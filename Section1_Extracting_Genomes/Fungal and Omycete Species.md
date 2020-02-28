@@ -7,7 +7,9 @@ Need to think about what to do about uncultured organisms
 # Fungal Species
 'x' indicate PCWD behaviour is common
 
-###### Dik (subkingdom)
+In the lists when there is only one subgroup to a group then the names are written side by side
+
+###### Dikarya (subkingdom)
 - [ ] Ascomycota (ascomycetes)
   - [ ] saccharomyceta
   - [ ] taphrinomycotina
@@ -68,3 +70,105 @@ Need to think about what to do about uncultured organisms
 - [ ] soil fungal species -- _will these be similar to root associated? As in fewer PCWDEs?_
 
 # Omycete Species
+- [ ] albuyginales
+  - [ ] albuginaceae
+    - [ ] albugo
+    - [ ] pustula
+    - [ ] wilsoniana
+- [ ] anisopidiales, anisolpidiaceae, anisolpidium
+- [ ] lagenidiales
+  - [ ] haliphthoraceae
+    - [ ] Atkinsiella   
+    - [ ] Halioticida
+    - [ ] Haliphthoros
+    - [ ] Halocrusticida
+    - [ ] Halodaphnea
+  - [ ] lagenidiaceae
+    - [ ] lagendium
+    - [ ] salilagendium
+    - [ ] incerae sedis: paralagenidium
+ - [ ] uncultured species
+ - [ ] leptomitales
+    - [ ] incertae sedis
+      - [ ] apodachlya
+      - [ ] blastulidium
+      - [ ] leptomitus
+ - [ ] myzocytiopsidales
+    - [ ] eurchasmatacea, eurychasma
+    - [ ] myzocytiopsidaea
+      - [ ] chlamydomyzium
+      - [ ] myzocytiopsis
+ - [ ] Olpidiopsidales, Olpidiopsidaceae, Olpidiopsis
+ - [ ] Peronosporales
+    - [ ] Ectrogellaceae, Ectrogella
+    - [ ] Pernosporaceae
+      - [ ] Baobabopsis
+      - [ ] Basidiophora
+      - [ ] Benua
+      - [ ] Bremia
+      - [ ] Calycofera
+      - [ ] Eraphthora
+      - [ ] Graminivora
+      - [ ] Hyaloperonospora
+      - [ ] Nothophytophthora
+      - [ ] Novotelnova
+      - [ ] Paraperonospora
+      - [ ] Perofascia
+      - [ ] Peronosclerospora
+      - [ ] Peronospora
+      - [ ] Phytophthora
+      - [ ] Plasmopara
+      - [ ] Plasmoverna
+      - [ ] Protobremia
+      - [ ] Pseudoperonospora
+      - [ ] Sclerophthora
+      - [ ] Sclerospora
+      - [ ] Viennotia
+    - [ ] potismataceae, pontisma
+    - [ ] salisapiliaceae, salisapilia
+    - [ ] unclassified
+    - [ ] incertae sedis: crypticola
+- [ ] pythiales
+    - [ ] pythiaceae
+      - [ ] Diasporangium
+      - [ ] Elongisporangium
+      - [ ] Globisporangium
+      - [ ] Halophytophthora
+      - [ ] Ovatisporangium
+      - [ ] Phytopythium
+      - [ ] Pilasporangium
+      - [ ] Pythium
+      - [ ] Salispina
+    - [ ] pythiogetonaceae, pythiogeton
+- [ ] rhipidiales, rhipidiaeae, sapromyces
+- [ ] saprolegniales
+    - [ ] saprolegnicaeae
+      - [ ] Achlya
+      - [ ] Aphanomyces
+      - [ ] Aplanes
+      - [ ] Aplanopsis
+      - [ ] Aquastella
+      - [ ] Brevilegnia
+      - [ ] Calyptralegnia
+      - [ ] Dictyuchus
+      - [ ] Geolegnia
+      - [ ] Isoachlya
+      - [ ] Leptolegnia
+      - [ ] Newbya
+      - [ ] Phragmosporangium
+      - [ ] Plectospira
+      - [ ] Protoachlya
+      - [ ] Pythiopsis
+      - [ ] Saprolegnia
+      - [ ] Scoliolegnia
+      - [ ] Thraustotheca
+- [ ] sclerosporales, verrucalvaceae, pachymetra
+- [ ] incertae sedis
+    - [ ] diatomophthoraeae, diatomophthora
+    - [ ] haptoglossa
+      - [ ] heterospora
+      - [ ] zoospora
+    - [ ] lagenaceae, laena
+    - [ ] laenisma, laenisma coscinodisci
+    - [ ] miraculaceae, miracula
+  
