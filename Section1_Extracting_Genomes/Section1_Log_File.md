@@ -32,3 +32,21 @@ Tasks:
     iii) Create a test dataset for using to test any code
     iv) Write the script and upload to GitHub then create a pullrequest for Leighton to see and check
     
+Task 1 completed on 28-02-2020, and uploaded to main area of the computational repository on GitHub
+
+### Papers for identifying fungal and omycete speices most suitable for future analysis
+https://www.hindawi.com/journals/ijg/2018/1974151/
+https://www.sciencedirect.com/science/article/pii/S1749461318300289
+https://www.ncbi.nlm.nih.gov/pubmed/25192611
+https://www.ncbi.nlm.nih.gov/pubmed/30825514
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3852112/pdf/1471-2164-14-S5-S7.pdf -- similar idea to the computational part of the PhD project
+https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-019-6358-x - Ascomycota focused
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4577117/ - Phytophthora focused
+
+(Project was advertised as looking at fungal Rhynchosporium and Magnaporthegenera and oomycete  Phytophthora genus, get evidence to show that these should be included)
+
+### Working list of fungi and omycete identified for pull down from NCBI
+
+### Notes when looking at the NCBI fungal taxnomic database
+Many of the fungal entries are not classified.
+Papers from above indicate that root associated fungi typically possess fewew PCWDEs, therefore may not need to include them???
