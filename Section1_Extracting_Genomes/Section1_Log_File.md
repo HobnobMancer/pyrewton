@@ -1,5 +1,5 @@
-### Section 1: Extracting Genomes from NCBI
-### Introduction to the notebook
+# Section 1: Extracting Genomes from NCBI
+## Introduction to the notebook
 
 ### Overview of 'Extract Genomes'
 Genomic sequences with and without annotations are stored in the NCBI database. The aim of this section of the project is to identify which fungi and omycete species will be most relevant to pull down for later examination to identify carbohydrate processing enzymes. Simultaneously, a Python script will be written to pull down the identified genomes from the NCBI database using Entrez from the BioPython module, in an automated manner. A test sample will be created to work on and test the script for pulling down genomes from NCBI.
@@ -77,7 +77,7 @@ Phylum: Ascinycota
    Subphylum: Pezizomycotina
    No rank: leoriomyceta
 
-# Table of taxanomy of fungal species of potential interest
+#### Table of taxanomy of fungal species of potential interest
 |  No rank |   sordariomyceta  |   sordariomyceta  |   sordariomyceta  |       sordariomyceta      |                  |                  |
 |:--------:|:-----------------:|:-----------------:|:-----------------:|:-------------------------:|:----------------:|:----------------:|
 |   Class  |  Sordariomycetes  |  Sordariomycetes  |  Sordariomycetes  |       Leotiomycetes       |  Eurotiomycetes  |  Eurotiomycetes  |
