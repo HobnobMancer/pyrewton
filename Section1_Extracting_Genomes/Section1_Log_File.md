@@ -18,19 +18,19 @@ Tasks:
 - [X] 1) Create flow chart of overal computational plan and upload to github
  
 - [ ] 2) Identify plant pathogenic and/or plant degrading fungal and omycete species
-        - [ ] i) Look in the literature to identify suitable speciesi
-        - [ ] ii) Identify and store the taxanomic NCBI identifiers
+- [ ] i) Look in the literature to identify suitable species
+- [ ] ii) Identify and store the taxanomic NCBI identifiers
 
 - [ ] 3) Spend time looking around the NCBI database
-        - [ ] i) What are the different formats of the files available?
-        - [ ] ii) Which output file formats are going to be most relevant and useful to pull down?
-        - [ ] iii) What are the differences between RefSeq and GeneBank assembles?
+- [ ] i) What are the different formats of the files available?
+- [ ] ii) Which output file formats are going to be most relevant and useful to pull down?
+- [ ] iii) What are the differences between RefSeq and GeneBank assembles?
     
 - [ ] 4) Write a short 10-15 line Python script for pulling down genomes from NCBI
-        - [ ] i) Spend some time reading the documentation for Entrez.BioPython
-        - [ ] ii) Spend some time practising using Entrez.BioPython
-        - [ ] iii) Create a test dataset for using to test any code
-        - [ ] iv) Write the script and upload to GitHub then create a pullrequest for Leighton to see and check
+- [ ] i) Spend some time reading the documentation for Entrez.BioPython
+- [ ] ii) Spend some time practising using Entrez.BioPython
+- [ ] iii) Create a test dataset for using to test any code
+- [ ] iv) Write the script and upload to GitHub then create a pullrequest for Leighton to see and check
     
 Task 1 completed on 28-02-2020, and uploaded to main area of the computational repository on GitHub
 
