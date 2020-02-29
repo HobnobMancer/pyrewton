@@ -61,3 +61,29 @@ Therefore there is definetly something about the : Dikarya, Ascomycota, saccharo
 A lot of focus has been put on Ascomycota for industrially used fungi
 
 There are 326 aspergillus assemblies - surely I can't take all of them. Maybe take some well characterised so as to included estabilished annotations to help with computationally identification of PCWDE and some of the most recently sequenced becuase these are less likely to be well annotated and thus more likely to find novel enzymes
+
+Common taxanomy:
+- [X] K
+- [X] P
+- [ ] C
+- [ ] O
+- [ ] F
+- [ ] G
+- [ ] S
+Kingdom: Fungi
+  Subkingdom: Dikarya
+Phylum: Ascinycota
+   No rank: saccharomyceta
+   Subphylum: Pezizomycotina
+   No rank: leoriomyceta
+
+# Table of taxanomy of fungal species of potential interest
+|  No rank |   sordariomyceta  |   sordariomyceta  |   sordariomyceta  |       sordariomyceta      |                  |                  |
+|:--------:|:-----------------:|:-----------------:|:-----------------:|:-------------------------:|:----------------:|:----------------:|
+|   Class  |  Sordariomycetes  |  Sordariomycetes  |  Sordariomycetes  |       Leotiomycetes       |  Eurotiomycetes  |  Eurotiomycetes  |
+| Subclass | Hypocreomycetidae | Sordariomycetidae | Sordariomycetidae |                           | Eurotiomycetidae | Eurotiomycetidae |
+|   Order  |    Hypocreales    |    Sordariales    |   Magnaporthales  |         Helotiales        |    Eurotiales    |    Eurotiales    |
+|  Family  |    Hypocreaceae   |    Sordariaceae   |  Magnaporthaceae  |                           |  Aspergillaceae  |  Aspergillaceae  |
+|  No rank |                   |                   |                   | Helotiales incertae sedis |                  |                  |
+|   Genus  |    Trichoderma    |     Neurospora    |    Magnaporthe    |       Rhynchosporium      |    Aspergillus   |    Penicillium   |
+|  Species |                   |                   |                   |                           |                  |                  |
