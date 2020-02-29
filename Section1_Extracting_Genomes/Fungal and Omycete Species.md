@@ -10,8 +10,9 @@ Need to think about what to do about uncultured organisms
 In the lists when there is only one subgroup to a group then the names are written side by side
 
 ###### Dikarya (subkingdom)
-- [ ] Ascomycota (ascomycetes)
-  - [ ] saccharomyceta
+- [X] Ascomycota (ascomycetes)
+  - [X] saccharomyceta
+      >> This common behaviour _(when looking at species commonly studied and/or used in industry follow the path: Dikarya, Ascomycota, saccharomyceta, Pezizomycotina, Leotiomyceta)_
   - [ ] taphrinomycotina
   - [ ] unclassified ascomycota
   
