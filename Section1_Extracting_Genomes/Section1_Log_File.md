@@ -46,7 +46,18 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4577117/ - Phytophthora focused
 (Project was advertised as looking at fungal Rhynchosporium and Magnaporthegenera and oomycete  Phytophthora genus, get evidence to show that these should be included)
 
 ### Working list of fungi and omycete identified for pull down from NCBI
+Trichoderma genus (38 assemblies on NCBI) - lit is riff of examples of their lignocelluluisc catalytic efficiency, limitation of being a well studied genus although studies seem to be limited to a few species (see Horta et al., 2018) - should I take all or select? Seeing as so well studied a few maybe take all? Seeing as a small collection are well studied then won't find many novel from them, hence take all as may find a few novel from all 38
 
 ### Notes when looking at the NCBI fungal taxnomic database
 Many of the fungal entries are not classified.
 Papers from above indicate that root associated fungi typically possess fewew PCWDEs, therefore may not need to include them???
+
+Trichoderma are ascomycota, and share the same species path as aspergillus (that are also commonly studied and used for their carbohydrate processing enzymes) to leotiomyceta -- should more focus be but onto one of the common taxonomy layers of Trichoderma and aspergillus? - Dikarya, Ascomycota, saccharomyceta, Pezizomycotina, Leotiomyceta
+-- Penicillium is another set of well studied species for biomass degrdatation (A, P and T from Weinmann et al., 2013) and also from Dikarya, Ascomycota, saccharomyceta, Pezizomycotina, Leotiomyceta
+
+rhynchosporium, madnaporthe are also in Dikarya, Ascomycota, saccharomyceta, Pezizomycotina, Leotiomyceta
+Therefore there is definetly something about the : Dikarya, Ascomycota, saccharomyceta, Pezizomycotina, Leotiomyceta lineage: narrows it down to 1105 genomes / 2731 assemblies out of 2269 / 5721 assemblies
+
+A lot of focus has been put on Ascomycota for industrially used fungi
+
+There are 326 aspergillus assemblies - surely I can't take all of them. Maybe take some well characterised so as to included estabilished annotations to help with computationally identification of PCWDE and some of the most recently sequenced becuase these are less likely to be well annotated and thus more likely to find novel enzymes
