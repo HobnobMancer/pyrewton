@@ -73,12 +73,16 @@ In the lists when there is only one subgroup to a group then the names are writt
 
 #### _Trichoderma_
 ##### _Trichoderma spp._ which have been well characterised
-- _Trichoderma reesei_
-- _Trichoderma harzianum_
-- _Trichoderma atroviride_
-- _Trichoderma virens_
+- _Trichoderma reesei_ 
+- _Trichoderma harzianum_ 
+- _Trichoderma atroviride_ 
+- _Trichoderma virens_ 
 - _Trichoderma asperellum_
 - _Trichoderma asperelloides_
+
+##### _Trichoderma spp._ for pull down from NCBI
+- _T.  longibrachiatum_
+- _T. citrinoviride_
 
 #### _Aspergillus_
 ##### _Aspergillus spp._ which have been well characterised
