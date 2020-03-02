@@ -48,7 +48,8 @@ In the lists when there is only one subgroup to a group then the names are writt
   - [ ] amoeboradix
   - [ ] sanchytrium
 - [ ] zoopagomycota
-  - [ ] Entomophthoromycotina  
+
+z  - [ ] Entomophthoromycotina  
   - [ ] Kickxellomycotina
   - [ ] Zoopagomycotina
 
@@ -69,6 +70,36 @@ In the lists when there is only one subgroup to a group then the names are writt
 - [ ] fungal yeast species
 - [ ] mycorrhizal fungal
 - [ ] soil fungal species -- _will these be similar to root associated? As in fewer PCWDEs?_
+
+#### _Trichoderma_
+##### _Trichoderma spp._ which have been well characterised
+- _Trichoderma reesei_
+- _Trichoderma harzianum_
+- _Trichoderma atroviride_
+- _Trichoderma virens_
+- _Trichoderma asperellum_
+- _Trichoderma asperelloides_
+
+#### _Aspergillus_
+##### _Aspergillus spp._ which have been well characterised
+- _Aspergillus luchuensis_
+- _Aspergillus tubingensis_
+- _Aspergillus niger_
+- _Aspergillus brasiliensis_
+- _Aspergillus varbonarius_
+- _Aspergillus carbonarius_
+- _Aspergillus aculeatus_
+- _Aspergillus nidulans_
+- _Aspergillus sydowii_
+- _Aspergillus versicolor_
+- _Aspergillus flavus_
+- _Aspergillus oryzae_
+- _Aspergillus terreus_
+- _Aspergillus fumigatus_
+- _Aspergillus fischeri_
+- _Aspergillus calvatus_
+- _Aspergillus wentii_
+
 
 # Omycete Species
 - [ ] albuyginales
