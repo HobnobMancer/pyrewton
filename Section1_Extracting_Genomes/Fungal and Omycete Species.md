@@ -73,16 +73,21 @@ In the lists when there is only one subgroup to a group then the names are writt
 
 #### _Trichoderma_
 ##### _Trichoderma spp._ which have been well characterised
+Paula et al., 2018, Horta et al., 2018, Kubicek and Druzhinina, 2013
 - _Trichoderma reesei_ 
-- _Trichoderma harzianum_ 
-- _Trichoderma atroviride_ 
+- _Trichoderma harzianum_   Kim et al., 2019
+- _Trichoderma atroviride_  Kim et al., 2019
 - _Trichoderma virens_ 
 - _Trichoderma asperellum_
 - _Trichoderma asperelloides_
 
 ##### _Trichoderma spp._ for pull down from NCBI
-- _T.  longibrachiatum_
-- _T. citrinoviride_
+- _T.  longibrachiatum_ Kubicek and Druzhinina, 2013; Kasonga et al., 2020; 
+- _T. citrinoviride_ Kim et al., 2019, Lee et al., 2018, Kim et al., 2016
+- _T. pseduokoningii_ Kim et al., 2019
+- _T. deliquescences_ Kim et al., 2016
+
+Have _T. harzianum Trichoderma atroviride, Trichoderma virens, Trichoderma asperellum_ and _Trichoderma asperelloides_,been annotated? Phenotypes of biomass degraders have been shown but genomic studies?
 
 #### _Aspergillus_
 ##### _Aspergillus spp._ which have been well characterised
