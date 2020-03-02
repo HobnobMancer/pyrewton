@@ -103,3 +103,6 @@ Another helpful website to reference is www.ncbi/nih.gov/assembly/model/
 
 Found a couple of papers that might help explain how to select candidates for the PhD project: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1456863/pdf/tpc1801100.pdf, https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3630013/pdf/2042-5783-3-2.pdf
 
+Need to spend more time looking at the different output file formats of NCBI and what each contains.
+
+Going to spend the rest of the day looking at Entrez.BioPython and if I have time look at the other assemblies available for _Trichoderma spp._ for selection candidates for the NCBI assembly pulldown.
