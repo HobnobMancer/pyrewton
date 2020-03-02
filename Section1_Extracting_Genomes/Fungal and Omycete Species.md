@@ -82,14 +82,15 @@ Paula et al., 2018, Horta et al., 2018, Kubicek and Druzhinina, 2013
 - _Trichoderma asperelloides_ - no hits in NCBI assembly database -- Leighton?
 
 ##### _Trichoderma spp._ for pull down from NCBI
-- _T.  longibrachiatum_ Kubicek and Druzhinina, 2013; Kasonga et al., 2020; 
+- _T.  longibrachiatum_ Kubicek and Druzhinina, 2013; Kasonga et al., 2020;  is involved in a genome annotating experiment, but only aligned with _T. reesei_ and _T.atroviride_ did not identify any novel CAZy, but updated databases since 2014 and also new programmes might Xie et al., 2014 
 - _T. citrinoviride_ Kim et al., 2019, Lee et al., 2018, Kim et al., 2016
 - _T. pseduokoningii_ Kim et al., 2019 - no hits in NCBI assembly database -- Leighton?
 - _T. deliquescences_ Kim et al., 2016 - no hits in NCBI assembly database -- Leighton? - explains why only 4 results on PubMed
 - sp. TW21990_1
 - sp. IMV 00454
+- _T. koningii_ Howdeshell and Tanaka, 2018
 
-Have _T. harzianum Trichoderma atroviride, Trichoderma virens, Trichoderma asperellum_ and _Trichoderma asperelloides_,been annotated? Phenotypes of biomass degraders have been shown but genomic studies?
+Have _T. harzianum, Trichoderma atroviride, Trichoderma virens, Trichoderma asperellum_ and _Trichoderma asperelloides_,been annotated? Phenotypes of biomass degraders have been shown but genomic studies?
 
 #### _Aspergillus_
 ##### _Aspergillus spp._ which have been well characterised
