@@ -89,8 +89,14 @@ Paula et al., 2018, Horta et al., 2018, Kubicek and Druzhinina, 2013
 - sp. TW21990_1
 - sp. IMV 00454
 - _T. koningii_ Howdeshell and Tanaka, 2018
+- _T. gamssi_ Tchameni et al., 2019, Chamekh et al., 2019
+- _T. erinaceum_ Tchameni et al., 2019
+- _T. afroharizanum_ Tchameni et al., 2019
+- _T. koningiopsis_ Mendoza-Lopez et al., 2017
 
 Have _T. harzianum, Trichoderma atroviride, Trichoderma virens, Trichoderma asperellum_ and _Trichoderma asperelloides_,been annotated? Phenotypes of biomass degraders have been shown but genomic studies?
+
+Really starting to wonder if pulling down all _Trichoderma_ spp. is too much or not? It would provide a lot of data, then again arguably is there any point analysing _T. reesie_ for example, because it is so well studied.
 
 #### _Aspergillus_
 ##### _Aspergillus spp._ which have been well characterised
