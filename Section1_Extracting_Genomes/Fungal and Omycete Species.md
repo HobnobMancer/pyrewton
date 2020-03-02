@@ -79,13 +79,15 @@ Paula et al., 2018, Horta et al., 2018, Kubicek and Druzhinina, 2013
 - _Trichoderma atroviride_  Kim et al., 2019
 - _Trichoderma virens_ 
 - _Trichoderma asperellum_
-- _Trichoderma asperelloides_
+- _Trichoderma asperelloides_ - no hits in NCBI assembly database -- Leighton?
 
 ##### _Trichoderma spp._ for pull down from NCBI
 - _T.  longibrachiatum_ Kubicek and Druzhinina, 2013; Kasonga et al., 2020; 
 - _T. citrinoviride_ Kim et al., 2019, Lee et al., 2018, Kim et al., 2016
-- _T. pseduokoningii_ Kim et al., 2019
-- _T. deliquescences_ Kim et al., 2016
+- _T. pseduokoningii_ Kim et al., 2019 - no hits in NCBI assembly database -- Leighton?
+- _T. deliquescences_ Kim et al., 2016 - no hits in NCBI assembly database -- Leighton? - explains why only 4 results on PubMed
+- sp. TW21990_1
+- sp. IMV 00454
 
 Have _T. harzianum Trichoderma atroviride, Trichoderma virens, Trichoderma asperellum_ and _Trichoderma asperelloides_,been annotated? Phenotypes of biomass degraders have been shown but genomic studies?
 
