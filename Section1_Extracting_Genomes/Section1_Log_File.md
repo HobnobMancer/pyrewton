@@ -48,6 +48,10 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4577117/ - Phytophthora focused
 ### Working list of fungi and omycete identified for pull down from NCBI
 Trichoderma genus (38 assemblies on NCBI) - lit is riff of examples of their lignocelluluisc catalytic efficiency, limitation of being a well studied genus although studies seem to be limited to a few species (see Horta et al., 2018) - should I take all or select? Seeing as so well studied a few maybe take all? Seeing as a small collection are well studied then won't find many novel from them, hence take all as may find a few novel from all 38
 
+
+
+## Working log
+
 ### 29-02-2020 Notes when looking at the NCBI fungal taxnomic database
 Many of the fungal entries are not classified.
 Papers from above indicate that root associated fungi typically possess fewew PCWDEs, therefore may not need to include them???
