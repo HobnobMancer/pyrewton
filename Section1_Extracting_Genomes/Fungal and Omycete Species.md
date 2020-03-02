@@ -49,7 +49,7 @@ In the lists when there is only one subgroup to a group then the names are writt
   - [ ] sanchytrium
 - [ ] zoopagomycota
 
-z  - [ ] Entomophthoromycotina  
+  - [ ] Entomophthoromycotina  
   - [ ] Kickxellomycotina
   - [ ] Zoopagomycotina
 
