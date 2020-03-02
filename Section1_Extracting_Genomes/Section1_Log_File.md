@@ -48,7 +48,7 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4577117/ - Phytophthora focused
 ### Working list of fungi and omycete identified for pull down from NCBI
 Trichoderma genus (38 assemblies on NCBI) - lit is riff of examples of their lignocelluluisc catalytic efficiency, limitation of being a well studied genus although studies seem to be limited to a few species (see Horta et al., 2018) - should I take all or select? Seeing as so well studied a few maybe take all? Seeing as a small collection are well studied then won't find many novel from them, hence take all as may find a few novel from all 38
 
-### Notes when looking at the NCBI fungal taxnomic database
+### 29-02-2020 Notes when looking at the NCBI fungal taxnomic database
 Many of the fungal entries are not classified.
 Papers from above indicate that root associated fungi typically possess fewew PCWDEs, therefore may not need to include them???
 
@@ -88,3 +88,11 @@ Phylum: Ascinycota
 |  No rank |                   |                   |                   | Helotiales incertae sedis |                  |                  |
 |   Genus  |    Trichoderma    |     Neurospora    |    Magnaporthe    |       Rhynchosporium      |    Aspergillus   |    Penicillium   |
 |  Species |                   |                   |                   |                           |                  |                  |
+
+### 02-03-2020 Notes on going through indidivudal _Trichoderma spp._
+There are some species that have barely been investigated, some have only been investigated in reference to human health but not for biomass degradation and others have been identified to degrade biomass during investigations to identify fungal species causing rot/degradation to a biomaterial/biomass of interest. These species I am interested in pulling down, especially becuase it appears that for these species the phenotype has been characterised by the specific enzymes involve in the degradation phenotype have not.
+
+However, there is an issue here for some of the species of interst. Some of them do not have assemblies available on NCBI :grimacing: so if I want to go with them I need to see if Leighton has any connections that have non-publically available genomes assemlbies of these species. These species include: 
+- _Trichoderma asperelloides_
+- _T. pseduokoningii_ 
+- _T. deliquescences_ 
