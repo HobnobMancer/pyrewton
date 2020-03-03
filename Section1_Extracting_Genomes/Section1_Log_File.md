@@ -111,5 +111,12 @@ Need to spend more time looking at the different output file formats of NCBI and
 
 Going to spend the rest of the day looking at Entrez.BioPython and if I have time look at the other assemblies available for _Trichoderma spp._ for selection candidates for the NCBI assembly pulldown
 
+
+##### Notes on ExtractGenomes_NCBI.py file
+Added the getAccessionNumbers function to ExtractGenomes_NCBI.py file. This function extracts the accession numbers of the genomes to be pulled down from the NCBI Assembly database from a plain text file.
+
+Added the storeNCBIdata function to ExtractGenomes_NCBI.py file. This function writes each pulled down Genbank file, pulled down from the NBCI Assembly database, to a new plain text file with the standard naming of 'data-of-pulldown_accession-Number_NCBI-database.txt'.
+
+
 ### 03-03-2020 Notes on _Rhynchosporium_ selection
 Only three genomes available on NCBI and becuase good homology studies included closely and more distantly related species, pull down all three.
