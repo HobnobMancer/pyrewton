@@ -125,6 +125,13 @@ Really starting to wonder if pulling down all _Trichoderma_ spp. is too much or 
 - _Aspergillus wentii_
 
 
+#### _Rhynchosporium_
+Pull down all three
+- _R. commune_
+- _R. agropyri_
+_ -R. secalis_
+
+
 # Omycete Species
 - [ ] albuyginales
   - [ ] albuginaceae
