@@ -6,7 +6,7 @@ https://biopython.org/DIST/docs/api/Bio.Entrez-module.html
 
 ## Entrez Documentation/Walkthrough
 https://biopython.org/DIST/docs/tutorial/Tutorial.html#htoc111
-Chapter 9
+(Chapter 9)
 
 ## eFetch Documentation
 https://www.ncbi.nlm.nih.gov/books/NBK25499/#chapter4.EFetch
