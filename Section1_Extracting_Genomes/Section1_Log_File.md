@@ -118,5 +118,6 @@ Added the getAccessionNumbers function to ExtractGenomes_NCBI.py file. This func
 Added the storeNCBIdata function to ExtractGenomes_NCBI.py file. This function writes each pulled down Genbank file, pulled down from the NBCI Assembly database, to a new plain text file with the standard naming of 'data-of-pulldown_accession-Number_NCBI-database.txt'.
 
 
-### 03-03-2020 Notes on _Rhynchosporium_ selection
-Only three genomes available on NCBI and becuase good homology studies included closely and more distantly related species, pull down all three.
+### 03-03-2020 Notes on _Rhynchosporium_ and _Magnaporthe_ selection
+Only three and five genomes, respectively, available on NCBI and becuase good homology studies included closely and more distantly related species, pull down all available genomes.
+Find references that demonstrate that many R. and M. species are plant pathogens, and thus express many PCWDEs.
