@@ -121,3 +121,6 @@ Added the storeNCBIdata function to ExtractGenomes_NCBI.py file. This function w
 ### 03-03-2020 Notes on _Rhynchosporium_ and _Magnaporthe_ selection
 Only three and five genomes, respectively, available on NCBI and becuase good homology studies included closely and more distantly related species, pull down all available genomes.
 Find references that demonstrate that many R. and M. species are plant pathogens, and thus express many PCWDEs.
+
+### 04-03-2020 Notes on fungal and oomycete selection
+During disussion in the PhD 4 month meeting with my internal examinar and tutor, it will be a good idea to include some well characterised species in the computational study. I will create a 'benchmark' dataset but it will be good to include these in the actual study for comparison, becuase I could identify homologs of genes that we know can be generated, potentially increasing the probability of being able to generate the novel fungal proteins.
