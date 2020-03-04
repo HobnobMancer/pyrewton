@@ -95,6 +95,13 @@ Paula et al., 2018, Horta et al., 2018, Kubicek and Druzhinina, 2013
 - _T. koningiopsis_ Mendoza-Lopez et al., 2017
 - _T. brevicompactum_ Leylaie and Zafari, 2018
 - _T. pleuroti_ only 3 hits in pubmed
+Paula et al., 2018, Horta et al., 2018, Kubicek and Druzhinina, 2013
+- _Trichoderma reesei_ 
+- _Trichoderma harzianum_   Kim et al., 2019
+- _Trichoderma atroviride_  Kim et al., 2019
+- _Trichoderma virens_ 
+- _Trichoderma asperellum_
+- _Trichoderma asperelloides_ - no hits in NCBI assembly database -- Leighton?
 
 Selection process seems to mostly be for evidence of plant pathogen, biomass degradation, antimicrobial behavior and/or lack of literature.
 Antimicrobial behaviour potential indicator of extracellular CAZyme expression for same reasons as plant pathogen behaiour.
