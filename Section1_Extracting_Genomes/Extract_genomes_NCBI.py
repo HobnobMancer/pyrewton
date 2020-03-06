@@ -41,10 +41,12 @@ def get_accession_numbers(accession_numbers_file):
     The accession numbers will be returned as a list with each number being assigned an individual element"""
 
     # inputFILE = open(r" - path for file containing accession numbers - ")
-    input_file = open(r"/home/em/PhD_Project_Scripts/Section_1_Extracting_Genomes/NCBI_AccessionNumbers_inputFILE.txt", "rt")
-    accesssion_numbers = input_file.readlines()
-    input_file.close()
+    accession_numbers = []
+    with open("input_file.txt", "r") as file_handle:
+        file_handle.readlines
+    accession_numbers = file_handle
     return(accesssion_numbers)
+
 
 
 # Define function to store pulled down data from NCBI in a individual data file for that associated accession number
