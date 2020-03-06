@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # This script is a general script for pulling down genomic assembles from the NCBI Assembly database,
 # identified by their taxanomic asscession numbers provided in a separate plain text file.
