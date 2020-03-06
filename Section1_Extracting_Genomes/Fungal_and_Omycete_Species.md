@@ -1,15 +1,18 @@
-### Notes on selection process
+# Notes on selection process
+
 Will ignore environmental samples
 Unclassified samples will be examined occationally if small datasets, otherwise will be ignored
 Papers infer that root associated fungi possess fewer PCWDEs
 Need to think about what to do about uncultured organisms
 
-# Fungal Species
+## Fungal Species
+
 'x' indicate PCWD behaviour is common
 
 In the lists when there is only one subgroup to a group then the names are written side by side
 
-###### Dikarya (subkingdom)
+### Dikarya (subkingdom)
+
 - [X] Ascomycota (ascomycetes)
   - [X] saccharomyceta
       >> This common behaviour _(when looking at species commonly studied and/or used in industry follow the path: Dikarya, Ascomycota, saccharomyceta, Pezizomycotina, Leotiomyceta)_
@@ -24,11 +27,11 @@ In the lists when there is only one subgroup to a group then the names are writt
   - [ ] unclassified basidiomycota
   - [ ] basidiomyctoa incertae sedis
     - [ ] enteorrhizomycetes
-    
 - [ ] Schizosaccharomyces pombe/Puccinia graminis mixed DNA library
 - [ ] Stachybotrys elegans/Rhizoctonia solani mixed EST library
 
-###### Incartae sedis (no rank)
+### Incartae sedis (no rank)
+
 - [ ] blasocladiomycota
 - [ ] chytridiomycota
 - [ ] cryptomycota
@@ -53,9 +56,10 @@ In the lists when there is only one subgroup to a group then the names are writt
   - [ ] Kickxellomycotina
   - [ ] Zoopagomycotina
 
-##### uncultured fungi
+#### uncultured fungi
 
-###### unclassified fungi
+#### unclassified fungi
+
 - [ ] beech leaf mycelium
 - [ ] calluna vulgaris root associated fungus
 - [ ] ectomycorrhizal isolates and fungal species
@@ -72,17 +76,21 @@ In the lists when there is only one subgroup to a group then the names are writt
 - [ ] soil fungal species -- _will these be similar to root associated? As in fewer PCWDEs?_
 
 #### _Trichoderma_
+
 ##### _Trichoderma spp._ which have been well characterised
+
 Paula et al., 2018, Horta et al., 2018, Kubicek and Druzhinina, 2013
-- _Trichoderma reesei_ 
+
+- _Trichoderma reesei_
 - _Trichoderma harzianum_   Kim et al., 2019
 - _Trichoderma atroviride_  Kim et al., 2019
-- _Trichoderma virens_ 
+- _Trichoderma virens_
 - _Trichoderma asperellum_
 - _Trichoderma asperelloides_ - no hits in NCBI assembly database -- Leighton?
 
 ##### _Trichoderma spp._ for pull down from NCBI
-- _T.  longibrachiatum_ Kubicek and Druzhinina, 2013; Kasonga et al., 2020;  is involved in a genome annotating experiment, but only aligned with _T. reesei_ and _T.atroviride_ did not identify any novel CAZy, but updated databases since 2014 and also new programmes might Xie et al., 2014 
+
+- _T.  longibrachiatum_ Kubicek and Druzhinina, 2013; Kasonga et al., 2020;  is involved in a genome annotating experiment, but only aligned with _T. reesei_ and _T.atroviride_ did not identify any novel CAZy, but updated databases since 2014 and also new programmes might Xie et al., 2014
 - _T. citrinoviride_ Kim et al., 2019, Lee et al., 2018, Kim et al., 2016
 - _T. pseduokoningii_ Kim et al., 2019 - no hits in NCBI assembly database -- Leighton?
 - _T. deliquescences_ Kim et al., 2016 - no hits in NCBI assembly database -- Leighton? - explains why only 4 results on PubMed
@@ -96,10 +104,10 @@ Paula et al., 2018, Horta et al., 2018, Kubicek and Druzhinina, 2013
 - _T. brevicompactum_ Leylaie and Zafari, 2018
 - _T. pleuroti_ only 3 hits in pubmed
 Paula et al., 2018, Horta et al., 2018, Kubicek and Druzhinina, 2013
-- _Trichoderma reesei_ 
+- _Trichoderma reesei_
 - _Trichoderma harzianum_   Kim et al., 2019
 - _Trichoderma atroviride_  Kim et al., 2019
-- _Trichoderma virens_ 
+- _Trichoderma virens_
 - _Trichoderma asperellum_
 - _Trichoderma asperelloides_ - no hits in NCBI assembly database -- Leighton?
 
@@ -111,8 +119,10 @@ Have _T. harzianum, Trichoderma atroviride, Trichoderma virens, Trichoderma aspe
 
 Really starting to wonder if pulling down all _Trichoderma_ spp. is too much or not? It would provide a lot of data, then again arguably is there any point analysing _T. reesie_ for example, because it is so well studied.
 
-#### _Aspergillus_
-##### _Aspergillus spp._ which have been well characterised
+## _Aspergillus_
+
+### _Aspergillus spp._ which have been well characterised
+
 - _Aspergillus luchuensis_
 - _Aspergillus tubingensis_
 - _Aspergillus niger_
@@ -131,15 +141,16 @@ Really starting to wonder if pulling down all _Trichoderma_ spp. is too much or 
 - _Aspergillus calvatus_
 - _Aspergillus wentii_
 
+### _Rhynchosporium_
 
-#### _Rhynchosporium_
 Pull down all three
+
 - _R. commune_
 - _R. agropyri_
-_ -R. secalis_
+- _R. secalis_
 
+## Omycete Species
 
-# Omycete Species
 - [ ] albuyginales
   - [ ] albuginaceae
     - [ ] albugo
@@ -148,7 +159,7 @@ _ -R. secalis_
 - [ ] anisopidiales, anisolpidiaceae, anisolpidium
 - [ ] lagenidiales
   - [ ] haliphthoraceae
-    - [ ] Atkinsiella   
+    - [ ] Atkinsiella
     - [ ] Halioticida
     - [ ] Haliphthoros
     - [ ] Halocrusticida
@@ -157,21 +168,23 @@ _ -R. secalis_
     - [ ] lagendium
     - [ ] salilagendium
     - [ ] incerae sedis: paralagenidium
- - [ ] uncultured species
- - [ ] leptomitales
-    - [ ] incertae sedis
+- [ ] uncultured species
+- [ ] leptomitales
+       - [ ] incertae sedis
       - [ ] apodachlya
       - [ ] blastulidium
       - [ ] leptomitus
- - [ ] myzocytiopsidales
-    - [ ] eurchasmatacea, eurychasma
-    - [ ] myzocytiopsidaea
-      - [ ] chlamydomyzium
-      - [ ] myzocytiopsis
- - [ ] Olpidiopsidales, Olpidiopsidaceae, Olpidiopsis
- - [ ] Peronosporales
-    - [ ] Ectrogellaceae, Ectrogella
-    - [ ] Pernosporaceae
+
+- [ ] myzocytiopsidales
+  - [ ] eurchasmatacea, eurychasma
+  - [ ] myzocytiopsidaea
+        - [ ] chlamydomyzium
+        - [ ] myzocytiopsis
+
+- [ ] Olpidiopsidales, Olpidiopsidaceae, Olpidiopsis
+- [ ] Peronosporales
+      - [ ] Ectrogellaceae, Ectrogella
+      - [ ] Pernosporaceae
       - [ ] Baobabopsis
       - [ ] Basidiophora
       - [ ] Benua
@@ -194,47 +207,47 @@ _ -R. secalis_
       - [ ] Sclerophthora
       - [ ] Sclerospora
       - [ ] Viennotia
-    - [ ] potismataceae, pontisma
-    - [ ] salisapiliaceae, salisapilia
-    - [ ] unclassified
-    - [ ] incertae sedis: crypticola
+  - [ ] potismataceae, pontisma
+  - [ ] salisapiliaceae, salisapilia
+  - [ ] unclassified
+  - [ ] incertae sedis: crypticola
 - [ ] pythiales
-    - [ ] pythiaceae
-      - [ ] Diasporangium
-      - [ ] Elongisporangium
-      - [ ] Globisporangium
-      - [ ] Halophytophthora
-      - [ ] Ovatisporangium
-      - [ ] Phytopythium
-      - [ ] Pilasporangium
-      - [ ] Pythium
-      - [ ] Salispina
+  - [ ] pythiaceae
+  - [ ] Diasporangium
+  - [ ] Elongisporangium
+  - [ ] Globisporangium
+  - [ ] Halophytophthora
+  - [ ] Ovatisporangium
+  - [ ] Phytopythium
+  - [ ] Pilasporangium
+  - [ ] Pythium
+  - [ ] Salispina
     - [ ] pythiogetonaceae, pythiogeton
 - [ ] rhipidiales, rhipidiaeae, sapromyces
 - [ ] saprolegniales
-    - [ ] saprolegnicaeae
-      - [ ] Achlya
-      - [ ] Aphanomyces
-      - [ ] Aplanes
-      - [ ] Aplanopsis
-      - [ ] Aquastella
-      - [ ] Brevilegnia
-      - [ ] Calyptralegnia
-      - [ ] Dictyuchus
-      - [ ] Geolegnia
-      - [ ] Isoachlya
-      - [ ] Leptolegnia
-      - [ ] Newbya
-      - [ ] Phragmosporangium
-      - [ ] Plectospira
-      - [ ] Protoachlya
-      - [ ] Pythiopsis
-      - [ ] Saprolegnia
-      - [ ] Scoliolegnia
-      - [ ] Thraustotheca
+  - [ ] saprolegnicaeae
+  - [ ] Achlya
+  - [ ] Aphanomyces
+  - [ ] Aplanes
+  - [ ] Aplanopsis
+  - [ ] Aquastella
+  - [ ] Brevilegnia
+  - [ ] Calyptralegnia
+  - [ ] Dictyuchus
+  - [ ] Geolegnia
+  - [ ] Isoachlya
+  - [ ] Leptolegnia
+  - [ ] Newbya
+  - [ ] Phragmosporangium
+  - [ ] Plectospira
+  - [ ] Protoachlya
+  - [ ] Pythiopsis
+  - [ ] Saprolegnia
+  - [ ] Scoliolegnia
+  - [ ] Thraustotheca
 - [ ] sclerosporales, verrucalvaceae, pachymetra
 - [ ] incertae sedis
-    - [ ] diatomophthoraeae, diatomophthora
+  - [ ] diatomophthoraeae, diatomophthora
     - [ ] haptoglossa
       - [ ] heterospora
       - [ ] zoospora
