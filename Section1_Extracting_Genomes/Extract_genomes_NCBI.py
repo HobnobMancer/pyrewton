@@ -7,36 +7,13 @@ from Bio import Entrez
 import datetime
 
 # Fill out pull down form:
-Entrez.email = 'eemh1@st-andrews.ac.uk'  #  enter email of person performing the pulldown
+Entrez.email = 'eemh1@st-andrews.ac.uk'  # enter email address
 date = datetime.datetime.now()
 date_of_pulldown = date.strftime("%Y-%m-%d")
-NCBI_database = 'NCBIAssembly'  #  name the database as a string
+NCBI_database = 'NCBIAssembly'  # name the database as a string
 
-# Create function to continually access desired NCBI database, and pull down data in desired output format.
-def extract_assembly(accession_number):
-    """Pull down genomic sequences from the NCBI assembly database.
 
-    This function pulls down the data from the specified NCBI
-    database in the specified format.
-    For information about Entrez.BioPython module's
-    keywords for rettype and retmode (which define
-    the output format of the pulled down data, see:
-    https://biopython.org/DIST/docs/api/Bio.Entrez-module.html
-    https://biopython.org/DIST/docs/tutorial/Tutorial.html#htoc111
-    >> Chapter 9
-    This function uses the Entrez eFetch handel which retrieves
-    data from NCBI, for more information see:
-    https://www.ncbi.nlm.nih.gov/books/NBK25499/#chapter4.EFetch
-    """
-
-    # The arguments rettype="gb" and retmode="text" will pull down the record in the GenBank format.
-    rettype_argmnt = "gb"
-    retmode_argmnt = "text"
-
-    handel = Entrez.efetch(db=NCBI_database, id=accession_number, rettype=rettype_argmnt, retmode=retmode_argmnt)
-    print(handel.read())
-
-# Define function to extract accession numbers of datasets of interest in NCBI database.
+# Define function to extract accession numbers from plain text file
 def get_accession_numbers(accession_numbers_file):
     """Extract accession numbers from a plain text file.
 
@@ -53,40 +30,55 @@ def get_accession_numbers(accession_numbers_file):
     # inputFILE = open(r" - path for file containing accession numbers - ")
     accession_numbers = []
     with open("input_file.txt", "r") as file_handle:
-        file_handle.readlines
-    accession_numbers = file_handle
-    return(accesssion_numbers)
-
-    with open('fname', 'r') as fhandle:
-        fhandle.readlines()
-        
+        accession_numbers = file_handle.readlines
+    return(accession_numbers)
 
 
-# Define function to store pulled down data from NCBI in a individual data file for that associated accession number
-def store_NCBI_data(working_accession_number, NCBI_data):
-    """Store data pulled down from NCBI in a new file.
+# Create function download as save assembly data from NCBI
+def extract_assembly(accession_number):
+    """Pull down genomic sequences from the NCBI assembly database.
 
-    This function stores the data pulled down from a NCBI database in a new file, named in the predefined manner.
-    The naming manner/system is defined in this function.
-    File naming system: 'data-of-pulldown_Accession#_NCBI-database-name.
-    Example file name: 02-03-2020_GCA00014548_NCBIAssembly
-    The file extension will also be defined using this function.
-    The created output file will be stored in the same directory as this scritp
-    data_of_pulldown and NCBI_database must be defined at the beginning of the main script
+    This function pulls down the data from the specified NCBI
+    database in the specified format.
+    For information about Entrez.BioPython module's
+    keywords for rettype and retmode (which define
+    the output format of the pulled down data, see:
+    https://biopython.org/DIST/docs/api/Bio.Entrez-module.html
+    https://biopython.org/DIST/docs/tutorial/Tutorial.html#htoc111
+    >> Chapter 9
+    This function uses the Entrez eFetch handel which retrieves
+    data from NCBI, for more information see:
+    https://www.ncbi.nlm.nih.gov/books/NBK25499/#chapter4.EFetch
+    
+    
+    The downloaded assembly is written to an output file,
+    with the standard file name of 'date - accession number
+    - NCBI database'.
     """
 
-    data_accession_number = NCBI_data # the accession number of the NCBI data of interest is passed to the function
+    # The arguments rettype="gb" and retmode="text" pull down records in the GenBank format
+    rettype_argmnt = "gb"
+    retmode_argmnt = "text"
 
+    handle = Entrez.efetch(db=NCBI_database, id=accession_number, rettype=rettype_argmnt, retmode=retmode_argmnt)
+    assembly = handle.read()
+
+    # Write data to ouput file
     file_format = '.txt' # define the file extention for the output file
-    file_name = date_of_pulldown + '_' + working_accession_number + '_' + NCBI_database + file_format
+    file_name = date_of_pulldown + '_' + accession_number + '_' + NCBI_database + file_format
 
-    output_file = open(file_name, "w")    # create file
-    output_file.write(NCBI_data)          # write out pulled down data
-    output_file.close()                  # close file
+    with open(file_name, "w") as output_handle:
+        output_handle.write(assembly)
+    
+    handle.close()
 
 
 
-# add code to print out each pulled down genome to a new text file, named after it's ID with a standard name
-# formal as well
+# Main script body
 
-# Extract
+# Retrieve accession numbers from input pile
+accession_numbers = get_accession_numbers('NCBI_accession_numbers.txt')
+
+# Pull down genomic sequences from NCBI and store in individual files
+for record in accession_numbers:
+    extract_assembly(record)
