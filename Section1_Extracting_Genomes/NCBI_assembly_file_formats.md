@@ -1,8 +1,8 @@
 # Notes on NCBI Assembly database file formats
 
-Information taken from: https://www.ncbi.nlm.nih.gov/genome/doc/ftpfaq/#files
+Information taken from: [NCBI genomes](https://www.ncbi.nlm.nih.gov/genome/doc/ftpfaq/#files)
 
-## What is the file content within each specific assembly directory?
+## What is the file content within each specific assembly directory
 
 Assembly directories for all current assemblies, and for many previous assembly versions, include a core set of files and formats plus additional files relevant to the data content of the specific assembly. Directories for old assembly versions that predate the genomes FTP site reorganization contain only the assembly report, assembly stats assembly status files. All data files are named according to the pattern: [assembly accession.version]_[assembly name]_content.[format]
 
@@ -50,7 +50,7 @@ GenBank flat file format of the genomic sequence(s) in the assembly. This file i
 
 ## *_genomic.gff.gz (Genomic GFF)
 
-Annotation of the genomic sequence(s) in Generic Feature Format Version 3 (GFF3). Sequence identifiers are provided as accession.version. Additional information about NCBI's GFF files is available at ftp://ftp.ncbi.nlm.nih.gov/genomes/README_GFF3.txt.
+Annotation of the genomic sequence(s) in Generic Feature Format Version 3 (GFF3). Sequence identifiers are provided as accession.version. Additional information about NCBI's GFF files is available at [URL](ftp://ftp.ncbi.nlm.nih.gov/genomes/README_GFF3.txt.)
 
 ## *_genomic.gtf.gz (Genomic GTF)
 
