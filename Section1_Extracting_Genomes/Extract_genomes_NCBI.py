@@ -4,10 +4,12 @@
 # Script pulls down assembles from NCBI database
 
 from Bio import Entrez
+import datetime
 
 # Fill out pull down form:
-Entrez.email = eemh1@st-andrews.ac.uk  #  enter email of person performing the pulldown
-date_of_pulldown = '03-03-2020'  #  enter the start date of script execution
+Entrez.email = 'eemh1@st-andrews.ac.uk'  #  enter email of person performing the pulldown
+date = datetime.datetime.now()
+date_of_pulldown = date.strftime("%Y-%m-%d")
 NCBI_database = 'NCBIAssembly'  #  name the database as a string
 
 # Create function to continually access desired NCBI database, and pull down data in desired output format.
@@ -56,11 +58,12 @@ def get_accession_numbers(accession_numbers_file):
     return(accesssion_numbers)
 
     with open('fname', 'r') as fhandle:
-        fhandle.read()
+        fhandle.readlines()
+        
 
 
 # Define function to store pulled down data from NCBI in a individual data file for that associated accession number
-def store_ncbi_data(working_accession_number, NCBI_data):
+def store_NCBI_data(working_accession_number, NCBI_data):
     """Store data pulled down from NCBI in a new file.
 
     This function stores the data pulled down from a NCBI database in a new file, named in the predefined manner.
