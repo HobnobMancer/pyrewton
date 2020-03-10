@@ -39,6 +39,11 @@ Task 1 completed on 28-02-2020, and uploaded to main area of the computational r
 Trichoderma genus (38 assemblies on NCBI) - lit is riff of examples of their lignocelluluisc catalytic efficiency, limitation of being a well studied genus although studies seem to be limited to a few species (see Horta et al., 2018) - should I take all or select? Seeing as so well studied a few maybe take all? Seeing as a small collection are well studied then won't find many novel from them, hence take all as may find a few novel from all 38
 
 
+Papers for identifying fungal and omycete speices most suitable for future analysis
+
+https://www.hindawi.com/journals/ijg/2018/1974151/ https://www.sciencedirect.com/science/article/pii/S1749461318300289 https://www.ncbi.nlm.nih.gov/pubmed/25192611 https://www.ncbi.nlm.nih.gov/pubmed/30825514 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3852112/pdf/1471-2164-14-S5-S7.pdf -- similar idea to the computational part of the PhD project https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-019-6358-x - Ascomycota focused https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4577117/ - Phytophthora focused
+
+(Project was advertised as looking at fungal Rhynchosporium and Magnaporthegenera and oomycete Phytophthora genus, get evidence to show that these should be included)
 
 ## Working log
 
