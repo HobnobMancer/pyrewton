@@ -13,7 +13,7 @@ NCBI_database = 'NCBIAssembly'  #  name the database as a string
 # Create function to continually access desired NCBI database, and pull down data in desired output format.
 def extract_assembly(accession_number):
     """Pull down genomic sequences from the NCBI assembly database.
-    
+
     This function pulls down the data from the specified NCBI
     database in the specified format.
     For information about Entrez.BioPython module's
@@ -36,7 +36,7 @@ def extract_assembly(accession_number):
 
 # Define function to extract accession numbers of datasets of interest in NCBI database.
 def get_accession_numbers(accession_numbers_file):
-    """Extract accession numbers from a plain text file
+    """Extract accession numbers from a plain text file.
 
     This function extract the accession numbers of
     genomic sequences stored in the NCBI assembly database.
