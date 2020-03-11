@@ -62,11 +62,6 @@ Horta et al., 2018 - demonstrated extracellular cellulase, xylanase and beta-glu
 
 [Wang _et al.,_ 2015](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0119237) - earlier work of the Wang _et al.,_ 2017 paper showing high efficiency of T1 to degrade lignocellulisic biomass.
 
-### _Tricoderma koningii_, _Aspergillus niger_, _Aspergillus fumigatus_, _Phanerochaete chyrsosporium_ and _Lactobacillus plantarum_
-
-**_double check that these are all fungi and they have assemblies available on NCBI_**
-All four are shown to degrade the biomass dried distiller's grains, determining by measuring the increasing cellulose concentration after  (Howdeshell and Tanaka, 2018), indicative of plant cell wall degrading behaviour and thus extracellular plant cell wall degrading enzyme possession.
-
 ### _Magnaporthe oryzae_ (anamorph: _Pyricularia oryzae_)
 
 **Note:** for this species use its anamorph name for NCBI, although NCBI does seem to autmatically correct for this, then still note that a different name will appear instead of '_Magnapothe oryzae_'
