@@ -66,6 +66,6 @@ Shown to degrade mushrooms (Kim _et al.,_ 2016) - **_double check what the study
 ### _Tricoderma koningii_, _Aspergillus niger_, _Aspergillus fumigatus_, _Phanerochaete chyrsosporium_ and _Lactobacillus plantarum_
 
 **_double check that these are all fungi and they have assemblies available on NCBI_**
-All four are shown to degrade the biomass dried distiller's grains (Howdeshell and Tanaka, 2018), indicative of plant cell wall degrading behaviour and thus extracellular plant cell wall degrading enzyme possession.
+All four are shown to degrade the biomass dried distiller's grains, determining by measuring the increasing cellulose concentration after  (Howdeshell and Tanaka, 2018), indicative of plant cell wall degrading behaviour and thus extracellular plant cell wall degrading enzyme possession.
 
 ## Omyecete species
