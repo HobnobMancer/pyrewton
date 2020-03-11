@@ -7,10 +7,10 @@ from Bio import Entrez
 import datetime
 
 # Fill out pull down form:
-Entrez.email = 'eemh1@st-andrews.ac.uk'  # enter email address
+Entrez.email = "eemh1@st-andrews.ac.uk"  # enter email address
 date = datetime.datetime.now()
 date_of_pulldown = date.strftime("%Y-%m-%d")
-NCBI_database = 'NCBIAssembly'  # name the database as a string
+NCBI_database = "NCBIAssembly"  # name the database as a string
 
 
 # Define function to extract accession numbers from plain text file
@@ -28,10 +28,9 @@ def get_accession_numbers(accession_numbers_file):
     """
 
     # inputFILE = open(r" - path for file containing accession numbers - ")
-    accession_numbers = []
     with open("input_file.txt", "r") as file_handle:
-        accession_numbers = file_handle.readlines
-    return(accession_numbers)
+        accession_numbers = file_handle.readlines()
+    return accession_numbers
 
 
 # Create function download as save assembly data from NCBI
@@ -60,24 +59,30 @@ def extract_assembly(accession_number):
     rettype_argmnt = "gb"
     retmode_argmnt = "text"
 
-    handle = Entrez.efetch(db=NCBI_database, id=accession_number, rettype=rettype_argmnt, retmode=retmode_argmnt)
+    handle = Entrez.efetch(
+        db=NCBI_database,
+        id=accession_number,
+        rettype=rettype_argmnt,
+        retmode=retmode_argmnt,
+    )
     assembly = handle.read()
 
     # Write data to ouput file
-    file_format = '.txt' # define the file extention for the output file
-    file_name = date_of_pulldown + '_' + accession_number + '_' + NCBI_database + file_format
+    file_format = ".txt"  # define the file extention for the output file
+    file_name = (
+        date_of_pulldown + "_" + accession_number + "_" + NCBI_database + file_format
+    )
 
     with open(file_name, "w") as output_handle:
         output_handle.write(assembly)
-    
-    handle.close()
 
+    handle.close()
 
 
 # Main script body
 
 # Retrieve accession numbers from input pile
-accession_numbers = get_accession_numbers('NCBI_accession_numbers.txt')
+accession_numbers = get_accession_numbers("NCBI_accession_numbers.txt")
 
 # Pull down genomic sequences from NCBI and store in individual files
 for record in accession_numbers:
