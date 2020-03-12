@@ -1,36 +1,39 @@
 # Fungal species
+Aspergillus fumigatus
+Aspergillus nidulans
+Aspergillus niger
+Aspergillus sydowii
+Blumeria graminis
+Botrytis cinerea
+Fusarium graminearum
+Fusarium oxysporum
+ # Need to find taxanomic ID for below Magnapothe spp. becuase not species name given on NCBI Assembly database
+ # Alternative is to search NCBI by 'Magnapothe' genus only as this will pull all 5 anyway
+ # Or maybe able to use the magnoporthe species names as is 
+Magnaporthe MG03
+Magnaporthe MG05
+Magnaporthe MG07
+Magnaporthe MG08
+Magnaporthe MG12
+Mycosphaerella graminicola
+Rhynchosporium agropyri
+Rhynchosporium commune
+Rhynchosporium secalis
 Trichoderma reesei
 Trichoderma citrinoviride
 Trichoderma harzianum
 Trichoderma atroviride
 Trichoderma pseudokoningii
 Trichoderma asperellum
- # Need to find taxanomic ID for below Magnapothe spp. becuase not species name given on NCBI Assembly database
- # Alternative is to search NCBI by 'Magnapothe' genus only as this will pull all 5 anyway
-Magnapothe MG03
-Magnapothe MG05
-Magnapothe MG07
-Magnapothe MG08
-Magnapothe MG12
-Botrytis cinerea
-Fusarium graminearum
-Fusarium oxysporum
-Blumeria graminis
-Mycosphaerella graminicola
-Aspergillus nidulans
-Aspergillus niger
-Aspergillus fumigatus
-Aspergillus sydowii
-Rhynchosporium commune
-Rhynchosporium agropyri
-Rhynchosporium secalis
+Ustilago maydis
 # Oomycete species
-Phytophthora infestans
+Albugo candida
 Hyaloperonospora arabidopsidis
+Phytophthora cinnamomi
+Phytophthora capsici
+Phytophthora infestans
+Phytophthora parasitica
 Phytophthora ramorum
 Phytophthora sojae
-Plasmopara viticola
-Phytophthora cinnamomi
-Phytophthora parasitica
 Phytophthora ultimum
-Albugo candida
+Plasmopara viticola
