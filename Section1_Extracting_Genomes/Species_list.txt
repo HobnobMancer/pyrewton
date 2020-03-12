@@ -19,12 +19,12 @@ Mycosphaerella graminicola
 Rhynchosporium agropyri
 Rhynchosporium commune
 Rhynchosporium secalis
-Trichoderma reesei
+Trichoderma asperellum
+Trichoderma atroviride
 Trichoderma citrinoviride
 Trichoderma harzianum
-Trichoderma atroviride
 Trichoderma pseudokoningii
-Trichoderma asperellum
+Trichoderma reesei
 Ustilago maydis
 # Oomycete species
 Albugo candida
