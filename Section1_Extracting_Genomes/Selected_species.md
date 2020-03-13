@@ -18,6 +18,8 @@ _Trichoderma_ have been shown to utilise a diverse range of carbon sources, show
 **_Rhynomodosporium_ and _Madnapothe_ species**
 _Rhynomodosporium_ and _Madnaporthe_ genuses contain many plant pathogens (**reference needed**), indicative of possing extracellular plant cell wall degrading enzymes.
 
+[King _et al.,_ 2013](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3797698/pdf/pone.0072536.pdf) - Rhynchosporium commune, R. agropyri and R. secalis are all closely related, thus good for homology study (reference from else where)
+
 ## Fungal species
 
 ### _Trichoderma reesei_
@@ -67,6 +69,7 @@ Horta et al., 2018 - demonstrated extracellular cellulase, xylanase and beta-glu
 **Note:** for this species use its anamorph name for NCBI, although NCBI does seem to autmatically correct for this, then still note that a different name will appear instead of '_Magnapothe oryzae_'
 
 [Dean _et al_., 2012](https://bsppjournals.onlinelibrary.wiley.com/doi/full/10.1111/j.1364-3703.2011.00783.x) - Voted top plant pathogen in 2012 in Molecular Plant Pathogen journal
+++ supported by [Shirke et al., 2016](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0162458) - "Blast disease caused by the Magnaporthe species is a major factor affecting the productivity of rice, wheat and millets."
 
 ### _Botrytis cinerea_
 
@@ -106,4 +109,62 @@ Fatme _et al.,_ 2018; Kao et al., 2019 - used in biofuel production already as o
 
 [Cong _et al.,_ 2017](https://bmcmicrobiol.biomedcentral.com/articles/10.1186/s12866-017-1028-0) - demonstrated species ability to express lignin peroxidase and manganese perosidase enzymes, and high through put sequencing identifed other CAZymes (17 cellulase and 19 feruloyl esterases that are linked to lignocellulse degradation)
 
+### _Rhynchosporium commune_
+
+[Avrova and Knogge, 2012](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6638709/pdf/MPP-13-986.pdf) - fungal plant pathogen, typically affecting cereal crops
+++ supported by [King _et al.,_ 2013](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3797698/pdf/pone.0072536.pdf)
+
+### _Rhynchosporium agropyri_
+
+[King _et al.,_ 2013](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3797698/pdf/pone.0072536.pdf) - can breakdown and utilise bearded crouch-grass (agropyron canninum) and couch-grass (Agropyron repens) as carbon source indicating ability to express and secrete extracellular plant cell wall enzymes and thus degrade the plant, causing leaf blotch and allowing the fungi to survive.
+
+### _Rhynochosporium secalis_
+
+[King _et al.,_ 2013](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3797698/pdf/pone.0072536.pdf) - same explanation as _R. agropyri_ but in this case survives on rye and triticale
+++ supported by [Ilyas et al., 2014](https://www.sciencedirect.com/science/article/pii/B9780128008751000090) - "is a common and widespread disease of barley ... Yield losses up to 45% have been observed due to this fungal disease causing leaf senescence and a reduced number of grains per ear"
+
+### _Magnaporthe_ spp. MG03, MG05, MG07, MG08 and MG12
+
+[Shirke et al., 2016](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0162458) - "The pure cultures of the Magnaporthe isolates from rice and non-rice host plants were obtained from blast infected leaf and neck tissues using water agar based single spore isolation method. ... The MG03 ... and MG12 were isolated from infected leaf and neck of tissues of finger millet (Eleusine coracana L. Gaertner) varieties Uduru Mallige (MG03 from leaf tissue, MG04 from neck tissue) and PR202 (MG12 from leaf tissue). Similarly, MG05 and MG08 were isolated from infected leaf tissues of foxtail millet and MG07 from buffel grass (Cenchrus celiaris L.)." - basically "Blast disease caused by the Magnaporthe species is a major factor affecting the productivity of rice, wheat and millets" so they took isolates of _Magnaporthe_ species and analysed their genomes, and these are MG03, MG05, MG07, MG08 and MG12 becuase they were shown to be plant pathogens.
+
 ## Omyecete species
+
+### _Phytophora infestans_
+
+[Dean _et al_., 2012](https://bsppjournals.onlinelibrary.wiley.com/doi/full/10.1111/j.1364-3703.2011.00783.x) - Voted top oomycete plant pathogen in 2014 in Molecular Plant Pathogen journal
+
+### _Hyaloperonospora arabidopsidis_
+
+[Dean _et al_., 2012](https://bsppjournals.onlinelibrary.wiley.com/doi/full/10.1111/j.1364-3703.2011.00783.x) - Voted joint second oomycete plant pathogen in 2014 in Molecular Plant Pathogen journal
+
+### _Phytophthora ramorum_
+
+[Dean _et al_., 2012](https://bsppjournals.onlinelibrary.wiley.com/doi/full/10.1111/j.1364-3703.2011.00783.x) - Voted joint second oomycete plant pathogen in 2014 in Molecular Plant Pathogen journal
+
+### _Phytophthora sojae_
+
+[Dean _et al_., 2012](https://bsppjournals.onlinelibrary.wiley.com/doi/full/10.1111/j.1364-3703.2011.00783.x) - Voted fourth oomycete plant pathogen in 2014 in Molecular Plant Pathogen journal
+
+### _Phytophthora capsici_
+
+[Dean _et al_., 2012](https://bsppjournals.onlinelibrary.wiley.com/doi/full/10.1111/j.1364-3703.2011.00783.x) - Voted fifth oomycete plant pathogen in 2014 in Molecular Plant Pathogen journal
+
+### _Plasmopara viticola_
+
+[Dean _et al_., 2012](https://bsppjournals.onlinelibrary.wiley.com/doi/full/10.1111/j.1364-3703.2011.00783.x) - Voted sixth oomycete plant pathogen in 2014 in Molecular Plant Pathogen journal
+
+### _Phytophthora cinnamomi_
+
+[Dean _et al_., 2012](https://bsppjournals.onlinelibrary.wiley.com/doi/full/10.1111/j.1364-3703.2011.00783.x) - Voted seventh oomycete plant pathogen in 2014 in Molecular Plant Pathogen journal
+
+### _Phytophthora parasitica_
+
+[Dean _et al_., 2012](https://bsppjournals.onlinelibrary.wiley.com/doi/full/10.1111/j.1364-3703.2011.00783.x) - Voted joint eighth oomycete plant pathogen in 2014 in Molecular Plant Pathogen journal
+
+### _Pythium ultimum_, also called _Globisporangium ultimum_
+
+[Dean _et al_., 2012](https://bsppjournals.onlinelibrary.wiley.com/doi/full/10.1111/j.1364-3703.2011.00783.x) - Voted joint eighth oomycete plant pathogen in 2014 in Molecular Plant Pathogen journal
+
+### _Albugo candida_
+
+[Dean _et al_., 2012](https://bsppjournals.onlinelibrary.wiley.com/doi/full/10.1111/j.1364-3703.2011.00783.x) - Voted tenth oomycete plant pathogen in 2014 in Molecular Plant Pathogen journal
