@@ -41,4 +41,3 @@ If I build a matrix as I go along then this should be created already at this po
 This will link with section 5 so that as soon as the assembly is pulled down it is written out to a file using a standard file format.
 
 This will invovle using Entrez eFetch to pull down the NCBI Assembly database.
-
