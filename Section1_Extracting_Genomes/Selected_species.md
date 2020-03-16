@@ -15,8 +15,8 @@ _Aspergillus_, _Trichoderma_ and _Penicillcium_ species have been previously wel
 _Trichoderma_ have been shown to utilise a diverse range of carbon sources, showing potential to degrade a range of plant cell wall polysaccharides, and are often used in biotechnological apllications owing to their ability to convert plant biomass into soluble sugars which are suitable for fermentation into biofuel (Kubicek and Druzhinina, 2013)
 ++ lack of genomic computational studies studying many _Trichoderma_ spp.
 
-**_Rhynomodosporium_ and _Madnapothe_ species**
-_Rhynomodosporium_ and _Madnaporthe_ genuses contain many plant pathogens (**reference needed**), indicative of possing extracellular plant cell wall degrading enzymes.
+**_Rhynomodosporium_ and _Magnaporthe_ species**
+_Rhynomodosporium_ and _Magnaporthe_ genuses contain many plant pathogens (**reference needed**), indicative of possing extracellular plant cell wall degrading enzymes.
 
 [King _et al.,_ 2013](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3797698/pdf/pone.0072536.pdf) - Rhynchosporium commune, R. agropyri and R. secalis are all closely related, thus good for homology study (reference from else where)
 
@@ -66,7 +66,7 @@ Horta et al., 2018 - demonstrated extracellular cellulase, xylanase and beta-glu
 
 ### _Magnaporthe oryzae_ (anamorph: _Pyricularia oryzae_)
 
-**Note:** for this species use its anamorph name for NCBI, although NCBI does seem to autmatically correct for this, then still note that a different name will appear instead of '_Magnapothe oryzae_'
+**Note:** for this species use its anamorph name for NCBI, although NCBI does seem to autmatically correct for this, then still note that a different name will appear instead of '_Magnaporthe oryzae_'
 
 [Dean _et al_., 2012](https://bsppjournals.onlinelibrary.wiley.com/doi/full/10.1111/j.1364-3703.2011.00783.x) - Voted top plant pathogen in 2012 in Molecular Plant Pathogen journal
 ++ supported by [Shirke et al., 2016](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0162458) - "Blast disease caused by the Magnaporthe species is a major factor affecting the productivity of rice, wheat and millets."
