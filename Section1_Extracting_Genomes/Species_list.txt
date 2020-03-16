@@ -7,9 +7,12 @@ Blumeria graminis
 Botrytis cinerea
 Fusarium graminearum
 Fusarium oxysporum
- # Need to find taxanomic ID for below Magnapothe spp. becuase not species name given on NCBI Assembly database
- # Alternative is to search NCBI by 'Magnapothe' genus only as this will pull all 5 anyway
- # Or maybe able to use the magnoporthe species names as is 
+# Need to find taxanomic ID for below Magnarpothe spp. becuase not species name given on NCBI Assembly database
+# Alternative is to search NCBI by 'Magnarpothe' genus only as this will pull all 5 anyway
+# Or maybe able to use the magnoporthe species names as is 
+# LP: The isolates you list below are individual strains without species assignments. I would ignore these, for a couple of reasons - taxonomic imprecision, and nomenclature issues...
+LP: There is a taxonomic nomenclature issue with Magnaporthe that you will need to note in your introduction, if you use these species: they are known as Pyricularia in the NCBI taxonomy. What we refer to in the literature as M. grisea and M. oryzae are P. grisea and P. oryzae in NCBI (and the two species may in fact be the same thing, anyway...)
+# LP: See, e.g. the JGI site here: https://mycocosm.jgi.doe.gov/Magor1/Magor1.home.html that refers to Magnaporthe, links to the publication at https://www.ncbi.nlm.nih.gov/pubmed/15846337 which has Magnaporthe in the title, which then links to the assembly https://www.ncbi.nlm.nih.gov/assembly?LinkName=pubmed_assembly&from_uid=15846337 under the name Pyricularia.
 Magnaporthe MG03
 Magnaporthe MG05
 Magnaporthe MG07
@@ -29,6 +32,7 @@ Ustilago maydis
 # Oomycete species
 Albugo candida
 Hyaloperonospora arabidopsidis
+# LP: You would probably be safe to include any Phytophthora species.
 Phytophthora cinnamomi
 Phytophthora capsici
 Phytophthora infestans
