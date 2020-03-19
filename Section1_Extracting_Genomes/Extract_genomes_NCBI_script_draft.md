@@ -76,6 +76,8 @@ Potentially, the taxonomic IDs taken from the inpu could be placed in one list, 
 
 For the issue with the taxonomic IDs taken from the input file can be solved by either manual addition of the names afterwards, which mitigates the point of inputting taxonomic IDs to begin with. Alteranatively, state that only species names can be given and not taxonomic IDs, or use Entrez to pull down the associated species name and add this to the end of the genus_species_name_list. If using the method directly above this to add the input file taxonomic IDs to the end of the taxonomic IDs pulled down list then the associated species names of the taxonomic IDs from the input will be aligned in the dataframe.
 
+Alternatively to the dataframe being created so late, a dataframe with the genus, species and taxonomic IDs could be created before pulling down the accession numbers. Then the taxonomic column can be passed to entrez, and then the list off accession numbers added to the dataframe as a new column.
+
 ### Section 5: Use accession numbers to pull down assemblies
 
 This will link with section 5 so that as soon as the assembly is pulled down it is written out to a file using a standard file format.
