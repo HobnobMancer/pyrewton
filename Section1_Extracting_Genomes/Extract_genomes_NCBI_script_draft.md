@@ -35,7 +35,7 @@ Example code structure to test first character to determine if taxonomic ID, spe
 
 **The lists genus_species_name_list and taxanomic_IDs_list will be defined as global lists**
 
-#### Section 2: Extract taxonomic numbers
+### Section 2: Extract taxonomic numbers
 
 1. Create a loop that will iterate over the genus_species_name_list and pass them to Entrez
 2. Use Entrez search to find Taxonomic IDs
