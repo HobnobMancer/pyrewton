@@ -7,56 +7,37 @@ Drafting out the script Extract_genomes_NCBI.py involves stating the overall aim
 
 ## Aims of Extract_genomes_NCBI.py
 
-<<<<<<< HEAD
 1. Extract names of species from input file
 2. Extract taxonomic numbers from NCBI Taxnomy database
 3. Use taxonomic numbers to pull down associated accession numbers from NCBI
 4. Create a table of genus / species / taxonomic ID / accession number
 5. Use the accession numbers to pull down genomic assemblies for each species
 6. Write out the genomic assemblies with a standard file-naming system
-=======
-> LP: The first aim in this list should be to process a list of desired species/taxIDs
-> LP: we should try to refer to the "numbers" as "IDs" or "accessions"
-
-1. Extract taxonomic numbers from NCBI Taxonomy database
-2. Use taxonomic numbers to pull down associated accession numbers from NCBI
-3. Create a table of genus / species / taxonomic ID / accession number
-4. Use the accession numbers to pull down genomic assemblies for each species
-5. Write out the genomic assemblies with a standard file-naming system
->>>>>>> 8559c027e4da7b0a0376db14ce80a222726bd85d
 
 ### Section 1: Extract names from Species_list.txt
 
-<<<<<<< HEAD
-This will form the first function that will be implemented, called 'get_names_and_TaxIDs'.
-=======
-> LP: in (2) I don't think you need to store the names - they're already stored in the file that's being read; also, if you use a Pandas dataframe you don't need to use a dictionary (the dataframe index plays the part of a dictionary key)
-> LP: in (3) working with dataframes will suggest a natural way of iterating over the rows (one row per species/taxID)
-> LP: in practice (5) will be done as part of (4): the link with species name is implied in the search, and finding the taxID is the same thing as "pulling it down"
-
-1. Read the species list plain text file
-2. Extract the species names and store in format that can be read/passed to Entrez
-??? Pass species names to a dictionary so that the genus is the key and species is the value, or to a matrix, so that the names can be easily added to the output table in overall script aim 3.
-3. Create a loop that will iterate over the names list (clearly going to need to also pass the names from the species list file to list then) and pass them to Entrez
-4. Use Entrez search to find Taxonomic IDs
-5. Pull down Taxonomic IDs and link it to the species name
-    5a. This is starting to look like I will create a matrix, which I will slowly build up/add to
->>>>>>> 8559c027e4da7b0a0376db14ce80a222726bd85d
+**This will form the first function that will be implemented, called 'get_names_and_TaxIDs'.**
 
 1. Use 'with open()' to open the plain text file containing the list of selected species: Species_list.txt
-2. Species_list.txt will contain gensus-species names, comments and potentially taxanomic IDs as well; therefore, will need to distguish between species names and taxonomic IDs. Species names passed to one list and taxanomic names passed to another list. Is 'string.isalpha()' to test if the first characteris a number of letter: taxanomic IDs start with numbers and species names will start with character. Comments will be distinguished by starting with '#' - this should be tested first in the if/elif list becuase .isalpha False will apply for both comments and taxanomic IDs, and thus will not distinguish between them. Otherwise, would need to pull comments and taxanomic IDs together, and then pass through another conditional loop which is will be far slower process than passing through a single conditional loop.
-Example code structure to test first character to determine if taxanomic ID or species name:
+2. Species_list.txt will contain gensus-species names, comments and potentially taxanomic IDs as well; therefore, will need to distguish between species names and taxonomic IDs. Species names passed to one list and taxanomic names passed to another list.
+3. Taxanomic IDs will start with 'NCBI:txid', therefore, create a for loop that will pass over the species_list and will check for the following conditions:
+a. Is the first character '#' - comments will be distinguished by starting with '#' - if 'yes' do nothing, if 'no' move onto the next condition - might be best to use "if item[0] is not '#':" then nest the next two conditions within
+b. Are the first nine characters 'NCBI:txid', if 'yes' pass item to taxonomic_id_list
+c. If the first nine characters are not 'NCBI:txid' then pass the item to the genus_species_name_list
+
+Example code structure to test first character to determine if taxonomic ID, species name of comment:
     for entry in input_list:
-        if entry.[0] is not '#':
-            if entry[0].isalpha is True:
+        if entry[0] is not '#':
+            if entry[0:10] is 'NCBI:txid':
+                taxonomic_id_list.append(entry)
+            else:
                 genus_species_name_list.append(entry)
-            elif entry[0].isalpha is False
-                taxanomic_IDs_list.append(entry)
+
 **The lists genus_species_name_list and taxanomic_IDs_list will be defined as global lists**
 
 #### Section 2: Extract taxonomic numbers
 
-1. Create a loop that will iterate over the names list and pass them to Entrez
+1. Create a loop that will iterate over the genus_species_name_list and pass them to Entrez
 2. Use Entrez search to find Taxonomic IDs
 3. Pull down Taxonomic IDs and link it to the species name. This is starting to look like I will create a matrix, which I will slowly build up/add to
 
@@ -73,7 +54,27 @@ Example code structure to test first character to determine if taxanomic ID or s
 
 ### Section 4: Create table
 
-If I build a matrix as I go along then this should be created already at this point and it will simply be the task at out putting the table in a human-readable format.
+1. Create empty dataframe
+species_dataframe = pd.DataFrame({})
+2. Create two empty lists for genus and species names
+genus_list = []
+species_list = []
+3. Separate genus and species names:
+for name in genus_species_name_list:
+    genus_species = name.split(' ')
+    genus_list.append(genus_species[0])
+    species_list.append(genus_species[1])
+4. Add columns with associated data to the dataframe
+species_dataframe['Genus'] = genus_list
+species_dataframe['Species'] = species_list
+species_dataframe['Taxonomic ID'] = taxonomic_id_list
+species_dataframe['Accession number'] = accession_number_list
+
+And here lies the problem. This works if the input species list only contains genus-species names, however if the list includes taxonomic numbers they will be put into the table first, placing the taxonomic IDs out of place with their respective genus-species names. Also no genus-species name will be recorded for the taxonomic IDs taken from the input file.
+
+Potentially, the taxonomic IDs taken from the inpu could be placed in one list, the taxonomic IDs pulled down placed in another and the taxonomic IDs taken from the input file then added to the list of taxonomic IDs that were pulled down. This would place the taxonomic IDs from the input file at the end of the list and thus not misalign the taxonomic IDs from the pull down from their associated genus-species names.
+
+For the issue with the taxonomic IDs taken from the input file can be solved by either manual addition of the names afterwards, which mitigates the point of inputting taxonomic IDs to begin with. Alteranatively, state that only species names can be given and not taxonomic IDs, or use Entrez to pull down the associated species name and add this to the end of the genus_species_name_list. If using the method directly above this to add the input file taxonomic IDs to the end of the taxonomic IDs pulled down list then the associated species names of the taxonomic IDs from the input will be aligned in the dataframe.
 
 ### Section 5: Use accession numbers to pull down assemblies
 
