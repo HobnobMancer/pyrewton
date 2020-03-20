@@ -43,7 +43,11 @@ for entry in genus_species_names_list:
 taxonomy_id_list = taxonomy_id_list + input_tax_id_list
 
 # pull genus/species names from NCBI, using taxID query
-taxID_query_GS_names_list = []
-
-# add genus/species names from taxID query to total genus/species name list
-genus_species_names_list = genus_species_names_list + taxID_query_GS_names_list
+for entry in input_tax_id_list:
+    t_id = entry[9:]
+    with Entrez.efetch(db="Taxonomy", id=t_id, retmode="xml") as handle:
+        record = Entrez.read(handle)
+genus_species_name = str(record[0]["ScientificName"])
+genus_species_names_list.append(
+    genus_species_name
+)  # add genus/species name to the list
