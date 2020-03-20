@@ -6,6 +6,7 @@
 from Bio import Entrez
 import datetime
 import re
+import pandas as pd
 
 # Fill out pull down form:
 Entrez.email = "eemh1@st-andrews.ac.uk"  # enter email address
@@ -51,3 +52,22 @@ genus_species_name = str(record[0]["ScientificName"])
 genus_species_names_list.append(
     genus_species_name
 )  # add genus/species name to the list
+
+# Fetch accession numbers from NCBI
+# create accession_numbers_list
+
+# split genus and species names
+# create genus_list
+# create species_list
+
+# create dataframe to store genus, species and taxID
+species_table = pd.DataFrame(
+    {
+        "Genus": genus_list,
+        "Species": species_list,
+        "Taxonomy ID": taxonomy_id_list,
+        "Accession numbers": accession_numbers_list,
+    }
+)
+
+# .... Then do the assembly pull down
