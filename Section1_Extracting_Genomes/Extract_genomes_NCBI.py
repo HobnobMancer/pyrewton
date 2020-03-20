@@ -41,7 +41,9 @@ for entry in genus_species_names_list:
 
 # add taxID from input list to the total tax ID list
 taxonomy_id_list = taxonomy_id_list + input_tax_id_list
-print(taxonomy_id_list)
 
 # pull genus/species names from NCBI, using taxID query
+taxID_query_GS_names_list = []
 
+# add genus/species names from taxID query to total genus/species name list
+genus_species_names_list = genus_species_names_list + taxID_query_GS_names_list
