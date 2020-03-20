@@ -30,6 +30,23 @@ for entry in input_list:
         else:
             genus_species_names_list.append(entry)
 
+# the above code put into a single function
+def extract_data(input_file)
+"""docstring""" # to be added
+    with open("working_species_list.txt") as file:
+        input_list = file.read().splitlines()
+        for line in input_list:
+            if line[0] is not "#":
+                if line.startswith("NCBI:txid", 0, 9) is True:
+                    input_tax_id_list.append(line)
+                else:
+                    genus_species_names_list.append(line)
+
+# input tax_id_list and genus_spcies_names_list would need to be defined globally in the main script body
+
+
+
+
 # pull taxID from NCBI, using genus/species names query
 for entry in genus_species_names_list:
     with Entrez.esearch(db="Taxonomy", term=entry) as handle:
