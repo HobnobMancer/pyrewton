@@ -34,13 +34,13 @@ def main():
 
     The 'NCBI Taxonomy ID' column is passed to the get_accession_numbers() function. Add
     the retrieved accession numbers to a new column in the dataframe ('NCBI Accession Numbers')
-
-    
     """
+
     # create tuple to store genus name, species name and taxonomy ID tuplets
     all_species_data = []
 
     # open working_species_list.txt and extract lines, without new line character
+    # then create genus name, species name and taxonomy ID tuplet
     with open("working_species_list.txt") as file:
         input_list = file.read().splitlines()
         for line in input_list:
@@ -56,7 +56,7 @@ def main():
                     line_data.append(tax_id)
                     all_species_data.append(line_data)
 
-    # create dataframe containg three columns: 'Genus', 'Species', 'Taxonomy ID'
+    # create dataframe containg three columns: 'Genus', 'Species', 'NCBI Taxonomy ID'
     species_table = pd.DataFrame(
         all_species_data, columns=["Genus", "Species", "NCBI Taxonomy ID"]
     )
@@ -66,7 +66,7 @@ def get_genus_species_name(taxonomy_id):
     """Pull fetch scientific name of species from NCBI,
     using its NCBI taxonomy ID as the query.
 
-    Uses Entrez efetch function to pull down the scientific name in the 
+    Use Entrez efetch function to pull down the scientific name in the 
     NCBI Taxonomy database, associated with the taxonomy ID passed to the
     function.
     """
@@ -80,7 +80,7 @@ def get_genus_species_name(taxonomy_id):
 def get_tax_ID(genus_species):
     """Pull down taxonomy ID from NCBI, using genus/species name as query.
 
-    Uses Entrez esearch function to pull down the NCBI taxonomy ID of the
+    Use Entrez esearch function to pull down the NCBI taxonomy ID of the
     species name passed to the function. Then the taxonomy ID is formatted
     and returned in the recommended referencing formate of 'NCBI:txidXXX',
     where 'XXX' is taxonomy ID.
