@@ -19,6 +19,7 @@ with open("working_species_list.txt") as file:  # use file to refer to the file 
 # create lists to store taxonomy IDs and genus/species names
 input_tax_id_list = []  # store taxonomy IDs from input file
 genus_species_names_list = []  # store genus/species names from input file
+taxonomy_id_list = []  # store all taxonomic IDs
 
 # separate out taxID and G/S names
 for entry in input_list:
@@ -27,3 +28,20 @@ for entry in input_list:
             input_tax_id_list.append(entry)
         else:
             genus_species_names_list.append(entry)
+
+# pull taxID from NCBI, using genus/species names query
+for entry in genus_species_names_list:
+    with Entrez.esearch(db="Taxonomy", term=entry) as handle:
+        record = Entrez.read(handle)
+    id = str(record["IdList"])
+    id = id.replace("['", "")
+    id = id.replace("']", "")
+    id = "NCBI:txid" + id
+    taxonomy_id_list.append(id)
+
+# add taxID from input list to the total tax ID list
+taxonomy_id_list = taxonomy_id_list + input_tax_id_list
+print(taxonomy_id_list)
+
+# pull genus/species names from NCBI, using taxID query
+
