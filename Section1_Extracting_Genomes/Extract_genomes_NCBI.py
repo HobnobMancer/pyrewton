@@ -103,3 +103,7 @@ def get_accession_numbers(taxonomy_id_column):
     Taxonomy IDs to Entrez eLink to pull down associated accession numbers.
     Accession numbers stored in list 'accession_numbers_list'.
     """
+    # very much a work in progress
+    with Entrez.elink(dbfrom="Taxonomy", db="Assembly", id="5061") as handle:
+        record = Entrez.read(handle)
+    print(record)
