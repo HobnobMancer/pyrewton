@@ -76,9 +76,12 @@ Horta et al., 2018 - demonstrated extracellular cellulase, xylanase and beta-glu
 
 [Wang _et al.,_ 2015](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0119237) - earlier work of the Wang _et al.,_ 2017 paper showing high efficiency of T1 to degrade lignocellulisic biomass.
 
-### _Magnaporthe oryzae_ (anamorph: _Pyricularia oryzae_)
+### _Magnaporthe oryzae_ (anamorph: _Pyricularia oryzae_) and _Magnaporthe grisea_ (anamorph: _Pyricularia grisea_)
 
 **Note:** for this species use its anamorph name for NCBI, although NCBI does seem to autmatically correct for this, then still note that a different name will appear instead of '_Magnaporthe oryzae_'
+
+[_Magnaporthe grisea_](https://www.ncbi.nlm.nih.gov/pubmed/26575082)
+[_Magnaporthe oryzae_](https://www.ncbi.nlm.nih.gov/pubmed/30022707)
 
 > LP: Ah - I see you're handling the nomenclature issue, here. That's good - see the note in the species list, and use *Pyricularia* in there.
 
@@ -86,6 +89,8 @@ Horta et al., 2018 - demonstrated extracellular cellulase, xylanase and beta-glu
 ++ supported by [Shirke et al., 2016](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0162458) - "Blast disease caused by the Magnaporthe species is a major factor affecting the productivity of rice, wheat and millets."
 
 > LP: If you wanted a bit more background for "colour" in your thesis draft, this paper leads to interesting places: https://www.nature.com/articles/nature10947 - don't forget to check for papers that cite it, as well as those cited by it, when you do a literature search
+
+
 
 ### _Botrytis cinerea_
 
