@@ -61,6 +61,8 @@ def main():
         all_species_data, columns=["Genus", "Species", "NCBI Taxonomy ID"]
     )
 
+    species_table.assign("Accession")
+
 
 def get_genus_species_name(taxonomy_id):
     """Pull fetch scientific name of species from NCBI,
@@ -103,7 +105,18 @@ def get_accession_numbers(taxonomy_id_column):
     Taxonomy IDs to Entrez eLink to pull down associated accession numbers.
     Accession numbers stored in list 'accession_numbers_list'.
     """
-    # very much a work in progress
-    with Entrez.elink(dbfrom="Taxonomy", db="Assembly", id="5061") as handle:
+
+    with Entrez.elink(
+        dbfrom="Taxonomy",
+        id=taxonomy_id_column,
+        db="Assembly",
+        linkname="taxonomy_assembly",
+    ) as handle:
         record = Entrez.read(handle)
-    print(record)
+        id_list = []
+        for id in record[0]["LinkSetDb"][0]["Link"]:
+            id_string = str(id)
+            id_string = id_string.replace("{'Id': '", "")
+            id_string = id_string.replace("'}", "")
+            id_list.append(id_string)
+        print(id_list)
