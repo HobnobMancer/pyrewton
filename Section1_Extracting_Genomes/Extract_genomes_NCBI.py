@@ -61,7 +61,21 @@ def main():
         all_species_data, columns=["Genus", "Species", "NCBI Taxonomy ID"]
     )
 
-    species_table.assign("Accession")
+    # pull down all accession numbers associated with each Taxonomy ID, from NCBI
+    all_accession_numbers = []
+    for NCBI_taxonomy_id in species_table["NCBI Taxonomy ID"]:
+        working_tax_id = NCBI_taxonomy_id[9:]
+        working_accession_numbers = get_accession_numbers(working_tax_id)
+        working_accession_numbers = str(working_accession_numbers)
+        working_accession_numbers = working_accession_numbers.replace("[", "")
+        working_accession_numbers = working_accession_numbers.replace("]", "")
+        working_accession_numbers = working_accession_numbers.replace("'", "")
+        print(working_accession_numbers)
+        all_accession_numbers.append(working_accession_numbers)
+
+    # add accession numbers to the dataframe
+    species_table["NCBI Accession Numbers"] = all_accession_numbers
+    print("\n", species_table, "\n")
 
 
 def get_genus_species_name(taxonomy_id):
@@ -106,17 +120,30 @@ def get_accession_numbers(taxonomy_id_column):
     Accession numbers stored in list 'accession_numbers_list'.
     """
 
+    taxonomy_id = taxonomy_id_column[9:]
+
     with Entrez.elink(
         dbfrom="Taxonomy",
         id=taxonomy_id_column,
         db="Assembly",
         linkname="taxonomy_assembly",
-    ) as handle:
-        record = Entrez.read(handle)
+    ) as handle_one:
+        record_one = Entrez.read(handle_one)
         id_list = []
-        for id in record[0]["LinkSetDb"][0]["Link"]:
+        for id in record_one[0]["LinkSetDb"][0]["Link"]:
             id_string = str(id)
             id_string = id_string.replace("{'Id': '", "")
             id_string = id_string.replace("'}", "")
             id_list.append(id_string)
-        print(id_list)
+
+    NCBI_accession_numbers_list = []
+    for assembly_db_id in id_list:
+        with Entrez.efetch(
+            db="Assembly", id=assembly_db_id, rettype="docsum", retmode="xml"
+        ) as handle_two:
+            record_two = Entrez.read(handle_two)
+            NCBI_accession_number = record_two["DocumentSummarySet"]["DocumentSummary"][
+                0
+            ]["AssemblyAccession"]
+            NCBI_accession_numbers_list.append(NCBI_accession_number)
+    return NCBI_accession_numbers_list
