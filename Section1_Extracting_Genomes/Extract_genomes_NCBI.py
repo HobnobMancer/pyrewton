@@ -43,6 +43,9 @@ def main():
     # then create genus name, species name and taxonomy ID tuplet
     with open("working_species_list.txt") as file:
         input_list = file.read().splitlines()
+        print("Reading input file, and acquiring Tax IDs and Genus/Species names")
+        lines = len(input_list)
+        line_count = 1
         for line in input_list:
             if line[0] is not "#":
                 if line.startswith("NCBI:txid", 0, 9) is True:
@@ -55,14 +58,21 @@ def main():
                     line_data = line.split()
                     line_data.append(tax_id)
                     all_species_data.append(line_data)
+            print("line", line_count, "/", lines)
+            line_count += 1
 
     # create dataframe containg three columns: 'Genus', 'Species', 'NCBI Taxonomy ID'
+    print("Generating genus, species and taxonomy ID dataframe")
     species_table = pd.DataFrame(
         all_species_data, columns=["Genus", "Species", "NCBI Taxonomy ID"]
     )
+    print("Dataframe completed")
 
     # pull down all accession numbers associated with each Taxonomy ID, from NCBI
     all_accession_numbers = []
+    tax_id_total_count = len(species_table["NCBI Taxonomy ID"])
+    tax_id_counter = 1
+    print("Aquiring accession numbers from NCBI Assembly database")
     for NCBI_taxonomy_id in species_table["NCBI Taxonomy ID"]:
         working_tax_id = NCBI_taxonomy_id[9:]
         working_accession_numbers = get_accession_numbers(working_tax_id)
@@ -71,8 +81,11 @@ def main():
         working_accession_numbers = working_accession_numbers.replace("]", "")
         working_accession_numbers = working_accession_numbers.replace("'", "")
         all_accession_numbers.append(working_accession_numbers)
+        print("Species", tax_id_counter, "/", tax_id_total_count)
+        tax_id_counter += 1
 
     # add accession numbers to the dataframe
+    print("Adding accession numbers to dataframe")
     species_table["NCBI Accession Numbers"] = all_accession_numbers
     print("\n", species_table, "\n")
 
