@@ -120,8 +120,6 @@ def get_accession_numbers(taxonomy_id_column):
     Accession numbers stored in list 'accession_numbers_list'.
     """
 
-    taxonomy_id = taxonomy_id_column[9:]
-
     with Entrez.elink(
         dbfrom="Taxonomy",
         id=taxonomy_id_column,
