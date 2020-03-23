@@ -70,7 +70,6 @@ def main():
         working_accession_numbers = working_accession_numbers.replace("[", "")
         working_accession_numbers = working_accession_numbers.replace("]", "")
         working_accession_numbers = working_accession_numbers.replace("'", "")
-        print(working_accession_numbers)
         all_accession_numbers.append(working_accession_numbers)
 
     # add accession numbers to the dataframe
