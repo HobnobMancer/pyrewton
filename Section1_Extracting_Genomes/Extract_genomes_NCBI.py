@@ -151,7 +151,7 @@ def get_accession_numbers(taxonomy_id_column):
         with Entrez.efetch(
             db="Assembly", id=assembly_db_id, rettype="docsum", retmode="xml"
         ) as handle_two:
-            record_two = Entrez.read(handle_two)
+            record_two = Entrez.read(handle_two, validate=False)
             NCBI_accession_number = record_two["DocumentSummarySet"]["DocumentSummary"][
                 0
             ]["AssemblyAccession"]
