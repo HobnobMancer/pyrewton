@@ -23,7 +23,7 @@ def main():
     Pass over the lines in the plain text file. The line contains a taxonomy ID the associated
     genus/species name is returned by calling get_genus_species_name(), and if line contains
     a genus/species name the taxonomy ID is obtained by calling get_tax_ID().
-    The genus and species names are separated, and then these names with the taxonomy ID are 
+    The genus and species names are separated, and then these names with the taxonomy ID are
     passed to a list (called 'working_species').
     The list containing the genus name, species name and taxonomy ID from the current line
     being worked on from the input file, is passed to the tuple 'all_species_data'.
@@ -47,7 +47,7 @@ def main():
         lines = len(input_list)
         line_count = 1
         for line in input_list:
-            if line[0] is not "#":
+            if line[0] != "#":
                 if line.startswith("NCBI:txid", 0, 9) is True:
                     gs_name = get_genus_species_name(line[9:])
                     line_data = gs_name.split()
@@ -94,7 +94,7 @@ def get_genus_species_name(taxonomy_id):
     """Pull fetch scientific name of species from NCBI,
     using its NCBI taxonomy ID as the query.
 
-    Use Entrez efetch function to pull down the scientific name in the 
+    Use Entrez efetch function to pull down the scientific name in the
     NCBI Taxonomy database, associated with the taxonomy ID passed to the
     function.
     """
