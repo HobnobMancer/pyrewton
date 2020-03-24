@@ -157,3 +157,7 @@ def get_accession_numbers(taxonomy_id_column):
             ]["AssemblyAccession"]
             NCBI_accession_numbers_list.append(NCBI_accession_number)
     return NCBI_accession_numbers_list
+
+
+if __name__ == "__main__":
+    main()
