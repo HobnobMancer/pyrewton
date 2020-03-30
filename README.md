@@ -6,4 +6,4 @@ Each section folder will also contain its own local README providing information
 
 Scripts are written using:
 Python = 3.7
-Miniconda3: autopep8, bandit, black, flake8, mypy, pycodestyle, pydocstyle, pylint
+Miniconda3 managed microenvironment, incorporated code checkers are included in list form in 'requirements.txt'
