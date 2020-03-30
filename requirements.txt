@@ -1,3 +1,4 @@
+autopep8
 bandit
 biopython
 black
@@ -5,4 +6,5 @@ flake8
 mypy
 pandas
 pydocstyle
+pycodestyle
 pylint
