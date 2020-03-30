@@ -1,0 +1,8 @@
+bandit
+biopython
+black
+flake8
+mypy
+pandas
+pydocstyle
+pylint
