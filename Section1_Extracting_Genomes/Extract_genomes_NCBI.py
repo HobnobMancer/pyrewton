@@ -7,11 +7,23 @@ from Bio import Entrez
 import datetime
 import re
 import pandas as pd
+import logging
 
 # Fill out pull down form:
 Entrez.email = "eemh1@st-andrews.ac.uk"  # enter email address
 date = datetime.datetime.now()
 date_of_pulldown = date.strftime("%Y-%m-%d")
+
+# Configure logging severity
+logging.basicConfig(level=logging.DEBUG)
+
+# set up logs for each function
+logger_main = logging.getLogger("main")
+logger_parse_input_file = logging.getLogger("parse_input_file")
+logger_get_genus_species_name = logging.getLogger("get_genus_species_name")
+logger_get_tax_ID = logging.getLogger("get_tax_ID")
+logger_collate_accession_numbers = logging.getLogger("collate_accession_numbers")
+logger_get_accession_numbers = logging.getLogger("get_accession_numbers")
 
 
 def main():
@@ -39,7 +51,8 @@ def main():
     # pull down all accession numbers associated with each Taxonomy ID, from NCBI
     # add accession numbers to 'species_table' dataframe
     species_table = collate_accession_numbers(species_table)
-    print("\n", species_table)
+    logger_main.info("Generated species table")
+    print(species_table)
 
 
 def parse_input_file(input_filename):
@@ -71,9 +84,13 @@ def parse_input_file(input_filename):
     all_species_data = []
     with open(input_filename) as file:
         input_list = file.read().splitlines()
-        print("Reading input file, and acquiring Tax IDs and Genus/Species names")
-        lines = len(input_list)
+        number_of_lines = len(input_list)
         line_count = 1
+        logger_parse_input_file.info(
+            "Reading input file, and acquiring Tax IDs and Genus/Species names. \n Total number of lines:"
+        )
+        logger_parse_input_file.info(number_of_lines)
+        logger_parse_input_file.info("Completed processing line:")
         for line in input_list:
             if line[0] != "#":
                 if line.startswith("NCBI:txid", 0, 9) is True:
@@ -86,15 +103,16 @@ def parse_input_file(input_filename):
                     line_data = line.split()
                     line_data.append(tax_id)
                     all_species_data.append(line_data)
-            print("line", line_count, "/", lines)
+            logger_parse_input_file.info(line_count)
             line_count += 1
+    logger_parse_input_file.info("Finished reading and closed input file")
 
     # create dataframe containg three columns: 'Genus', 'Species', 'NCBI Taxonomy ID'
-    print("Generating genus, species and taxonomy ID dataframe")
+    logger_parse_input_file.info("Generating genus, species and taxonomy ID dataframe")
     species_table = pd.DataFrame(
         all_species_data, columns=["Genus", "Species", "NCBI Taxonomy ID"]
     )
-    print("Dataframe completed")
+    logger_parse_input_file.info("Dataframe completed")
     return species_table
 
 
@@ -109,6 +127,9 @@ def get_genus_species_name(taxonomy_id):
     with Entrez.efetch(db="Taxonomy", id=taxonomy_id, retmode="xml") as handle:
         record = Entrez.read(handle)
     genus_species_name = str(record[0]["ScientificName"])
+    logger_get_genus_species_name.info(
+        "(Successfully retrieved genus/species name using Taxonomy ID)"
+    )
     return genus_species_name
 
 
@@ -124,6 +145,9 @@ def get_tax_ID(genus_species):
         record = Entrez.read(handle)
     fetched_taxonomy_id = "NCBI:txid" + "".join(
         re.findall("\d.*?\d", str(record["IdList"]))
+    )
+    logger_get_tax_ID.info(
+        "(Successfully retrieved taxonomy ID using genus/species name)"
     )
     return fetched_taxonomy_id
 
@@ -145,18 +169,22 @@ def collate_accession_numbers(species_table):
     all_accession_numbers = []
     tax_id_total_count = len(species_table["NCBI Taxonomy ID"])
     tax_id_counter = 1
-    print("Aquiring accession numbers from NCBI Assembly database")
+    logger_collate_accession_numbers.info(
+        "Aquiring accession numbers from NCBI Assembly database for NCBI Taxonomy IDs, \n Total Taxonomy IDs:"
+    )
+    logger_collate_accession_numbers.info(tax_id_total_count)
+    logger_collate_accession_numbers.info("Completed Taxonomy ID number:")
     for NCBI_taxonomy_id in species_table["NCBI Taxonomy ID"]:
         working_tax_id = NCBI_taxonomy_id[9:]
         working_accession_numbers = ", ".join(
             re.findall("GCA_\d+.\d", get_accession_numbers(working_tax_id))
         )
         all_accession_numbers.append(working_accession_numbers)
-        print("Species", tax_id_counter, "/", tax_id_total_count)
+        logger_collate_accession_numbers.info(tax_id_counter)
         tax_id_counter += 1
 
     # add accession numbers to the dataframe
-    print("Adding accession numbers to dataframe")
+    logger_collate_accession_numbers.info("Adding accession numbers to dataframe")
     species_table["NCBI Accession Numbers"] = all_accession_numbers
     return species_table
 
@@ -185,12 +213,18 @@ def get_accession_numbers(taxonomy_id_column):
         assembly_id_list = re.findall(
             "\d+", str(assembly_number_record[0]["LinkSetDb"][0]["Link"])
         )
+    logger_get_accession_numbers.info(
+        "Successfully retrieved all associated assembly IDs for Taxonomy ID"
+    )
 
     epost_search_results = Entrez.read(
         Entrez.epost("Assembly", id=",".join(assembly_id_list))
     )
     epost_webenv = epost_search_results["WebEnv"]
     epost_query_key = epost_search_results["QueryKey"]
+    logger_get_accession_numbers.info(
+        "Successfully posted all assembly IDs for accession nmber fetch for Taxonomy ID"
+    )
 
     NCBI_accession_numbers_list = []
 
@@ -206,6 +240,9 @@ def get_accession_numbers(taxonomy_id_column):
             "DocumentSummary"
         ][0]["AssemblyAccession"]
         NCBI_accession_numbers_list.append(NCBI_accession_number)
+    logger_get_accession_numbers.info(
+        "Successfully retrieved all associated accession numbers of Taxonomy ID"
+    )
     return str(NCBI_accession_numbers_list)
 
 
