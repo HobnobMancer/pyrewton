@@ -3,11 +3,12 @@
 
 # Script pulls down assembles from NCBI database with genus/species names and taxonomy ID input
 
-from Bio import Entrez
 import datetime
-import re
-import pandas as pd
 import logging
+import re
+
+from Bio import Entrez
+import pandas as pd
 
 # Fill out pull down form:
 Entrez.email = "eemh1@st-andrews.ac.uk"  # enter email address
