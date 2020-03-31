@@ -15,33 +15,61 @@ date_of_pulldown = date.strftime("%Y-%m-%d")
 
 
 def main():
-    """Read input file and pass genus/species names and taxonomy IDs to approriapte functions
-    to pull down the accosicated taxonomy ID and genus/species name, respectively.
+    """Generates datafame containing genus/species name with NCBI taxonomy and accession numbers
 
-    Open input file, a plain text file containing comments (indicated by the first line
-    character '#'), taxonomy IDs (starting with 'NCBI:txid'), and genus/species names.
-    Pass over the lines in the plain text file. The line contains a taxonomy ID the associated
-    genus/species name is returned by calling get_genus_species_name(), and if line contains
-    a genus/species name the taxonomy ID is obtained by calling get_tax_ID().
-    The genus and species names are separated, and then these names with the taxonomy ID are
-    passed to a list (called 'working_species').
-    The list containing the genus name, species name and taxonomy ID from the current line
-    being worked on from the input file, is passed to the tuple 'all_species_data'.
+    Pass input file (containing unique species on each line, idenfitied by their genus/species
+    name or NCBI Taxnomy ID) tp parse_input_file() function, which aquires missing genus/species
+    names and NCBI taxonomy IDs as approprirate. Genus/species names and associated NCBI
+    Taxonomy ID are stored in a generated dataframe with three columns: 'Genus', 'Species',
+    and 'NCBI Taxonomy ID'. Parse_input_file() returns the generated dataframe which is stored in
+    the variable 'species_table'.
 
-    Store genus name, species name and taxonomy ID tuplets stored in the 'all_species_data'
-    tuple, which is used to create a dataframe, of three columnes: 'Genus', 'Species',
-    and 'NCBI Taxonomy ID'.
-
-    The 'NCBI Taxonomy ID' column is passed to the get_accession_numbers() function. Add
-    the retrieved accession numbers to a new column in the dataframe ('NCBI Accession Numbers')
+    Pass the 'species_table' dataframe to collate_accession_numbers(), which aquires all associated
+    aquires all associated NCBI accession numbers associated for each Taxonomy ID. Aquired accession
+    numbers are stored in a new column in the dataframe, titled 'NCBI Accession Numbers'.
+    The modified dataframe is returned from collate_accession_numbers() and stored in the variable
+    'species_table'.
     """
 
-    # create tuple to store genus name, species name and taxonomy ID tuplets
-    all_species_data = []
+    # create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
+    species_table = parse_input_file(
+        "working_species_list.txt"
+    )  # pass name of input file with extension
+
+    # pull down all accession numbers associated with each Taxonomy ID, from NCBI
+    # add accession numbers to 'species_table' dataframe
+    species_table = collate_accession_numbers(species_table)
+    print("\n", species_table)
+
+
+def parse_input_file(input_filename):
+    """Parse input file, returning dataframe of species names and NCBI Taxonomy IDs.
+
+    Read input file passed to the function, performing the appropriate action depending
+    on each line's content.
+
+    Comments: Indicated with the first character of '#', perform no action.
+    NCBI Taxonomy ID: Indicated with the first nine characters of 'NCBI:txid', pass 
+    the Taxonomy ID (excluding the 'NCBI:txid' prefix) to get_genus_species_name() to 
+    return associated scientific name.
+    Genus/species name: Indicated by lack of '#' and 'NCBI:txid', pass genus/species
+    name to get get_tax_ID() to return associated NCBI Taxonomy ID with 'NCBI:txid'
+    prefix.
+
+    Split genus and species name into separate variables. Store genus, species and
+    associated Taxonomy ID in the list 'line_data'. Append 'line_data' to
+    'all_species_data' list. Repeat for each line.
+
+    Generate a dataframe with three columns: 'Genus', 'Species' and 'NCBI Taxonomy ID'.
+    Use data from 'all_species_data' to fill out dataframe.
+
+    Return dataframe.
+    """
 
     # open working_species_list.txt and extract lines, without new line character
     # then create genus name, species name and taxonomy ID tuplet
-    with open("working_species_list.txt") as file:
+    all_species_data = []
+    with open(input_filename) as file:
         input_list = file.read().splitlines()
         print("Reading input file, and acquiring Tax IDs and Genus/Species names")
         lines = len(input_list)
@@ -67,8 +95,53 @@ def main():
         all_species_data, columns=["Genus", "Species", "NCBI Taxonomy ID"]
     )
     print("Dataframe completed")
+    return species_table
 
-    # pull down all accession numbers associated with each Taxonomy ID, from NCBI
+
+def get_genus_species_name(taxonomy_id):
+    """Fetch scientfic name associated with the NCBI Taxonomy ID.
+
+    Use Entrez efetch function to pull down the scientific name (genus/species name)
+    in the     NCBI Taxonomy database, associated with the taxonomy ID passed to the
+    function.
+    """
+
+    with Entrez.efetch(db="Taxonomy", id=taxonomy_id, retmode="xml") as handle:
+        record = Entrez.read(handle)
+    genus_species_name = str(record[0]["ScientificName"])
+    return genus_species_name
+
+
+def get_tax_ID(genus_species):
+    """Pull down taxonomy ID from NCBI, using genus/species name as query.
+
+    Use Entrez esearch function to pull down the NCBI Taxonomy ID of the
+    species name passed to the function. Return the NCBI Taxonomy ID with
+    the prefix 'NCBI:txid'.
+    """
+
+    with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
+        record = Entrez.read(handle)
+    fetched_taxonomy_id = "NCBI:txid" + "".join(
+        re.findall("\d.*?\d", str(record["IdList"]))
+    )
+    return fetched_taxonomy_id
+
+
+def collate_accession_numbers(species_table):
+    """Return dataframe with column containing all associated NCBI accession numbers.
+
+    Pass each Taxonomy ID in the 'NCBI Taxonomy ID' column of the 'species_table'
+    dataframe, find all associated NCBI accession numbers by calling get_accession_numbers().
+
+    Format object returned from get_accession_numbers into a human readable list. Append list
+    of accession numbers to 'all_accession_numbers' list. Create fourth column, called
+    'NCBI Accession Numbers' in the 'species_table' dataframe and populate with data in
+    'all_accession_numbers'. 
+    
+    Return modified dataframe.
+    """
+
     all_accession_numbers = []
     tax_id_total_count = len(species_table["NCBI Taxonomy ID"])
     tax_id_counter = 1
@@ -85,48 +158,21 @@ def main():
     # add accession numbers to the dataframe
     print("Adding accession numbers to dataframe")
     species_table["NCBI Accession Numbers"] = all_accession_numbers
-    print("\n", species_table, "\n")
-
-
-def get_genus_species_name(taxonomy_id):
-    """Pull fetch scientific name of species from NCBI,
-    using its NCBI taxonomy ID as the query.
-
-    Use Entrez efetch function to pull down the scientific name in the
-    NCBI Taxonomy database, associated with the taxonomy ID passed to the
-    function.
-    """
-
-    with Entrez.efetch(db="Taxonomy", id=taxonomy_id, retmode="xml") as handle:
-        record = Entrez.read(handle)
-    genus_species_name = str(record[0]["ScientificName"])
-    return genus_species_name
-
-
-def get_tax_ID(genus_species):
-    """Pull down taxonomy ID from NCBI, using genus/species name as query.
-
-    Use Entrez esearch function to pull down the NCBI taxonomy ID of the
-    species name passed to the function. Then the taxonomy ID is formatted
-    and returned in the recommended referencing formate of 'NCBI:txidXXX',
-    where 'XXX' is taxonomy ID.
-    """
-
-    with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
-        record = Entrez.read(handle)
-    fetched_taxonomy_id = "NCBI:txid" + "".join(
-        re.findall("\d.*?\d", str(record["IdList"]))
-    )
-    return fetched_taxonomy_id
+    return species_table
 
 
 def get_accession_numbers(taxonomy_id_column):
-    """Pulls down NCBI accession numbers using their taxonomy IDs as the
-    query.
+    """Return all NCBI accession numbers associated with NCBI Taxonomy Id.
 
-    Passes over a Pandas dataframe column containing NCBI taxonomy IDs. Pass
-    Taxonomy IDs to Entrez eLink to pull down associated accession numbers.
-    Accession numbers stored in list 'accession_numbers_list'.
+    Use Entrez elink function to pull down the assembly IDs of all genomic assemblies
+    stored in the NCBI Assembly database that are associated with each NCBI Taxonomy ID
+    stored in the dataframe passed to the function.
+
+    Use Entrez efetch function to pull down the NCBI accession number associated with
+    each NCBI assembly ID. Return the dataframe with additional column titled
+    'NCBI Assembly Numbers' containing all assembly numbers associated with each NCBI
+    Taxonomy ID. The dataframe returned from get_accession_numbers() is stored in the
+    variable 'species_table'.
     """
 
     with Entrez.elink(
