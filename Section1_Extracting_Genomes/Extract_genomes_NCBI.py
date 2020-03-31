@@ -132,14 +132,14 @@ def collate_accession_numbers(species_table):
     """Return dataframe with column containing all associated NCBI accession numbers.
 
     Pass each Taxonomy ID in the 'NCBI Taxonomy ID' column of the 'species_table'
-    dataframe, find all associated NCBI accession numbers by calling get_accession_numbers().
+    dataframe to get_accession_numbers() to find all associated NCBI accession numbers.
 
     Format object returned from get_accession_numbers into a human readable list. Append list
     of accession numbers to 'all_accession_numbers' list. Create fourth column, called
     'NCBI Accession Numbers' in the 'species_table' dataframe and populate with data in
     'all_accession_numbers'. 
     
-    Return modified dataframe.
+    Return modified dataframe, with four columns.
     """
 
     all_accession_numbers = []
@@ -149,7 +149,7 @@ def collate_accession_numbers(species_table):
     for NCBI_taxonomy_id in species_table["NCBI Taxonomy ID"]:
         working_tax_id = NCBI_taxonomy_id[9:]
         working_accession_numbers = ", ".join(
-            re.findall("GCA_\d*.\d", get_accession_numbers(working_tax_id))
+            re.findall("GCA_\d+.\d", get_accession_numbers(working_tax_id))
         )
         all_accession_numbers.append(working_accession_numbers)
         print("Species", tax_id_counter, "/", tax_id_total_count)
@@ -180,22 +180,32 @@ def get_accession_numbers(taxonomy_id_column):
         id=taxonomy_id_column,
         db="Assembly",
         linkname="taxonomy_assembly",
-    ) as handle_one:
-        record_one = Entrez.read(handle_one)
+    ) as assembly_number_handle:
+        assembly_number_record = Entrez.read(assembly_number_handle)
         assembly_id_list = re.findall(
-            "'\d*'", str(record_one[0]["LinkSetDb"][0]["Link"])
+            "\d+", str(assembly_number_record[0]["LinkSetDb"][0]["Link"])
         )
 
+    epost_search_results = Entrez.read(
+        Entrez.epost("Assembly", id=",".join(assembly_id_list))
+    )
+    epost_webenv = epost_search_results["WebEnv"]
+    epost_query_key = epost_search_results["QueryKey"]
+
     NCBI_accession_numbers_list = []
-    for assembly_id in assembly_id_list:
-        with Entrez.efetch(
-            db="Assembly", id=assembly_id, rettype="docsum", retmode="xml"
-        ) as handle_two:
-            record_two = Entrez.read(handle_two, validate=False)
-            NCBI_accession_number = record_two["DocumentSummarySet"]["DocumentSummary"][
-                0
-            ]["AssemblyAccession"]
-            NCBI_accession_numbers_list.append(NCBI_accession_number)
+
+    with Entrez.efetch(
+        db="Assembly",
+        query_key=epost_query_key,
+        WebEnv=epost_webenv,
+        rettype="docsum",
+        retmode="xml",
+    ) as accession_handle:
+        accession_record = Entrez.read(accession_handle, validate=False)
+        NCBI_accession_number = accession_record["DocumentSummarySet"][
+            "DocumentSummary"
+        ][0]["AssemblyAccession"]
+        NCBI_accession_numbers_list.append(NCBI_accession_number)
     return str(NCBI_accession_numbers_list)
 
 
