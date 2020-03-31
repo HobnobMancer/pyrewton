@@ -75,11 +75,9 @@ def main():
     print("Aquiring accession numbers from NCBI Assembly database")
     for NCBI_taxonomy_id in species_table["NCBI Taxonomy ID"]:
         working_tax_id = NCBI_taxonomy_id[9:]
-        working_accession_numbers = get_accession_numbers(working_tax_id)
-        working_accession_numbers = str(working_accession_numbers)
-        working_accession_numbers = working_accession_numbers.replace("[", "")
-        working_accession_numbers = working_accession_numbers.replace("]", "")
-        working_accession_numbers = working_accession_numbers.replace("'", "")
+        working_accession_numbers = ", ".join(
+            re.findall("GCA_\d*.\d", get_accession_numbers(working_tax_id))
+        )
         all_accession_numbers.append(working_accession_numbers)
         print("Species", tax_id_counter, "/", tax_id_total_count)
         tax_id_counter += 1
@@ -116,11 +114,10 @@ def get_tax_ID(genus_species):
 
     with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
         record = Entrez.read(handle)
-    id = str(record["IdList"])
-    id = id.replace("['", "")
-    id = id.replace("']", "")
-    id = "NCBI:txid" + id
-    return id
+    fetched_taxonomy_id = "NCBI:txid" + "".join(
+        re.findall("\d.*?\d", str(record["IdList"]))
+    )
+    return fetched_taxonomy_id
 
 
 def get_accession_numbers(taxonomy_id_column):
@@ -139,24 +136,21 @@ def get_accession_numbers(taxonomy_id_column):
         linkname="taxonomy_assembly",
     ) as handle_one:
         record_one = Entrez.read(handle_one)
-        id_list = []
-        for id in record_one[0]["LinkSetDb"][0]["Link"]:
-            id_string = str(id)
-            id_string = id_string.replace("{'Id': '", "")
-            id_string = id_string.replace("'}", "")
-            id_list.append(id_string)
+        assembly_id_list = re.findall(
+            "'\d*'", str(record_one[0]["LinkSetDb"][0]["Link"])
+        )
 
     NCBI_accession_numbers_list = []
-    for assembly_db_id in id_list:
+    for assembly_id in assembly_id_list:
         with Entrez.efetch(
-            db="Assembly", id=assembly_db_id, rettype="docsum", retmode="xml"
+            db="Assembly", id=assembly_id, rettype="docsum", retmode="xml"
         ) as handle_two:
             record_two = Entrez.read(handle_two, validate=False)
             NCBI_accession_number = record_two["DocumentSummarySet"]["DocumentSummary"][
                 0
             ]["AssemblyAccession"]
             NCBI_accession_numbers_list.append(NCBI_accession_number)
-    return NCBI_accession_numbers_list
+    return str(NCBI_accession_numbers_list)
 
 
 if __name__ == "__main__":
