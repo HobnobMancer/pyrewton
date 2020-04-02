@@ -4,6 +4,7 @@ Practising_inputfile.txt
 input_file.txt
 .idea/
 ../.vscode/
+.vscode/
 Practising1.py
 Practising2.py
 *.log
