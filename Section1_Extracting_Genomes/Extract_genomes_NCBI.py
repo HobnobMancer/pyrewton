@@ -18,34 +18,6 @@ date = datetime.datetime.now()
 date_of_pulldown = date.strftime("%Y-%m-%d")
 time_of_pulldown = date.strftime("%H:%M")
 
-# Configure logging severity
-# Create log file for run, with date and time run was initated in the filename
-log_filename = "Extract_genomes_NCBI_Log_DATE_{}_TIME_{}".format(
-    date_of_pulldown, time_of_pulldown
-)
-
-logging.basicConfig(
-    filename=log_filename,
-    level=logging.DEBUG,
-    format="%(asctime)s:%(levelname)s:%(message)s",
-)
-
-# Set up logs for each function
-logger_main = logging.getLogger("main")
-logger_parse_input_file = logging.getLogger("parse_input_file")
-logger_get_genus_species_name = logging.getLogger("get_genus_species_name")
-logger_get_tax_ID = logging.getLogger("get_tax_ID")
-logger_collate_accession_numbers = logging.getLogger("collate_accession_numbers")
-logger_get_accession_numbers = logging.getLogger("get_accession_numbers")
-
-# Add run initiated statement to log
-with open("Extract_genomes_NCBI_py.log", "a") as log_handle:
-    log_handle.write(
-        "\n ---------------- \n Run Initated \n Date of initation: {} \n Time of initation: {} \n ---------------- \n".format(
-            date_of_pulldown, time_of_pulldown
-        )
-    )
-
 
 def main():
     """Generates datafame containing genus/species name with NCBI taxonomy and accession numbers
@@ -56,14 +28,17 @@ def main():
     Taxonomy ID are stored in a generated dataframe with three columns: 'Genus', 'Species',
     and 'NCBI Taxonomy ID'. Parse_input_file() returns the generated dataframe which is stored in
     the variable 'species_table'.
-
     Pass the 'species_table' dataframe to collate_accession_numbers(), which aquires all associated
     aquires all associated NCBI accession numbers associated for each Taxonomy ID. Aquired accession
     numbers are stored in a new column in the dataframe, titled 'NCBI Accession Numbers'.
     The modified dataframe is returned from collate_accession_numbers() and stored in the variable
     'species_table'.
     """
-    logger_main.info("Run initated")
+
+    # Initiate logger
+    logger_system("Extract_genomes_NCBI")
+    logger = logging.getLogger("Extract_genomes_NCBI")
+    logger.info("Run initated")
 
     # create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
     species_table = parse_input_file(
@@ -73,8 +48,52 @@ def main():
     # pull down all accession numbers associated with each Taxonomy ID, from NCBI
     # add accession numbers to 'species_table' dataframe
     species_table = collate_accession_numbers(species_table)
-    logger_main.info("Generated species table")
-    print(species_table)
+    logger.info("Generated species table")
+    print("\nSpecies table:\n", species_table)
+
+
+def logger_system(script_name) -> logging.Logger:
+    """"Return a logger for this script.
+
+    current_date: Data run was initated
+    current_time: Time run was initated
+
+    Enables logger for script, sets parameters and creates new file to store log.
+    """
+
+    # User defines name of run via the terminal during script run, which will automatically
+    # end with the date and time captured when script run was initated
+    user_defined_run_name = input(
+        "Please specify log filename. Note: log filename will start with 'Extract_genomes_NCBI__' followed by user specified name,\nand end with date and time captured when script run was initated.\nFilename: "
+    )
+
+    logger = logging.getLogger(script_name)
+    logger.setLevel(logging.DEBUG)
+
+    # Set format of loglines
+    log_formatter = logging.Formatter(
+        script_name + ": {} - {}".format("%(asctime)s", "%(message)s")
+    )
+
+    # Setup console handler to log to terminal
+    console_log_handler = logging.StreamHandler()
+    console_log_handler.setLevel(logging.DEBUG)
+    console_log_handler.setFormatter(log_formatter)
+    logger.addHandler(console_log_handler)
+
+    # Setup file handler to log to a file
+    file_log_handler = logging.FileHandler(
+        "LOG:"
+        + script_name
+        + "__"
+        + user_defined_run_name
+        + "_DATE_{}_TIME_{}.log".format(date_of_pulldown, time_of_pulldown)
+    )
+    file_log_handler.setLevel(logging.DEBUG)
+    file_log_handler.setFormatter(log_formatter)
+    logger.addHandler(file_log_handler)
+
+    return logger
 
 
 def parse_input_file(input_filename):
@@ -82,7 +101,6 @@ def parse_input_file(input_filename):
 
     Read input file passed to the function, performing the appropriate action depending
     on each line's content.
-
     Comments: Indicated with the first character of '#', perform no action.
     NCBI Taxonomy ID: Indicated with the first nine characters of 'NCBI:txid', pass 
     the Taxonomy ID (excluding the 'NCBI:txid' prefix) to get_genus_species_name() to 
@@ -90,16 +108,15 @@ def parse_input_file(input_filename):
     Genus/species name: Indicated by lack of '#' and 'NCBI:txid', pass genus/species
     name to get get_tax_ID() to return associated NCBI Taxonomy ID with 'NCBI:txid'
     prefix.
-
     Split genus and species name into separate variables. Store genus, species and
     associated Taxonomy ID in the list 'line_data'. Append 'line_data' to
     'all_species_data' list. Repeat for each line.
-
     Generate a dataframe with three columns: 'Genus', 'Species' and 'NCBI Taxonomy ID'.
     Use data from 'all_species_data' to fill out dataframe.
 
     Return dataframe.
     """
+    logger = logging.getLogger("Extract_genomes_NCBI")
 
     # open working_species_list.txt and extract lines, without new line character
     # then create genus name, species name and taxonomy ID tuplet
@@ -108,13 +125,11 @@ def parse_input_file(input_filename):
         input_list = file.read().splitlines()
         number_of_lines = len(input_list)
         line_count = 1
-        logger_parse_input_file.info(
+        logger.info(
             "Reading input file, and acquiring Tax IDs and Genus/Species names."
         )
         for line in input_list:
-            logger_parse_input_file.info(
-                "Processing line {} of {}".format(line_count, number_of_lines)
-            )
+            logger.info("Processing line {} of {}".format(line_count, number_of_lines))
             if line[0] != "#":
                 if line.startswith("NCBI:txid", 0, 9) is True:
                     gs_name = get_genus_species_name(line[9:])
@@ -126,18 +141,18 @@ def parse_input_file(input_filename):
                     line_data = line.split()
                     line_data.append(tax_id)
                     all_species_data.append(line_data)
-            logger_parse_input_file.info(
+            logger.info(
                 "Finished processing line {} of {}".format(line_count, number_of_lines)
             )
             line_count += 1
-    logger_parse_input_file.info("Finished reading and closed input file")
+    logger.info("Finished reading and closed input file")
 
     # create dataframe containg three columns: 'Genus', 'Species', 'NCBI Taxonomy ID'
-    logger_parse_input_file.info("Generating genus, species and taxonomy ID dataframe")
+    logger.info("Generating genus, species and taxonomy ID dataframe")
     species_table = pd.DataFrame(
         all_species_data, columns=["Genus", "Species", "NCBI Taxonomy ID"]
     )
-    logger_parse_input_file.info("Dataframe completed")
+    logger.info("Dataframe completed")
     return species_table
 
 
@@ -148,13 +163,12 @@ def get_genus_species_name(taxonomy_id):
     in the     NCBI Taxonomy database, associated with the taxonomy ID passed to the
     function.
     """
+    logger = logging.getLogger("Extract_genomes_NCBI")
 
     with Entrez.efetch(db="Taxonomy", id=taxonomy_id, retmode="xml") as handle:
         record = Entrez.read(handle)
     genus_species_name = str(record[0]["ScientificName"])
-    logger_get_genus_species_name.info(
-        "(Successfully retrieved genus/species name using Taxonomy ID)"
-    )
+    logger.info("(Successfully retrieved genus/species name using Taxonomy ID)")
     return genus_species_name
 
 
@@ -165,15 +179,14 @@ def get_tax_ID(genus_species):
     species name passed to the function. Return the NCBI Taxonomy ID with
     the prefix 'NCBI:txid'.
     """
+    logger = logging.getLogger("Extract_genomes_NCBI")
 
     with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
         record = Entrez.read(handle)
     fetched_taxonomy_id = "NCBI:txid" + "".join(
         re.findall("\d.*?\d", str(record["IdList"]))
     )
-    logger_get_tax_ID.info(
-        "(Successfully retrieved taxonomy ID using genus/species name)"
-    )
+    logger.info("(Successfully retrieved taxonomy ID using genus/species name)")
     return fetched_taxonomy_id
 
 
@@ -190,15 +203,16 @@ def collate_accession_numbers(species_table):
     
     Return modified dataframe, with four columns.
     """
+    logger = logging.getLogger("Extract_genomes_NCBI")
 
     all_accession_numbers = []
     tax_id_total_count = len(species_table["NCBI Taxonomy ID"])
     tax_id_counter = 1
-    logger_collate_accession_numbers.info(
+    logger.info(
         "Aquiring accession numbers from NCBI Assembly database for NCBI Taxonomy IDs"
     )
     for NCBI_taxonomy_id in species_table["NCBI Taxonomy ID"]:
-        logger_collate_accession_numbers.info(
+        logger.info(
             "Acquiring accession numbers for NCBI Taxonomy ID {} of {}".format(
                 tax_id_counter, tax_id_total_count
             )
@@ -208,7 +222,7 @@ def collate_accession_numbers(species_table):
             re.findall("GCA_\d+.\d", get_accession_numbers(working_tax_id))
         )
         all_accession_numbers.append(working_accession_numbers)
-        logger_collate_accession_numbers.info(
+        logger.info(
             "Completed retrieving accession numbers of Taxonomy ID {} of {}".format(
                 tax_id_counter, tax_id_total_count
             )
@@ -216,7 +230,7 @@ def collate_accession_numbers(species_table):
         tax_id_counter += 1
 
     # add accession numbers to the dataframe
-    logger_collate_accession_numbers.info("Adding accession numbers to dataframe")
+    logger.info("Adding accession numbers to dataframe")
     species_table["NCBI Accession Numbers"] = all_accession_numbers
     return species_table
 
@@ -234,6 +248,7 @@ def get_accession_numbers(taxonomy_id_column):
     Taxonomy ID. The dataframe returned from get_accession_numbers() is stored in the
     variable 'species_table'.
     """
+    logger = logging.getLogger("Extract_genomes_NCBI")
 
     with Entrez.elink(
         dbfrom="Taxonomy",
@@ -245,16 +260,14 @@ def get_accession_numbers(taxonomy_id_column):
         assembly_id_list = re.findall(
             "\d+", str(assembly_number_record[0]["LinkSetDb"][0]["Link"])
         )
-    logger_get_accession_numbers.info(
-        "(Successfully retrieved all associated assembly IDs for Taxonomy ID)"
-    )
+    logger.info("(Successfully retrieved all associated assembly IDs for Taxonomy ID)")
 
     epost_search_results = Entrez.read(
         Entrez.epost("Assembly", id=",".join(assembly_id_list))
     )
     epost_webenv = epost_search_results["WebEnv"]
     epost_query_key = epost_search_results["QueryKey"]
-    logger_get_accession_numbers.info(
+    logger.info(
         "(Successfully posted all assembly IDs for accession nmber fetch for Taxonomy ID)"
     )
 
@@ -272,7 +285,7 @@ def get_accession_numbers(taxonomy_id_column):
             "DocumentSummary"
         ][0]["AssemblyAccession"]
         NCBI_accession_numbers_list.append(NCBI_accession_number)
-    logger_get_accession_numbers.info(
+    logger.info(
         "(Successfully retrieved all associated accession numbers of Taxonomy ID)"
     )
     return str(NCBI_accession_numbers_list)
