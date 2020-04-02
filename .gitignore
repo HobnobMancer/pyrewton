@@ -6,3 +6,4 @@ input_file.txt
 ../.vscode/
 Practising1.py
 Practising2.py
+*.log
