@@ -64,7 +64,7 @@ def logger_system(script_name) -> logging.Logger:
     # User defines name of run via the terminal during script run, which will automatically
     # end with the date and time captured when script run was initated
     user_defined_run_name = input(
-        "Please specify log filename. Note: log filename will start with 'Extract_genomes_NCBI__' followed by user specified name,\nand end with date and time captured when script run was initated.\nFilename: "
+        "Please specify log filename. Note: log filename fix prefix is 'Extract_genomes_NCBI__', and fixed suffix of date and time captured when script run was initated.\nFilename: "
     )
 
     logger = logging.getLogger(script_name)
@@ -167,9 +167,8 @@ def get_genus_species_name(taxonomy_id):
 
     with Entrez.efetch(db="Taxonomy", id=taxonomy_id, retmode="xml") as handle:
         record = Entrez.read(handle)
-    genus_species_name = str(record[0]["ScientificName"])
     logger.info("(Successfully retrieved genus/species name using Taxonomy ID)")
-    return genus_species_name
+    return record[0]["ScientificName"]
 
 
 def get_tax_ID(genus_species):
@@ -183,11 +182,8 @@ def get_tax_ID(genus_species):
 
     with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
         record = Entrez.read(handle)
-    fetched_taxonomy_id = "NCBI:txid" + "".join(
-        re.findall("\d.*?\d", str(record["IdList"]))
-    )
     logger.info("(Successfully retrieved taxonomy ID using genus/species name)")
-    return fetched_taxonomy_id
+    return "NCBI:txid" + record["IdList"][0]
 
 
 def collate_accession_numbers(species_table):
@@ -195,7 +191,6 @@ def collate_accession_numbers(species_table):
 
     Pass each Taxonomy ID in the 'NCBI Taxonomy ID' column of the 'species_table'
     dataframe to get_accession_numbers() to find all associated NCBI accession numbers.
-
     Format object returned from get_accession_numbers into a human readable list. Append list
     of accession numbers to 'all_accession_numbers' list. Create fourth column, called
     'NCBI Accession Numbers' in the 'species_table' dataframe and populate with data in
@@ -218,16 +213,14 @@ def collate_accession_numbers(species_table):
             )
         )
         working_tax_id = NCBI_taxonomy_id[9:]
-        working_accession_numbers = ", ".join(
-            re.findall("GCA_\d+.\d", get_accession_numbers(working_tax_id))
-        )
-        all_accession_numbers.append(working_accession_numbers)
+        all_accession_numbers.append(get_accession_numbers(working_tax_id))
         logger.info(
             "Completed retrieving accession numbers of Taxonomy ID {} of {}".format(
                 tax_id_counter, tax_id_total_count
             )
         )
         tax_id_counter += 1
+    print("\n\n=======\n\nAll accession numbers:", all_accession_numbers, "\n\n")
 
     # add accession numbers to the dataframe
     logger.info("Adding accession numbers to dataframe")
@@ -241,7 +234,6 @@ def get_accession_numbers(taxonomy_id_column):
     Use Entrez elink function to pull down the assembly IDs of all genomic assemblies
     stored in the NCBI Assembly database that are associated with each NCBI Taxonomy ID
     stored in the dataframe passed to the function.
-
     Use Entrez efetch function to pull down the NCBI accession number associated with
     each NCBI assembly ID. Return the dataframe with additional column titled
     'NCBI Assembly Numbers' containing all assembly numbers associated with each NCBI
@@ -257,18 +249,21 @@ def get_accession_numbers(taxonomy_id_column):
         linkname="taxonomy_assembly",
     ) as assembly_number_handle:
         assembly_number_record = Entrez.read(assembly_number_handle)
-        assembly_id_list = re.findall(
-            "\d+", str(assembly_number_record[0]["LinkSetDb"][0]["Link"])
-        )
-    logger.info("(Successfully retrieved all associated assembly IDs for Taxonomy ID)")
+        assembly_id_list = [
+            dict["Id"] for dict in assembly_number_record[0]["LinkSetDb"][0]["Link"]
+        ]
+
+    logger.info(
+        "(Finished processing retrieval of associated assembly IDs for Taxonomy ID)"
+    )
 
     epost_search_results = Entrez.read(
-        Entrez.epost("Assembly", id=",".join(assembly_id_list))
+        Entrez.epost("Assembly", id=str(",".join(assembly_id_list)))
     )
     epost_webenv = epost_search_results["WebEnv"]
     epost_query_key = epost_search_results["QueryKey"]
     logger.info(
-        "(Successfully posted all assembly IDs for accession nmber fetch for Taxonomy ID)"
+        "(Finished processing posting of assembly IDs for accession number fetch for Taxonomy ID)"
     )
 
     NCBI_accession_numbers_list = []
@@ -277,16 +272,17 @@ def get_accession_numbers(taxonomy_id_column):
         db="Assembly",
         query_key=epost_query_key,
         WebEnv=epost_webenv,
-        rettype="docsum",
+        rettype="uilist",
         retmode="xml",
     ) as accession_handle:
         accession_record = Entrez.read(accession_handle, validate=False)
         NCBI_accession_number = accession_record["DocumentSummarySet"][
             "DocumentSummary"
         ][0]["AssemblyAccession"]
+        print("\n\n========\n\nAccesion numbers:", NCBI_accession_number, "\n\n")
         NCBI_accession_numbers_list.append(NCBI_accession_number)
     logger.info(
-        "(Successfully retrieved all associated accession numbers of Taxonomy ID)"
+        "(Finished processing retrieval associated accession numbers of Taxonomy ID)"
     )
     return str(NCBI_accession_numbers_list)
 
