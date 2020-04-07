@@ -213,7 +213,7 @@ def collate_accession_numbers(species_table):
             )
         )
         working_tax_id = NCBI_taxonomy_id[9:]
-        all_accession_numbers.append(str(get_accession_numbers(working_tax_id))[1:-1])
+        all_accession_numbers.append(get_accession_numbers(working_tax_id))
         logger.info(
             "Completed retrieving accession numbers of Taxonomy ID {} of {}".format(
                 tax_id_counter, tax_id_total_count
@@ -284,7 +284,6 @@ def get_accession_numbers(taxonomy_id_column):
             new_accession_number = accession_record["DocumentSummarySet"][
                 "DocumentSummary"
             ][index_number]["AssemblyAccession"]
-            print("new accession number:", new_accession_number)
             NCBI_accession_numbers_list.append(new_accession_number)
             index_number += 1
 
@@ -292,7 +291,7 @@ def get_accession_numbers(taxonomy_id_column):
         "(Finished processing retrieval associated accession numbers of Taxonomy ID)"
     )
 
-    # Processing accession numbers into human readable list for dataframe
+    # Process accession numbers into human readable list for dataframe
     NCBI_accession_numbers = ", ".join(NCBI_accession_numbers_list)
 
     return NCBI_accession_numbers
