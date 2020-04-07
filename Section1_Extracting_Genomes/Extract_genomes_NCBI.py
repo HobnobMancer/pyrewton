@@ -233,11 +233,9 @@ def get_accession_numbers(taxonomy_id_column):
     Use Entrez elink function to pull down the assembly IDs of all genomic assemblies
     stored in the NCBI Assembly database that are associated with each NCBI Taxonomy ID
     stored in the dataframe passed to the function.
-    Use Entrez efetch function to pull down the NCBI accession number associated with
-    each NCBI assembly ID. Return the dataframe with additional column titled
-    'NCBI Assembly Numbers' containing all assembly numbers associated with each NCBI
-    Taxonomy ID. The dataframe returned from get_accession_numbers() is stored in the
-    variable 'species_table'.
+    Use Entrez epost to post all assembly IDs to NCBI as a single query for subsequent
+    Entrez efetch of all associated accession numbers.
+    Accession numbers are returned as a string 'NCBI_accession_numbers'.
     """
     logger = logging.getLogger("Extract_genomes_NCBI")
 
