@@ -213,14 +213,13 @@ def collate_accession_numbers(species_table):
             )
         )
         working_tax_id = NCBI_taxonomy_id[9:]
-        all_accession_numbers.append(get_accession_numbers(working_tax_id))
+        all_accession_numbers.append(str(get_accession_numbers(working_tax_id))[1:-1])
         logger.info(
             "Completed retrieving accession numbers of Taxonomy ID {} of {}".format(
                 tax_id_counter, tax_id_total_count
             )
         )
         tax_id_counter += 1
-    print("\n\n=======\n\nAll accession numbers:", all_accession_numbers, "\n\n")
 
     # add accession numbers to the dataframe
     logger.info("Adding accession numbers to dataframe")
@@ -272,19 +271,31 @@ def get_accession_numbers(taxonomy_id_column):
         db="Assembly",
         query_key=epost_query_key,
         WebEnv=epost_webenv,
-        rettype="uilist",
+        rettype="docsum",
         retmode="xml",
     ) as accession_handle:
         accession_record = Entrez.read(accession_handle, validate=False)
-        NCBI_accession_number = accession_record["DocumentSummarySet"][
-            "DocumentSummary"
-        ][0]["AssemblyAccession"]
-        print("\n\n========\n\nAccesion numbers:", NCBI_accession_number, "\n\n")
-        NCBI_accession_numbers_list.append(NCBI_accession_number)
+        # Find total number of accession numbers
+        number_of_accession_numbers = len(
+            accession_record["DocumentSummarySet"]["DocumentSummary"]
+        )
+        # Add each accession number in the accession record to the accession number list
+        for index_number in range(number_of_accession_numbers):
+            new_accession_number = accession_record["DocumentSummarySet"][
+                "DocumentSummary"
+            ][index_number]["AssemblyAccession"]
+            print("new accession number:", new_accession_number)
+            NCBI_accession_numbers_list.append(new_accession_number)
+            index_number += 1
+
     logger.info(
         "(Finished processing retrieval associated accession numbers of Taxonomy ID)"
     )
-    return str(NCBI_accession_numbers_list)
+
+    # Processing accession numbers into human readable list for dataframe
+    NCBI_accession_numbers = ", ".join(NCBI_accession_numbers_list)
+
+    return NCBI_accession_numbers
 
 
 if __name__ == "__main__":
