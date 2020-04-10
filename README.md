@@ -4,16 +4,16 @@
 
 PhD_Project_Scripts contains all scripts associated with the EASTBio Proteng project.
 
-Completed scripts are packaged into `Proteng`.
+Completed scripts are packaged into `proteng`.
 
-`Proteng` is a Python3 script package that supports the pull down of genomic assemblies from the [NCBI Assembly database](https://www.ncbi.nlm.nih.gov/assembly).
+`proteng` is a Python3 script package that supports the pull down of genomic assemblies from the [NCBI Assembly database](https://www.ncbi.nlm.nih.gov/assembly).
 
 [In GitHub](https://github.com/HobnobMancer/PhD_Project_Scripts) each section of the project is given its own folder and subfolders within.
 
 ## Installation
 
-The easiest way to install `Proteng` is to use `pip`:
-`pip install Proteng`.
+The easiest way to install `proteng` is to use `pip`:
+`pip3 install proteng`.
 This will also install all required Python packages dependencies.
 
 ### Requirements
