@@ -10,14 +10,6 @@ import re
 from Bio import Entrez
 import pandas as pd
 
-# Fill out pull down form:
-Entrez.email = "eemh1@st-andrews.ac.uk"  # enter email address
-
-# Capture date and time script is executed
-date = datetime.datetime.now()
-date_of_pulldown = date.strftime("%Y-%m-%d")
-time_of_pulldown = date.strftime("%H:%M")
-
 
 def main():
     """Generates datafame containing genus/species name with NCBI taxonomy and accession numbers
@@ -35,14 +27,22 @@ def main():
     'species_table'.
     """
 
+    # Fill out pull down form:
+    Entrez.email = "eemh1@st-andrews.ac.uk"  # enter email address
+
+    # Capture date and time script is executed
+    date = datetime.datetime.now()
+    date_of_pulldown = date.strftime("%Y-%m-%d")
+    time_of_pulldown = date.strftime("%H:%M")
+
     # Initiate logger
-    logger_system("Extract_genomes_NCBI")
+    build_logger("Extract_genomes_NCBI", date_of_pulldown, time_of_pulldown)
     logger = logging.getLogger("Extract_genomes_NCBI")
     logger.info("Run initated")
 
     # create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
     species_table = parse_input_file(
-        "working_species_list.txt"
+        "Extract_genomes_NCBI_input_file.txt"
     )  # pass name of input file with extension
 
     # pull down all accession numbers associated with each Taxonomy ID, from NCBI
@@ -52,7 +52,7 @@ def main():
     print("\nSpecies table:\n", species_table)
 
 
-def logger_system(script_name) -> logging.Logger:
+def build_logger(script_name, date_of_pulldown, time_of_pulldown) -> logging.Logger:
     """"Return a logger for this script.
 
     current_date: Data run was initated
