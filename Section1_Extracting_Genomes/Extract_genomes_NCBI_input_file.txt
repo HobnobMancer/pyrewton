@@ -1,8 +1,8 @@
 # This is the input file for Extract_genomes_NCBI.py
-# This file can be used as the input file bu default, by not
+# This file can be used as the input file by default, by not
 # passing the optional input argument to Extract_genomes_NCBI.py.
 # Alternatively, this file can be used as a template,
-# to create a unique input file list.
+# to create a new input file list.
 #
 # An input file for Extract_genomes_NCBI.py must adhere to
 # these rules:
