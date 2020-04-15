@@ -3,6 +3,7 @@
 
 # Script pulls down assembles from NCBI database with genus/species names and taxonomy ID input
 
+import argparse
 import datetime
 import logging
 import re
@@ -27,8 +28,54 @@ def main():
     'species_table'.
     """
 
-    # Fill out pull down form:
-    Entrez.email = "eemh1@st-andrews.ac.uk"  # enter email address
+    # Create parser object
+    parser = argparse.ArgumentParser(
+        prog="Extract_genomes_NCBI.py",
+        description="Programme to pull down genomic assembleis from NCBI",
+    )
+
+    # Add arguments to parser
+    # Add user email address
+    parser.add_argument(
+        "user_email",
+        type=str,
+        metavar="user email address",
+        default=None,
+        help="Email address of user, this must be provided",
+    )
+    # Add input file name option
+    parser.add_argument(
+        "-i",
+        "--input_file",
+        type=str,
+        metavar="custom input file name",
+        default="Extract_genomes_NCBI_input_file.txt",
+        help="Name of input file (including extension) containing list of species, if not using input file provided (Default: Extract_genomes_NCBI_input_file.txt)",
+    )
+    # Add output file name option
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        metavar="custom output file name",
+        default=None,
+        help="Name of output file (including extension) if not using input file provided (Default: None)",
+    )
+    # Add log file name option
+    parser.add_argument(
+        "-l",
+        "--log",
+        type=str,
+        metavar="custom log file name",
+        default=None,
+        help="Additional string added to log file name (Default: None)",
+    )
+
+    # Parse arguments into args variable
+    args = parser.parse_args()
+
+    # Add users email address from parser
+    Entrez.email = args.user_email
 
     # Capture date and time script is executed
     date = datetime.datetime.now()
@@ -36,14 +83,13 @@ def main():
     time_of_pulldown = date.strftime("%H:%M")
 
     # Initiate logger
-    build_logger("Extract_genomes_NCBI", date_of_pulldown, time_of_pulldown)
+    build_logger("Extract_genomes_NCBI", args.log, date_of_pulldown, time_of_pulldown)
     logger = logging.getLogger("Extract_genomes_NCBI")
     logger.info("Run initated")
 
     # create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
-    species_table = parse_input_file(
-        "Extract_genomes_NCBI_input_file.txt"
-    )  # pass name of input file with extension
+    # default: "Extract_genomes_NCBI_input_file.txt"
+    species_table = parse_input_file(args.input_file)
 
     # pull down all accession numbers associated with each Taxonomy ID, from NCBI
     # add accession numbers to 'species_table' dataframe
@@ -52,20 +98,18 @@ def main():
     print("\nSpecies table:\n", species_table)
 
 
-def build_logger(script_name, date_of_pulldown, time_of_pulldown) -> logging.Logger:
+def build_logger(
+    script_name, custom_string, date_of_pulldown, time_of_pulldown
+) -> logging.Logger:
     """"Return a logger for this script.
-
-    current_date: Data run was initated
-    current_time: Time run was initated
+    
+    script_name: Name of script
+    custom_string: Additional string parsed from cmdline by user
+    date_of_pulldown: Data run was initated
+    time_of_pulldown: Time run was initated
 
     Enables logger for script, sets parameters and creates new file to store log.
     """
-
-    # User defines name of run via the terminal during script run, which will automatically
-    # end with the date and time captured when script run was initated
-    user_defined_run_name = input(
-        "Please specify log filename. Note: log filename fix prefix is 'Extract_genomes_NCBI__', and fixed suffix of date and time captured when script run was initated.\nFilename: "
-    )
 
     logger = logging.getLogger(script_name)
     logger.setLevel(logging.DEBUG)
@@ -82,13 +126,21 @@ def build_logger(script_name, date_of_pulldown, time_of_pulldown) -> logging.Log
     logger.addHandler(console_log_handler)
 
     # Setup file handler to log to a file
-    file_log_handler = logging.FileHandler(
-        "LOG:"
-        + script_name
-        + "__"
-        + user_defined_run_name
-        + "_DATE_{}_TIME_{}.log".format(date_of_pulldown, time_of_pulldown)
-    )
+    if custom_string != None:
+        file_log_handler = logging.FileHandler(
+            "LOG:"
+            + script_name
+            + "__"
+            + custom_string
+            + "_DATE_{}_TIME_{}.log".format(date_of_pulldown, time_of_pulldown)
+        )
+    else:
+        file_log_handler = logging.FileHandler(
+            "LOG:"
+            + script_name
+            + "_DATE_{}_TIME_{}.log".format(date_of_pulldown, time_of_pulldown)
+        )
+
     file_log_handler.setLevel(logging.DEBUG)
     file_log_handler.setFormatter(log_formatter)
     logger.addHandler(file_log_handler)
@@ -164,10 +216,11 @@ def get_genus_species_name(taxonomy_id):
     function.
     """
     logger = logging.getLogger("Extract_genomes_NCBI")
+    logger.info("(Successfully retrieved genus/species name using Taxonomy ID)")
 
     with Entrez.efetch(db="Taxonomy", id=taxonomy_id, retmode="xml") as handle:
         record = Entrez.read(handle)
-    logger.info("(Successfully retrieved genus/species name using Taxonomy ID)")
+
     return record[0]["ScientificName"]
 
 
@@ -179,10 +232,11 @@ def get_tax_ID(genus_species):
     the prefix 'NCBI:txid'.
     """
     logger = logging.getLogger("Extract_genomes_NCBI")
+    logger.info("(Retrieving taxonomy ID using genus/species name)")
 
     with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
         record = Entrez.read(handle)
-    logger.info("(Successfully retrieved taxonomy ID using genus/species name)")
+
     return "NCBI:txid" + record["IdList"][0]
 
 
