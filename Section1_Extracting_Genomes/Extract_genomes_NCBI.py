@@ -50,7 +50,7 @@ def main():
         type=str,
         metavar="input file name",
         default="Extract_genomes_NCBI_input_file.txt",
-        help="Name of input file (including extension) containing list of species, if not using input file provided (Default: Extract_genomes_NCBI_input_file.txt)",
+        help="input filename",
     )
     # Add output file name option
     parser.add_argument(
@@ -59,7 +59,7 @@ def main():
         type=str,
         metavar="output file name",
         default=None,
-        help="Name of output file (including extension) if not using input file provided (Default: None)",
+        help="output filename",
     )
     # Add log file name option
     parser.add_argument(
