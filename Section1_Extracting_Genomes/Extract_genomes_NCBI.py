@@ -32,6 +32,7 @@ def main():
     parser = argparse.ArgumentParser(
         prog="Extract_genomes_NCBI.py",
         description="Programme to pull down genomic assembleis from NCBI",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
     # Add arguments to parser
@@ -68,7 +69,7 @@ def main():
         type=str,
         metavar="log file name",
         default=None,
-        help="Additional string added to log file name (Default: None)",
+        help="Additional string added to log file name",
     )
 
     # Parse arguments into args variable
