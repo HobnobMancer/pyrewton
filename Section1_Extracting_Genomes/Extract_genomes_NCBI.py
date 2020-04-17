@@ -183,7 +183,7 @@ def parse_input_file(input_filename):
         for line in input_list:
             logger.info("Processing line {} of {}".format(line_count, number_of_lines))
             if line[0] != "#":
-                if line.startswith("NCBI:txid", 0, 9) is True:
+                if line.startswith("NCBI:txid"):
                     gs_name = get_genus_species_name(line[9:])
                     line_data = gs_name.split()
                     line_data.append(line)
