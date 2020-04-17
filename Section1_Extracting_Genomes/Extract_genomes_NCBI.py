@@ -48,7 +48,7 @@ def main():
         "-i",
         "--input_file",
         type=str,
-        metavar="custom input file name",
+        metavar="input file name",
         default="Extract_genomes_NCBI_input_file.txt",
         help="Name of input file (including extension) containing list of species, if not using input file provided (Default: Extract_genomes_NCBI_input_file.txt)",
     )
@@ -57,7 +57,7 @@ def main():
         "-o",
         "--output",
         type=str,
-        metavar="custom output file name",
+        metavar="output file name",
         default=None,
         help="Name of output file (including extension) if not using input file provided (Default: None)",
     )
@@ -66,7 +66,7 @@ def main():
         "-l",
         "--log",
         type=str,
-        metavar="custom log file name",
+        metavar="log file name",
         default=None,
         help="Additional string added to log file name (Default: None)",
     )
