@@ -126,7 +126,7 @@ def build_logger(
     logger.addHandler(console_log_handler)
 
     # Setup file handler to log to a file
-    if custom_string != None:
+    if custom_string is not None:
         file_log_handler = logging.FileHandler(
             "LOG:"
             + script_name
