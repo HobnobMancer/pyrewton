@@ -24,4 +24,4 @@
 # Fungal species:
 Aspergillus fumigatus
 Aspergillus nidulans
-NCBItxid:5061
+NCBI:txid5061
