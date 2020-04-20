@@ -7,6 +7,7 @@ import argparse
 import datetime
 import logging
 import re
+from pathlib import Path
 
 from Bio import Entrez
 import pandas as pd
@@ -45,28 +46,33 @@ def main():
         help="Email address of user, this must be provided",
     )
     # Add input file name option
+    # If not given use standard input file ("Extract_genomes_NCBI_input_file.txt")
     parser.add_argument(
         "-i",
         "--input_file",
-        type=str,
+        type=Path,
         metavar="input file name",
-        default="Extract_genomes_NCBI_input_file.txt",
+        default=Path(__file__)
+        .resolve()
+        .parent.joinpath("Extract_genomes_NCBI_input_file.txt"),
         help="input filename",
     )
     # Add output file name option
+    # If not given, output will be saved to CWD with default name
     parser.add_argument(
         "-o",
         "--output",
-        type=str,
+        type=Path,
         metavar="output file name",
         default=None,
         help="output filename",
     )
     # Add log file name option
+    # If not given not log file will be written out
     parser.add_argument(
         "-l",
         "--log",
-        type=str,
+        type=Path,
         metavar="log file name",
         default=None,
         help="Additional string added to log file name",
@@ -84,17 +90,17 @@ def main():
     time_of_pulldown = date.strftime("%H:%M")
 
     # Initiate logger
+    # Note: log file only created if specified at cmdline
     build_logger("Extract_genomes_NCBI", args.log, date_of_pulldown, time_of_pulldown)
     logger = logging.getLogger("Extract_genomes_NCBI")
     logger.info("Run initated")
 
-    # create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
-    # default: "Extract_genomes_NCBI_input_file.txt"
-    species_table = parse_input_file(args.input_file)
+    # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
+    species_table = parse_input_file(args.input_file, logger)
 
     # pull down all accession numbers associated with each Taxonomy ID, from NCBI
     # add accession numbers to 'species_table' dataframe
-    species_table = collate_accession_numbers(species_table)
+    species_table = collate_accession_numbers(species_table, logger)
     logger.info("Generated species table")
     print("\nSpecies table:\n", species_table)
 
@@ -105,7 +111,8 @@ def build_logger(
     """"Return a logger for this script.
     
     script_name: Name of script
-    custom_string: Additional string parsed from cmdline by user
+    custom_string: Additional string parsed from cmdline by user - required for log
+                    file to be written out
     date_of_pulldown: Data run was initated
     time_of_pulldown: Time run was initated
 
@@ -129,27 +136,19 @@ def build_logger(
     # Setup file handler to log to a file
     if custom_string is not None:
         file_log_handler = logging.FileHandler(
-            "LOG:"
-            + script_name
+            custom_string
             + "__"
-            + custom_string
-            + "_DATE_{}_TIME_{}.log".format(date_of_pulldown, time_of_pulldown)
-        )
-    else:
-        file_log_handler = logging.FileHandler(
-            "LOG:"
             + script_name
             + "_DATE_{}_TIME_{}.log".format(date_of_pulldown, time_of_pulldown)
         )
-
-    file_log_handler.setLevel(logging.DEBUG)
-    file_log_handler.setFormatter(log_formatter)
-    logger.addHandler(file_log_handler)
+        file_log_handler.setLevel(logging.DEBUG)
+        file_log_handler.setFormatter(log_formatter)
+        logger.addHandler(file_log_handler)
 
     return logger
 
 
-def parse_input_file(input_filename):
+def parse_input_file(input_filename, logger):
     """Parse input file, returning dataframe of species names and NCBI Taxonomy IDs.
 
     Read input file passed to the function, performing the appropriate action depending
@@ -169,7 +168,6 @@ def parse_input_file(input_filename):
 
     Return dataframe.
     """
-    logger = logging.getLogger("Extract_genomes_NCBI")
 
     # open working_species_list.txt and extract lines, without new line character
     # then create genus name, species name and taxonomy ID tuplet
@@ -185,12 +183,12 @@ def parse_input_file(input_filename):
             logger.info("Processing line {} of {}".format(line_count, number_of_lines))
             if line[0] != "#":
                 if line.startswith("NCBI:txid"):
-                    gs_name = get_genus_species_name(line[9:])
+                    gs_name = get_genus_species_name(line[9:], logger)
                     line_data = gs_name.split()
                     line_data.append(line)
                     all_species_data.append(line_data)
                 else:
-                    tax_id = get_tax_ID(line)
+                    tax_id = get_tax_ID(line, logger)
                     line_data = line.split()
                     line_data.append(tax_id)
                     all_species_data.append(line_data)
@@ -209,15 +207,15 @@ def parse_input_file(input_filename):
     return species_table
 
 
-def get_genus_species_name(taxonomy_id):
+def get_genus_species_name(taxonomy_id, logger):
     """Fetch scientfic name associated with the NCBI Taxonomy ID.
 
     Use Entrez efetch function to pull down the scientific name (genus/species name)
     in the     NCBI Taxonomy database, associated with the taxonomy ID passed to the
     function.
     """
-    logger = logging.getLogger("Extract_genomes_NCBI")
-    logger.info("(Successfully retrieved genus/species name using Taxonomy ID)")
+
+    logger.info("(Retrieving genus/species name using Taxonomy ID)")
 
     with Entrez.efetch(db="Taxonomy", id=taxonomy_id, retmode="xml") as handle:
         record = Entrez.read(handle)
@@ -225,14 +223,14 @@ def get_genus_species_name(taxonomy_id):
     return record[0]["ScientificName"]
 
 
-def get_tax_ID(genus_species):
+def get_tax_ID(genus_species, logger):
     """Pull down taxonomy ID from NCBI, using genus/species name as query.
 
     Use Entrez esearch function to pull down the NCBI Taxonomy ID of the
     species name passed to the function. Return the NCBI Taxonomy ID with
     the prefix 'NCBI:txid'.
     """
-    logger = logging.getLogger("Extract_genomes_NCBI")
+
     logger.info("(Retrieving taxonomy ID using genus/species name)")
 
     with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
@@ -241,7 +239,7 @@ def get_tax_ID(genus_species):
     return "NCBI:txid" + record["IdList"][0]
 
 
-def collate_accession_numbers(species_table):
+def collate_accession_numbers(species_table, logger):
     """Return dataframe with column containing all associated NCBI accession numbers.
 
     Pass each Taxonomy ID in the 'NCBI Taxonomy ID' column of the 'species_table'
@@ -253,7 +251,6 @@ def collate_accession_numbers(species_table):
     
     Return modified dataframe, with four columns.
     """
-    logger = logging.getLogger("Extract_genomes_NCBI")
 
     all_accession_numbers = []
     tax_id_total_count = len(species_table["NCBI Taxonomy ID"])
@@ -268,7 +265,7 @@ def collate_accession_numbers(species_table):
             )
         )
         working_tax_id = NCBI_taxonomy_id[9:]
-        all_accession_numbers.append(get_accession_numbers(working_tax_id))
+        all_accession_numbers.append(get_accession_numbers(working_tax_id, logger))
         logger.info(
             "Completed retrieving accession numbers of Taxonomy ID {} of {}".format(
                 tax_id_counter, tax_id_total_count
@@ -282,7 +279,7 @@ def collate_accession_numbers(species_table):
     return species_table
 
 
-def get_accession_numbers(taxonomy_id_column):
+def get_accession_numbers(taxonomy_id_column, logger):
     """Return all NCBI accession numbers associated with NCBI Taxonomy Id.
 
     Use Entrez elink function to pull down the assembly IDs of all genomic assemblies
@@ -292,7 +289,6 @@ def get_accession_numbers(taxonomy_id_column):
     Entrez efetch of all associated accession numbers.
     Accession numbers are returned as a string 'NCBI_accession_numbers'.
     """
-    logger = logging.getLogger("Extract_genomes_NCBI")
 
     with Entrez.elink(
         dbfrom="Taxonomy",
