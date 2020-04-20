@@ -64,7 +64,8 @@ def main():
     )
     # Add output file name option
     # If not given, file will be written to CWD
-    # Development note - need to add file extension for default output file
+    # Development note - need to add file exte
+    # nsion for default output file
     parser.add_argument(
         "-o",
         "--output",
@@ -83,7 +84,7 @@ def main():
         type=Path,
         metavar="log file name",
         default=None,
-        help="Additional string added to log file name",
+        help="Defines log file name and/or path",
     )
 
     # Parse arguments into args variable
@@ -98,18 +99,26 @@ def main():
     logger = logging.getLogger("Extract_genomes_NCBI")
     logger.info("Run initated")
 
-    # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
-    species_table = parse_input_file(args.input_file, logger)
+    # Invoke main usage of script
+    try:
+        # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
+        species_table = parse_input_file(args.input_file, logger)
 
-    # pull down all accession numbers associated with each Taxonomy ID, from NCBI
-    # add accession numbers to 'species_table' dataframe
-    species_table = collate_accession_numbers(species_table, logger)
-    logger.info("Generated species table")
-    print("\nSpecies table:\n", species_table)
+        # pull down all accession numbers associated with each Taxonomy ID, from NCBI
+        # add accession numbers to 'species_table' dataframe
+        species_table = collate_accession_numbers(species_table, logger)
+        logger.info("Generated species table")
+        print("\nSpecies table:\n", species_table)
+    except Exception:
+        logger.error(
+            "::ERROR:: Error encounted during run, see Stack info below:",
+            exc_info=1,
+            stack_info=1,
+        )
 
 
 def build_logger(
-    script_name, custom_string, date_of_pulldown, time_of_pulldown
+    script_name, log_file, date_of_pulldown, time_of_pulldown
 ) -> logging.Logger:
     """"Return a logger for this script.
     
@@ -137,13 +146,8 @@ def build_logger(
     logger.addHandler(console_log_handler)
 
     # Setup file handler to log to a file
-    if custom_string is not None:
-        file_log_handler = logging.FileHandler(
-            custom_string
-            + "__"
-            + script_name
-            + "_DATE_{}_TIME_{}.log".format(date_of_pulldown, time_of_pulldown)
-        )
+    if log_file is not None:
+        file_log_handler = logging.FileHandler(log_file)
         file_log_handler.setLevel(logging.DEBUG)
         file_log_handler.setFormatter(log_formatter)
         logger.addHandler(file_log_handler)
@@ -175,30 +179,34 @@ def parse_input_file(input_filename, logger):
     # open working_species_list.txt and extract lines, without new line character
     # then create genus name, species name and taxonomy ID tuplet
     all_species_data = []
-    with open(input_filename) as file:
-        input_list = file.read().splitlines()
-        number_of_lines = len(input_list)
-        line_count = 1
+    try:
+        with open(input_filename) as file:
+            input_list = file.read().splitlines()
+    except Exception:
+        logger.error("ERROR: Failed to read input file", exc_info=1, stack_info=1)
+
+    number_of_lines = len(input_list)
+    line_count = 1
+
+    # Parse input, retrieving tax ID or scientific name as appropriate
+    for line in input_list:
+        logger.info("Processing line {} of {}".format(line_count, number_of_lines))
+        if line[0] != "#":
+            if line.startswith("NCBI:txid"):
+                gs_name = get_genus_species_name(line[9:], logger)
+                line_data = gs_name.split()
+                line_data.append(line)
+                all_species_data.append(line_data)
+            else:
+                tax_id = get_tax_ID(line, logger)
+                line_data = line.split()
+                line_data.append(tax_id)
+                all_species_data.append(line_data)
         logger.info(
-            "Reading input file, and acquiring Tax IDs and Genus/Species names."
+            "Finished processing line {} of {}".format(line_count, number_of_lines)
         )
-        for line in input_list:
-            logger.info("Processing line {} of {}".format(line_count, number_of_lines))
-            if line[0] != "#":
-                if line.startswith("NCBI:txid"):
-                    gs_name = get_genus_species_name(line[9:], logger)
-                    line_data = gs_name.split()
-                    line_data.append(line)
-                    all_species_data.append(line_data)
-                else:
-                    tax_id = get_tax_ID(line, logger)
-                    line_data = line.split()
-                    line_data.append(tax_id)
-                    all_species_data.append(line_data)
-            logger.info(
-                "Finished processing line {} of {}".format(line_count, number_of_lines)
-            )
-            line_count += 1
+        line_count += 1
+
     logger.info("Finished reading and closed input file")
 
     # create dataframe containg three columns: 'Genus', 'Species', 'NCBI Taxonomy ID'
@@ -220,8 +228,11 @@ def get_genus_species_name(taxonomy_id, logger):
 
     logger.info("(Retrieving genus/species name using Taxonomy ID)")
 
-    with Entrez.efetch(db="Taxonomy", id=taxonomy_id, retmode="xml") as handle:
-        record = Entrez.read(handle)
+    try:
+        with Entrez.efetch(db="Taxonomy", id=taxonomy_id, retmode="xml") as handle:
+            record = Entrez.read(handle)
+    except Exception:
+        logger.error("ERROR: Entrez failed to retrieve scientific name", exc_info=1)
 
     return record[0]["ScientificName"]
 
@@ -235,9 +246,11 @@ def get_tax_ID(genus_species, logger):
     """
 
     logger.info("(Retrieving taxonomy ID using genus/species name)")
-
-    with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
-        record = Entrez.read(handle)
+    try:
+        with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
+            record = Entrez.read(handle)
+    except Exception:
+        logger.error("ERROR: Entrez failed to retrieve taxonomy ID", exc_info=1)
 
     return "NCBI:txid" + record["IdList"][0]
 
@@ -293,51 +306,66 @@ def get_accession_numbers(taxonomy_id_column, logger):
     Accession numbers are returned as a string 'NCBI_accession_numbers'.
     """
 
-    with Entrez.elink(
-        dbfrom="Taxonomy",
-        id=taxonomy_id_column,
-        db="Assembly",
-        linkname="taxonomy_assembly",
-    ) as assembly_number_handle:
-        assembly_number_record = Entrez.read(assembly_number_handle)
-        assembly_id_list = [
-            dict["Id"] for dict in assembly_number_record[0]["LinkSetDb"][0]["Link"]
-        ]
+    try:
+        with Entrez.elink(
+            dbfrom="Taxonomy",
+            id=taxonomy_id_column,
+            db="Assembly",
+            linkname="taxonomy_assembly",
+        ) as assembly_number_handle:
+            assembly_number_record = Entrez.read(assembly_number_handle)
+            assembly_id_list = [
+                dict["Id"] for dict in assembly_number_record[0]["LinkSetDb"][0]["Link"]
+            ]
+    except Exception:
+        logger.error("ERROR: Entrez failed to retrieve assembly ID", exc_info=1)
+    finally:
+        logger.info("(Finished processing retrieval of assembly ID)", exc_info=1)
 
-    logger.info(
-        "(Finished processing retrieval of associated assembly IDs for Taxonomy ID)"
-    )
-
-    epost_search_results = Entrez.read(
-        Entrez.epost("Assembly", id=str(",".join(assembly_id_list)))
-    )
-    epost_webenv = epost_search_results["WebEnv"]
-    epost_query_key = epost_search_results["QueryKey"]
-    logger.info(
-        "(Finished processing posting of assembly IDs for accession number fetch for Taxonomy ID)"
-    )
+    try:
+        epost_search_results = Entrez.read(
+            Entrez.epost("Assembly", id=str(",".join(assembly_id_list)))
+        )
+        epost_webenv = epost_search_results["WebEnv"]
+        epost_query_key = epost_search_results["QueryKey"]
+    except Exception:
+        logger.error("ERROR: Entrez failed to post assembly IDs", exc_info=1)
+    finally:
+        logger.info(
+            "(Finihsed processing positing of assembly IDs for accession number fetch"
+        )
 
     NCBI_accession_numbers_list = []
 
-    with Entrez.efetch(
-        db="Assembly",
-        query_key=epost_query_key,
-        WebEnv=epost_webenv,
-        rettype="docsum",
-        retmode="xml",
-    ) as accession_handle:
-        accession_record = Entrez.read(accession_handle, validate=False)
-        # Find total number of accession numbers
-        number_of_accession_numbers = len(
-            accession_record["DocumentSummarySet"]["DocumentSummary"]
-        )
-        # Add each accession number in the accession record to the accession number list
+    try:
+        with Entrez.efetch(
+            db="Assembly",
+            query_key=epost_query_key,
+            WebEnv=epost_webenv,
+            rettype="docsum",
+            retmode="xml",
+        ) as accession_handle:
+            accession_record = Entrez.read(accession_handle, validate=False)
+    except Exception:
+        logger.error("ERROR: Entrez failed to retrieve accession numbers", exc_info=1)
+
+    # Find total number of accession numbers
+    number_of_accession_numbers = len(
+        accession_record["DocumentSummarySet"]["DocumentSummary"]
+    )
+
+    # Retrieve accession numbers
+    try:
         for index_number in range(number_of_accession_numbers):
             new_accession_number = accession_record["DocumentSummarySet"][
                 "DocumentSummary"
             ][index_number]["AssemblyAccession"]
             NCBI_accession_numbers_list.append(new_accession_number)
             index_number += 1
+    except Exception:
+        logger.error(
+            "ERROR: Error encounted when fetching accession numbers", exc_info=1
+        )
 
     logger.info(
         "(Finished processing retrieval associated accession numbers of Taxonomy ID)"
