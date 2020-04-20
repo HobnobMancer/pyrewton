@@ -49,10 +49,9 @@ setuptools.setup(
     keywords="genome bioinforamtics protein engineering",
     platforms="Posix, MacOS X",
     url="https://github.com/HobnobMancer/PhD_Project_Scripts",  # Github repository
-    scripts=["Extract_genomes_NCBI.py"],
     entry_points={
         "console_scripts": [
-            "Extract_genomes_NCBI = Section1_Extracting_Genomes.Extract_genomes.NCBI:main"
+            "Extract_genomes_NCBI = Section1_Extracting_Genomes.Extract_genomes_NCBI:main"
         ]
     },
     # Ensure all additional requirements are installed

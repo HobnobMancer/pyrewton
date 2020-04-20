@@ -32,6 +32,7 @@ def main():
     parser = argparse.ArgumentParser(
         prog="Extract_genomes_NCBI.py",
         description="Programme to pull down genomic assembleis from NCBI",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
     # Add arguments to parser
@@ -48,27 +49,27 @@ def main():
         "-i",
         "--input_file",
         type=str,
-        metavar="custom input file name",
+        metavar="input file name",
         default="Extract_genomes_NCBI_input_file.txt",
-        help="Name of input file (including extension) containing list of species, if not using input file provided (Default: Extract_genomes_NCBI_input_file.txt)",
+        help="input filename",
     )
     # Add output file name option
     parser.add_argument(
         "-o",
         "--output",
         type=str,
-        metavar="custom output file name",
+        metavar="output file name",
         default=None,
-        help="Name of output file (including extension) if not using input file provided (Default: None)",
+        help="output filename",
     )
     # Add log file name option
     parser.add_argument(
         "-l",
         "--log",
         type=str,
-        metavar="custom log file name",
+        metavar="log file name",
         default=None,
-        help="Additional string added to log file name (Default: None)",
+        help="Additional string added to log file name",
     )
 
     # Parse arguments into args variable
@@ -126,7 +127,7 @@ def build_logger(
     logger.addHandler(console_log_handler)
 
     # Setup file handler to log to a file
-    if custom_string != None:
+    if custom_string is not None:
         file_log_handler = logging.FileHandler(
             "LOG:"
             + script_name
@@ -183,7 +184,7 @@ def parse_input_file(input_filename):
         for line in input_list:
             logger.info("Processing line {} of {}".format(line_count, number_of_lines))
             if line[0] != "#":
-                if line.startswith("NCBI:txid", 0, 9) is True:
+                if line.startswith("NCBI:txid"):
                     gs_name = get_genus_species_name(line[9:])
                     line_data = gs_name.split()
                     line_data.append(line)
