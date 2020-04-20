@@ -29,6 +29,11 @@ def main():
     'species_table'.
     """
 
+    # Capture date and time script is executed
+    date = datetime.datetime.now()
+    date_of_pulldown = date.strftime("%Y-%m-%d")
+    time_of_pulldown = date.strftime("%H:%M")
+
     # Create parser object
     parser = argparse.ArgumentParser(
         prog="Extract_genomes_NCBI.py",
@@ -58,13 +63,16 @@ def main():
         help="input filename",
     )
     # Add output file name option
-    # If not given, output will be saved to CWD with default name
+    # If not given, file will be written to CWD
+    # Development note - need to add file extension for default output file
     parser.add_argument(
         "-o",
         "--output",
         type=Path,
         metavar="output file name",
-        default=None,
+        default=Path.cwd().joinpath(
+            "Extract_genomes_NCBI_{}_{}".format(date_of_pulldown, time_of_pulldown)
+        ),
         help="output filename",
     )
     # Add log file name option
@@ -83,11 +91,6 @@ def main():
 
     # Add users email address from parser
     Entrez.email = args.user_email
-
-    # Capture date and time script is executed
-    date = datetime.datetime.now()
-    date_of_pulldown = date.strftime("%Y-%m-%d")
-    time_of_pulldown = date.strftime("%H:%M")
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
