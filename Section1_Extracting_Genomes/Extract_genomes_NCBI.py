@@ -103,7 +103,14 @@ def main():
     try:
         # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
         species_table = parse_input_file(args.input_file, logger)
+    except Exception:
+        logger.error(
+            "::ERROR:: Error encounted during name and tax ID retrieval, see stack info:",
+            exc_info=1,
+            stack_info=1,
+        )
 
+    try:
         # pull down all accession numbers associated with each Taxonomy ID, from NCBI
         # add accession numbers to 'species_table' dataframe
         species_table = collate_accession_numbers(species_table, logger)
@@ -111,7 +118,7 @@ def main():
         print("\nSpecies table:\n", species_table)
     except Exception:
         logger.error(
-            "::ERROR:: Error encounted during run, see Stack info below:",
+            "::ERROR:: Error encounted during accession number acquisition, see stack info::",
             exc_info=1,
             stack_info=1,
         )
