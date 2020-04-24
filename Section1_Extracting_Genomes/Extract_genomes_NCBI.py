@@ -105,7 +105,7 @@ def main():
         species_table = parse_input_file(args.input_file, logger)
     except Exception:
         logger.error(
-            "::ERROR:: Error encounted during name and tax ID retrieval, see stack info:",
+            "Error encounted during name and tax ID retrieval, see stack info:",
             exc_info=1,
             stack_info=1,
         )
@@ -118,7 +118,7 @@ def main():
         print("\nSpecies table:\n", species_table)
     except Exception:
         logger.error(
-            "::ERROR:: Error encounted during accession number acquisition, see stack info::",
+            "Error encounted during accession number acquisition, see stack info::",
             exc_info=1,
             stack_info=1,
         )
@@ -190,7 +190,9 @@ def parse_input_file(input_filename, logger):
         with open(input_filename) as file:
             input_list = file.read().splitlines()
     except Exception:
-        logger.error("ERROR: Failed to read input file", exc_info=1, stack_info=1)
+        logger.error(
+            "ERROR encountered when trying to read input file", exc_info=1, stack_info=1
+        )
 
     number_of_lines = len(input_list)
     line_count = 1
@@ -239,7 +241,7 @@ def get_genus_species_name(taxonomy_id, logger):
         with Entrez.efetch(db="Taxonomy", id=taxonomy_id, retmode="xml") as handle:
             record = Entrez.read(handle)
     except Exception:
-        logger.error("ERROR: Entrez failed to retrieve scientific name", exc_info=1)
+        logger.error("Entrez failed to retrieve scientific name", exc_info=1)
 
     return record[0]["ScientificName"]
 
@@ -257,7 +259,7 @@ def get_tax_ID(genus_species, logger):
         with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
             record = Entrez.read(handle)
     except Exception:
-        logger.error("ERROR: Entrez failed to retrieve taxonomy ID", exc_info=1)
+        logger.error("Entrez failed to retrieve taxonomy ID", exc_info=1)
 
     return "NCBI:txid" + record["IdList"][0]
 
@@ -325,7 +327,7 @@ def get_accession_numbers(taxonomy_id_column, logger):
                 dict["Id"] for dict in assembly_number_record[0]["LinkSetDb"][0]["Link"]
             ]
     except Exception:
-        logger.error("ERROR: Entrez failed to retrieve assembly ID", exc_info=1)
+        logger.error("Entrez failed to retrieve assembly ID", exc_info=1)
     finally:
         logger.info("(Finished processing retrieval of assembly ID)", exc_info=1)
 
@@ -336,7 +338,7 @@ def get_accession_numbers(taxonomy_id_column, logger):
         epost_webenv = epost_search_results["WebEnv"]
         epost_query_key = epost_search_results["QueryKey"]
     except Exception:
-        logger.error("ERROR: Entrez failed to post assembly IDs", exc_info=1)
+        logger.error("Entrez failed to post assembly IDs", exc_info=1)
     finally:
         logger.info(
             "(Finihsed processing positing of assembly IDs for accession number fetch"
@@ -354,7 +356,7 @@ def get_accession_numbers(taxonomy_id_column, logger):
         ) as accession_handle:
             accession_record = Entrez.read(accession_handle, validate=False)
     except Exception:
-        logger.error("ERROR: Entrez failed to retrieve accession numbers", exc_info=1)
+        logger.error("Entrez failed to retrieve accession numbers", exc_info=1)
 
     # Find total number of accession numbers
     number_of_accession_numbers = len(
@@ -370,9 +372,7 @@ def get_accession_numbers(taxonomy_id_column, logger):
             NCBI_accession_numbers_list.append(new_accession_number)
             index_number += 1
     except Exception:
-        logger.error(
-            "ERROR: Error encounted when fetching accession numbers", exc_info=1
-        )
+        logger.error("Error encounted when fetching accession numbers", exc_info=1)
 
     logger.info(
         "(Finished processing retrieval associated accession numbers of Taxonomy ID)"
