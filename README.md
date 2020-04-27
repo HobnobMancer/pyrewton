@@ -86,32 +86,32 @@ each script, and the probably causes of each error.
 
 ### Extract_genomes_NCBI
 
-The majoirty of issues will arise due to errors in the input file.\
-Always ensure the input file does not contain any errors or blank\
-lines. Additionally, always ensure the correct path to the input\
+The majoirty of issues will arise due to errors in the input file.
+Always ensure the input file does not contain any errors or blank
+lines. Additionally, always ensure the correct path to the input
 file is provided.
 
 **IOError**\
-This error will occur if there is a network issue when using Entrez\
+This error will occur if there is a network issue when using Entrez
 to call to NCBI. The script will automatically retry the call.
 
-If a network error occurs during the retrieval of a scientific name\
-or taxonomy ID the program will terminate, to avoid errors occuring\
-during downstream processing that will cause the program to\
+If a network error occurs during the retrieval of a scientific name
+or taxonomy ID the program will terminate, to avoid errors occuring
+during downstream processing that will cause the program to
 automatically terminate.
 
-If a network error occurs during the retrievel of the accession\
-numbers, the program will exit the process of the retrieval of\
-the accession numbers and start processing the retrieval of the\
-taxonomy ID in the dataframe. This is so a second attempt to\
-retrieve the accession numbers can be performed by reinvoking\
-the script, only for the species for which the retrieval\
+If a network error occurs during the retrievel of the accession
+numbers, the program will exit the process of the retrieval of
+the accession numbers and start processing the retrieval of the
+taxonomy ID in the dataframe. This is so a second attempt to
+retrieve the accession numbers can be performed by reinvoking
+the script, only for the species for which the retrieval
 previously failed, thus reducing demand on the NCBI database.
 
 **FileNotFoundError**\
-This error will occur is the incorrect path is provided as the\
-input argument at the command line, or no input argument is\
-provided and STDIN contains no data. Ensure the path includes\
+This error will occur is the incorrect path is provided as the
+input argument at the command line, or no input argument is
+provided and STDIN contains no data. Ensure the path includes
 the file name, with extension.
 
 If this error occurs the program will terminate.
