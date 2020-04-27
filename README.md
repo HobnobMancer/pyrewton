@@ -91,7 +91,7 @@ Always ensure the input file does not contain any errors or blank\
 lines. Additionally, always ensure the correct path to the input\
 file is provided.
 
-**IOError**
+**IOError**\
 This error will occur if there is a network issue when using Entrez\
 to call to NCBI. The script will automatically retry the call.
 
@@ -108,7 +108,7 @@ retrieve the accession numbers can be performed by reinvoking\
 the script, only for the species for which the retrieval\
 previously failed, thus reducing demand on the NCBI database.
 
-**FileNotFoundError**
+**FileNotFoundError**\
 This error will occur is the incorrect path is provided as the\
 input argument at the command line, or no input argument is\
 provided and STDIN contains no data. Ensure the path includes\
@@ -116,87 +116,87 @@ the file name, with extension.
 
 If this error occurs the program will terminate.
 
-**IndexError during scientific name retrieval**
-This occurs when Entrez fails to retrieve a sceintific name for\
+**IndexError during scientific name retrieval**\
+This occurs when Entrez fails to retrieve a sceintific name for
 the given taxonomy ID.
 
-This is potentially caused by a typo in the taxonomy id provided\
+This is potentially caused by a typo in the taxonomy id provided
 in the input file.
 
-If this error occurs the program terminates to avoid errors\
-occuring during downstream processing that will cause the\
+If this error occurs the program terminates to avoid errors
+occuring during downstream processing that will cause the
 program to automatically terminate.
 
-**IndexError during taxonomy ID retrieval**
-This occurs when Entrez fails to retrieve a taxonomy ID for\
+**IndexError during taxonomy ID retrieval**\
+This occurs when Entrez fails to retrieve a taxonomy ID for
 the given scientific name.
 
-This is potentially caused by a typo in the species name in the\
-input file, or a typo in a taxonomy ID 'NCBI:txid' prefix,\
-causing the program to misinturpret the ID as a species name\
+This is potentially caused by a typo in the species name in the
+input file, or a typo in a taxonomy ID 'NCBI:txid' prefix,
+causing the program to misinturpret the ID as a species name
 and use it to try and retrieve a scientific name.
 
-If this error occurs the program terminates to avoid errors\
-occuring during downstream processing that will cause the\
+If this error occurs the program terminates to avoid errors
+occuring during downstream processing that will cause the
 program to automatically terminate.
 
-**IndexError during assembly ID retrieval**
-This occurs when Entrez fails to retrieve assembly IDs from\
+**IndexError during assembly ID retrieval**\
+This occurs when Entrez fails to retrieve assembly IDs from
 NCBI.
 
-This may be becuase there are no directly linked assemblies\
-for the given taxonomy ID. Check the NCBI Taxonomy database\
-to ensure there are 'directly' linked assemblies and not\
+This may be becuase there are no directly linked assemblies
+for the given taxonomy ID. Check the NCBI Taxonomy database
+to ensure there are 'directly' linked assemblies and not
 only 'subtree' assemblies.
 
-If this error occurs the program with exit the retrieve of\
-the assembly IDs and not retrieve the NCBI accession numbers.\
-This allows for troubleshooting using on the specie(s)\
+If this error occurs the program with exit the retrieve of
+the assembly IDs and not retrieve the NCBI accession numbers.
+This allows for troubleshooting using on the specie(s)
 for which it is required, to reduce demand on NCBI.
 
-**RuntimeError during posting of assembly IDs to NCBI**
-This error occurs when Entrez fails to post the retrieved\
-assembly IDs, causing it to fail to retrieve the document\
+**RuntimeError during posting of assembly IDs to NCBI**\
+This error occurs when Entrez fails to post the retrieved
+assembly IDs, causing it to fail to retrieve the document
 summary.
 
-This is potentially caused by incorrect formating of the\
-the assembly IDs or the request is too large for Entrez/\
+This is potentially caused by incorrect formating of the
+the assembly IDs or the request is too large for Entrez/
 NCBI. If this is the case, repeat the procedure in batches.
 
-If this error occurs the program with exit the posting of\
-the assembly IDs and not retrieve the NCBI accession numbers.\
-This allows for troubleshooting using on the specie(s)\
+If this error occurs the program with exit the posting of
+the assembly IDs and not retrieve the NCBI accession numbers.
+This allows for troubleshooting using on the specie(s)
 for which it is required, to reduce demand on NCBI.
 
-**RuntimeError or IndexError during retrieval of accession numbers**
-This error occurs when Entrez fails to retrieve the document\
+**RuntimeError or IndexError during retrieval of accession numbers**\
+This error occurs when Entrez fails to retrieve the document
 summary from NCBI.
 
-This is potentially caused by incorrect formating of the\
-the assembly IDs or the request is too large for Entrez/\
+This is potentially caused by incorrect formating of the
+the assembly IDs or the request is too large for Entrez/
 NCBI. If this is the case, repeat the procedure in batches.
 
-If this error occurs the program with exit the retrieval of\
-the NCBI accession numbers.\
-This allows for troubleshooting using on the specie(s)\
+If this error occurs the program with exit the retrieval of
+the NCBI accession numbers.
+This allows for troubleshooting using on the specie(s)
 for which it is required, to reduce demand on NCBI.
 
 ## Testing
 
-This section describes the tests that are included with the\
-program to ensure each of the scripts is operating as\
+This section describes the tests that are included with the
+program to ensure each of the scripts is operating as
 expected.
 
 ### Extract_genomes_NCBI
 
-**test_name_and_id_retrieval.py**
-This test tests the functions `get_genus_species_name()` and\
-`get_tax_id()`, using provided inputs. The result of the\
-Entrez calls to the NCBI database are compared against\
+**test_name_and_id_retrieval.py**\
+This test tests the functions `get_genus_species_name()` and
+`get_tax_id()`, using provided inputs. The result of the
+Entrez calls to the NCBI database are compared against
 expected results.
 
-**test_accession_number_retrieval.py**
-This test test the `get_accession_numbers()` function, to ensure\
-that Entrez can call to the NCBI database. Owing to the frequent\
-updating of the NCBI Assembly database it is not possible to\
+**test_accession_number_retrieval.py**\
+This test test the `get_accession_numbers()` function, to ensure
+that Entrez can call to the NCBI database. Owing to the frequent
+updating of the NCBI Assembly database it is not possible to
 compare the results from the NCBI call against expected results.
