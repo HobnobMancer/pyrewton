@@ -26,11 +26,6 @@ class TestName_and_IDRetrieval(unittest.TestCase):
     # Define tests
 
     def test_assembly_id_retrieval(self):
-        """Tests Entrez call to NCBI to retrieve all accession numbers associated
-        with taxonomy ID. Specifically, tests that something is returned after all
-        Entrez calls"""
-
-        # Input for Entrez call: '5061'
-        # Test something was returned, and not an empty query
+        """Tests is turned after get_accession_numbers() Entrez calls"""
 
         Extract_genomes_NCBI.get_accession_numbers("5061", self.logger)
