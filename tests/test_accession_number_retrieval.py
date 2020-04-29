@@ -14,8 +14,7 @@ Entrez.email = "eemh1@standrews.ac.uk"
 
 class TestName_and_IDRetrieval(unittest.TestCase):
 
-    """Class defining tests of Extract_genomes_NCBI.py name
-  and taxonomy ID retrieval. """
+    """Class defining tests of Extract_genomes_NCBI.py assembly retrieval"""
 
     # Establish inputs for tests and expected outputs
 
