@@ -189,6 +189,11 @@ expected.
 
 ### Extract_genomes_NCBI
 
+**test_input_reading.py**\
+This tests the ability of the `parse_inputfile()` function's
+ability to open and read a given input file, defined using
+the `pathlib` `Path` module.
+
 **test_name_and_id_retrieval.py**\
 This test tests the functions `get_genus_species_name()` and
 `get_tax_id()`, using provided inputs. The result of the
