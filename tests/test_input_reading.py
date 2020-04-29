@@ -35,8 +35,7 @@ class TestName_and_IDRetrieval(unittest.TestCase):
     # Define tests
 
     def test_example_input_file_exists(self):
-
-        """Tests that example input file, supplied with programme is present."""
+        """Tests that test input file, supplied with programme is present."""
         assert self.input_file_path.is_file() == True
 
     def test_input_file(self):

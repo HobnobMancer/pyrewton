@@ -27,21 +27,23 @@ class TestName_and_IDRetrieval(unittest.TestCase):
     # Define tests
 
     def test_species_name_retrieval(self):
-        """Tests Entrez call to NCBI to retrieve scientific name from taxonomy ID."""
+        """Tests Entrez call to NCBI to retrieve scientific name from taxonomy ID.
+        
+        Input: '5061'. Expected output: 'Aspergillus niger'.
+        '0' represent an arbitary line numbers passed to the function in the
+        original srcipt."""
 
-        # Input for Entrez call: '5061'
-        # Expected return from call: 'Aspergillus niger'
-        # 0 represents an arbitary line numbers passed to the function
         assert "Aspergillus niger" == Extract_genomes_NCBI.get_genus_species_name(
             "5061", self.logger, 0
         )
 
     def test_taxonomy_id_retrieval(self):
-        """Tests Entrez call to NCBI to retrieve taxonomy ID from scientific name."""
+        """Tests Entrez call to NCBI to retrieve taxonomy ID from scientific name.
+        
+        Input: 'Aspergillus nidulans'. Expected output: '162425'.
+        '0' represents an arbitary line numbers passed to the function in the
+        original script."""
 
-        # Input for Entrez call: 'Aspergillus nidulans'
-        # Expected return from call: '162425'
-        # 0 represents an arbitary line numbers passed to the function
-        assert "NCBI:txid162425" == Extract_genomes_NCBI.get_tax_ID(
-            "Aspergillus nidulans", self.logger, 0
+        assert "NCBI:txid5061" == Extract_genomes_NCBI.get_tax_ID(
+            "Aspergillus niger", self.logger, 0
         )
