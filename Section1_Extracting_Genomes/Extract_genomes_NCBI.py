@@ -177,9 +177,18 @@ def parse_input_file(input_filename, logger):
         )
         sys.exit(1)
 
-    # test path to input file exists proceed
-    with open(input_filename) as file:
-        input_list = file.read().splitlines()
+    # if path to input file exists proceed
+    # parse input file
+    try:
+        with open(input_filename) as file:
+            input_list = file.read().splitlines()
+    except IOError:
+        # if input file cannot be read, programme terminates
+        logger.error(
+            "Input file was found but could not be read\nTerminating programming",
+            exc_info=1,
+        )
+        sys.exit(1)
 
     number_of_lines = len(input_list)
     line_count = 1
