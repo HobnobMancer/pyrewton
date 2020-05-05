@@ -25,9 +25,9 @@ jobs:
             pip install -r requirements.txt
 
       - save_cache:
-          paths: ./venv
-          keys:
-            - phd_eastbio_standrews-{{ .Branch }}-{{ checksum "requirements.txt" }}
+          paths:
+            - ./venv
+          key: phd_eastbio_standrews-{{ .Branch }}-{{ checksum "requirements.txt" }}
 
       - run:
           name: install package
