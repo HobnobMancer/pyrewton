@@ -250,6 +250,7 @@ def get_genus_species_name(taxonomy_id, logger, line_number):
         # log error
         logger.error("Network error encountered, retrying in 10s")
         time.sleep(10)
+        # initiate retries
         record = get_g_s_name_retry(taxonomy_id, logger, line_number)
 
     return record[0]["ScientificName"]
@@ -262,7 +263,7 @@ def get_tax_ID(genus_species, logger, line_number):
     species name passed to the function. Return the NCBI Taxonomy ID with
     the prefix 'NCBI:txid'.
     """
-
+    # check for potential mistake in taxonomy ID prefix
     if bool(re.search(r"\d", genus_species)) == True:
         logger.error(
             "Warning: Number found in genus-species name,\n when trying to retrieve taxonomy ID for species on line {}.\nPotential typo in taxonomy ID, so taxonomy ID misinturpretted as genus-species name.\nTerminating program to avoid downstream processing errors".format(
@@ -289,30 +290,11 @@ def get_tax_ID(genus_species, logger, line_number):
             sys.exit(1)
 
         except IOError:
-
-            try:
-                logger.error("Network on inital call to Entrez, call retried")
-                print("Network error, retrying in 30s")
-                time.sleep(30)
-                print("Re-trying Entrez call")
-                with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
-                    record = Entrez.read(handle)
-
-            except IndexError:
-                logger.error(
-                    "Entrez failed to retrieve taxonomy ID, for species in line {} of input file.\nPotential typo in species name.\nTerminating program to avoid downstream processing errors".format(
-                        line_number
-                    ),
-                    exc_info=1,
-                )
-                sys.exit(1)
-
-            except IOError:
-                logger.error(
-                    ("Network error, failed to call to Entrez, terminating program"),
-                    exc_info=1,
-                )
-                sys.exit(1)
+            # log error
+            logger.error("Network error ecountered, retrying in 10s")
+            time.sleep(10)
+            # initate retries
+            record = get_t_id_retry(genus_species, logger, line_number)
 
         return "NCBI:txid" + record["IdList"][0]
 
@@ -582,7 +564,7 @@ def get_g_s_name_retry(taxonomy_id, logger, line_number, retries=10):
     such record does not exist, or typo in given taxonomy ID,
     programme terminates.
 
-    Function only invoked if network encountered during call to NCBI
+    Function only invoked if network  error encountered during call to NCBI
     using Entrez in another function.
 
     Return record.
@@ -608,9 +590,6 @@ def get_g_s_name_retry(taxonomy_id, logger, line_number, retries=10):
 
         except IOError:
             # log retry attempt
-            logger.error(
-                "Network error encountered during try no.{}".format(tries), exc_info=1
-            )
             if tries < tries:
                 logger.error(
                     "Network error encountered during try no.{}.\nRetrying in 10s".format(
@@ -632,6 +611,58 @@ def get_g_s_name_retry(taxonomy_id, logger, line_number, retries=10):
 
 
 # If network error encountered during retrieval of taxonomy ID
+def get_t_id_retry(genus_species, logger, line_number, retries=10):
+    """Retries call to NCBI Taxonomy database to retrieve taxonomy ID.
+
+    Maxinum number of retries is 10. Retry initated with network error
+    encountered. IF not recorded is returned for non-network error issue,
+    such as record does not exist, or type in the given scientific name,
+    programme terminates.
+
+    Function all invoked if network error encountered during call to NCBI
+    using Entrez in another function.
+
+    Return record.
+    """
+
+    record = None
+    tries = 0
+
+    while record is None and tries < retries:
+        try:
+            with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
+                record = Entrez.read(handle)
+
+        # If network error not encountered but no recorded returned, terminate programme
+        except IndexError:
+            logger.error(
+                "Entrez failed to retrieve taxonomy ID, for species in line {} of input file.\nPotential typo in species name.\nTerminating program to avoid downstream processing errors".format(
+                    line_number
+                ),
+                exc_info=1,
+            )
+            sys.exit(1)
+
+        except IOError:
+            # log retry attempt
+            if tries < tries:
+                logger.error(
+                    "Network error encountered during try no.{}.\nRetrying in 10s".format(
+                        tries
+                    ),
+                    exc_info=1,
+                )
+                time.sleep(10)
+            tries += 1
+
+    if record is None:
+        logger.error(
+            "Network error encountered after 10 attempts.\nTerminating programme",
+            exc_info=1,
+        )
+        sys.exit(1)
+
+    return record
 
 
 if __name__ == "__main__":
