@@ -8,3 +8,4 @@ pandas
 pydocstyle
 pycodestyle
 pylint
+pytest

@@ -1,0 +1,47 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@0.2.1
+
+jobs:
+  build-and-test:
+    executor: python/default
+
+    working_directory: ~/phd_eastbio
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - phd_eastbio_standrews-{{ .Branch }}-{{ checksum "requirements.txt" }}
+            - phd_eastbio_standrews-
+
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+
+      - save_cache:
+          paths:
+            - ./venv
+          key: phd_eastbio_standrews-{{ .Branch }}-{{ checksum "requirements.txt" }}
+
+      - run:
+          name: install package
+          command: |
+            . venv/bin/activate
+            pip install -e .
+
+      - run:
+          name: test
+          command: |
+            . venv/bin/activate
+            pytest -v
+
+workflows:
+  main:
+    jobs:
+      - build-and-test
