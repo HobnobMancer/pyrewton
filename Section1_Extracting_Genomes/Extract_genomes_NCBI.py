@@ -248,7 +248,11 @@ def get_genus_species_name(taxonomy_id, logger, line_number):
 
     except IOError:
         # log error
-        logger.error("Network error encountered, retrying in 10s")
+        logger.error(
+            "Network error encountered during retrieval of scientific\nname for species in line {} of inputfile,\nretrying in 10s".format(
+                line_number
+            )
+        )
         time.sleep(10)
         # initiate retries
         record = get_g_s_name_retry(taxonomy_id, logger, line_number)
@@ -366,7 +370,7 @@ def get_accession_numbers(taxonomy_id, logger):
 
     except IndexError:
         logger.error(
-            "Entrez failed to retrieve assembly IDs, for {}.\nExiting retrievel of accession numbers for {}".format(
+            "Entrez failed to retrieve assembly IDs, for NCBI:txid{}.\nExiting retrieval of accession numbers for {}".format(
                 taxonomy_id, taxonomy_id
             ),
             exc_info=1,
@@ -374,39 +378,16 @@ def get_accession_numbers(taxonomy_id, logger):
         return ()
 
     except IOError:
-        try:
-            logger.error("Network on inital call to Entrez, call retried")
-            print("Network error, retrying in 30s")
-            time.sleep(30)
-            print("Re-trying Entrez call")
-            with Entrez.elink(
-                dbfrom="Taxonomy",
-                id=taxonomy_id,
-                db="Assembly",
-                linkname="taxonomy_assembly",
-            ) as assembly_number_handle:
-                assembly_number_record = Entrez.read(assembly_number_handle)
-                assembly_id_list = [
-                    dict["Id"]
-                    for dict in assembly_number_record[0]["LinkSetDb"][0]["Link"]
-                ]
-
-        except IndexError:
-            logger.error(
-                "Entrez failed to retrieve assembly IDs, for NCBI:txid{}.\nExiting retrievel of accession numbers for NCBI:txid{}".format(
-                    taxonomy_id, taxonomy_id
-                ),
-                exc_info=1,
+        # log error
+        logger.error(
+            "Network error encountered during retrieval of assembly IDs, for NCBI:txid{},\n retrying in 10s".format(
+                taxonomy_id
             )
-            return ()
-
-        except IOError:
-            logger.error(
-                "Network error, failed to call to Entrez, exiting retrievel of accession numbers for NCBI:txid{}".format(
-                    taxonomy_id
-                ),
-                exc_info=1,
-            )
+        )
+        time.sleep(10)
+        # initate retries
+        assembly_id_list = get_a_id_retry(taxonomy_id, logger)
+        if assembly_id_list == None:
             return ()
 
     logger.info("(Finished processing retrieval of assembly ID)")
@@ -418,47 +399,32 @@ def get_accession_numbers(taxonomy_id, logger):
         epost_search_results = Entrez.read(
             Entrez.epost("Assembly", id=str(",".join(assembly_id_list)))
         )
-        epost_webenv = epost_search_results["WebEnv"]
-        epost_query_key = epost_search_results["QueryKey"]
 
     except RuntimeError:
         logger.error(
-            "Entrez could not retrieve document summary.\nPotential incorrect formatting of assembly IDs,\nor query too large.\nExiting retrievel of accession numbers for NCBI:txid{}".format(
-                taxonomy_id
+            "Entrez failed to post assembly IDs for NCBI:txid{}.\nEntrez could not retrieve document summary.\nPotential incorrect formatting of assembly IDs,\nor query too large.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
+                taxonomy_id, taxonomy_id
             ),
             exc_info=1,
         )
         return ()
 
     except IOError:
-        try:
-            logger.error("Network on inital call to Entrez, call retried")
-            print("Network error, retrying in 30s")
-            time.sleep(30)
-            print("Re-trying Entrez call")
-            epost_search_results = Entrez.read(
-                Entrez.epost("Assembly", id=str(",".join(assembly_id_list)))
+        # log error
+        logger.error(
+            "Network error encountered during assembly id posting for NCBI:txid{},\n retrying in 10s".format(
+                taxonomy_id
             )
-            epost_webenv = epost_search_results["WebEnv"]
-            epost_query_key = epost_search_results["QueryKey"]
-
-        except RuntimeError:
-            logger.error(
-                "Entrez could not retrieve document summary.\nPotential incorrect formatting of assembly IDs,\nor query too large.\nExiting retrievel of accession numbers for NCBI:txid{}".format(
-                    taxonomy_id
-                ),
-                exc_info=1,
-            )
+        )
+        time.sleep(10)
+        # initiate retries
+        epost_search_results = post_a_ids_retry(assembly_id_list, logger, taxonomy_id)
+        if epost_search_results == None:
             return ()
 
-        except IOError:
-            logger.error(
-                "Network error, failed to call to Entrez.\nExiting retrievel of accession numbers for NCBI:txid{}".format(
-                    taxonomy_id
-                ),
-                exc_info=1,
-            )
-            return ()
+    # Retrieve web environment and query key from Entrez epost
+    epost_webenv = epost_search_results["WebEnv"]
+    epost_query_key = epost_search_results["QueryKey"]
 
     logger.info(
         "(Finihsed processing positing of assembly IDs for accession number fetch)"
@@ -480,7 +446,7 @@ def get_accession_numbers(taxonomy_id, logger):
 
     except RuntimeError:
         logger.error(
-            "Entrez could not retrieve document summary.\nPotential incorrect formatting of assembly IDs,\nor query too large.\nExiting retrievel of accession numbers for NCBI:txid{}".format(
+            "Entrez could not retrieve document summary when retrieving accession numbers.\nPotential incorrect formatting of assembly IDs,\nor query too large.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
                 taxonomy_id
             ),
             exc_info=1,
@@ -488,36 +454,18 @@ def get_accession_numbers(taxonomy_id, logger):
         return ()
 
     except IOError:
-        try:
-            logger.error("Network on inital call to Entrez, call retried")
-            print("Network error, retrying in 30s")
-            time.sleep(30)
-            print("Re-trying Entrez call")
-            with Entrez.efetch(
-                db="Assembly",
-                query_key=epost_query_key,
-                WebEnv=epost_webenv,
-                rettype="docsum",
-                retmode="xml",
-            ) as accession_handle:
-                accession_record = Entrez.read(accession_handle, validate=False)
-
-        except RuntimeError:
-            logger.error(
-                "Entrez could not retrieve document summary.\nPotential incorrect formatting of assembly IDs,\nor query too large.\nExiting retrievel of accession numbers for NCBI:txid{}".format(
-                    taxonomy_id
-                ),
-                exc_info=1,
+        # log error
+        logger.error(
+            "Network error encountered during accession number retrieval\nfor NCBI:txid{},retrying in 10s".format(
+                taxonomy_id
             )
-            return ()
-
-        except IOError:
-            logger.error(
-                "Network error, failed to call to Entrez.\nExiting retrievel of accession numbers for NCBI:txid{}".format(
-                    taxonomy_id
-                ),
-                exc_info=1,
-            )
+        )
+        time.sleep(10)
+        # initate retries
+        accession_record = get_a_n_retry(
+            epost_query_key, epost_webenv, logger, taxonomy_id
+        )
+        if accession_record == None:
             return ()
 
     # Find total number of accession numbers
@@ -559,9 +507,9 @@ def get_accession_numbers(taxonomy_id, logger):
 def get_g_s_name_retry(taxonomy_id, logger, line_number, retries=10):
     """Retries call to NCBI Taxnomy database to retrieve scientific name.
 
-    Maxinum number of retries is 10. Retry initated with network error
+    Maxinum number of retries is 10. Retry initated when network error
     encountered. If no recorded is returned for non-network error issue,
-    such record does not exist, or typo in given taxonomy ID,
+    such as record does not exist, or typo in given taxonomy ID,
     programme terminates.
 
     Function only invoked if network  error encountered during call to NCBI
@@ -614,8 +562,8 @@ def get_g_s_name_retry(taxonomy_id, logger, line_number, retries=10):
 def get_t_id_retry(genus_species, logger, line_number, retries=10):
     """Retries call to NCBI Taxonomy database to retrieve taxonomy ID.
 
-    Maxinum number of retries is 10. Retry initated with network error
-    encountered. IF not recorded is returned for non-network error issue,
+    Maxinum number of retries is 10. Retry initated when network error
+    encountered. If no recorded is returned for non-network error issue,
     such as record does not exist, or type in the given scientific name,
     programme terminates.
 
@@ -661,6 +609,190 @@ def get_t_id_retry(genus_species, logger, line_number, retries=10):
             exc_info=1,
         )
         sys.exit(1)
+
+    return record
+
+
+# If network error encountered during retrieval of assembly IDs
+def get_a_id_retry(taxonomy_id, logger, retries=10):
+    """Retries call to NCBI Assembly database to retrieve accession numbers.
+
+    Maxinum number of retries is 10. Retry initated when network error
+    encountered. If no record is returned for non-network error issue,
+    such as record does not exist, or type is given taxonomy ID,
+    exits function.
+
+    Function only invoked if network error encountered during call to
+    NCBI using Entrez in another function.
+
+    Return list of assembly IDs for given taxonomy ID.
+    """
+
+    record = None
+    tries = 0
+
+    while record is None and tries < retries:
+        try:
+            with Entrez.elink(
+                dbfrom="Taxonomy",
+                id=taxonomy_id,
+                db="Assembly",
+                linkname="taxonomy_assembly",
+            ) as handle:
+                record = Entrez.read(handle)
+                assembly_id_list = [
+                    dict["Id"] for dict in record[0]["LinkSetDb"][0]["Link"]
+                ]
+
+        # If network error not encountered but no record returned
+        # terminate collection of accession numbers
+        except IndexError:
+            logger.error(
+                "Entrez failed to retrieve assembly IDs for NCBI:txid{}.\nExiting retrieval of accession numbers for {}".format(
+                    taxonomy_id, taxonomy_id, exc_info=1
+                )
+            )
+            return ()
+
+        except IOError:
+            # log retry attempt
+            if tries < tries:
+                logger.error(
+                    "Network error encountered during try no.{}.\nRetrying in 10s".format(
+                        tries
+                    ),
+                    exc_info=1,
+                )
+                time.sleep(10)
+            tries += 1
+
+    if record is None:
+        logger.error(
+            "Network error encountered after 10 attempts.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
+                taxonomy_id
+            ),
+            exc_info=1,
+        )
+        return ()
+
+    return assembly_id_list
+
+
+# If network error encountered during posting of assembly IDs
+def post_a_ids_retry(assembly_id_list, logger, taxonomy_id, retries=10):
+    """Retries call to NCBI Assembly database to post assembly IDs.
+
+    Maxinum number of retries is 10. Retry initated when network error
+    encountered. If no record is returned for non-network error issue,
+    such as post is too large, exits function.
+
+    Function only invoked if network error encountered during call to
+    NCBI using Entrez in another function.
+
+    Return record.
+    """
+
+    record = None
+    tries = 0
+
+    while record is None and tries < retries:
+        try:
+            record = Entrez.read(
+                Entrez.epost("Assembly", id=str(",".join(assembly_id_list)))
+            )
+
+        # If non-network work error encountered
+        # terminate posting of assembly IDs
+        except RuntimeError:
+            logger.error(
+                "Entrez failed to post assembly IDs for NCBI:txid{}.\nEntrez could not retrieve document summary.\nPotentially incorrect formatting of assembly IDS,\nor query too large.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
+                    taxonomy_id, taxonomy_id
+                ),
+                exc_info=1,
+            )
+            return ()
+
+        except IOError:
+            # log retry attempt
+            if tries < tries:
+                logger.error(
+                    "Network error encountered during try no.{}.\nRetrying in 10s".format(
+                        tries
+                    ),
+                    exc_info=1,
+                )
+                time.sleep(10)
+            tries += 1
+
+    if record is None:
+        logger.error(
+            "Network error encountered after 10 attempts.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
+                taxonomy_id
+            ),
+            exc_info=1,
+        )
+        return ()
+
+    return record
+
+
+# If network error encountered during retrieval of accession numbers
+def get_a_n_retry(epost_query_key, epost_webenv, logger, taxonomy_id, retries=10):
+    """Retries call to NCBI Assembly database to retrieve accession numbers.
+
+    Maxinum number of retries is 10. Retry initated when network error
+    encountered. If no record is returned for non-network error issue,
+    exits retrieval of accession numbers for given taxonomy ID.
+
+    Function only invoked if network error encountered during call to
+    NCBI using Entrez in another function.
+
+    Return record.
+    """
+
+    record = None
+    tries = 0
+
+    while record is None and tries < retries:
+        try:
+            with Entrez.efetch(
+                db="Assembly",
+                query_key=epost_query_key,
+                WebEnv=epost_webenv,
+                rettype="docsum",
+                retmode="xml",
+            ) as handle:
+                record = Entrez.read(handle, validate=False)
+
+        except RuntimeError:
+            logger.error(
+                "Entrez could not retrieve document summary when retrieving accession numbers.\nPotential incorrect formatting of assembly IDs,\nor query too large.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
+                    taxonomy_id
+                ),
+                exc_info=1,
+            )
+            return ()
+
+        except IOError:
+            # log retry attempt
+            if tries < tries:
+                logger.error(
+                    "Network error encountered during try no.{}.\nRetrying in 10s".format(
+                        tries
+                    ),
+                    exc_info=1,
+                )
+                time.sleep(10)
+            tries += 1
+
+    if record is None:
+        logger.error(
+            "Network error encountered after 10 attempts.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
+                taxonomy_id
+            ),
+            exc_info=1,
+        )
+        return ()
 
     return record
 
