@@ -12,6 +12,9 @@ jobs:
       - python/install-deps
       - python/save-cache
       - run:
+          name: install dependencies
+          command: pip install -r requirements.txt
+      - run:
           command: pytest -v
           name: Test
 
