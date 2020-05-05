@@ -167,16 +167,19 @@ def parse_input_file(input_filename, logger):
     # open working_species_list.txt and extract lines, without new line character
     # then create genus name, species name and taxonomy ID tuplet
     all_species_data = []
-    try:
-        with open(input_filename) as file:
-            input_list = file.read().splitlines()
 
-    except FileNotFoundError:
+    # test path to input file exists, if not exit programme
+    if input_filename.is_file() == False:
+        # report to user and exit programme
         logger.error(
             "Input file not found.\nCheck filename, extension and directory is correct.\nTerminating program.",
             exc_info=1,
         )
         sys.exit(1)
+
+    # test path to input file exists proceed
+    with open(input_filename) as file:
+        input_list = file.read().splitlines()
 
     number_of_lines = len(input_list)
     line_count = 1
