@@ -10,8 +10,8 @@ jobs:
       - checkout
 
       - restore_cache:
-        keys:
-          - phd_eastbio_standrews-{{ .Branch }}-{{ checksum "requirements.txt" }}
+          keys:
+            - phd_eastbio_standrews-{{ .Branch }}-{{ checksum "requirements.txt" }}
 
       - run:
           name: install dependencies
