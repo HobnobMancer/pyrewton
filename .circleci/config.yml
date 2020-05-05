@@ -11,19 +11,23 @@ jobs:
 
     steps:
       - checkout
-      # - restore_cache:
-      #     keys:
-      #       - phd_eastbio_standrews-{{ .Branch }}-{{ checksum "requirements.txt" }}
-      # - run:
-      #     name: install dependencies
-      #     command: |
-      #       python3 -m venv venv
-      #       . venv/bin/activate
-      #       pip install -r requirements.txt
-      # - save_cache:
-      #   paths: ./venv
-      #   keys:
-      #     - phd_eastbio_standrews-{{ .Branch }}-{{ checksum "requirements.txt" }}
+
+      - restore_cache:
+          keys:
+            - phd_eastbio_standrews-{{ .Branch }}-{{ checksum "requirements.txt" }}
+
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+
+      - save_cache:
+        paths: ./venv
+        keys:
+          - phd_eastbio_standrews-{{ .Branch }}-{{ checksum "requirements.txt" }}
+
       # - run:
       #   name: install package
       #   command: |
