@@ -5,7 +5,7 @@ orbs:
 
 jobs:
   build-and-test:
-    # executor: python/default
+    executor: python/default
     working_directory: ~/phd_eastbio
     steps:
       - checkout
