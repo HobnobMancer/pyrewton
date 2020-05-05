@@ -8,17 +8,32 @@ jobs:
     executor: python/default
     steps:
       - checkout
-      - python/load-cache
-      - python/install-deps
-      - python/save-cache
+
+      - restore_cache:
+        keys:
+          - phd_eastbio_standrews-{{ .Branch }}-{{ checksum "requirements.txt" }}
+
       - run:
           name: install dependencies
           command: |
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements.txt
+
+      - save_cache:
+        paths:
+          - ./venv
+        keys:
+          - phd_eastbio_standrews-{{ .Branch }}-{{ checksum "requirements.txt" }}
+
       - run:
-          name: Test
+        name: install package
+        command: |
+          . venv/bin/activate
+          pip install -e .
+
+      - run:
+          name: test
           command: |
             . venv/bin/activate
             pytest -v
