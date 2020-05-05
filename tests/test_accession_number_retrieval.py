@@ -9,7 +9,7 @@ import pytest
 
 from Section1_Extracting_Genomes import Extract_genomes_NCBI
 
-Entrez.email = "eemh1@standrews.ac.uk"
+Entrez.email = "my.email@my.domain"
 
 
 class Test_call_to_AssemblyDb(unittest.TestCase):
