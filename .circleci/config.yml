@@ -29,16 +29,16 @@ jobs:
       #     - phd_eastbio_standrews-{{ .Branch }}-{{ checksum "requirements.txt" }}
 
       - run:
-        name: install package
-        command: |
-          . venv/bin/activate
-          pip install -e .
+          name: install package
+          command: |
+            . venv/bin/activate
+            pip install -e .
 
       - run:
-        name: test
-        command: |
-          . venv/bin/activate
-          pytest -v
+          name: test
+          command: |
+            . venv/bin/activate
+            pytest -v
 
 workflows:
   main:
