@@ -12,7 +12,7 @@ from Section1_Extracting_Genomes import Extract_genomes_NCBI
 Entrez.email = "eemh1@standrews.ac.uk"
 
 
-class TestName_and_IDRetrieval(unittest.TestCase):
+class Test_call_to_AssemblyDb(unittest.TestCase):
 
     """Class defining tests of Extract_genomes_NCBI.py assembly retrieval"""
 
@@ -25,6 +25,7 @@ class TestName_and_IDRetrieval(unittest.TestCase):
 
     # Define tests
 
+    @pytest.mark.run(order=5)
     def test_assembly_id_retrieval(self):
         """Tests is turned after get_accession_numbers() Entrez calls"""
 

@@ -26,6 +26,7 @@ class TestName_and_IDRetrieval(unittest.TestCase):
 
     # Define tests
 
+    @pytest.mark.run(order=3)
     def test_species_name_retrieval(self):
         """Tests Entrez call to NCBI to retrieve scientific name from taxonomy ID.
         
@@ -33,10 +34,12 @@ class TestName_and_IDRetrieval(unittest.TestCase):
         '0' represent an arbitary line numbers passed to the function in the
         original srcipt."""
 
-        assert "Aspergillus niger" == Extract_genomes_NCBI.get_genus_species_name(
-            "5061", self.logger, 0
+        self.assertEqual(
+            "Aspergillus niger",
+            Extract_genomes_NCBI.get_genus_species_name("5061", self.logger, 0),
         )
 
+    @pytest.mark.run(order=4)
     def test_taxonomy_id_retrieval(self):
         """Tests Entrez call to NCBI to retrieve taxonomy ID from scientific name.
         
@@ -44,6 +47,7 @@ class TestName_and_IDRetrieval(unittest.TestCase):
         '0' represents an arbitary line numbers passed to the function in the
         original script."""
 
-        assert "NCBI:txid5061" == Extract_genomes_NCBI.get_tax_ID(
-            "Aspergillus niger", self.logger, 0
+        self.assertEqual(
+            "NCBI:txid5061",
+            Extract_genomes_NCBI.get_tax_ID("Aspergillus niger", self.logger, 0),
         )
