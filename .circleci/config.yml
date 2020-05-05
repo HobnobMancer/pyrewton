@@ -13,10 +13,15 @@ jobs:
       - python/save-cache
       - run:
           name: install dependencies
-          command: pip install -r requirements.txt
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
       - run:
-          command: pytest -v
           name: Test
+          command: |
+            . venv/bin/activate
+            pytest -v
 
 workflows:
   main:
