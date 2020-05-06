@@ -187,6 +187,12 @@ This section describes the tests that are included with the
 program to ensure each of the scripts is operating as
 expected.
 
+Inputs and targets for tests are stored in the respective `test_inputs`
+and `test_targets` directories. Each script is provided its own subdirectory
+containing its associated tests input and target files. These subdirectories
+are named using the contracted version of the scripts name, such that
+`Extract_genomes_NCBI.py` respective test subdirectories are called `test_ext_gnm_ncbi`.
+
 ### Extract_genomes_NCBI
 
 **test_input_reading.py**\
@@ -195,13 +201,11 @@ ability to open and read a given input file, defined using
 the `pathlib` `Path` module.
 
 **test_name_and_id_retrieval.py**\
-This test tests the functions `get_genus_species_name()` and
-`get_tax_id()`, using provided inputs. The result of the
+This test tests the functions `get_genus_species_name()`, `get_g_s_name_retry`,
+`get_tax_id()` and `get_t_ix_retry`, using provided inputs. The result of the
 Entrez calls to the NCBI database are compared against
 expected results.
 
 **test_accession_number_retrieval.py**\
-This test test the `get_accession_numbers()` function, to ensure
-that Entrez can call to the NCBI database. Owing to the frequent
-updating of the NCBI Assembly database it is not possible to
+This test test the `get_accession_numbers()`, `get_a_id_retry`, `post_a_ids_retry` and `get_a_n_retry` functions, to ensure that Entrez can call to the NCBI database. Owing to the frequent updating of the NCBI Assembly database it is not possible to
 compare the results from the NCBI call against expected results.
