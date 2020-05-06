@@ -19,16 +19,17 @@ def main():
     """Generates datafame containing genus/species name with NCBI taxonomy and accession numbers
 
     Pass input file (containing unique species on each line, idenfitied by their genus/species
-    name or NCBI Taxnomy ID) tp parse_input_file() function, which aquires missing genus/species
-    names and NCBI taxonomy IDs as approprirate. Genus/species names and associated NCBI
+    name or NCBI Taxonomy ID) tp parse_input_file() function, which acquires missing genus/species
+    names and NCBI taxonomy IDs as appropriate. Genus/species names and associated NCBI
     Taxonomy ID are stored in a generated dataframe with three columns: 'Genus', 'Species',
     and 'NCBI Taxonomy ID'. Parse_input_file() returns the generated dataframe which is stored in
     the variable 'species_table'.
-    Pass the 'species_table' dataframe to collate_accession_numbers(), which aquires all associated
-    aquires all associated NCBI accession numbers associated for each Taxonomy ID. Aquired accession
-    numbers are stored in a new column in the dataframe, titled 'NCBI Accession Numbers'.
-    The modified dataframe is returned from collate_accession_numbers() and stored in the variable
-    'species_table'.
+    Pass the 'species_table' dataframe to collate_accession_numbers(), which acquires all associated
+    NCBI accession numbers for each Taxonomy ID. Acquired accession numbers are stored in a new
+    column in the dataframe, titled 'NCBI Accession Numbers'. The modified dataframe is returned
+    from collate_accession_numbers() and stored in the variable 'species_table'.
+
+    Return 'species_table' dataframe.
     """
 
     # Capture date and time script is executed
@@ -113,8 +114,8 @@ def build_logger(
     script_name: Name of script
     custom_string: Additional string parsed from cmdline by user - required for log
                     file to be written out
-    date_of_pulldown: Data run was initated
-    time_of_pulldown: Time run was initated
+    date_of_pulldown: Data run was initiated
+    time_of_pulldown: Time run was initiated
 
     Enables logger for script, sets parameters and creates new file to store log.
     """
@@ -164,7 +165,7 @@ def parse_input_file(input_filename, logger):
     Return dataframe.
     """
 
-    # open working_species_list.txt and extract lines, without new line character
+    # open working_species_list.txt and extract lines, without newline character
     # then create genus name, species name and taxonomy ID tuplet
     all_species_data = []
 
@@ -214,7 +215,7 @@ def parse_input_file(input_filename, logger):
 
     logger.info("Finished reading and closed input file")
 
-    # create dataframe containg three columns: 'Genus', 'Species', 'NCBI Taxonomy ID'
+    # create dataframe containing three columns: 'Genus', 'Species', 'NCBI Taxonomy ID'
     logger.info("Generating genus, species and taxonomy ID dataframe")
     species_table = pd.DataFrame(
         all_species_data, columns=["Genus", "Species", "NCBI Taxonomy ID"]
@@ -224,7 +225,7 @@ def parse_input_file(input_filename, logger):
 
 
 def get_genus_species_name(taxonomy_id, logger, line_number):
-    """Fetch scientfic name associated with the NCBI Taxonomy ID.
+    """Fetch scientific name associated with the NCBI Taxonomy ID.
 
     Use Entrez efetch function to pull down the scientific name (genus/species name)
     in the     NCBI Taxonomy database, associated with the taxonomy ID passed to the
@@ -255,7 +256,7 @@ def get_genus_species_name(taxonomy_id, logger, line_number):
         )
         time.sleep(10)
         # initiate retries
-        record = get_g_s_name_retry(taxonomy_id, logger, line_number)
+        record = get_genus_species_name_retry(taxonomy_id, logger, line_number)
 
     return record[0]["ScientificName"]
 
@@ -267,6 +268,7 @@ def get_tax_ID(genus_species, logger, line_number):
     species name passed to the function. Return the NCBI Taxonomy ID with
     the prefix 'NCBI:txid'.
     """
+
     # check for potential mistake in taxonomy ID prefix
     if bool(re.search(r"\d", genus_species)) == True:
         logger.error(
@@ -295,10 +297,10 @@ def get_tax_ID(genus_species, logger, line_number):
 
         except IOError:
             # log error
-            logger.error("Network error ecountered, retrying in 10s")
+            logger.error("Network error encountered, retrying in 10s")
             time.sleep(10)
             # initate retries
-            record = get_t_id_retry(genus_species, logger, line_number)
+            record = get_tax_id_retry(genus_species, logger, line_number)
 
         return "NCBI:txid" + record["IdList"][0]
 
@@ -308,7 +310,7 @@ def collate_accession_numbers(species_table, logger):
 
     Pass each Taxonomy ID in the 'NCBI Taxonomy ID' column of the 'species_table'
     dataframe to get_accession_numbers() to find all associated NCBI accession numbers.
-    Format object returned from get_accession_numbers into a human readable list. Append list
+    Format object returned from get_accession_numbers into a human-readable list. Append list
     of accession numbers to 'all_accession_numbers' list. Create fourth column, called
     'NCBI Accession Numbers' in the 'species_table' dataframe and populate with data in
     'all_accession_numbers'. 
@@ -346,11 +348,11 @@ def collate_accession_numbers(species_table, logger):
 def get_accession_numbers(taxonomy_id, logger):
     """Return all NCBI accession numbers associated with NCBI Taxonomy Id.
 
-    Use Entrez elink function to pull down the assembly IDs of all genomic assemblies
-    stored in the NCBI Assembly database that are associated with each NCBI Taxonomy ID
-    stored in the dataframe passed to the function.
-    Use Entrez epost to post all assembly IDs to NCBI as a single query for subsequent
-    Entrez efetch of all associated accession numbers.
+    Use Entrez elink function to pull down the assembly IDs of all genomic
+    assemblies stored in the NCBI Assembly database that are associated
+    with each NCBI Taxonomy ID stored in the dataframe passed to the function.
+    Use Entrez epost to post all assembly IDs to NCBI as a single query for
+    subsequent Entrez efetch of all associated accession numbers.
     Accession numbers are returned as a string 'NCBI_accession_numbers'.
     """
 
@@ -386,7 +388,7 @@ def get_accession_numbers(taxonomy_id, logger):
         )
         time.sleep(10)
         # initate retries
-        assembly_id_list = get_a_id_retry(taxonomy_id, logger)
+        assembly_id_list = get_assembly_ids_retry(taxonomy_id, logger)
         if assembly_id_list == None:
             return ()
 
@@ -418,7 +420,9 @@ def get_accession_numbers(taxonomy_id, logger):
         )
         time.sleep(10)
         # initiate retries
-        epost_search_results = post_a_ids_retry(assembly_id_list, logger, taxonomy_id)
+        epost_search_results = post_assembly_ids_retry(
+            assembly_id_list, logger, taxonomy_id
+        )
         if epost_search_results == None:
             return ()
 
@@ -427,7 +431,7 @@ def get_accession_numbers(taxonomy_id, logger):
     epost_query_key = epost_search_results["QueryKey"]
 
     logger.info(
-        "(Finihsed processing positing of assembly IDs for accession number fetch)"
+        "(Finished processing positing of assembly IDs for accession number fetch)"
     )
 
     # Pull down all accession numbers
@@ -462,7 +466,7 @@ def get_accession_numbers(taxonomy_id, logger):
         )
         time.sleep(10)
         # initate retries
-        accession_record = get_a_n_retry(
+        accession_record = get_accession_numbers_retry(
             epost_query_key, epost_webenv, logger, taxonomy_id
         )
         if accession_record == None:
@@ -504,11 +508,11 @@ def get_accession_numbers(taxonomy_id, logger):
 # Functions for retrying call to NCBI with network error is encountered
 
 # If network error encountered during retrieval of scientific name
-def get_g_s_name_retry(taxonomy_id, logger, line_number, retries=10):
-    """Retries call to NCBI Taxnomy database to retrieve scientific name.
+def get_genus_species_name_retry(taxonomy_id, logger, line_number, retries=10):
+    """Retries call to NCBI Taxonomy database to retrieve scientific name.
 
-    Maxinum number of retries is 10. Retry initated when network error
-    encountered. If no recorded is returned for non-network error issue,
+    The maximum number of retries is 10. Retry initiated when network
+    error encountered. If no recorded is returned for non-network error issue,
     such as record does not exist, or typo in given taxonomy ID,
     programme terminates.
 
@@ -529,7 +533,7 @@ def get_g_s_name_retry(taxonomy_id, logger, line_number, retries=10):
         # If network error not encountered but no record returned, terminate programme
         except IndexError:
             logger.error(
-                "Entrez failed to retrieve scientific name, for speices in line {} of input file.\nPotential tpyo in taxonomy ID, check input.\nTerminating programming to avoid downstream processing errors".format(
+                "Entrez failed to retrieve scientific name, for species in line {} of input file.\nPotential typo in taxonomy ID, check input.\nTerminating programming to avoid downstream processing errors".format(
                     line_number
                 ),
                 exc_info=1,
@@ -559,13 +563,13 @@ def get_g_s_name_retry(taxonomy_id, logger, line_number, retries=10):
 
 
 # If network error encountered during retrieval of taxonomy ID
-def get_t_id_retry(genus_species, logger, line_number, retries=10):
+def get_tax_id_retry(genus_species, logger, line_number, retries=10):
     """Retries call to NCBI Taxonomy database to retrieve taxonomy ID.
 
-    Maxinum number of retries is 10. Retry initated when network error
-    encountered. If no recorded is returned for non-network error issue,
-    such as record does not exist, or type in the given scientific name,
-    programme terminates.
+    The maximum number of retries is 10. Retry initiated when network
+    error encountered. If no recorded is returned for non-network error
+    issue, such as record does not exist, or type in the given scientific
+    name, programme terminates.
 
     Function all invoked if network error encountered during call to NCBI
     using Entrez in another function.
@@ -614,11 +618,11 @@ def get_t_id_retry(genus_species, logger, line_number, retries=10):
 
 
 # If network error encountered during retrieval of assembly IDs
-def get_a_id_retry(taxonomy_id, logger, retries=10):
+def get_assembly_ids_retry(taxonomy_id, logger, retries=10):
     """Retries call to NCBI Assembly database to retrieve accession numbers.
 
-    Maxinum number of retries is 10. Retry initated when network error
-    encountered. If no record is returned for non-network error issue,
+    The maximum number of retries is 10. Retry initiated when network
+    error encountered. If no record is returned for non-network error issue,
     such as record does not exist, or type is given taxonomy ID,
     exits function.
 
@@ -679,10 +683,10 @@ def get_a_id_retry(taxonomy_id, logger, retries=10):
 
 
 # If network error encountered during posting of assembly IDs
-def post_a_ids_retry(assembly_id_list, logger, taxonomy_id, retries=10):
+def post_assembly_ids_retry(assembly_id_list, logger, taxonomy_id, retries=10):
     """Retries call to NCBI Assembly database to post assembly IDs.
 
-    Maxinum number of retries is 10. Retry initated when network error
+    The maximum number of retries is 10. Retry initiated when network error
     encountered. If no record is returned for non-network error issue,
     such as post is too large, exits function.
 
@@ -737,10 +741,12 @@ def post_a_ids_retry(assembly_id_list, logger, taxonomy_id, retries=10):
 
 
 # If network error encountered during retrieval of accession numbers
-def get_a_n_retry(epost_query_key, epost_webenv, logger, taxonomy_id, retries=10):
+def get_accession_numbers_retry(
+    epost_query_key, epost_webenv, logger, taxonomy_id, retries=10
+):
     """Retries call to NCBI Assembly database to retrieve accession numbers.
 
-    Maxinum number of retries is 10. Retry initated when network error
+    The maximum number of retries is 10. Retry initiated when network error
     encountered. If no record is returned for non-network error issue,
     exits retrieval of accession numbers for given taxonomy ID.
 
