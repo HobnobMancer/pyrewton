@@ -45,16 +45,27 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
 
     @pytest.mark.run(order=7)
     def test_assembly_id_retrieval(self):
-        """Tests is turned after get_accession_numbers() Entrez calls"""
+        """Tests multiplpe Entrez calls to NCBI to retrieve accession numbers.
+        
+        Tests all Entrez called made in Extract_genomes_NCBI.py
+        get_accession_numbers() function. These are a call using a taxonomy ID
+        to retrieve all assemmbly IDs, posting of all assembly IDs and retrieval
+        of accession numbers from posting. Tests these can be performed without
+        encountering errors. Does not test against expected/target outcome
+        becuase output data is subject to potentially frequent updates.
+        """
 
         Extract_genomes_NCBI.get_accession_numbers(self.input_tax_id, self.logger)
 
     @pytest.mark.run(order=8)
     def test_assembly_id_retry(self):
         """Tests function to retry Entrez call after network error encountered.
-
-        Input: '5061' taxonomy ID.
-        Test no errors encountered.
+        
+        Tests call to NCBI Assembly database using Entrez to retrieve all
+        associated assembly IDs, for a given taxonomy ID. Tests function
+        can be performed without encoutinring errors. Does not test
+        against expected/target outcome becuase output data is subject to
+        potentially frequent updates.
         """
 
         Extract_genomes_NCBI.get_a_id_retry(self.input_tax_id, self.logger)
@@ -63,10 +74,13 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
     def test_assembly_posting_and_accession_retry(self):
         """Tests function to retry Entrez call after network error encountered.
 
-        Input: assembly IDs'6106631,6106621'; taxonomy ID '5061'
-        Test no error encountered.
+        Tests call to NCBI using Entrez to post provided assembly IDs,
+        and retrieve associated accession numbrs. Tests function
+        can be performed without encoutinring errors. Does not test
+        against expected/target outcome becuase output data is subject to
+        potentially frequent updates.
         """
-
+        
         record = Extract_genomes_NCBI.post_a_ids_retry(
             self.input_assembly_id_list, self.logger, self.input_tax_id
         )
