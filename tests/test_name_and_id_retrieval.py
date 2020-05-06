@@ -10,6 +10,7 @@ import pytest
 
 from Section1_Extracting_Genomes import Extract_genomes_NCBI
 
+# Define dummy email for Entrez
 Entrez.email = "my.email@my.domain"
 
 
@@ -21,14 +22,16 @@ class TestName_and_IDRetrieval(unittest.TestCase):
     # Establish inputs for tests and expected outputs
 
     def setUp(self):
-        """"Retrieve inputs and targets for tests."""
+        """"Set attributes for tests."""
 
         # Null logger instance
         self.logger = logging.getLogger("Test_name_and_ID_Retrieval logger")
         self.logger.addHandler(logging.NullHandler())
 
         # Parse file containing test inputs
-        self.input_file_path = Path("test_inputs/test_ext_gnm_ncbi/test_inputs.txt")
+        self.input_file_path = Path(
+            "tests/test_inputs/test_ext_gnm_ncbi/test_inputs.txt"
+        )
 
         with open(self.input_file_path) as file:
             input_list = file.read().splitlines()
@@ -43,7 +46,9 @@ class TestName_and_IDRetrieval(unittest.TestCase):
                 self.input_line_number = 0
 
         # Parse file containing test targets
-        self.target_file_path = Path("test_targets/test_ext_gnm_ncbi/test_targets.txt")
+        self.target_file_path = Path(
+            "tests/test_targets/test_ext_gnm_ncbi/test_targets.txt"
+        )
 
         with open(self.target_file_path) as file:
             target_list = file.read().splitlines()

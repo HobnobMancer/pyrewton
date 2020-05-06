@@ -27,7 +27,9 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
         self.logger.addHandler(logging.NullHandler())
 
         # Parse file containing test inputs
-        self.input_file_path = Path("test_inputs/test_ext_gnm_ncbi/test_inputs.txt")
+        self.input_file_path = Path(
+            "tests/test_inputs/test_ext_gnm_ncbi/test_inputs.txt"
+        )
 
         with open(self.input_file_path) as file:
             input_list = file.read().splitlines()
