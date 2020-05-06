@@ -29,7 +29,7 @@ class Test_parsing_input_file(unittest.TestCase):
 
         # Path to example input file provided with the programme
         self.input_file_path = Path(
-            "test/test_inputs/test_ext_gnm_ncbi/input_reading/test_input_file.txt"
+            "tests/test_inputs/test_ext_gnm_ncbi/input_reading/test_input_file.txt"
         )
 
     # Define tests
