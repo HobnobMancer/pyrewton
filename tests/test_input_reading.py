@@ -41,5 +41,5 @@ class Test_parsing_input_file(unittest.TestCase):
 
     @pytest.mark.run(order=2)
     def test_input_file(self):
-        """Tests script open and read supplied input file."""
+        """Tests script can open and read supplied input file."""
         Extract_genomes_NCBI.parse_input_file(self.input_file_path, self.logger)
