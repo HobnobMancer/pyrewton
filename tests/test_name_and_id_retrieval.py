@@ -32,7 +32,8 @@ class TestName_and_IDRetrieval(unittest.TestCase):
         
         Input: '5061'. Expected output: 'Aspergillus niger'.
         '0' represent an arbitary line numbers passed to the function in the
-        original srcipt."""
+        original srcipt.
+        """
 
         self.assertEqual(
             "Aspergillus niger",
@@ -40,14 +41,48 @@ class TestName_and_IDRetrieval(unittest.TestCase):
         )
 
     @pytest.mark.run(order=4)
+    def test_species_name_network_retry(self):
+        """Tests function to retry Entrez call after network error encountered.
+
+        Input: '5061', Expected output: 'Aspergillus niger'.
+        '0' represents an arbitary line numbers passed to function in the
+        original script.
+        """
+
+        self.assertEqual(
+            "Aspergillus niger",
+            Extract_genomes_NCBI.get_g_s_name_retry("5061", self.logger, 0)[0][
+                "ScientificName"
+            ],
+        )
+
+    @pytest.mark.run(order=5)
     def test_taxonomy_id_retrieval(self):
         """Tests Entrez call to NCBI to retrieve taxonomy ID from scientific name.
         
         Input: 'Aspergillus nidulans'. Expected output: '162425'.
         '0' represents an arbitary line numbers passed to the function in the
-        original script."""
+        original script.
+        """
 
         self.assertEqual(
-            "NCBI:txid5061",
-            Extract_genomes_NCBI.get_tax_ID("Aspergillus niger", self.logger, 0),
+            "NCBI:txid162425",
+            Extract_genomes_NCBI.get_tax_ID("Aspergillus nidulans", self.logger, 0),
+        )
+
+    @pytest.mark.run(order=6)
+    def test_tax_id_network_retry(self):
+        """Tests function to retry Entrez call after network error encountered.
+
+        Input: 'Aspergillus nidulans'. Expected output: '162425'.
+        '0' represents an arbitary line numbers passed to the function in the
+        original script.
+        """
+
+        self.assertEqual(
+            "NCBI:txid162425",
+            "NCBI:txid"
+            + Extract_genomes_NCBI.get_t_id_retry(
+                "Aspergillus nidulans", self.logger, 0
+            )["IdList"][0],
         )
