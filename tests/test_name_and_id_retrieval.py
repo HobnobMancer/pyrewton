@@ -64,7 +64,11 @@ class TestName_and_IDRetrieval(unittest.TestCase):
 
     @pytest.mark.run(order=3)
     def test_species_name_retrieval(self):
-        """Tests Entrez call to NCBI to retrieve scientific name from taxonomy ID."""
+        """Tests Entrez call to NCBI to retrieve scientific name from taxonomy ID.
+        
+        Tests that correct output from function is returned, by comparison against
+        target result.
+        """
 
         self.assertEqual(
             self.target_genus_species_name,
@@ -77,9 +81,8 @@ class TestName_and_IDRetrieval(unittest.TestCase):
     def test_species_name_network_retry(self):
         """Tests function to retry Entrez call after network error encountered.
 
-        Input: '5061', Expected output: 'Aspergillus niger'.
-        '0' represents an arbitary line numbers passed to function in the
-        original script.
+        Tests that correct output from function is returned, by comparison against
+        target result.
         """
 
         self.assertEqual(
@@ -93,9 +96,8 @@ class TestName_and_IDRetrieval(unittest.TestCase):
     def test_taxonomy_id_retrieval(self):
         """Tests Entrez call to NCBI to retrieve taxonomy ID from scientific name.
         
-        Input: 'Aspergillus nidulans'. Expected output: '162425'.
-        '0' represents an arbitary line numbers passed to the function in the
-        original script.
+        Tests that correct output from function is returned, by comparison against
+        target result.
         """
 
         self.assertEqual(
@@ -109,9 +111,8 @@ class TestName_and_IDRetrieval(unittest.TestCase):
     def test_tax_id_network_retry(self):
         """Tests function to retry Entrez call after network error encountered.
 
-        Input: 'Aspergillus nidulans'. Expected output: '162425'.
-        '0' represents an arbitary line numbers passed to the function in the
-        original script.
+        Tests that correct output from function is returned, by comparison against
+        target result.
         """
 
         self.assertEqual(
