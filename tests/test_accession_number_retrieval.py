@@ -3,6 +3,7 @@
 
 import logging
 import unittest
+from pathlib import Path
 
 from Bio import Entrez
 import pytest
@@ -19,12 +20,24 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
     # Establish inputs for tests and expected outputs
 
     def setUp(self):
-        """"Null logger instance"""
+        """"Retrieve inputs and targets for tests."""
+
+        # Null logger instance
         self.logger = logging.getLogger("Test_name_and_ID_Retrieval logger")
         self.logger.addHandler(logging.NullHandler())
 
-        # define assembly ID list
-        self.assembly_id_list = "6106631,6106621"
+        # Parse file containing test inputs
+        self.input_file_path = Path("test_inputs/test_ext_gnm_ncbi/test_inputs.txt")
+
+        with open(self.input_file_path) as file:
+            input_list = file.read().splitlines()
+
+        # Define test inputs
+        for line in input_list:
+            if line.startswith("input_taxonomy_id:"):
+                self.input_tax_id = line[18:]
+            elif line.startswith("input_assembly_id_list:"):
+                self.input_assembly_id_list = line[23:]
 
     # Define tests
 
@@ -32,7 +45,7 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
     def test_assembly_id_retrieval(self):
         """Tests is turned after get_accession_numbers() Entrez calls"""
 
-        Extract_genomes_NCBI.get_accession_numbers("5061", self.logger)
+        Extract_genomes_NCBI.get_accession_numbers(self.input_tax_id, self.logger)
 
     @pytest.mark.run(order=8)
     def test_assembly_id_retry(self):
@@ -42,7 +55,7 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
         Test no errors encountered.
         """
 
-        Extract_genomes_NCBI.get_a_id_retry("5061", self.logger)
+        Extract_genomes_NCBI.get_a_id_retry(self.input_tax_id, self.logger)
 
     @pytest.mark.run(order=9)
     def test_assembly_posting_and_accession_retry(self):
@@ -53,9 +66,9 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
         """
 
         record = Extract_genomes_NCBI.post_a_ids_retry(
-            "6106631,6106621", self.logger, "5061"
+            self.input_assembly_id_list, self.logger, self.input_tax_id
         )
 
         Extract_genomes_NCBI.get_a_n_retry(
-            record["QueryKey"], record["WebEnv"], self.logger, "5061"
+            record["QueryKey"], record["WebEnv"], self.logger, self.input_tax_id
         )

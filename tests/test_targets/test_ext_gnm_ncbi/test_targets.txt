@@ -1,0 +1,2 @@
+target_genus_species_name:Aspergillus niger
+target_taxonomy_id:162425

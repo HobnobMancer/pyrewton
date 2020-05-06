@@ -3,6 +3,7 @@
 
 import logging
 import unittest
+from pathlib import Path
 
 from Bio import Entrez
 import pytest
@@ -20,24 +21,51 @@ class TestName_and_IDRetrieval(unittest.TestCase):
     # Establish inputs for tests and expected outputs
 
     def setUp(self):
-        """"Null logger instance"""
+        """"Retrieve inputs and targets for tests."""
+
+        # Null logger instance
         self.logger = logging.getLogger("Test_name_and_ID_Retrieval logger")
         self.logger.addHandler(logging.NullHandler())
+
+        # Parse file containing test inputs
+        self.input_file_path = Path("test_inputs/test_ext_gnm_ncbi/test_inputs.txt")
+
+        with open(self.input_file_path) as file:
+            input_list = file.read().splitlines()
+
+        # Define test inputs
+        for line in input_list:
+            if line.startswith("input_taxonomy_id:"):
+                self.input_tax_id = line[18:]
+            elif line.startswith("input_genus_species_name:"):
+                self.input_genus_species_name = line[25:]
+            elif line.startswith("input_line_number:"):
+                self.input_line_number = 0
+
+        # Parse file containing test targets
+        self.target_file_path = Path("test_targets/test_ext_gnm_ncbi/test_targets.txt")
+
+        with open(self.target_file_path) as file:
+            target_list = file.read().splitlines()
+
+        # Degine test targets
+        for line in target_list:
+            if line.startswith("target_genus_species_name:"):
+                self.target_genus_species_name = line[26:]
+            elif line.startswith("target_taxonomy_id:"):
+                self.target_tax_id = line[19:]
 
     # Define tests
 
     @pytest.mark.run(order=3)
     def test_species_name_retrieval(self):
-        """Tests Entrez call to NCBI to retrieve scientific name from taxonomy ID.
-        
-        Input: '5061'. Expected output: 'Aspergillus niger'.
-        '0' represent an arbitary line numbers passed to the function in the
-        original srcipt.
-        """
+        """Tests Entrez call to NCBI to retrieve scientific name from taxonomy ID."""
 
         self.assertEqual(
-            "Aspergillus niger",
-            Extract_genomes_NCBI.get_genus_species_name("5061", self.logger, 0),
+            self.target_genus_species_name,
+            Extract_genomes_NCBI.get_genus_species_name(
+                self.input_tax_id, self.logger, self.input_line_number
+            ),
         )
 
     @pytest.mark.run(order=4)
@@ -50,10 +78,10 @@ class TestName_and_IDRetrieval(unittest.TestCase):
         """
 
         self.assertEqual(
-            "Aspergillus niger",
-            Extract_genomes_NCBI.get_g_s_name_retry("5061", self.logger, 0)[0][
-                "ScientificName"
-            ],
+            self.target_genus_species_name,
+            Extract_genomes_NCBI.get_g_s_name_retry(
+                self.input_tax_id, self.logger, self.input_line_number
+            )[0]["ScientificName"],
         )
 
     @pytest.mark.run(order=5)
@@ -66,8 +94,10 @@ class TestName_and_IDRetrieval(unittest.TestCase):
         """
 
         self.assertEqual(
-            "NCBI:txid162425",
-            Extract_genomes_NCBI.get_tax_ID("Aspergillus nidulans", self.logger, 0),
+            "NCBI:txid" + self.target_tax_id,
+            Extract_genomes_NCBI.get_tax_ID(
+                self.input_genus_species_name, self.logger, self.input_line_number
+            ),
         )
 
     @pytest.mark.run(order=6)
@@ -80,9 +110,8 @@ class TestName_and_IDRetrieval(unittest.TestCase):
         """
 
         self.assertEqual(
-            "NCBI:txid162425",
-            "NCBI:txid"
-            + Extract_genomes_NCBI.get_t_id_retry(
-                "Aspergillus nidulans", self.logger, 0
+            self.target_tax_id,
+            Extract_genomes_NCBI.get_t_id_retry(
+                self.input_genus_species_name, self.logger, self.input_line_number
             )["IdList"][0],
         )
