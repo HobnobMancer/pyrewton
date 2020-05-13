@@ -369,7 +369,7 @@ def get_accession_numbers(taxonomy_id, logger):
     with each NCBI Taxonomy ID stored in the dataframe passed to the function.
     Use Entrez epost to post all assembly IDs to NCBI as a single query for
     subsequent Entrez efetch of all associated accession numbers.
-    Accession numbers are returned as a string 'NCBI_accession_numbers'.
+    Accession numbers are returned as a string 'ncbi_accession_numbers'.
 
     taxonomy_id: str, NCBI taxonomy ID
     logger: logger object
@@ -534,9 +534,9 @@ def get_accession_numbers(taxonomy_id, logger):
     )
 
     # Process accession numbers into human readable list for dataframe
-    NCBI_accession_numbers = ", ".join(ncbi_accession_numbers_list)
+    ncbi_accession_numbers = ", ".join(ncbi_accession_numbers_list)
 
-    return NCBI_accession_numbers
+    return ncbi_accession_numbers
 
 
 # Functions for retrying call to NCBI with network error is encountered
@@ -638,7 +638,7 @@ def post_assembly_ids_retry(assembly_id_list, logger, taxonomy_id, retries=10):
 
         except IOError:
             # log retry attempt
-            if tries < tries:
+            if tries < retries:
                 logger.error(
                     "Network error encountered during try no.{}.\nRetrying in 10s".format(
                         tries
@@ -704,7 +704,7 @@ def get_accession_numbers_retry(
 
         except IOError:
             # log retry attempt
-            if tries < tries:
+            if tries < retries:
                 logger.error(
                     "Network error encountered during try no.{}.\nRetrying in 10s".format(
                         tries
