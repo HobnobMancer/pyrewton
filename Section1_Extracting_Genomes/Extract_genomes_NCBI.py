@@ -16,7 +16,7 @@ import pandas as pd
 
 
 def main():
-    """Generates datafame containing genus/species name with NCBI taxonomy and accession numbers
+    """Generate datafame containing genus/species name with NCBI taxonomy and accession numbers.
 
     Pass input file (containing unique species on each line, idenfitied by their genus/species
     name or NCBI Taxonomy ID) tp parse_input_file() function, which acquires missing genus/species
@@ -109,8 +109,8 @@ def main():
 def build_logger(
     script_name, log_file, date_of_pulldown, time_of_pulldown
 ) -> logging.Logger:
-    """"Return a logger for this script.
-    
+    """Return a logger for this script.
+
     script_name: Name of script
     custom_string: Additional string parsed from cmdline by user - required for log
                     file to be written out
@@ -146,12 +146,12 @@ def build_logger(
 
 def parse_input_file(input_filename, logger):
     """Parse input file, returning dataframe of species names and NCBI Taxonomy IDs.
-    
+
     Read input file passed to the function, performing the appropriate action depending
     on each line's content.
     Comments: Indicated with the first character of '#', perform no action.
-    NCBI Taxonomy ID: Indicated with the first nine characters of 'NCBI:txid', pass 
-    the Taxonomy ID (excluding the 'NCBI:txid' prefix) to get_genus_species_name() to 
+    NCBI Taxonomy ID: Indicated with the first nine characters of 'NCBI:txid', pass
+    the Taxonomy ID (excluding the 'NCBI:txid' prefix) to get_genus_species_name() to
     return associated scientific name.
     Genus/species name: Indicated by lack of '#' and 'NCBI:txid', pass genus/species
     name to get get_tax_ID() to return associated NCBI Taxonomy ID with 'NCBI:txid'
@@ -161,7 +161,7 @@ def parse_input_file(input_filename, logger):
     'all_species_data' list. Repeat for each line.
     Generate a dataframe with three columns: 'Genus', 'Species' and 'NCBI Taxonomy ID'.
     Use data from 'all_species_data' to fill out dataframe.
-    
+
     input_filename: args, if specific name of input file, otherwise input taken from STDIN
     logger: logger object
 
@@ -173,10 +173,13 @@ def parse_input_file(input_filename, logger):
     all_species_data = []
 
     # test path to input file exists, if not exit programme
-    if input_filename.is_file() == False:
+    if input_filename.is_file() is False:
         # report to user and exit programme
         logger.error(
-            "Input file not found.\nCheck filename, extension and directory is correct.\nTerminating program.",
+            (
+                "Input file not found. Check filename, extension and directory is correct."
+                "Terminating program."
+            ),
             exc_info=1,
         )
         sys.exit(1)
@@ -233,11 +236,11 @@ def get_genus_species_name(taxonomy_id, logger, line_number):
     Use Entrez efetch function to pull down the scientific name (genus/species name)
     in the NCBI Taxonomy database, associated with the taxonomy ID passed to the
     function.
-    
+
     taxonomy_id: str, NCBI taxonomy ID
     logger: logger object
     line_number: int, line number in input file containing taxonomy ID
-    
+
     Return scientific name.
     """
 
@@ -254,9 +257,11 @@ def get_genus_species_name(taxonomy_id, logger, line_number):
 
     except IndexError:
         logger.error(
-            "Entrez failed to retrieve scientific name, for species in line {} of input file.\nPotential tpyo in taxonomy ID, check input.\nTerminating programming to avoid downstream processing errors".format(
-                line_number
-            ),
+            (
+                "Entrez failed to retrieve scientific name, for species in line {} of input file."
+                "Potential typo in taxonomy ID, check input."
+                "Terminating programming to avoid downstream processing errors"
+            ).format(line_number),
             exc_info=1,
         )
         sys.exit(1)
@@ -268,20 +273,23 @@ def get_tax_ID(genus_species, logger, line_number):
     Use Entrez esearch function to pull down the NCBI Taxonomy ID of the
     species name passed to the function. Return the NCBI Taxonomy ID with
     the prefix 'NCBI:txid'.
-    
+
     genus_species: str, scientific name of species
     logger: logger object
     line_number: int, number of line containing the species name in the input file.
-    
+
     Return NCBI taxonomy ID.
     """
 
     # check for potential mistake in taxonomy ID prefix
-    if bool(re.search(r"\d", genus_species)) == True:
+    if bool(re.search(r"\d", genus_species)) is True:
         logger.error(
-            "Warning: Number found in genus-species name,\n when trying to retrieve taxonomy ID for species on line {}.\nPotential typo in taxonomy ID, so taxonomy ID misinturpretted as genus-species name.\nTerminating program to avoid downstream processing errors".format(
-                line_number
-            ),
+            (
+                "Warning: Number found in genus-species name, when trying to retrieve taxonomy ID"
+                "for species on line {}. Potential typo in taxonomy ID, so taxonomy ID "
+                "misinterpreted as genus-species name. "
+                "Terminating program to avoid downstream processing errors"
+            ).format(line_number),
             exc_info=1,
         )
         sys.exit(1)
@@ -300,9 +308,11 @@ def get_tax_ID(genus_species, logger, line_number):
 
     except IndexError:
         logger.error(
-            "Entrez failed to retrieve taxonomy ID, for species in line {} of input file.\nPotential typo in species name.\nTerminating program to avoid downstream processing errors".format(
-                line_number
-            ),
+            (
+                "Entrez failed to retrieve taxonomy ID, for species in line {} of input file."
+                "Potential typo in species name.\nTerminating program to avoid downstream"
+                "processing errors"
+            ).format(line_number),
             exc_info=1,
         )
         sys.exit(1)
@@ -316,11 +326,11 @@ def collate_accession_numbers(species_table, logger):
     Format object returned from get_accession_numbers into a human-readable list. Append list
     of accession numbers to 'all_accession_numbers' list. Create fourth column, called
     'NCBI Accession Numbers' in the 'species_table' dataframe and populate with data in
-    'all_accession_numbers'. 
-    
+    'all_accession_numbers'.
+
     species_table: dataframe, dataframe containing scientific names and taxonomy IDs
     logger: logger object
-    
+
     Return modified dataframe, with four columns.
     """
 
@@ -360,10 +370,10 @@ def get_accession_numbers(taxonomy_id, logger):
     Use Entrez epost to post all assembly IDs to NCBI as a single query for
     subsequent Entrez efetch of all associated accession numbers.
     Accession numbers are returned as a string 'NCBI_accession_numbers'.
-    
+
     taxonomy_id: str, NCBI taxonomy ID
     logger: logger object
-    
+
     Return NCBI accession numbers.
     """
 
@@ -383,11 +393,12 @@ def get_accession_numbers(taxonomy_id, logger):
         assembly_number_record = Entrez.read(assembly_number_handle)
 
     # test record was returned, if failed to return exit retrieval of assembly IDs
-    if assembly_number_record == None:
+    if assembly_number_record is None:
         logger.error(
-            "Entrez failed to retrieve assembly IDs, for NCBI:txid{}.\nExiting retrieval of accession numbers for {}".format(
-                taxonomy_id, taxonomy_id
-            ),
+            (
+                "Entrez failed to retrieve assembly IDs, for NCBI:txid{}."
+                "Exiting retrieval of accession numbers for {}"
+            ).format(taxonomy_id, taxonomy_id),
             exc_info=1,
         )
         return ()
@@ -400,9 +411,10 @@ def get_accession_numbers(taxonomy_id, logger):
 
     except IndexError:
         logger.error(
-            "Entrez failed to retrieve assembly IDs, for NCBI:txid{}.\nExiting retrieval of accession numbers for {}".format(
-                taxonomy_id, taxonomy_id
-            ),
+            (
+                "Entrez failed to retrieve assembly IDs, for NCBI:txid{}."
+                "Exiting retrieval of accession numbers for {}"
+            ).format(taxonomy_id, taxonomy_id),
             exc_info=1,
         )
         return ()
@@ -419,9 +431,12 @@ def get_accession_numbers(taxonomy_id, logger):
 
     except RuntimeError:
         logger.error(
-            "Entrez failed to post assembly IDs for NCBI:txid{}.\nEntrez could not retrieve document summary.\nPotential incorrect formatting of assembly IDs,\nor query too large.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
-                taxonomy_id, taxonomy_id
-            ),
+            (
+                "Entrez failed to post assembly IDs for NCBI:txid{}."
+                "Entrez could not retrieve document summary."
+                "Potential incorrect formatting of assembly IDs, or query too large."
+                "Exiting retrieval of accession numbers for NCBI:txid{}"
+            ).format(taxonomy_id, taxonomy_id),
             exc_info=1,
         )
         return ()
@@ -429,16 +444,17 @@ def get_accession_numbers(taxonomy_id, logger):
     except IOError:
         # log error
         logger.error(
-            "Network error encountered during assembly id posting for NCBI:txid{},\n retrying in 10s".format(
-                taxonomy_id
-            )
+            (
+                "Network error encountered during assembly id posting for NCBI:txid{}, "
+                "retrying in 10s"
+            ).format(taxonomy_id)
         )
         time.sleep(10)
         # initiate retries
         epost_search_results = post_assembly_ids_retry(
             assembly_id_list, logger, taxonomy_id
         )
-        if epost_search_results == None:
+        if epost_search_results is None:
             return ()
 
     # Retrieve web environment and query key from Entrez epost
@@ -465,9 +481,11 @@ def get_accession_numbers(taxonomy_id, logger):
 
     except RuntimeError:
         logger.error(
-            "Entrez could not retrieve document summary when retrieving accession numbers.\nPotential incorrect formatting of assembly IDs,\nor query too large.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
-                taxonomy_id
-            ),
+            (
+                "Entrez could not retrieve document summary when retrieving accession numbers. "
+                "Potential incorrect formatting of assembly IDs, or query too large. "
+                "Exiting retrieval of accession numbers for NCBI:txid{}"
+            ).format(taxonomy_id),
             exc_info=1,
         )
         return ()
@@ -475,16 +493,17 @@ def get_accession_numbers(taxonomy_id, logger):
     except IOError:
         # log error
         logger.error(
-            "Network error encountered during accession number retrieval\nfor NCBI:txid{},retrying in 10s".format(
-                taxonomy_id
-            )
+            (
+                "Network error encountered during accession number retrieval for NCBI:txid{}, "
+                "retrying in 10s"
+            ).format(taxonomy_id)
         )
         time.sleep(10)
         # initate retries
         accession_record = get_accession_numbers_retry(
             epost_query_key, epost_webenv, logger, taxonomy_id
         )
-        if accession_record == None:
+        if accession_record is None:
             return ()
 
     # Extract accession numbers from document summary
@@ -560,9 +579,13 @@ def entrez_get_retry(logger, sys_response, entrez_funct, *funct_args, **funct_kw
             tries += 1
 
     if record is None:
-        if sys_response == True:
+        if sys_response is True:
             logger.error(
-                "Network error encountered too many times.\nTerminating programme to avoid downstream processing errors caused by missing data",
+                (
+                    "Network error encountered too many times. "
+                    "Terminating program to avoid downstream processing errors "
+                    "caused by missing data"
+                ),
                 exc_info=1,
             )
             sys.exit(1)
@@ -603,9 +626,12 @@ def post_assembly_ids_retry(assembly_id_list, logger, taxonomy_id, retries=10):
         # terminate posting of assembly IDs
         except RuntimeError:
             logger.error(
-                "Entrez failed to post assembly IDs for NCBI:txid{}.\nEntrez could not retrieve document summary.\nPotentially incorrect formatting of assembly IDS,\nor query too large.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
-                    taxonomy_id, taxonomy_id
-                ),
+                (
+                    "Entrez failed to post assembly IDs for NCBI:txid{}. "
+                    "Entrez could not retrieve document summary. "
+                    "Potentially incorrect formatting of assembly IDS, or query too large."
+                    "Exiting retrieval of accession numbers for NCBI:txid{}"
+                ).format(taxonomy_id, taxonomy_id),
                 exc_info=1,
             )
             return ()
@@ -624,9 +650,10 @@ def post_assembly_ids_retry(assembly_id_list, logger, taxonomy_id, retries=10):
 
     if record is None:
         logger.error(
-            "Network error encountered after 10 attempts.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
-                taxonomy_id
-            ),
+            (
+                "Network error encountered after 10 attempts. "
+                "Exiting retrieval of accession numbers for NCBI:txid{}"
+            ).format(taxonomy_id),
             exc_info=1,
         )
         return ()
@@ -666,9 +693,11 @@ def get_accession_numbers_retry(
 
         except RuntimeError:
             logger.error(
-                "Entrez could not retrieve document summary when retrieving accession numbers.\nPotential incorrect formatting of assembly IDs,\nor query too large.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
-                    taxonomy_id
-                ),
+                (
+                    "Entrez could not retrieve document summary when retrieving accession numbers. "
+                    "Potential incorrect formatting of assembly IDs, or query too large."
+                    "Exiting retrieval of accession numbers for NCBI:txid{}"
+                ).format(taxonomy_id),
                 exc_info=1,
             )
             return ()
@@ -687,9 +716,10 @@ def get_accession_numbers_retry(
 
     if record is None:
         logger.error(
-            "Network error encountered after 10 attempts.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
-                taxonomy_id
-            ),
+            (
+                "Network error encountered after 10 attempts. "
+                "Exiting retrieval of accession numbers for NCBI:txid{}"
+            ).format(taxonomy_id),
             exc_info=1,
         )
         return ()
