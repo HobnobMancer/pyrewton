@@ -154,7 +154,7 @@ def parse_input_file(input_filename, logger):
     the Taxonomy ID (excluding the 'NCBI:txid' prefix) to get_genus_species_name() to
     return associated scientific name.
     Genus/species name: Indicated by lack of '#' and 'NCBI:txid', pass genus/species
-    name to get get_tax_ID() to return associated NCBI Taxonomy ID with 'NCBI:txid'
+    name to get get_tax_id() to return associated NCBI Taxonomy ID with 'NCBI:txid'
     prefix.
     Split genus and species name into separate variables. Store genus, species and
     associated Taxonomy ID in the list 'line_data'. Append 'line_data' to
@@ -210,7 +210,7 @@ def parse_input_file(input_filename, logger):
                 line_data.append(line)
                 all_species_data.append(line_data)
             else:
-                tax_id = get_tax_ID(line, logger, line_count)
+                tax_id = get_tax_id(line, logger, line_count)
                 line_data = line.split()
                 line_data.append(tax_id)
                 all_species_data.append(line_data)
@@ -267,7 +267,7 @@ def get_genus_species_name(taxonomy_id, logger, line_number):
         sys.exit(1)
 
 
-def get_tax_ID(genus_species, logger, line_number):
+def get_tax_id(genus_species, logger, line_number):
     """Pull down taxonomy ID from NCBI, using genus/species name as query.
 
     Use Entrez esearch function to pull down the NCBI Taxonomy ID of the
@@ -542,7 +542,7 @@ def get_accession_numbers(taxonomy_id, logger):
 # Functions for retrying call to NCBI with network error is encountered
 
 # Repeat call to NCBI if network error encountered during any 'get' function:
-# get_genus_species_name(), get_tax_ID() and get_accession_numbers()
+# get_genus_species_name(), get_tax_id() and get_accession_numbers()
 def entrez_get_retry(logger, sys_response, entrez_funct, *funct_args, **funct_kwargs):
     """Retries call to NCBI if network error encountered, for all 'get' functions.
 
