@@ -45,19 +45,13 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
 
     # Define tests
 
-    @pytest.mark.run(order=7)
+    @pytest.mark.run(order=5)
     def test_assembly_id_retrieval(self):
         """Tests multiplpe Entrez calls to NCBI to retrieve accession numbers."""
 
         Extract_genomes_NCBI.get_accession_numbers(self.input_tax_id, self.logger)
 
-    @pytest.mark.run(order=8)
-    def test_assembly_id_retry(self):
-        """Tests function to retry Entrez call after network error encountered."""
-
-        Extract_genomes_NCBI.get_assembly_ids_retry(self.input_tax_id, self.logger)
-
-    @pytest.mark.run(order=9)
+    @pytest.mark.run(order=6)
     def test_assembly_posting_and_accession_retry(self):
         """Tests function to retry Entrez call after network error encountered."""
 

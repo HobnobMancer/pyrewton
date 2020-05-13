@@ -241,33 +241,25 @@ def get_genus_species_name(taxonomy_id, logger, line_number):
     Return scientific name.
     """
 
-    logger.info("(Retrieving genus/species name using Taxonomy ID)")
+    logger.info("(Retrieving scientific name for NCBI:txid{})".format(taxonomy_id))
 
+    with entrez_get_retry(
+        logger, True, Entrez.efetch, db="Taxonomy", id=taxonomy_id, retmode="xml"
+    ) as handle:
+        record = Entrez.read(handle)
+
+    # extract scientific name from record
     try:
-        with Entrez.efetch(db="Taxonomy", id=taxonomy_id, retmode="xml") as handle:
-            record = Entrez.read(handle)
+        return record[0]["ScientificName"]
 
     except IndexError:
         logger.error(
-            "Entrez failed to retrieve scientific name, for speices in line {} of input file.\nPotential tpyo in taxonomy ID, check input.\nTerminating programming to avoid downstream processing errors".format(
+            "Entrez failed to retrieve scientific name, for species in line {} of input file.\nPotential tpyo in taxonomy ID, check input.\nTerminating programming to avoid downstream processing errors".format(
                 line_number
             ),
             exc_info=1,
         )
         sys.exit(1)
-
-    except IOError:
-        # log error
-        logger.error(
-            "Network error encountered during retrieval of scientific\nname for species in line {} of inputfile,\nretrying in 10s".format(
-                line_number
-            )
-        )
-        time.sleep(10)
-        # initiate retries
-        record = get_genus_species_name_retry(taxonomy_id, logger, line_number)
-
-    return record[0]["ScientificName"]
 
 
 def get_tax_ID(genus_species, logger, line_number):
@@ -295,29 +287,25 @@ def get_tax_ID(genus_species, logger, line_number):
         sys.exit(1)
 
     else:
-        logger.info("(Retrieving taxonomy ID using genus/species name)")
+        logger.info("(Retrieving NCBI taxonomy ID for {})".format(genus_species))
 
-        try:
-            with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
-                record = Entrez.read(handle)
+        with entrez_get_retry(
+            logger, True, Entrez.esearch, db="Taxonomy", term=genus_species
+        ) as handle:
+            record = Entrez.read(handle)
 
-        except IndexError:
-            logger.error(
-                "Entrez failed to retrieve taxonomy ID, for species in line {} of input file.\nPotential typo in species name.\nTerminating program to avoid downstream processing errors".format(
-                    line_number
-                ),
-                exc_info=1,
-            )
-            sys.exit(1)
-
-        except IOError:
-            # log error
-            logger.error("Network error encountered, retrying in 10s")
-            time.sleep(10)
-            # initate retries
-            record = get_tax_id_retry(genus_species, logger, line_number)
-
+    # extract taxonomy ID from record
+    try:
         return "NCBI:txid" + record["IdList"][0]
+
+    except IndexError:
+        logger.error(
+            "Entrez failed to retrieve taxonomy ID, for species in line {} of input file.\nPotential typo in species name.\nTerminating program to avoid downstream processing errors".format(
+                line_number
+            ),
+            exc_info=1,
+        )
+        sys.exit(1)
 
 
 def collate_accession_numbers(species_table, logger):
@@ -381,17 +369,34 @@ def get_accession_numbers(taxonomy_id, logger):
 
     # Retrieve all IDs of genomic assemblies for taxonomy ID
 
+    logger.info("(Retrieving assembly IDs for NCBI:txid{}".format(taxonomy_id))
+
+    with entrez_get_retry(
+        logger,
+        False,
+        Entrez.elink,
+        dbfrom="Taxonomy",
+        id=taxonomy_id,
+        db="Assembly",
+        linkname="taxonomy_assembly",
+    ) as assembly_number_handle:
+        assembly_number_record = Entrez.read(assembly_number_handle)
+
+    # test record was returned, if failed to return exit retrieval of assembly IDs
+    if assembly_number_record == None:
+        logger.error(
+            "Entrez failed to retrieve assembly IDs, for NCBI:txid{}.\nExiting retrieval of accession numbers for {}".format(
+                taxonomy_id, taxonomy_id
+            ),
+            exc_info=1,
+        )
+        return ()
+
+    # extract assembly IDs from record
     try:
-        with Entrez.elink(
-            dbfrom="Taxonomy",
-            id=taxonomy_id,
-            db="Assembly",
-            linkname="taxonomy_assembly",
-        ) as assembly_number_handle:
-            assembly_number_record = Entrez.read(assembly_number_handle)
-            assembly_id_list = [
-                dict["Id"] for dict in assembly_number_record[0]["LinkSetDb"][0]["Link"]
-            ]
+        assembly_id_list = [
+            dict["Id"] for dict in assembly_number_record[0]["LinkSetDb"][0]["Link"]
+        ]
 
     except IndexError:
         logger.error(
@@ -401,19 +406,6 @@ def get_accession_numbers(taxonomy_id, logger):
             exc_info=1,
         )
         return ()
-
-    except IOError:
-        # log error
-        logger.error(
-            "Network error encountered during retrieval of assembly IDs, for NCBI:txid{},\n retrying in 10s".format(
-                taxonomy_id
-            )
-        )
-        time.sleep(10)
-        # initate retries
-        assembly_id_list = get_assembly_ids_retry(taxonomy_id, logger)
-        if assembly_id_list == None:
-            return ()
 
     logger.info("(Finished processing retrieval of assembly ID)")
 
@@ -495,14 +487,14 @@ def get_accession_numbers(taxonomy_id, logger):
         if accession_record == None:
             return ()
 
-    # Find total number of accession numbers
-    number_of_accession_numbers = len(
-        accession_record["DocumentSummarySet"]["DocumentSummary"]
-    )
-
     # Extract accession numbers from document summary
 
     try:
+        # Find total number of accession numbers
+        number_of_accession_numbers = len(
+            accession_record["DocumentSummarySet"]["DocumentSummary"]
+        )
+
         for index_number in range(number_of_accession_numbers):
             new_accession_number = accession_record["DocumentSummarySet"][
                 "DocumentSummary"
@@ -530,38 +522,30 @@ def get_accession_numbers(taxonomy_id, logger):
 
 # Functions for retrying call to NCBI with network error is encountered
 
-# If network error encountered during retrieval of scientific name
-def get_genus_species_name_retry(taxonomy_id, logger, line_number, retries=10):
-    """Retries call to NCBI Taxonomy database to retrieve scientific name.
+# Repeat call to NCBI if network error encountered during any 'get' function:
+# get_genus_species_name(), get_tax_ID() and get_accession_numbers()
+def entrez_get_retry(logger, sys_response, entrez_funct, *funct_args, **funct_kwargs):
+    """Retries call to NCBI if network error encountered, for all 'get' functions.
 
-    The maximum number of retries is 10. Retry initiated when network
-    error encountered. If no recorded is returned for non-network error issue,
-    such as record does not exist, or typo in given taxonomy ID,
-    programme terminates.
+    Maximum number of retries is 10. Retry initated when network error encountered.
 
-    Function only invoked if network  error encountered during call to NCBI
-    using Entrez in another function.
+    logger: logger object
+    sys_response: boolean, if True programme terminates
+    entrez_function: function, call method to NCBI
+    *funct_args: tuple, arguments passed to Entrez function
+    ** funct_kwargs: dictionary, keyword arguments passed to Entrez function
+    retries: int, maximum number of retries
 
-    Return record.
+    Returns record.
     """
 
     record = None
+    retries = 10
     tries = 0
 
     while record is None and tries < retries:
         try:
-            with Entrez.efetch(db="Taxonomy", id=taxonomy_id, retmode="xml") as handle:
-                record = Entrez.read(handle)
-
-        # If network error not encountered but no record returned, terminate programme
-        except IndexError:
-            logger.error(
-                "Entrez failed to retrieve scientific name, for species in line {} of input file.\nPotential typo in taxonomy ID, check input.\nTerminating programming to avoid downstream processing errors".format(
-                    line_number
-                ),
-                exc_info=1,
-            )
-            sys.exit(1)
+            record = entrez_funct(*funct_args, **funct_kwargs)
 
         except IOError:
             # log retry attempt
@@ -576,133 +560,20 @@ def get_genus_species_name_retry(taxonomy_id, logger, line_number, retries=10):
             tries += 1
 
     if record is None:
-        logger.error(
-            "Network error encountered after 10 attempts.\nTerminating programme",
-            exc_info=1,
-        )
-        sys.exit(1)
-
-    return record
-
-
-# If network error encountered during retrieval of taxonomy ID
-def get_tax_id_retry(genus_species, logger, line_number, retries=10):
-    """Retries call to NCBI Taxonomy database to retrieve taxonomy ID.
-
-    The maximum number of retries is 10. Retry initiated when network
-    error encountered. If no recorded is returned for non-network error
-    issue, such as record does not exist, or type in the given scientific
-    name, programme terminates.
-
-    Function all invoked if network error encountered during call to NCBI
-    using Entrez in another function.
-
-    Return record.
-    """
-
-    record = None
-    tries = 0
-
-    while record is None and tries < retries:
-        try:
-            with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
-                record = Entrez.read(handle)
-
-        # If network error not encountered but no recorded returned, terminate programme
-        except IndexError:
+        if sys_response == True:
             logger.error(
-                "Entrez failed to retrieve taxonomy ID, for species in line {} of input file.\nPotential typo in species name.\nTerminating program to avoid downstream processing errors".format(
-                    line_number
-                ),
+                "Network error encountered too many times.\nTerminating programme to avoid downstream processing errors caused by missing data",
                 exc_info=1,
             )
             sys.exit(1)
-
-        except IOError:
-            # log retry attempt
-            if tries < tries:
-                logger.error(
-                    "Network error encountered during try no.{}.\nRetrying in 10s".format(
-                        tries
-                    ),
-                    exc_info=1,
-                )
-                time.sleep(10)
-            tries += 1
-
-    if record is None:
-        logger.error(
-            "Network error encountered after 10 attempts.\nTerminating programme",
-            exc_info=1,
-        )
-        sys.exit(1)
-
-    return record
-
-
-# If network error encountered during retrieval of assembly IDs
-def get_assembly_ids_retry(taxonomy_id, logger, retries=10):
-    """Retries call to NCBI Assembly database to retrieve accession numbers.
-
-    The maximum number of retries is 10. Retry initiated when network
-    error encountered. If no record is returned for non-network error issue,
-    such as record does not exist, or type is given taxonomy ID,
-    exits function.
-
-    Function only invoked if network error encountered during call to
-    NCBI using Entrez in another function.
-
-    Return list of assembly IDs for given taxonomy ID.
-    """
-
-    record = None
-    tries = 0
-
-    while record is None and tries < retries:
-        try:
-            with Entrez.elink(
-                dbfrom="Taxonomy",
-                id=taxonomy_id,
-                db="Assembly",
-                linkname="taxonomy_assembly",
-            ) as handle:
-                record = Entrez.read(handle)
-                assembly_id_list = [
-                    dict["Id"] for dict in record[0]["LinkSetDb"][0]["Link"]
-                ]
-
-        # If network error not encountered but no record returned
-        # terminate collection of accession numbers
-        except IndexError:
+        else:
             logger.error(
-                "Entrez failed to retrieve assembly IDs for NCBI:txid{}.\nExiting retrieval of accession numbers for {}".format(
-                    taxonomy_id, taxonomy_id, exc_info=1
-                )
+                "Network error encountered too many times.\nExiting retrieval of accession numbers",
+                exc_info=1,
             )
             return ()
 
-        except IOError:
-            # log retry attempt
-            if tries < tries:
-                logger.error(
-                    "Network error encountered during try no.{}.\nRetrying in 10s".format(
-                        tries
-                    ),
-                    exc_info=1,
-                )
-                time.sleep(10)
-            tries += 1
-
-    if record is None:
-        logger.error(
-            "Network error encountered after 10 attempts.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
-                taxonomy_id
-            ),
-            exc_info=1,
-        )
-        return ()
-
-    return assembly_id_list
+    return record
 
 
 # If network error encountered during posting of assembly IDs

@@ -79,21 +79,6 @@ class TestName_and_IDRetrieval(unittest.TestCase):
         )
 
     @pytest.mark.run(order=4)
-    def test_species_name_network_retry(self):
-        """Tests function to retry Entrez call after network error encountered.
-
-        Tests that correct output is returned from from 
-        get_genus_species_name_retry() function in Extract_genomes_NCBI.py.
-        """
-
-        self.assertEqual(
-            self.target_genus_species_name,
-            Extract_genomes_NCBI.get_genus_species_name_retry(
-                self.input_tax_id, self.logger, self.input_line_number
-            )[0]["ScientificName"],
-        )
-
-    @pytest.mark.run(order=5)
     def test_taxonomy_id_retrieval(self):
         """Tests Entrez call to NCBI to retrieve taxonomy ID from scientific name."""
 
@@ -102,15 +87,4 @@ class TestName_and_IDRetrieval(unittest.TestCase):
             Extract_genomes_NCBI.get_tax_ID(
                 self.input_genus_species_name, self.logger, self.input_line_number
             ),
-        )
-
-    @pytest.mark.run(order=6)
-    def test_tax_id_network_retry(self):
-        """Tests function to retry Entrez call after network error encountered."""
-
-        self.assertEqual(
-            self.target_tax_id,
-            Extract_genomes_NCBI.get_tax_id_retry(
-                self.input_genus_species_name, self.logger, self.input_line_number
-            )["IdList"][0],
         )
