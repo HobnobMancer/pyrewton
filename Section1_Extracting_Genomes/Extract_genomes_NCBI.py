@@ -340,13 +340,13 @@ def collate_accession_numbers(species_table, logger):
     logger.info(
         "Aquiring accession numbers from NCBI Assembly database for NCBI Taxonomy IDs"
     )
-    for NCBI_taxonomy_id in species_table["NCBI Taxonomy ID"]:
+    for ncbi_taxonomy_id in species_table["NCBI Taxonomy ID"]:
         logger.info(
             "Acquiring accession numbers for NCBI Taxonomy ID {} of {}".format(
                 tax_id_counter, tax_id_total_count
             )
         )
-        working_tax_id = NCBI_taxonomy_id[9:]
+        working_tax_id = ncbi_taxonomy_id[9:]
         all_accession_numbers.append(get_accession_numbers(working_tax_id, logger))
         logger.info(
             "Completed retrieving accession numbers of Taxonomy ID {} of {}".format(
@@ -467,7 +467,7 @@ def get_accession_numbers(taxonomy_id, logger):
 
     # Pull down all accession numbers
 
-    NCBI_accession_numbers_list = []
+    ncbi_accession_numbers_list = []
 
     try:
         with Entrez.efetch(
@@ -518,7 +518,7 @@ def get_accession_numbers(taxonomy_id, logger):
             new_accession_number = accession_record["DocumentSummarySet"][
                 "DocumentSummary"
             ][index_number]["AssemblyAccession"]
-            NCBI_accession_numbers_list.append(new_accession_number)
+            ncbi_accession_numbers_list.append(new_accession_number)
             index_number += 1
 
     except IndexError:
@@ -534,7 +534,7 @@ def get_accession_numbers(taxonomy_id, logger):
     )
 
     # Process accession numbers into human readable list for dataframe
-    NCBI_accession_numbers = ", ".join(NCBI_accession_numbers_list)
+    NCBI_accession_numbers = ", ".join(ncbi_accession_numbers_list)
 
     return NCBI_accession_numbers
 
