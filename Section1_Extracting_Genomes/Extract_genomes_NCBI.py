@@ -568,7 +568,7 @@ def entrez_get_retry(logger, sys_response, entrez_funct, *funct_args, **funct_kw
 
         except IOError:
             # log retry attempt
-            if tries < tries:
+            if tries < retries:
                 logger.error(
                     "Network error encountered during try no.{}.\nRetrying in 10s".format(
                         tries
