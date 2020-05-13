@@ -146,7 +146,7 @@ def build_logger(
 
 def parse_input_file(input_filename, logger):
     """Parse input file, returning dataframe of species names and NCBI Taxonomy IDs.
-
+    
     Read input file passed to the function, performing the appropriate action depending
     on each line's content.
     Comments: Indicated with the first character of '#', perform no action.
@@ -161,6 +161,9 @@ def parse_input_file(input_filename, logger):
     'all_species_data' list. Repeat for each line.
     Generate a dataframe with three columns: 'Genus', 'Species' and 'NCBI Taxonomy ID'.
     Use data from 'all_species_data' to fill out dataframe.
+    
+    input_filename: args, if specific name of input file, otherwise input taken from STDIN
+    logger: logger object
 
     Return dataframe.
     """
@@ -228,8 +231,14 @@ def get_genus_species_name(taxonomy_id, logger, line_number):
     """Fetch scientific name associated with the NCBI Taxonomy ID.
 
     Use Entrez efetch function to pull down the scientific name (genus/species name)
-    in the     NCBI Taxonomy database, associated with the taxonomy ID passed to the
+    in the NCBI Taxonomy database, associated with the taxonomy ID passed to the
     function.
+    
+    taxonomy_id: str, NCBI taxonomy ID
+    logger: logger object
+    line_number: int, line number in input file containing taxonomy ID
+    
+    Return scientific name.
     """
 
     logger.info("(Retrieving genus/species name using Taxonomy ID)")
@@ -267,6 +276,12 @@ def get_tax_ID(genus_species, logger, line_number):
     Use Entrez esearch function to pull down the NCBI Taxonomy ID of the
     species name passed to the function. Return the NCBI Taxonomy ID with
     the prefix 'NCBI:txid'.
+    
+    genus_species: str, scientific name of species
+    logger: logger object
+    line_number: int, number of line containing the species name in the input file.
+    
+    Return NCBI taxonomy ID.
     """
 
     # check for potential mistake in taxonomy ID prefix
@@ -315,6 +330,9 @@ def collate_accession_numbers(species_table, logger):
     'NCBI Accession Numbers' in the 'species_table' dataframe and populate with data in
     'all_accession_numbers'. 
     
+    species_table: dataframe, dataframe containing scientific names and taxonomy IDs
+    logger: logger object
+    
     Return modified dataframe, with four columns.
     """
 
@@ -354,6 +372,11 @@ def get_accession_numbers(taxonomy_id, logger):
     Use Entrez epost to post all assembly IDs to NCBI as a single query for
     subsequent Entrez efetch of all associated accession numbers.
     Accession numbers are returned as a string 'NCBI_accession_numbers'.
+    
+    taxonomy_id: str, NCBI taxonomy ID
+    logger: logger object
+    
+    Return NCBI accession numbers.
     """
 
     # Retrieve all IDs of genomic assemblies for taxonomy ID
