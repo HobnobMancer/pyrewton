@@ -8,3 +8,6 @@ input_file.txt
 Practising1.py
 Practising2.py
 *.log
+__pycache__
+.mypy_cache
+*.egg-info
