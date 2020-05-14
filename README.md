@@ -98,20 +98,12 @@ file is provided.
 
 **IOError**\
 This error will occur if there is a network issue when using Entrez
-to call to NCBI. The script will automatically retry the call.
+to call to NCBI. The script will automatically retry the call the set
+maximum number of times.
 
-If a network error occurs during the retrieval of a scientific name
-or taxonomy ID the program will terminate, to avoid errors occuring
-during downstream processing that will cause the program to
-automatically terminate.
-
-If a network error occurs during the retrievel of the accession
-numbers, the program will exit the process of the retrieval of
-the accession numbers and start processing the retrieval of the
-taxonomy ID in the dataframe. This is so a second attempt to
-retrieve the accession numbers can be performed by reinvoking
-the script, only for the species for which the retrieval
-previously failed, thus reducing demand on the NCBI database.
+If the maximum number of retries is met before connecting to NCBI
+without encountering a network error, 'NA' is returned and stored
+in the dataframe.
 
 **FileNotFoundError**\
 This error will occur is the incorrect path is provided as the
@@ -128,22 +120,21 @@ the given taxonomy ID.
 This is potentially caused by a typo in the taxonomy id provided
 in the input file.
 
-If this error occurs the program terminates to avoid errors
-occuring during downstream processing that will cause the
-program to automatically terminate.
+If this error occurs the string 'NA' will be returned.
 
 **IndexError during taxonomy ID retrieval**\
 This occurs when Entrez fails to retrieve a taxonomy ID for
-the given scientific name.
+the given scientific name. Returns 'NA'.
 
 This is potentially caused by a typo in the species name in the
 input file, or a typo in a taxonomy ID 'NCBI:txid' prefix,
 causing the program to misinturpret the ID as a species name
 and use it to try and retrieve a scientific name.
 
-If this error occurs the program terminates to avoid errors
-occuring during downstream processing that will cause the
-program to automatically terminate.
+If this error occurs the string 'NA' will be returned.
+If no taxonomy ID is available for the retrieval of accession numbers,
+the retrieval of accession numbers is cancelled and a value of 'NA' is
+returned.
 
 **IndexError during assembly ID retrieval**\
 This occurs when Entrez fails to retrieve assembly IDs from
@@ -155,7 +146,8 @@ to ensure there are 'directly' linked assemblies and not
 only 'subtree' assemblies.
 
 If this error occurs the program with exit the retrieve of
-the assembly IDs and not retrieve the NCBI accession numbers.
+the assembly IDs and not retrieve the NCBI accession numbers,
+and return the string 'NA'.
 This allows for troubleshooting using on the specie(s)
 for which it is required, to reduce demand on NCBI.
 
@@ -169,7 +161,8 @@ the assembly IDs or the request is too large for Entrez/
 NCBI. If this is the case, repeat the procedure in batches.
 
 If this error occurs the program with exit the posting of
-the assembly IDs and not retrieve the NCBI accession numbers.
+the assembly IDs and not retrieve the NCBI accession numbers,
+and return the string 'NA'.
 This allows for troubleshooting using on the specie(s)
 for which it is required, to reduce demand on NCBI.
 
@@ -182,7 +175,7 @@ the assembly IDs or the request is too large for Entrez/
 NCBI. If this is the case, repeat the procedure in batches.
 
 If this error occurs the program with exit the retrieval of
-the NCBI accession numbers.
+the NCBI accession numbers, and return the string 'NA'.
 This allows for troubleshooting using on the specie(s)
 for which it is required, to reduce demand on NCBI.
 
