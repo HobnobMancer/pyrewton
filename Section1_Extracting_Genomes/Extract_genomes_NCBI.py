@@ -383,6 +383,10 @@ def get_accession_numbers(taxonomy_id, logger, retries):
     
     Return NCBI accession numbers.
     """
+    # If previously failed to retrieve the taxonomy ID cancel retrieval of accession numbers
+    if taxonomy_id == "NA":
+        return "NA"
+
     # Retrieve all IDs of genomic assemblies for taxonomy ID
 
     logger.info("(Retrieving assembly IDs for NCBI:txid{}".format(taxonomy_id))
