@@ -68,7 +68,7 @@ including filename.
 If not option is given no log file will be written out,
 however, logs will still be printed to the terminal.
 
--`o, --output`\
+-`-o, --output`\
 &emsp;&emsp;Specify filename (with extension) of output file.
 If only the filename is given, Extract_genomes_NCBI.py
 the output file will be written to the current working
@@ -78,6 +78,11 @@ If not option is given an output file will be written to
 the current directory with the standard name:
 "Extract_genomes_NCBI_Date_Time", where _Date_ and _Time_
 are the date and time script was invoked, respectively.
+
+- `-r, --retries`\
+&emsp;&emsp;Specifiy maximum number of retries before cancelling call to NCBI
+if a network error is encountered. The default is a maximum of 10 retries. When
+maximum is reached, a value of 'NA' is returned.
 
 ## Troubleshooting and common errors
 
