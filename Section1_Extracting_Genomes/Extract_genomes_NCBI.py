@@ -266,7 +266,7 @@ def get_genus_species_name(taxonomy_id, logger, line_number, retries):
     """
     logger.info("(Retrieving scientific name for NCBI:txid{})".format(taxonomy_id))
 
-    with entrez_get_retry(
+    with entrez_retry(
         logger, retries, Entrez.efetch, db="Taxonomy", id=taxonomy_id, retmode="xml"
     ) as handle:
         record = Entrez.read(handle)
@@ -314,7 +314,7 @@ def get_tax_id(genus_species, logger, line_number, retries):
     else:
         logger.info("(Retrieving NCBI taxonomy ID for {})".format(genus_species))
 
-        with entrez_get_retry(
+        with entrez_retry(
             logger, retries, Entrez.esearch, db="Taxonomy", term=genus_species
         ) as handle:
             record = Entrez.read(handle)
@@ -397,7 +397,7 @@ def get_accession_numbers(taxonomy_id, logger, retries):
 
     logger.info("(Retrieving assembly IDs for NCBI:txid{}".format(taxonomy_id))
 
-    with entrez_get_retry(
+    with entrez_retry(
         logger,
         retries,
         Entrez.elink,
@@ -443,7 +443,7 @@ def get_accession_numbers(taxonomy_id, logger, retries):
     # compile list of ids in suitable format for epost
     id_post_list = str(",".join(assembly_id_list))
     epost_search_results = Entrez.read(
-        entrez_get_retry(logger, retries, Entrez.epost, "Assembly", id=id_post_list)
+        entrez_retry(logger, retries, Entrez.epost, "Assembly", id=id_post_list)
     )
 
     # test record was returned, if failed to return exit retrieval of assembly IDs
@@ -469,7 +469,7 @@ def get_accession_numbers(taxonomy_id, logger, retries):
 
     ncbi_accession_numbers_list = []
 
-    with entrez_get_retry(
+    with entrez_retry(
         logger,
         retries,
         Entrez.efetch,
@@ -525,10 +525,10 @@ def get_accession_numbers(taxonomy_id, logger, retries):
     return ncbi_accession_numbers
 
 
-def entrez_get_retry(logger, retries, entrez_func, *func_args, **func_kwargs):
-    """Retries call to NCBI if network error encountered, for all 'get' functions.
+def entrez_retry(logger, retries, entrez_func, *func_args, **func_kwargs):
+    """Calls to NCBI using Entrez.
 
-    Maximum number of retries is 10. Retry initated when network error encountered.
+    Maximum number of retries is 10, retry initated when network error encountered.
 
     :param logger: logger object
     :param retries: args.parser object (int), maximum number retries if network error encountered
