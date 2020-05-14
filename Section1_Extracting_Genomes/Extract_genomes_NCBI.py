@@ -185,7 +185,7 @@ def parse_input_file(input_filename, logger, retries):
     
     :param input_filename: args, if specific name of input file, otherwise input taken from STDIN
     :param logger: logger object
-    :param retries: parser.args object, maximum number of retries if network error encountered
+    :param retries: parser argument, maximum number of retries excepted if network error encountered
 
     Return dataframe.
     """
@@ -261,6 +261,7 @@ def get_genus_species_name(taxonomy_id, logger, line_number, retries):
     :param taxonomy_id: str, NCBI taxonomy ID
     :param logger: logger object
     :param line_number: int, line number in input file containing taxonomy ID
+    :param retries: parser argument, maximum number of retries excepted if network error encountered
     
     Return scientific name.
     """
@@ -296,6 +297,7 @@ def get_tax_id(genus_species, logger, line_number, retries):
     :param genus_species: str, scientific name of species
     :param logger: logger object
     :param line_number: int, number of line containing the species name in the input file.
+    :param retries: parser argument, maximum number of retries excepted if network error encountered
     
     Return NCBI taxonomy ID.
     """
@@ -346,35 +348,21 @@ def collate_accession_numbers(species_table, logger, retries):
     
     :param species_table: dataframe, dataframe containing scientific names and taxonomy IDs
     :param logger: logger object
+    :param retries: parser argument, maximum number of retries excepted if network error encountered
     
     Return modified dataframe, with four columns.
     """
-    all_accession_numbers = []
-    tax_id_total_count = len(species_table["NCBI Taxonomy ID"])
-    tax_id_counter = 1
     logger.info(
         "Aquiring accession numbers from NCBI Assembly database for NCBI Taxonomy IDs"
     )
-    for ncbi_taxonomy_id in species_table["NCBI Taxonomy ID"]:
-        logger.info(
-            "Acquiring accession numbers for NCBI Taxonomy ID {} of {}".format(
-                tax_id_counter, tax_id_total_count
-            )
-        )
-        working_tax_id = ncbi_taxonomy_id[9:]
-        all_accession_numbers.append(
-            get_accession_numbers(working_tax_id, logger, retries)
-        )
-        logger.info(
-            "Completed retrieving accession numbers of Taxonomy ID {} of {}".format(
-                tax_id_counter, tax_id_total_count
-            )
-        )
-        tax_id_counter += 1
+    species_table["NCBI Accession Numbers"] = species_table.apply(
+        lambda column: get_accession_numbers(
+            column["NCBI Taxonomy ID"][9:], logger, retries
+        ),
+        axis=1,
+    )
 
-    # add accession numbers to the dataframe
-    logger.info("Adding accession numbers to dataframe")
-    species_table["NCBI Accession Numbers"] = all_accession_numbers
+    logger.info("Finished adding accession numbers to dataframe")
     return species_table
 
 
@@ -390,6 +378,8 @@ def get_accession_numbers(taxonomy_id, logger, retries):
     
     :param taxonomy_id: str, NCBI taxonomy ID
     :param logger: logger object
+    :param retries: parser argument, maximum number of retries excepted if network error encountered
+
     
     Return NCBI accession numbers.
     """
@@ -531,7 +521,7 @@ def entrez_retry(logger, retries, entrez_func, *func_args, **func_kwargs):
     Maximum number of retries is 10, retry initated when network error encountered.
 
     :param logger: logger object
-    :param retries: args.parser object (int), maximum number retries if network error encountered
+    :param retries: parser argument, maximum number of retries excepted if network error encountered
     :param entrez_func: function, call method to NCBI
     :param *func_args: tuple, arguments passed to Entrez function
     :param ** func_kwargs: dictionary, keyword arguments passed to Entrez function
