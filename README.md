@@ -201,11 +201,8 @@ ability to open and read a given input file, defined using
 the `pathlib` `Path` module.
 
 **test_name_and_id_retrieval.py**\
-This test tests the functions `get_genus_species_name()`, `get_g_s_name_retry`,
-`get_tax_id()` and `get_t_ix_retry`, using provided inputs. The result of the
-Entrez calls to the NCBI database are compared against
+This test tests the functions `get_genus_species_name()` and `get_tax_id()`, using provided inputs. The result of the Entrez calls to the NCBI database are compared against
 expected results.
 
 **test_accession_number_retrieval.py**\
-This test test the `get_accession_numbers()`, `get_a_id_retry`, `post_a_ids_retry` and `get_a_n_retry` functions, to ensure that Entrez can call to the NCBI database. Owing to the frequent updating of the NCBI Assembly database it is not possible to
-compare the results from the NCBI call against expected results.
+This test test the function `get_accession_numbers()`, `get_a_id_retry`, to ensure that Entrez can call to the NCBI database. Owing to the frequent updating of the NCBI Assembly database it is not possible to compare the results from the NCBI call against expected results.
