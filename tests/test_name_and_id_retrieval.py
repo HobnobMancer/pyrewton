@@ -41,7 +41,9 @@ class TestName_and_IDRetrieval(unittest.TestCase):
 
         # Define test inputs
         for line in input_list:
-            if line.startswith("input_taxonomy_id:"):
+            if line.startswith("retries"):
+                self.retries = line[-1:]
+            elif line.startswith("input_taxonomy_id:"):
                 self.input_tax_id = line[18:]
             elif line.startswith("input_genus_species_name:"):
                 self.input_genus_species_name = line[25:]
@@ -74,7 +76,7 @@ class TestName_and_IDRetrieval(unittest.TestCase):
         self.assertEqual(
             self.target_genus_species_name,
             Extract_genomes_NCBI.get_genus_species_name(
-                self.input_tax_id, self.logger, self.input_line_number
+                self.input_tax_id, self.logger, self.input_line_number, self.retries
             ),
         )
 
@@ -85,6 +87,9 @@ class TestName_and_IDRetrieval(unittest.TestCase):
         self.assertEqual(
             "NCBI:txid" + self.target_tax_id,
             Extract_genomes_NCBI.get_tax_id(
-                self.input_genus_species_name, self.logger, self.input_line_number
+                self.input_genus_species_name,
+                self.logger,
+                self.input_line_number,
+                self.retries,
             ),
         )

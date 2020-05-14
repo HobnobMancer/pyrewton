@@ -38,7 +38,9 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
 
         # Define test inputs
         for line in input_list:
-            if line.startswith("input_taxonomy_id:"):
+            if line.startswith("retries"):
+                self.retries = line[-1:]
+            elif line.startswith("input_taxonomy_id:"):
                 self.input_tax_id = line[18:]
             elif line.startswith("input_assembly_id_list:"):
                 self.input_assembly_id_list = line[23:]
@@ -49,16 +51,6 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
     def test_assembly_id_retrieval(self):
         """Tests multiplpe Entrez calls to NCBI to retrieve accession numbers."""
 
-        Extract_genomes_NCBI.get_accession_numbers(self.input_tax_id, self.logger)
-
-    @pytest.mark.run(order=6)
-    def test_assembly_posting_and_accession_retry(self):
-        """Tests function to retry Entrez call after network error encountered."""
-
-        record = Extract_genomes_NCBI.post_assembly_ids_retry(
-            self.input_assembly_id_list, self.logger, self.input_tax_id
-        )
-
-        Extract_genomes_NCBI.get_accession_numbers_retry(
-            record["QueryKey"], record["WebEnv"], self.logger, self.input_tax_id
+        Extract_genomes_NCBI.get_accession_numbers(
+            self.input_tax_id, self.logger, self.retries
         )
