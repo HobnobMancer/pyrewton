@@ -84,7 +84,7 @@ class TestName_and_IDRetrieval(unittest.TestCase):
 
         self.assertEqual(
             "NCBI:txid" + self.target_tax_id,
-            Extract_genomes_NCBI.get_tax_ID(
+            Extract_genomes_NCBI.get_tax_id(
                 self.input_genus_species_name, self.logger, self.input_line_number
             ),
         )

@@ -1,10 +1,12 @@
-Practising.py
-Practising.txt
-Practising_inputfile.txt
-input_file.txt
-.idea/
-../.vscode/
-.vscode/
-Practising1.py
-Practising2.py
+# Ignore VS Code config
+.vscode
+
+# Ignore log files
 *.log
+
+# Ignore caches
+__pycache__
+.mypy_cache
+
+# Ignore distutils output
+*.egg-info
