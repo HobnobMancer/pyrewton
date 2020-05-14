@@ -25,16 +25,16 @@ class Test_parsing_input_file(unittest.TestCase):
 
         # Define test directories
         self.test_dir = Path("tests")
-        self.input_dir = (
-            self.test_dir / "test_inputs" / "test_ext_gnm_ncbi" / "input_reading"
-        )
+        self.input_dir = self.test_dir / "test_inputs" / "test_ext_gnm_ncbi"
 
         # Null logger instance
         self.logger = logging.getLogger("Test_name_and_ID_Retrieval logger")
         self.logger.addHandler(logging.NullHandler())
 
         # Path to example input file provided with the programme
-        self.input_reading_path = self.input_dir / "test_input_file.txt"
+        self.input_reading_path = (
+            self.input_dir / "input_reading" / "test_input_file.txt"
+        )
 
         # Retrieve 'retries' argument from test inputs
         self.input_file_path = self.input_dir / "test_inputs.txt"
