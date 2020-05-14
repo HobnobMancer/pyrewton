@@ -1,6 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""Pull down genomic assemblies from NCBI database.
 
+:func main: generate a dataframe of scientific names, taxonomy IDs and accession numbers
+:func build_logger: creates logger object
+:func parse_input_file: parse input file
+:func get_genus_species_name: retrieve scientific name from taxonomy ID
+:func get_tax_id: retrieve NCBI taxonomy ID from scientific name
+:func collate_accession_numbers: parse taxonomy ID column in dataframe
+:func get_accession_numbers: retrieves all accessions associated to given taxonomy ID
+
+Generates dataframe containing scientific names, taxonomy IDs and accession numbers.
+Pulls down and stores genomic assemblies from NCBI Assebmly database.
+"""
 # Script pulls down assembles from NCBI database with genus/species names and taxonomy ID input
 
 import argparse
@@ -16,8 +28,8 @@ import pandas as pd
 
 
 def main():
-    """Generates datafame containing genus/species name with NCBI taxonomy and accession numbers
-
+    """Generate datafame containing scientific names, taxonomy IDs and accessio numbers.
+    
     Pass input file (containing unique species on each line, idenfitied by their genus/species
     name or NCBI Taxonomy ID) tp parse_input_file() function, which acquires missing genus/species
     names and NCBI taxonomy IDs as appropriate. Genus/species names and associated NCBI
@@ -31,7 +43,6 @@ def main():
 
     Return 'species_table' dataframe.
     """
-
     # Capture date and time script is executed
     date = datetime.datetime.now()
     date_of_pulldown = date.strftime("%Y-%m-%d")
@@ -109,17 +120,18 @@ def main():
 def build_logger(
     script_name, log_file, date_of_pulldown, time_of_pulldown
 ) -> logging.Logger:
-    """"Return a logger for this script.
-    
-    script_name: Name of script
-    custom_string: Additional string parsed from cmdline by user - required for log
-                    file to be written out
-    date_of_pulldown: Data run was initiated
-    time_of_pulldown: Time run was initiated
+    """Return a logger for this script.
 
     Enables logger for script, sets parameters and creates new file to store log.
-    """
+    
+    :param script_name: Name of script
+    :param custom_string: Additional string parsed from cmdline by user - required for log
+                    file to be written out
+    :param date_of_pulldown: Data run was initiated
+    :param time_of_pulldown: Time run was initiated
 
+    Return logger object.
+    """
     logger = logging.getLogger(script_name)
     logger.setLevel(logging.DEBUG)
 
@@ -162,12 +174,11 @@ def parse_input_file(input_filename, logger):
     Generate a dataframe with three columns: 'Genus', 'Species' and 'NCBI Taxonomy ID'.
     Use data from 'all_species_data' to fill out dataframe.
     
-    input_filename: args, if specific name of input file, otherwise input taken from STDIN
-    logger: logger object
+    :param input_filename: args, if specific name of input file, otherwise input taken from STDIN
+    :param logger: logger object
 
     Return dataframe.
     """
-
     # open working_species_list.txt and extract lines, without newline character
     # then create genus name, species name and taxonomy ID tuplet
     all_species_data = []
@@ -234,13 +245,12 @@ def get_genus_species_name(taxonomy_id, logger, line_number):
     in the NCBI Taxonomy database, associated with the taxonomy ID passed to the
     function.
     
-    taxonomy_id: str, NCBI taxonomy ID
-    logger: logger object
-    line_number: int, line number in input file containing taxonomy ID
+    :param taxonomy_id: str, NCBI taxonomy ID
+    :param logger: logger object
+    :param line_number: int, line number in input file containing taxonomy ID
     
     Return scientific name.
     """
-
     logger.info("(Retrieving scientific name for NCBI:txid{})".format(taxonomy_id))
 
     with entrez_get_retry(
@@ -269,13 +279,12 @@ def get_tax_ID(genus_species, logger, line_number):
     species name passed to the function. Return the NCBI Taxonomy ID with
     the prefix 'NCBI:txid'.
     
-    genus_species: str, scientific name of species
-    logger: logger object
-    line_number: int, number of line containing the species name in the input file.
+    :param genus_species: str, scientific name of species
+    :param logger: logger object
+    :param line_number: int, number of line containing the species name in the input file.
     
     Return NCBI taxonomy ID.
     """
-
     # check for potential mistake in taxonomy ID prefix
     if bool(re.search(r"\d", genus_species)) == True:
         logger.error(
@@ -318,12 +327,11 @@ def collate_accession_numbers(species_table, logger):
     'NCBI Accession Numbers' in the 'species_table' dataframe and populate with data in
     'all_accession_numbers'. 
     
-    species_table: dataframe, dataframe containing scientific names and taxonomy IDs
-    logger: logger object
+    :param species_table: dataframe, dataframe containing scientific names and taxonomy IDs
+    :param logger: logger object
     
     Return modified dataframe, with four columns.
     """
-
     all_accession_numbers = []
     tax_id_total_count = len(species_table["NCBI Taxonomy ID"])
     tax_id_counter = 1
@@ -361,12 +369,11 @@ def get_accession_numbers(taxonomy_id, logger):
     subsequent Entrez efetch of all associated accession numbers.
     Accession numbers are returned as a string 'NCBI_accession_numbers'.
     
-    taxonomy_id: str, NCBI taxonomy ID
-    logger: logger object
+    :param taxonomy_id: str, NCBI taxonomy ID
+    :param logger: logger object
     
     Return NCBI accession numbers.
     """
-
     # Retrieve all IDs of genomic assemblies for taxonomy ID
 
     logger.info("(Retrieving assembly IDs for NCBI:txid{}".format(taxonomy_id))
@@ -529,16 +536,15 @@ def entrez_get_retry(logger, sys_response, entrez_funct, *funct_args, **funct_kw
 
     Maximum number of retries is 10. Retry initated when network error encountered.
 
-    logger: logger object
-    sys_response: boolean, if True programme terminates
-    entrez_function: function, call method to NCBI
-    *funct_args: tuple, arguments passed to Entrez function
-    ** funct_kwargs: dictionary, keyword arguments passed to Entrez function
-    retries: int, maximum number of retries
+    :param logger: logger object
+    :param sys_response: boolean, if True programme terminates
+    :param entrez_function: function, call method to NCBI
+    :param *funct_args: tuple, arguments passed to Entrez function
+    :param ** funct_kwargs: dictionary, keyword arguments passed to Entrez function
+    :param retries: int, maximum number of retries
 
     Returns record.
     """
-
     record = None
     retries = 10
     tries = 0
@@ -589,7 +595,6 @@ def post_assembly_ids_retry(assembly_id_list, logger, taxonomy_id, retries=10):
 
     Return record.
     """
-
     record = None
     tries = 0
 
@@ -649,7 +654,6 @@ def get_accession_numbers_retry(
 
     Return record.
     """
-
     record = None
     tries = 0
 
