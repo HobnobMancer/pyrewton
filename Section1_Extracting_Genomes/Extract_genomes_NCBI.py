@@ -2,29 +2,52 @@
 # -*- coding: utf-8 -*-
 """Pull down genomic assemblies from NCBI database.
 
+:cmd_args user_email: email address of user
+:cmd_args --dataframe: output directory for dataframe
+:cmd_args --force: force writing in output directory
+:cmd_args --genbank: enable/disable GenBank file download
+:cmd_args --input_file: path of input file
+:cmd_args --log: enable log file writing
+:cmd_args --nodelete: enable/disabling removal of exiting files in output
+:cmd_args --output: output directory for downloaded files
+:cmd_args --retries: maximum number of retries if network error occurs
+:cmd_args --timeout: timeout limit of URL connection
+
 :func main: generate a dataframe of scientific names, taxonomy IDs and accession numbers
 :func build_logger: creates logger object
+:func make_output_directory: create directory for genomic files to be written to
 :func parse_input_file: parse input file
 :func get_genus_species_name: retrieve scientific name from taxonomy ID
 :func get_tax_id: retrieve NCBI taxonomy ID from scientific name
 :func collate_accession_numbers: parse taxonomy ID column in dataframe
 :func get_accession_numbers: retrieves all accessions associated to given taxonomy ID
+:func get_genbank_files: organise download of genbank files
+:func compile_URL: create URL for downloading file
+:func compile_output_path: create file name and path to output directory for downloaded files
+:func download_file: download file using provided URL
+:func write_out_dataframe: write out species table as .csv file
 
 Generates dataframe containing scientific names, taxonomy IDs and accession numbers.
 Pulls down and stores genomic assemblies from NCBI Assebmly database.
 """
-# Script pulls down assembles from NCBI database with genus/species names and taxonomy ID input
 
 import argparse
 import datetime
 import logging
+import os
 import re
+import shutil
 import sys
 import time
+
 from pathlib import Path
+from socket import timeout
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
+
+import pandas as pd
 
 from Bio import Entrez
-import pandas as pd
 
 
 def main():
@@ -64,6 +87,33 @@ def main():
         default=None,
         help="Email address of user, this must be provided",
     )
+    # Add dataframe write out options
+    # if not given dataframe written to STDOUT
+    parser.add_argument(
+        "-d",
+        "--dataframe",
+        type=Path,
+        default=sys.stdout,
+        help="Location of file for species table to be written to",
+    )
+    # Add option to force file over writting
+    parser.add_argument(
+        "-f",
+        "--force",
+        type=bool,
+        metavar="force file overwritting",
+        default=False,
+        help="Force file over writting",
+    )
+    # Add option to disable pull down of GenBank files
+    parser.add_argument(
+        "-g",
+        "--genbank",
+        type=bool,
+        metavar="genbank file (.gbff)",
+        default=True,
+        help="Disable pulldown of GenBank (.gbff) files",
+    )
     # Add input file name option
     # If not given input will be taken from STDIN
     parser.add_argument(
@@ -72,18 +122,7 @@ def main():
         type=Path,
         metavar="input file name",
         default=sys.stdin,
-        help="input filename",
-    )
-    # Add output file name option
-    # Must include file extension
-    # If not given, output will be written to STDOUT
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        metavar="output file name",
-        default=sys.stdout,
-        help="output filename",
+        help="Input filename",
     )
     # Add log file name option
     # If not given, no log file will be written out
@@ -95,6 +134,27 @@ def main():
         default=None,
         help="Defines log file name and/or path",
     )
+    # Add option to prevent over writing of existing files
+    # and cause addition of files to output directory
+    parser.add_argument(
+        "-n",
+        "--nodelete",
+        type=bool,
+        metavar="not to delete exisiting files",
+        default=False,
+        help="enable/disable deletion of exisiting files",
+    )
+    # Add output file name option
+    # Must include file extension
+    # If not given, output will be written to STDOUT
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        metavar="output file name",
+        default=sys.stdout,
+        help="Output filename",
+    )
     # Add custom maximum number of retries if network error is encountered
     parser.add_argument(
         "-r",
@@ -103,6 +163,15 @@ def main():
         metavar="maximum number of retries",
         default=10,
         help="Defines the maximum number of retries if network errors are encountered",
+    )
+    # Add option to alter timeout allowance before cancelling downloading of files
+    parser.add_argument(
+        "-t",
+        "--timeout",
+        dest="timeout",
+        action="store",
+        default=10,
+        help="Timeout for URL connections, in seconds",
     )
 
     # Parse arguments into args variable
@@ -117,13 +186,31 @@ def main():
     logger = logging.getLogger("Extract_genomes_NCBI")
     logger.info("Run initated")
 
+    # If specified output directory for genomic files, create output directory
+    if args.output is not sys.stdout:
+        make_output_directory(args.output, logger, args.force, args.nodelete)
+
     # Invoke main usage of script
     # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
     species_table = parse_input_file(args.input_file, logger, args.retries)
 
-    species_table = collate_accession_numbers(species_table, logger, args.retries)
+    # Pull down accession numbers and GenBank files (if not disabled)
+    species_table = collate_accession_numbers(
+        species_table, logger, args.retries, args.output, args.genbank, args.timeout
+    )
     logger.info("Generated species table")
-    print("\nSpecies table:\n", species_table)
+    print("\nSpecies table:\n", species_table, "\n")
+
+    # Write out dataframe
+    if args.dataframe is not sys.stdout:
+        write_out_dataframe(
+            species_table, logger, args.dataframe, args.force, args.nodelete
+        )
+    else:
+        species_table.to_csv(args.dataframe)
+
+    # Program finished
+    logger.info("Program finished and exiting")
 
 
 def build_logger(
@@ -165,6 +252,57 @@ def build_logger(
     return logger
 
 
+def make_output_directory(output, logger, force, nodelete):
+    """Create output directory for genomic files.
+
+    Check if directory indicated for output existed already.
+    If so check if force overwrite enabled. If not terminate programme.
+    If so, check if deletion of exiting files was enabled.
+    If so, exiting files in output directory are deleted.
+    Create output directory, expecting error if already exists.
+
+    :param output: Path, path to output directory
+    :param logger: logger object
+    :param force: bool, cmd-line args to enable/disable over writing existing directory
+    :param nodelete: bool, cmd-line args to enable/disable deleting of existing files
+
+    Return nothing.
+    """
+    logger.info("Checking if specified output directory for genomic files exists.")
+    # If output directory specificed at cmd-line, check output directory does not already exist
+    if output.exists():
+        if force is False:
+            logger.info(
+                "Output directory already exists and forced overwrite not enabled.\nTerminating program."
+            )
+            sys.exit()
+        else:
+            if nodelete is False:
+                logger.info(
+                    "Output directory already exists and forced complete overwrite enabled.\nDeleting existing content in outdir."
+                )
+                # delete existing content in outdir
+                shutil.rmtree(output)
+            else:
+                logger.info(
+                    "Output directory already exists and forced addition of files to outdir enables."
+                )
+    # Recursively make output directory
+    try:
+        output.mkdir(exist_ok=True)
+    except OSError:
+        # this will occur if directory already exists
+        # ignored if forced over write enabled
+        if force is True:
+            return ()
+        else:
+            logger.error(
+                "OSError occured while creating output directory for genomic files.\nTerminating programme."
+            )
+            sys.exit()
+    return
+
+
 def parse_input_file(input_filename, logger, retries):
     """Parse input file, returning dataframe of species names and NCBI Taxonomy IDs.
 
@@ -196,10 +334,10 @@ def parse_input_file(input_filename, logger, retries):
     # test path to input file exists, if not exit programme
     if input_filename.is_file() is False:
         # report to user and exit programme
-        logger.error(
+        logger.info(
             (
                 "Input file not found. Check filename, extension and directory is correct."
-                "Terminating program."
+                "\nTerminating program."
             ),
             exc_info=1,
         )
@@ -303,7 +441,7 @@ def get_tax_id(genus_species, logger, line_number, retries):
     """
     # check for potential mistake in taxonomy ID prefix
     if bool(re.search(r"\d", genus_species)) is True:
-        logger.error(
+        logger.warning(
             (
                 "Warning: Number found in genus-species name, when trying to retrieve taxonomy ID"
                 "for species on line {}. Potential typo in taxonomy ID, so taxonomy ID "
@@ -311,7 +449,7 @@ def get_tax_id(genus_species, logger, line_number, retries):
             ).format(line_number),
             exc_info=1,
         )
-        sys.exit(1)
+        return "NA"
 
     else:
         logger.info("(Retrieving NCBI taxonomy ID for {})".format(genus_species))
@@ -336,7 +474,9 @@ def get_tax_id(genus_species, logger, line_number, retries):
         return "NA"
 
 
-def collate_accession_numbers(species_table, logger, retries):
+def collate_accession_numbers(
+    species_table, logger, retries, output, genbank, timeout_limit
+):
     """Return dataframe with column containing all associated NCBI accession numbers.
 
     Pass each Taxonomy ID in the 'NCBI Taxonomy ID' column of the 'species_table'
@@ -349,6 +489,9 @@ def collate_accession_numbers(species_table, logger, retries):
     :param species_table: dataframe, dataframe containing scientific names and taxonomy IDs
     :param logger: logger object
     :param retries: parser argument, maximum number of retries excepted if network error encountered
+    :param output: path, output directory for genomic files
+    :param genbank: booleon, cmd-line argumen to enable/disable downloading of GenBank files
+    :param timeout_limit: int, cmd-line argument, timeout of URL connection (s)
     
     Return modified dataframe, with four columns.
     """
@@ -357,7 +500,12 @@ def collate_accession_numbers(species_table, logger, retries):
     )
     species_table["NCBI Accession Numbers"] = species_table.apply(
         lambda column: get_accession_numbers(
-            column["NCBI Taxonomy ID"][9:], logger, retries
+            column["NCBI Taxonomy ID"][9:],
+            logger,
+            retries,
+            output,
+            genbank,
+            timeout_limit,
         ),
         axis=1,
     )
@@ -366,7 +514,7 @@ def collate_accession_numbers(species_table, logger, retries):
     return species_table
 
 
-def get_accession_numbers(taxonomy_id, logger, retries):
+def get_accession_numbers(taxonomy_id, logger, retries, output, genbank, timeout_limit):
     """Return all NCBI accession numbers associated with NCBI Taxonomy Id.
 
     Use Entrez elink function to pull down the assembly IDs of all genomic
@@ -379,8 +527,10 @@ def get_accession_numbers(taxonomy_id, logger, retries):
     :param taxonomy_id: str, NCBI taxonomy ID
     :param logger: logger object
     :param retries: parser argument, maximum number of retries excepted if network error encountered
+    :param output: path, output directory for genomic files
+    :param genbank: booleon, cmd-line argumen to enable/disable downloading of GenBank files
+    :param timeout_limit: int, cmd-line argument, timeout_limit of URL connection (s)
 
-    
     Return NCBI accession numbers.
     """
     # If previously failed to retrieve the taxonomy ID cancel retrieval of accession numbers
@@ -516,11 +666,199 @@ def get_accession_numbers(taxonomy_id, logger, retries):
     # Process accession numbers into human readable list for dataframe
     ncbi_accession_numbers = ", ".join(ncbi_accession_numbers_list)
 
+    # If downloading of GenBank files is enabled, download GenBank files
+    if genbank is True:
+        get_genbank_files(
+            assembly_id_list, taxonomy_id, logger, output, retries, timeout_limit
+        )
+
     return ncbi_accession_numbers
 
 
+def get_genbank_files(
+    assembly_ids, taxonomy_id, logger, output, retries, timeout_limit
+):
+    """Pull down GenBank files from NCBI.
+
+    Retrieved necessary data to compile URL, and pass
+    data to to function to create URL. Pass URL to a function
+    to download GenBank file.
+
+    :param assembly_ids: list, list of all assembly IDs
+    :param logger: logger object
+    :param output: cmd args, defines output directory
+    :param retries: cmd args, defines maximum number of retries if network error encountered
+    :param force: booleon, cmd-line argument to enable/disable over writing of existing files
+    :param timeout_limit: int, cmd-line argument, timeout of URL connection (s)
+
+    Return nothing.
+    """
+    logger.info(
+        "Initating pull down of GenBank files for NCBI:txid{}".format(taxonomy_id)
+    )
+    count = 1
+    id_index = 0
+    for id_index in range(len(assembly_ids)):
+        logger.info(
+            "Preparing download of GenBank file {} of {} for NCBI:txid{}".format(
+                (id_index + 1), len(assembly_ids), taxonomy_id
+            )
+        )
+        with entrez_retry(
+            logger,
+            retries,
+            Entrez.esummary,
+            db="assembly",
+            id=assembly_ids[id_index],
+            report="full",
+        ) as genbank_handle:
+            genbank_record = Entrez.read(genbank_handle, validate=False)
+            genbank_summary = genbank_record["DocumentSummarySet"]["DocumentSummary"][0]
+        # compile url for download
+        genbank_url, filestem, accession_number = compile_url(genbank_summary, logger)
+        # if downloaded file is not to be written to STDOUT, compile output path
+        if output is not sys.stdout:
+            out_file_path = compile_output_path(
+                output, filestem, "genomic.gbff.fz", logger
+            )
+        else:
+            out_file_path = output
+
+        # download GenBank file
+        download_file(
+            genbank_url, timeout_limit, out_file_path, logger, accession_number,
+        )
+
+        logger.info(
+            "Finished download of GenBank file. Accesion {}".format(accession_number)
+        )
+
+        count += 1
+        id_index += 1
+
+    return
+
+
+def compile_url(data_summary, logger):
+    """Compile url for file download.
+
+    Extract the assembly name from the record summary and replace
+    escape characters with underscores. This is becuase NCBI records
+    can include a varierty of escape charcters in its records, but
+    requires inclusion of underscores within its urls. Use the
+    assembly name and accession number to generate the filestem.
+    Use the file stem to arquire the GCstem (region of the url which
+    dictates the type of genome record, i.e. reference or assembly), and
+    accession number block (in the format of nnn/nnn/nnn in the url).
+    Regions of the url are compiled together with the ftpstem:
+    ftp://ftp.ncni.nlm.nih.gov/genomes/all/.
+
+    :param data_summary: record dictionary, summary region of NCBI record
+    :param logger: logger object
+
+    Return str, url required for download.
+    """
+    logger.info("Compiling URL for download")
+    # Extract assembly name, removing alterantive escape characters
+    escape_characters = re.compile(r"[\s/,#\(\)]")
+    escape_name = re.sub(escape_characters, "_", data_summary["AssemblyName"])
+    # compile filstem
+    filestem = "_".join([data_summary["AssemblyAccession"], escape_name])
+    # separate out filesteam into GCstem, intergers and version number
+    gcstem, accession_block, _ = tuple(filestem.split("_", 2))
+    # separate identifying numbers from version number
+    accession_intergers = accession_block.split(".")[0]
+    # generate accession number block for url in format (nnn\nnn\nnn)
+    url_accession_block = "/".join(
+        [accession_intergers[i : i + 3] for i in range(0, len(accession_intergers), 3)]
+    )
+    # return url for downloading file
+    return (
+        f"ftp://ftp.ncbi.nlm.nih.gov/genomes/all/{gcstem}/{url_accession_block}/{filestem}/{filestem}_genomic.gbff.gz",
+        filestem,
+        data_summary["AssemblyAccession"],
+    )
+
+
+def compile_output_path(output, filestem, suffix, logger):
+    """Compile path for output file.
+
+    Standardised file name of accession_number.suffix.
+    Suffix for GenBank file is _genomic.gbff.gz
+
+    :param output: cmd-args, path to directory for download files to be written
+    :param accession_number: str, accession number
+    :param suffix: str, file extension
+    :param logger: logger object
+    :param force: booleon, cmd-line argument to enable/disable over writing of existing files
+    :param nodelete: boolean, cmd-line args to enable/disable deleting of existing files in outdir
+
+    Return path.
+    """
+    logger.info("Compiling output path for file")
+    return output / "_".join([filestem.replace(".", "_"), suffix])
+
+
+def download_file(genbank_url, timeout_limit, out_file_path, logger, accession):
+    """Download file.
+    
+    :param genbank_url: str, url of file to be downloaded
+    :param timeout_limit: int, cmd-line args, timout out of URL connection (s)
+    :param out_file_path: path, output directory for file to be written to
+    :param accession: str, accession number of genome
+    
+    Return nothing.
+    """
+    # Try URL connection
+    try:
+        response = urlopen(genbank_url, timeout=timeout_limit)
+    except HTTPError:
+        logger.error(
+            "Failed to download GenBank file for {}".format(accession), exc_info=1,
+        )
+        return
+    except URLError:
+        logger.error(
+            "Failed to download GenBank file for {}".format(accession), exc_info=1,
+        )
+        return
+    except timeout:
+        logger.error(
+            "Download timed out, thus failed to download GenBank file for {}".format(
+                accession
+            ),
+            exc_info=1,
+        )
+        return
+
+    # Download file
+    logger.info("Opened URL and parsed metadata")
+    file_size = int(response.info().get("Content-length"))
+    bytes_downloaded = 0
+    bsize = 1_048_576
+    try:
+        logger.info("Downloading file. Accession: {}".format(accession))
+        with open(out_file_path, "wb") as out_handle:
+            while True:
+                buffer = response.read(bsize)
+                if not buffer:
+                    break
+                bytes_downloaded += len(buffer)
+                out_handle.write(buffer)
+                download_progress = r"%10d  [%3.2f%%]" % (
+                    bytes_downloaded,
+                    bytes_downloaded * 100.0 / file_size,
+                )
+                logger.info(download_progress)
+    except IOError:
+        logger.error("Download failed for {}".format(accession), exc_info=1)
+        return
+
+    return
+
+
 def entrez_retry(logger, retries, entrez_func, *func_args, **func_kwargs):
-    """Calls to NCBI using Entrez.
+    """Call to NCBI using Entrez.
 
     Maximum number of retries is 10, retry initated when network error encountered.
 
@@ -559,6 +897,34 @@ def entrez_retry(logger, retries, entrez_func, *func_args, **func_kwargs):
         return "NA"
 
     return record
+
+
+def write_out_dataframe(species_table, logger, outdir, force, nodelete):
+    """Write out dataframe to output directory.
+
+    :param species_table: pandas dataframe
+    :param logger: logger object
+    :param outdir: cmd-args, Path, output directory
+    :param force: booleon, cmd-line argument to enable/disable over writing of existing files
+    :param nodelete: boolean, cmd-line args to enable/disable deleting of existing files in outdir
+
+    return Nothing.
+    """
+    # Check if overwrite of existing directory will occur
+    logger.info("Checking if output directory for dataframe already exists")
+    if outdir.exists():
+        if force is False:
+            logger.warning(
+                "Specified directory for dataframe already exists.\nExiting writing out dataframe."
+            )
+            return ()
+        else:
+            logger.warning(
+                "Specified directory for dataframe already exists.\nForced overwritting enabled."
+            )
+    logger.info("Writing out species dataframe to directory")
+    species_table.to_csv(outdir)
+    return ()
 
 
 if __name__ == "__main__":
