@@ -28,13 +28,12 @@
 :func write_out_dataframe: write out species table as .csv file
 
 Generates dataframe containing scientific names, taxonomy IDs and accession numbers.
-Pulls down and stores genomic assemblies from NCBI Assebmly database.
+Pulls down and stores genomic assemblies from NCBI Assembly database.
 """
 
 import argparse
 import datetime
 import logging
-import os
 import re
 import shutil
 import sys
@@ -48,29 +47,11 @@ from urllib.request import urlopen
 import pandas as pd
 
 from Bio import Entrez
+from tqdm import tqdm
 
 
-def main():
-    """Generate datafame containing scientific names, taxonomy IDs and accession numbers.
-    
-    Pass input file (containing unique species on each line, idenfitied by their genus/species
-    name or NCBI Taxonomy ID) tp parse_input_file() function, which acquires missing genus/species
-    names and NCBI taxonomy IDs as appropriate. Genus/species names and associated NCBI
-    Taxonomy ID are stored in a generated dataframe with three columns: 'Genus', 'Species',
-    and 'NCBI Taxonomy ID'. Parse_input_file() returns the generated dataframe which is stored in
-    the variable 'species_table'.
-    Pass the 'species_table' dataframe to collate_accession_numbers(), which acquires all associated
-    NCBI accession numbers for each Taxonomy ID. Acquired accession numbers are stored in a new
-    column in the dataframe, titled 'NCBI Accession Numbers'. The modified dataframe is returned
-    from collate_accession_numbers() and stored in the variable 'species_table'.
-
-    Return 'species_table' dataframe.
-    """
-    # Capture date and time script is executed
-    date = datetime.datetime.now()
-    date_of_pulldown = date.strftime("%Y-%m-%d")
-    time_of_pulldown = date.strftime("%H:%M")
-
+def build_parser():
+    """Return ArgumentParser parser for script."""
     # Create parser object
     parser = argparse.ArgumentParser(
         prog="Extract_genomes_NCBI.py",
@@ -174,7 +155,34 @@ def main():
         help="Timeout for URL connections, in seconds",
     )
 
-    # Parse arguments into args variable
+    return parser
+
+
+def main():
+    """Generate dataframe containing scientific names, taxonomy IDs and accession numbers.
+    
+    Pass input file (containing unique species on each line, idenfitied by their genus/species
+    name or NCBI Taxonomy ID) tp parse_input_file() function, which acquires missing genus/species
+    names and NCBI taxonomy IDs as appropriate. Genus/species names and associated NCBI
+    Taxonomy ID are stored in a generated dataframe with three columns: 'Genus', 'Species',
+    and 'NCBI Taxonomy ID'. Parse_input_file() returns the generated dataframe which is stored in
+    the variable 'species_table'.
+
+    Pass the 'species_table' dataframe to collate_accession_numbers(), which acquires all associated
+
+    NCBI accession numbers for each Taxonomy ID. Acquired accession numbers are stored in a new
+    column in the dataframe, titled 'NCBI Accession Numbers'. The modified dataframe is returned
+    from collate_accession_numbers() and stored in the variable 'species_table'.
+
+    Return 'species_table' dataframe.
+    """
+    # Capture date and time script is executed
+    date = datetime.datetime.now()
+    date_of_pulldown = date.strftime("%Y-%m-%d")
+    time_of_pulldown = date.strftime("%H:%M")
+
+    # Parse arguments
+    parser = build_parser()
     args = parser.parse_args()
 
     # Add users email address from parser
@@ -182,8 +190,8 @@ def main():
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
-    build_logger("Extract_genomes_NCBI", args.log, date_of_pulldown, time_of_pulldown)
-    logger = logging.getLogger("Extract_genomes_NCBI")
+    logger = build_logger("Extract_genomes_NCBI", args.log, date_of_pulldown, time_of_pulldown)
+    # logger = logging.getLogger("Extract_genomes_NCBI")
     logger.info("Run initated")
 
     # If specified output directory for genomic files, create output directory
@@ -199,7 +207,7 @@ def main():
         species_table, logger, args.retries, args.output, args.genbank, args.timeout
     )
     logger.info("Generated species table")
-    print("\nSpecies table:\n", species_table, "\n")
+    # print("\nSpecies table:\n", species_table, "\n")
 
     # Write out dataframe
     if args.dataframe is not sys.stdout:
@@ -273,33 +281,32 @@ def make_output_directory(output, logger, force, nodelete):
     if output.exists():
         if force is False:
             logger.info(
-                "Output directory already exists and forced overwrite not enabled.\nTerminating program."
+                (
+                    "Output directory already exists and forced overwrite not enabled.\n"
+                    "Terminating program."
+                )
             )
-            sys.exit()
+            sys.exit(1)
         else:
             if nodelete is False:
                 logger.info(
-                    "Output directory already exists and forced complete overwrite enabled.\nDeleting existing content in outdir."
+                    (
+                        "Output directory already exists and forced complete overwrite enabled.\n"
+                        "Deleting existing content in outdir."
+                    )
                 )
                 # delete existing content in outdir
                 shutil.rmtree(output)
             else:
                 logger.info(
-                    "Output directory already exists and forced addition of files to outdir enables."
+                    (
+                        "Output directory already exists and forced addition of files "
+                        "to outdir enables."
+                    )
                 )
-    # Recursively make output directory
-    try:
-        output.mkdir(exist_ok=True)
-    except OSError:
-        # this will occur if directory already exists
-        # ignored if forced over write enabled
-        if force is True:
-            return ()
-        else:
-            logger.error(
-                "OSError occured while creating output directory for genomic files.\nTerminating programme."
-            )
-            sys.exit()
+    # Recursively make output directory (directory may exist if
+    # --force==True and --nodelete==True, so exist_ok is required)
+    output.mkdir(exist_ok=True)
     return
 
 
@@ -308,17 +315,22 @@ def parse_input_file(input_filename, logger, retries):
 
     Read input file passed to the function, performing the appropriate action depending
     on each line's content.
+
     Comments: Indicated with the first character of '#', perform no action.
     NCBI Taxonomy ID: Indicated with the first nine characters of 'NCBI:txid', pass
     the Taxonomy ID (excluding the 'NCBI:txid' prefix) to get_genus_species_name() to
     return associated scientific name.
+
     Genus/species name: Indicated by lack of '#' and 'NCBI:txid', pass genus/species
     name to get get_tax_id() to return associated NCBI Taxonomy ID with 'NCBI:txid'
     prefix.
+
     Split genus and species name into separate variables. Store genus, species and
     associated Taxonomy ID in the list 'line_data'. Append 'line_data' to
     'all_species_data' list. Repeat for each line.
+
     Generate a dataframe with three columns: 'Genus', 'Species' and 'NCBI Taxonomy ID'.
+
     Use data from 'all_species_data' to fill out dataframe.
     
     :param input_filename: args, if specific name of input file, otherwise input taken from STDIN
@@ -332,7 +344,7 @@ def parse_input_file(input_filename, logger, retries):
     all_species_data = []
 
     # test path to input file exists, if not exit programme
-    if input_filename.is_file() is False:
+    if not input_filename.is_file():
         # report to user and exit programme
         logger.info(
             (
@@ -345,38 +357,25 @@ def parse_input_file(input_filename, logger, retries):
 
     # if path to input file exists proceed
     # parse input file
-    try:
-        with open(input_filename) as file:
-            input_list = file.read().splitlines()
-    except IOError:
-        # if input file cannot be read, programme terminates
-        logger.error(
-            "Input file was found but could not be read\nTerminating programming",
-            exc_info=1,
-        )
-        sys.exit(1)
-
+    with open(input_filename) as file:
+        input_list = file.read().splitlines()
     number_of_lines = len(input_list)
-    line_count = 1
 
     # Parse input, retrieving tax ID or scientific name as appropriate
-    for line in input_list:
-        logger.info("Processing line {} of {}".format(line_count, number_of_lines))
-        if line[0] != "#":
-            if line.startswith("NCBI:txid"):
-                gs_name = get_genus_species_name(line[9:], logger, line_count, retries)
-                line_data = gs_name.split()
-                line_data.append(line)
-                all_species_data.append(line_data)
-            else:
-                tax_id = get_tax_id(line, logger, line_count, retries)
-                line_data = line.split()
-                line_data.append(tax_id)
-                all_species_data.append(line_data)
-        logger.info(
-            "Finished processing line {} of {}".format(line_count, number_of_lines)
-        )
+    line_count = 0
+    for line in tqdm(input_list, desc="reading lines"):
+        # logger.info("Processing line {} of {}".format(line_count, number_of_lines))
         line_count += 1
+
+        if line.startswith("#"):
+            continue
+
+        line_data = parse_line(line, logger, line_count, retries)
+        all_species_data.append(line_data)
+
+        # logger.info(
+        #     "Finished processing line {} of {}".format(line_count, number_of_lines)
+        # )
 
     logger.info("Finished reading and closed input file")
 
@@ -387,6 +386,20 @@ def parse_input_file(input_filename, logger, retries):
     )
     logger.info("Dataframe completed")
     return species_table
+
+
+def parse_line(line, logger, line_count, retries):
+    """Return parsed line from input file."""
+    if line.startswith("NCBI:txid"):
+        gs_name = get_genus_species_name(line[9:], logger, line_count, retries)
+        line_data = gs_name.split()
+        line_data.append(line)
+    else:
+        tax_id = get_tax_id(line, logger, line_count, retries)
+        line_data = line.split()
+        line_data.append(tax_id)
+
+    return line_data
 
 
 def get_genus_species_name(taxonomy_id, logger, line_number, retries):
@@ -403,7 +416,7 @@ def get_genus_species_name(taxonomy_id, logger, line_number, retries):
     
     Return scientific name.
     """
-    logger.info("(Retrieving scientific name for NCBI:txid{})".format(taxonomy_id))
+    # logger.info("(Retrieving scientific name for NCBI:txid{})".format(taxonomy_id))
 
     with entrez_retry(
         logger, retries, Entrez.efetch, db="Taxonomy", id=taxonomy_id, retmode="xml"
@@ -452,7 +465,7 @@ def get_tax_id(genus_species, logger, line_number, retries):
         return "NA"
 
     else:
-        logger.info("(Retrieving NCBI taxonomy ID for {})".format(genus_species))
+        # logger.info("(Retrieving NCBI taxonomy ID for {})".format(genus_species))
 
         with entrez_retry(
             logger, retries, Entrez.esearch, db="Taxonomy", term=genus_species
