@@ -28,7 +28,24 @@
 :func write_out_dataframe: write out species table as .csv file
 
 Generates dataframe containing scientific names, taxonomy IDs and accession numbers.
-Pulls down and stores genomic assemblies from NCBI Assembly database.
+Pulls down and stores genomic assemblies and GenBank filesfrom NCBI Assembly database.
+
+Author:
+Emma Hobbs
+
+Contact
+eemh1@st-andrews.ac.uk
+
+Emma E. M. Hobbs,
+Biomolecular Sciences Building,
+University of St Andrews,
+North Haugh Campus,
+St Andrews,
+KY16 9ST
+Scotland,
+UK
+
+The MIT License
 """
 
 import argparse
