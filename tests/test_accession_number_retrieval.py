@@ -30,6 +30,9 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
         self.logger = logging.getLogger("Test_name_and_ID_Retrieval logger")
         self.logger.addHandler(logging.NullHandler())
 
+        # Disable GenBank file
+        self.args = False
+
         # Parse file containing test inputs
         self.input_file_path = self.input_dir / "test_inputs.txt"
 
@@ -37,6 +40,7 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
             input_list = file.read().splitlines()
 
         # Define test inputs
+        self.df_row_data = []
         for line in input_list:
             if line.startswith("retries"):
                 self.retries = line[-1:]
@@ -44,13 +48,22 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
                 self.input_tax_id = line[18:]
             elif line.startswith("input_assembly_id_list:"):
                 self.input_assembly_id_list = line[23:]
+            elif line.startswith("input_df_row_genus:"):
+                self.df_row_data.append(line)[19:]
+            elif line.startswith("input_df_row_species:"):
+                self.df_row_data.append(line)[21:]
 
-    # Define tests
+    # Define function to test
 
     @pytest.mark.run(order=5)
-    def test_assembly_id_retrieval(self):
+    def test_accession_number_retrieval(self):
         """Tests multiplpe Entrez calls to NCBI to retrieve accession numbers."""
-
-        Extract_genomes_NCBI.get_accession_numbers(
-            self.input_tax_id, self.logger, self.retries
-        )
+        with pytest.raises(TypeError) as exc:
+            Extract_genomes_NCBI.get_accession_numbers(
+                self.input_tax_id,
+                self.df_row_data,
+                self.logger,
+                self.retries,
+                self.args,
+            )
+        assert str(exc.value) == "'NoneType' object is not subscriptable"
