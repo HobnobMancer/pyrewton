@@ -3,6 +3,7 @@
 """Create summary of annotated CAZy classes in GenBank files.
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 :cmd_args df_input: path, path to input dataframe
 :cmd_args force: bool, force overwriting files in output directory
 :cmd_args genbank: path, path to directory containing GenBank files
@@ -51,10 +52,33 @@ import sys
 
 =======
 :func main:
+=======
+:cmd_args:...
+>>>>>>> create parser function and update build logger
 
-Generate summary dataframe bar chart of annotated CAZy classes in all GenBank
+:func main:...
+
+Generate summary dataframe and of annotated CAZy classes in all GenBank
 files associated with a given species.
+
+Author:
+Emma Hobbs
+
+Contact
+eemh1@st-andrews.ac.uk
+
+Emma E. M. Hobbs,
+Biomolecular Sciences Building,
+University of St Andrews,
+North Haugh Campus,
+St Andrews,
+KY16 9ST
+Scotland,
+UK
+
+The MIT License
 """
+
 import argparse
 import logging
 import shutil
@@ -86,22 +110,21 @@ from Bio import SeqIO
 from bioservices import UniProt
 
 
-def main():
-    """docstring summary.
-
-    Detail.
-
-    Return.
-    """
-    # Create parser object for cmd-line ctrl
+def build_parser():
+    """Return ArgumentParser parser for script."""
+    # Create parser object
     parser = argparse.ArgumentParser(
         prog="CAZy_genbank_summary.py",
         description="Generate summary dataframes and bar charts of CAZy annotation in GenBank files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
+<<<<<<< HEAD
     # Define cmd-line args
 >>>>>>> First draft of script
+=======
+    # Add arguments to parser
+>>>>>>> create parser function and update build logger
     # Add option to specific input directory for dataframe
     parser.add_argument(
         "-d",
@@ -169,6 +192,9 @@ def main():
     )
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> create parser function and update build logger
     return parser
 
 
@@ -181,9 +207,12 @@ def main():
     """
     # Create parser object for cmd-line ctrl
     parser = build_parser()
+<<<<<<< HEAD
 =======
     # Parse arguments into args variable
 >>>>>>> First draft of script
+=======
+>>>>>>> create parser function and update build logger
     args = parser.parse_args()
 
     # Initiate logger
@@ -251,14 +280,21 @@ def build_logger(script_name, log_file,) -> logging.Logger:
     return
 
 
-def build_logger(script_name, log_file) -> logging.Logger:
+def build_logger(script_name, log_file,) -> logging.Logger:
     """Return a logger for this script.
+
     Enables logger for script, sets parameters and creates new file to store log.
+<<<<<<< HEAD
     
     :param script_name: Name of script
     :param custom_string: Additional string parsed from cmdline by user - required for log
                     file to be written out
 >>>>>>> First draft of script
+=======
+
+    :param script_name: str, name of script
+    :param log_file: parser argument, enable writing out of log file
+>>>>>>> create parser function and update build logger
 
     Return logger object.
     """
