@@ -201,7 +201,6 @@ def main():
     # Pull down accession numbers and GenBank files (if not disabled)
     species_table = collate_accession_numbers(species_table, logger, args)
     logger.info("Generated species table")
-    # print("\nSpecies table:\n", species_table, "\n")
 
     # Write out dataframe
     if args.dataframe is not sys.stdout:
