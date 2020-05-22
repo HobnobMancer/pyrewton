@@ -2,11 +2,31 @@
 # -*- coding: utf-8 -*-
 """Create summary of annotated CAZy classes in GenBank files.
 
-:func main:
+:cmd_args:...
 
-Generate summary dataframe bar chart of annotated CAZy classes in all GenBank
+:func main:...
+
+Generate summary dataframe and of annotated CAZy classes in all GenBank
 files associated with a given species.
+
+Author:
+Emma Hobbs
+
+Contact
+eemh1@st-andrews.ac.uk
+
+Emma E. M. Hobbs,
+Biomolecular Sciences Building,
+University of St Andrews,
+North Haugh Campus,
+St Andrews,
+KY16 9ST
+Scotland,
+UK
+
+The MIT License
 """
+
 import argparse
 import logging
 import shutil
@@ -19,21 +39,16 @@ from Bio import SeqIO
 from bioservices import UniProt
 
 
-def main():
-    """docstring summary.
-
-    Detail.
-
-    Return.
-    """
-    # Create parser object for cmd-line ctrl
+def build_parser():
+    """Return ArgumentParser parser for script."""
+    # Create parser object
     parser = argparse.ArgumentParser(
         prog="CAZy_genbank_summary.py",
         description="Generate summary dataframes and bar charts of CAZy annotation in GenBank files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
-    # Define cmd-line args
+    # Add arguments to parser
     # Add option to specific input directory for dataframe
     parser.add_argument(
         "-d",
@@ -90,7 +105,18 @@ def main():
         help="output filename",
     )
 
-    # Parse arguments into args variable
+    return parser
+
+
+def main():
+    """docstring summary.
+
+    Detail.
+
+    Return.
+    """
+    # Create parser object for cmd-line ctrl
+    parser = build_parser()
     args = parser.parse_args()
 
     # Initiate logger
@@ -124,13 +150,13 @@ def main():
     return
 
 
-def build_logger(script_name, log_file) -> logging.Logger:
+def build_logger(script_name, log_file,) -> logging.Logger:
     """Return a logger for this script.
+
     Enables logger for script, sets parameters and creates new file to store log.
-    
-    :param script_name: Name of script
-    :param custom_string: Additional string parsed from cmdline by user - required for log
-                    file to be written out
+
+    :param script_name: str, name of script
+    :param log_file: parser argument, enable writing out of log file
 
     Return logger object.
     """
