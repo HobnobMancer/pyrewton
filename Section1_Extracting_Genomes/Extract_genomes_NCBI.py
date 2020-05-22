@@ -309,25 +309,20 @@ def make_output_directory(output, logger, force, nodelete):
 def parse_input_file(input_filename, logger, retries):
     """Parse input file, returning dataframe of species names and NCBI Taxonomy IDs.
 
-    Read input file passed to the function, performing the appropriate action depending
-    on each line's content.
+    Read input file. Calling functions as appropriate to retrieve scientific name
+    or taxonomy ID if the other is given.
 
-    Comments: Indicated with the first character of '#', perform no action.
+    Input file formating:
+    Comments indicated with the first character of '#', perform no action.
     NCBI Taxonomy ID: Indicated with the first nine characters of 'NCBI:txid', pass
-    the Taxonomy ID (excluding the 'NCBI:txid' prefix) to get_genus_species_name() to
-    return associated scientific name.
+    to get_genus_species_name() to retrieve scientific name.
+    Genus/species name: Indicated by lack of '#' and 'NCBI:txid', pass to get_tax_id()
+    to return NCBI Taxonomy ID.
 
-    Genus/species name: Indicated by lack of '#' and 'NCBI:txid', pass genus/species
-    name to get get_tax_id() to return associated NCBI Taxonomy ID with 'NCBI:txid'
-    prefix.
-
-    Split genus and species name into separate variables. Store genus, species and
-    associated Taxonomy ID in the list 'line_data'. Append 'line_data' to
-    'all_species_data' list. Repeat for each line.
+    Split genus and species name into separate variables, to be stored in separate
+    dataframe columns.
 
     Generate a dataframe with three columns: 'Genus', 'Species' and 'NCBI Taxonomy ID'.
-
-    Use data from 'all_species_data' to fill out dataframe.
     
     :param input_filename: args, if specific name of input file, otherwise input taken from STDIN
     :param logger: logger object
@@ -355,12 +350,10 @@ def parse_input_file(input_filename, logger, retries):
     # parse input file
     with open(input_filename) as file:
         input_list = file.read().splitlines()
-    number_of_lines = len(input_list)
 
     # Parse input, retrieving tax ID or scientific name as appropriate
     line_count = 0
     for line in tqdm(input_list, desc="reading lines"):
-        # logger.info("Processing line {} of {}".format(line_count, number_of_lines))
         line_count += 1
 
         if line.startswith("#"):
@@ -368,10 +361,6 @@ def parse_input_file(input_filename, logger, retries):
 
         line_data = parse_line(line, logger, line_count, retries)
         all_species_data.append(line_data)
-
-        # logger.info(
-        #     "Finished processing line {} of {}".format(line_count, number_of_lines)
-        # )
 
     logger.info("Finished reading and closed input file")
 
@@ -385,11 +374,23 @@ def parse_input_file(input_filename, logger, retries):
 
 
 def parse_line(line, logger, line_count, retries):
-    """Return parsed line from input file."""
+    """Coordinate retrieval of scientific name or taxonomy ID.
+
+    Read line from input file, calling functions as appropriate to retrieve
+    scientific name or taxonomy ID.
+
+    :param line: str, line from input file
+    :param logger: logger object
+    :line_count: number of line in input file - enable tracking if error occurs
+    :param retries: parser argument, maximum number of retries excepted if network error encountered
+    
+    Return list of genus, species and taxonomy ID"""
+    # For taxonomy ID retrieve scientific name
     if line.startswith("NCBI:txid"):
         gs_name = get_genus_species_name(line[9:], logger, line_count, retries)
         line_data = gs_name.split()
         line_data.append(line)
+    # For scientific name retrieve taxonomy ID
     else:
         tax_id = get_tax_id(line, logger, line_count, retries)
         line_data = line.split()
