@@ -44,7 +44,7 @@ def build_parser():
     # Create parser object
     parser = argparse.ArgumentParser(
         prog="CAZy_genbank_summary.py",
-        description="Generate summary dataframes and bar charts of CAZy annotation in GenBank files",
+        description="Generate summary of CAZy annotation in GenBank files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
@@ -126,27 +126,24 @@ def main():
     logger.info("Run initated")
 
     # Check inputs are valid
-    check_input(args.df_input, args.genbank, logger)
+    check_input(args, logger)
     logger.info("Inputs accepted")
 
     # If specified output directory for genomic files, create output directory
     if args.output is not sys.stdout:
-        make_output_directory(args.output, logger, args.force, args.nodelete)
+        make_output_directory(args, logger)
 
     # Open input dataframe
     logger.info("Opening input dataframe")
-    input_df = pd.read_csv(
-        args.df_input,
-        header=0,
-        names=["Genus", "Species", "NCBI Taxonomy ID", "NCBI Accession Numbers"],
-    )  # is it necessary to save to a variable?
+    input_df = get_input_df(args.df_input, logger)
 
-    # create CAZy summary per species in input dataframe
-    # dataframe written to output in function not main().
-    input_df.apply(
-        lambda df_row: create_cazy_df(df_row, args.genbank, args.output, logger),
-        axis=1,
-    )
+    # Build dataframe
+    CAZy_summary_df = get_dataframe(input_df, args, logger)
+
+    # Create summary charts of CAZy annotation distribution
+
+    # Write out dataframe
+
     return
 
 
@@ -184,18 +181,16 @@ def build_logger(script_name, log_file,) -> logging.Logger:
     return logger
 
 
-def check_input(dataframe, genbank, logger):
-    """Summary...
+def check_input(args, logger):
+    """Check paths to input dataframe and GenBank files is valid.
 
-    Process...
-    
-    :param...
+    :param args: parser arguments
+    :param logger: logger object
 
-    Return...
+    Return nothing if paths are valid.
     """
     logger.info("Checking path to input dataframe is valid")
-    if dataframe.is_file() is False:
-        # report to user and exit programme
+    if (args.input_df).is_file() is False:
         logger.info(
             (
                 "Input dataframe not found. Check filename, extension and directory are correct."
@@ -204,8 +199,9 @@ def check_input(dataframe, genbank, logger):
             exc_info=1,
         )
         sys.exit(1)
+
     logger.info("Checking path to GenBank file containing directory is valid")
-    if genbank.exists is False:
+    if (args.genbank).exists is False:
         logger.info(
             (
                 "GenBank file directory not found. Check correct directory was provided."
@@ -214,11 +210,11 @@ def check_input(dataframe, genbank, logger):
             exc_info=1,
         )
         sys.exit(1)
-    
+
     return
 
 
-def make_output_directory(output, logger, force, nodelete):
+def make_output_directory(args, logger):
     """Create output directory for genomic files.
 
     Check if directory indicated for output existed already.
@@ -227,31 +223,35 @@ def make_output_directory(output, logger, force, nodelete):
     If so, exiting files in output directory are deleted.
     Create output directory, expecting error if already exists.
 
-    :param output: Path, path to output directory
+    :param args: parser arguments
     :param logger: logger object
-    :param force: bool, cmd-line args to enable/disable over writing existing directory
-    :param nodelete: bool, cmd-line args to enable/disable deleting of existing files
 
     Return nothing.
     """
     logger.info("Checking if specified output directory for genomic files exists.")
-    # If output directory specificed at cmd-line, check output directory does not already exist
-    if output.exists():
-        if force is False:
+    # If output directory specificed at cmd-line already exists, and 'force' not enabled
+    if (args.output).exists():
+        if (args.force) is False:
             logger.info(
-                "Output directory already exists and forced overwrite not enabled.\nTerminating program."
+                "Output directory already exists and forced overwrite not enabled.\n"
+                "Terminating programme."
             )
             sys.exit()
+        # If output directory exists and 'force' overwrite enabled
         else:
-            if nodelete is False:
+            # 'Nodelete' not enabled so delete output directory contents
+            if (args.nodelete) is False:
                 logger.info(
-                    "Output directory already exists and forced complete overwrite enabled.\nDeleting existing content in outdir."
+                    "Output directory already exists and forced complete overwrite enabled.\n"
+                    "Deleting existing content in outdir."
                 )
                 # delete existing content in outdir
                 shutil.rmtree(output)
+            # 'Nodelete' enabled, don't empty directory
             else:
                 logger.info(
-                    "Output directory already exists and forced addition of files to outdir enables."
+                    "Output directory already exists and forced addition of files"
+                    "to outdir enabled."
                 )
     # Recursively make output directory
     try:
@@ -263,83 +263,141 @@ def make_output_directory(output, logger, force, nodelete):
             return ()
         else:
             logger.error(
-                "OSError occured while creating output directory for genomic files.\nTerminating programme."
+                "OSError occured while creating output directory for genomic files.\n"
+                "Terminating programme."
             )
             sys.exit()
     return
 
 
-def create_cazy_df(df_row, genbank_input, output, logger):
-    """Create dataframe of annotated proteins in GenBank files.
-    
-    Parse row from dataframe as pandas series.
+def get_input_df(input_df, logger):
+    """Open input dataframe (df).
+
+    Input dataframe must contain at least columns titled:
+    'Genus', 'Species', 'NCBI Taxonomy ID', and 'NCBI Accession Numbers'.
+
+    Return dataframe.
+    """
+    input_df = pd.read_csv(
+        input_df,
+        header=0,
+        names=["Genus", "Species", "NCBI Taxonomy ID", "NCBI Accession Numbers"]
+    )
+    return input_df
+
+
+def get_dataframe(input_df, args, logger):
+    """Build datafame.
+
+    :param input_df:
+    :param args:
+    :param logger:
+
+    Return dataframe.
+    """
+    # Build dataframe foundation: genus, species, accession number, protein name, protein ID
+    all_foundation_data = []  # empty list to store all data for foundation dataframe
+    all_foundation_data.append(input_df.apply(
+        lambda df_row: create_df_foundation(df_row, args, logger),
+        axis=1,
+        )
+    )
+    CAZy_summary_df = pd.Dataframe(all_foundation_data, columns=[
+        "Genus",
+        "Species",
+        "NCBI Accession Number",
+        "Protein Name",
+        "Protein ID"
+        ])
+
+    # Add CAZy data to dataframe:
+    # Vectorise over protein ID column to call to NCBI to see if CAZy linked, and return class,
+    # stored in a new column 'CAZy class' and protein funciton 'Function'
+    # if cazy class returned full section will be titled 'cazy class',
+    # if familied returned use 'cazy family' instead
+    CAZy_summary_df["Cazy Class", "Function"] = CAZy_summary_df.apply(
+        lambda column: get_cazy_family(column["Protein ID"], logger), axis=1
+    )
+
+
+def create_df_foundation(df_row, args, logger):
+    """Prepare row data to create dataframe.
+
+    Parse row from input dataframe as pandas series.
     row[0] = Genus
     row[1] = Species
     row[2] = NCBI Taxonomy ID
     row[3] = NCBI Accession numbers
 
-    First letter of genus, species and taxonomy ID form name of
-    dataframe summarising current CAZy annotation for species.
+    Retrieve all row data for single species, as a tuple. Each row is represented
+    as a unique list in tuple. Each row/list containing genus, species, accession
+    number, protein name and protein ID, with a unique protein name and ID per
+    row/list.
 
     :param df_row: row from input_df (dataframe)
-    :param genbank_input:
-    :param output:
-    :param logger:
+    :param args: parser arguments
+    :param logger: logger object
 
-    Return ...
+    Return tuple.
     """
-    # Create dataframe. Name formate: 'abbreviated_scientific_name_taxID_CAZy_summary_df'
-    # with one column: 'Accession Number', with a unique accession number per row
-    logger.info(f"Creating dataframe summarising CAZy annotations in GenBank,\n     for {df_row[0]} {df_row[1]}, {df_row[2]}")
-    logger.info("Retrieving scientific name and taxonomy ID")
-    df_name = df_name = (
-        df_row[0][0] + "_" + df_row[1] + "_" + df_row[2][9:] + "_CAZy_summary_df"
-    )
-
-    df_name = pd.DataFrame(df_row[3].split(", "), columns=["Accession Number"])
-
-    # vectorise over accession_number column, using get_protein_data to fill out two new columns:
-    # 'Protein ID' and 'Protein Name'
     logger.info(
-        f"Retrieving protein names and IDs from annotations for {df_row[0]} {df_row[1]}, {df_row[2]}"
+        (
+            "Adding scientific name, accession numbers, protein names and IDs\n"
+            f"to dataframe for {df_row[0][0]}.{df_row[1]}"
+        )
     )
-    df_name["Protein Name", "Protein ID"] = df_name.apply(
-        lambda column: get_protein_data(
-            column["Accession Number"], len(df_name["Accession Number"]), genbank_input, logger
-        ),
-        axis=1,
-    )
-
-    # vectorise over protein ID column to call to NCBI to see if CAZy linked, and return class,
-    # stored in a new column 'CAZy class'
-    # if cazy class returned full section will be titled 'cazy class',
-    # if familied returned use 'cazy family' instead
-    df_name["Cazy Class"] = df_name.apply(
-        lambda column: get_cazy_family(column["Protein ID"], logger), axis=1
+    # Separate accession numbers in string, to form a list of accession numbers
+    # with a unique accession number per index number
+    single_species_data = get_species_data(
+        df_row[0],
+        df_row[1],
+        df_row[3].split(", "),
+        args,
+        logger,
     )
 
-    # create bar chart summarise cazy class distribution/annotation frequency
-    # if families were returned in the function called us the startswith
-    # function to determine the family
-    # check what input is required for seaborn
-    chart = create_summary_chart(df_name["CAZy Family"], logger)
 
-    # if enabled write out chart to output directory
-    write_out_chart(chart, output, logger)
+def get_species_data(genus, species, accession_list, args, logger):
+    """Build dataframe of genus, species and unique accession number per row.
 
-    # if enabled write out df to output directory
-    write_out_df(df_name, output, logger)
-    return
+    :param genus: str, genus name
+    :param species: str, species name
+    :param accession_list: list, list of accession numbers
+    :param args: parser arguments
+    :param logger: logger object
+
+    Return dataframe.
+    """
+    # Row data
+    row_foundation = []  # genus, species and accession
+    complete_row_data = []  # genus, speccies, accession, protein name, protein ID
+    all_rows_data = []  # data for all rows
+
+    for accession in tqdm(accession_list, desc="Compiling data"):
+        row_foundation.append([genus, species, accession])
+        protein_data = get_protein_data(accession, len(accession_list), args.genbank, logger)
+        # construct data for completed row, then compile all dataframe data
+        for name_id_pair in protein_data:
+            # add protein name and ID as individual items so as not create list within a list
+            all_rows_data.append(row_foundation.append(name_id_pair[0], name_id_pair[1]))
+
+    return all_rows_data
 
 
 def get_protein_data(accession_number, total_accession, genbank_input, logger):
-    """Summary...
+    """Retrieve protein names and ID from GenBank file.
 
-    Process...
+    From each record the protein name and ID will be retrieved, and stored as
+    a list.
 
-    args...
+    Lists wil be added to a single tuple containing all protein data.
 
-    Return...
+    :param accession_number: str
+    :param total_accession: int, total number of accessions
+    :param genbank_input: path, path to directory containing GenBank files
+    :param logger: logger object
+
+    Return tuple.
     """
     # use accession number to open associated genbank file
     # use SeqIO to extract protein ID and protein name
@@ -348,30 +406,42 @@ def get_protein_data(accession_number, total_accession, genbank_input, logger):
 
     # check if accession number was provided
     if accession_number == 'NA':
-        logger.info("Null values ('NA') was contained in cell, exiting retrieval of protein data.\nReturning null ('NA') value.")
+        logger.info(
+            (
+                "Null values ('NA') was contained in cell, exiting retrieval of protein data.\n"
+                "Returning null ('NA') value."
+            )
+        )
         return ('NA')
 
     count = 1
     for count in range(total_accession):
         if genbank_input.glob(accession_number + '*genomic.gbff.gz'):
-            logger.info(f"Opening GenBank file for {accession_number}, accession {count} of {total_accession}")
+            logger.info(
+                (
+                    f"Opening GenBank file for {accession_number},"
+                    f"accession {count} of {total_accession}"
+                )
+            )
             # Open and extract protein ID and protein name
 
             protein_name = a
             protein_id = a
-            
+
         else:
-            logger.info(f"Could not find GenBank file for {accession_number}, exiting retrieval of protein data.\nReturning null ('NA') value.")
+            logger.info(
+                (
+                    f"Could not find GenBank file for {accession_number},"
+                    "exiting retrieval of protein data.\nReturning null ('NA') value."
+                )
+            )
             return ('NA')
-            
-    return(protein_name,protein_id)
 
-
+    return(protein_name, protein_id)
 
     # create search term for file # look up re again
     file_term = accession_number.replace('.', '_').re...
 
-    
     # create path to genbank file
     genbank_path = genbank_input + '/' + file_term
 
@@ -386,7 +456,8 @@ def get_protein_data(accession_number, total_accession, genbank_input, logger):
 def get_cazy_family(protein_id, logger):
     # use protein_id to call to UniProt
     # if CAZy link return class - may return full family rather than class - no worries
-    return  # return family as str
+    # if no CAZy link return 'NA'
+    return  # list, first CAZy class and then protein function
 
 
 def create_summary_chart(CAZy_fam_column, logger):
@@ -394,13 +465,13 @@ def create_summary_chart(CAZy_fam_column, logger):
     return
 
 
-def write_out_chart(chart, output, logger):
-    # write out chart to specified directory
+def write_out_df(df, output, logger):
+    # write out df to specified directory
     return
 
 
-def write_out_df(df, output, logger):
-    # write out df to specified directory
+def write_out_chart(chart, output, logger):
+    # write out chart to specified directory
     return
 
 
