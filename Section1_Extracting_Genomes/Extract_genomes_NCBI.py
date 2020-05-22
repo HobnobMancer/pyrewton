@@ -160,11 +160,11 @@ def build_parser():
 
 def main():
     """Generate dataframe containing scientific names, taxonomy IDs and accession numbers.
-    
+
     Parse input file to create dataframe ('species_table') of scientific name and taxonomy ID.
 
     Pass the 'species_table' dataframe to collate_accession_numbers(), to retrieve all associated
-    NCBI accession numbers. Store accession numbers in new column. 
+    NCBI accession numbers. Store accession numbers in new column.
 
     If enabled, write out dataframe to .csv file.
 
@@ -199,9 +199,7 @@ def main():
     species_table = parse_input_file(args.input_file, logger, args.retries)
 
     # Pull down accession numbers and GenBank files (if not disabled)
-    species_table = collate_accession_numbers(
-        species_table, logger, args.retries, args.output, args.genbank, args.timeout
-    )
+    species_table = collate_accession_numbers(species_table, logger, args)
     logger.info("Generated species table")
     # print("\nSpecies table:\n", species_table, "\n")
 
@@ -223,7 +221,7 @@ def build_logger(
     """Return a logger for this script.
 
     Enables logger for script, sets parameters and creates new file to store log.
-    
+
     :param script_name: Name of script
     :param custom_string: Additional string parsed from cmdline by user - required for log
                     file to be written out
@@ -323,7 +321,7 @@ def parse_input_file(input_filename, logger, retries):
     dataframe columns.
 
     Generate a dataframe with three columns: 'Genus', 'Species' and 'NCBI Taxonomy ID'.
-    
+
     :param input_filename: args, if specific name of input file, otherwise input taken from STDIN
     :param logger: logger object
     :param retries: parser argument, maximum number of retries excepted if network error encountered
@@ -339,8 +337,8 @@ def parse_input_file(input_filename, logger, retries):
         # report to user and exit programme
         logger.info(
             (
-                "Input file not found. Check filename, extension and directory is correct."
-                "\nTerminating program."
+                "Input file not found. Check filename, extension and directory is correct.\n"
+                "Terminating program."
             ),
             exc_info=1,
         )
@@ -353,7 +351,7 @@ def parse_input_file(input_filename, logger, retries):
 
     # Parse input, retrieving tax ID or scientific name as appropriate
     line_count = 0
-    for line in tqdm(input_list, desc="reading lines"):
+    for line in tqdm(input_list, desc="Reading lines"):
         line_count += 1
 
         if line.startswith("#"):
@@ -383,7 +381,7 @@ def parse_line(line, logger, line_count, retries):
     :param logger: logger object
     :line_count: number of line in input file - enable tracking if error occurs
     :param retries: parser argument, maximum number of retries excepted if network error encountered
-    
+
     Return list of genus, species and taxonomy ID"""
     # For taxonomy ID retrieve scientific name
     if line.startswith("NCBI:txid"):
@@ -405,12 +403,12 @@ def get_genus_species_name(taxonomy_id, logger, line_number, retries):
     Use Entrez efetch function to pull down the scientific name (genus/species name)
     in the NCBI Taxonomy database, associated with the taxonomy ID passed to the
     function.
-    
+
     :param taxonomy_id: str, NCBI taxonomy ID
     :param logger: logger object
     :param line_number: int, line number in input file containing taxonomy ID
     :param retries: parser argument, maximum number of retries excepted if network error encountered
-    
+
     Return scientific name.
     """
     # logger.info("(Retrieving scientific name for NCBI:txid{})".format(taxonomy_id))
@@ -427,8 +425,8 @@ def get_genus_species_name(taxonomy_id, logger, line_number, retries):
     except IndexError:
         logger.error(
             (
-                "Entrez failed to retrieve scientific name, for species in line {} of input file."
-                "Potential typo in taxonomy ID, check input."
+                "Entrez failed to retrieve scientific name, for species in line {} of input file.\n"
+                "Potential typo in taxonomy ID, check input. Returned 'NA'."
             ).format(line_number),
             exc_info=1,
         )
@@ -441,29 +439,27 @@ def get_tax_id(genus_species, logger, line_number, retries):
     Use Entrez esearch function to pull down the NCBI Taxonomy ID of the
     species name passed to the function. Return the NCBI Taxonomy ID with
     the prefix 'NCBI:txid'.
-    
+
     :param genus_species: str, scientific name of species
     :param logger: logger object
     :param line_number: int, number of line containing the species name in the input file.
     :param retries: parser argument, maximum number of retries excepted if network error encountered
-    
+
     Return NCBI taxonomy ID.
     """
     # check for potential mistake in taxonomy ID prefix
     if bool(re.search(r"\d", genus_species)) is True:
         logger.warning(
             (
-                "Warning: Number found in genus-species name, when trying to retrieve taxonomy ID"
-                "for species on line {}. Potential typo in taxonomy ID, so taxonomy ID "
-                "misinterpreted as genus-species name."
+                "Warning: Number with no 'NCBI:txid' prefix found line {}.\n"
+                "Typo in scientific name of ID missing 'NCBI:txid' prefix.\n"
+                "Inturpretted as scientific name. Returning taxonomy ID as 'NA'.\n"
             ).format(line_number),
             exc_info=1,
         )
         return "NA"
 
     else:
-        # logger.info("(Retrieving NCBI taxonomy ID for {})".format(genus_species))
-
         with entrez_retry(
             logger, retries, Entrez.esearch, db="Taxonomy", term=genus_species
         ) as handle:
@@ -484,25 +480,16 @@ def get_tax_id(genus_species, logger, line_number, retries):
         return "NA"
 
 
-def collate_accession_numbers(
-    species_table, logger, retries, output, genbank, timeout_limit
-):
+def collate_accession_numbers(species_table, logger, args):
     """Return dataframe with column containing all associated NCBI accession numbers.
 
     Pass each Taxonomy ID in the 'NCBI Taxonomy ID' column of the 'species_table'
-    dataframe to get_accession_numbers() to find all associated NCBI accession numbers.
-    Format object returned from get_accession_numbers into a human-readable list. Append list
-    of accession numbers to 'all_accession_numbers' list. Create fourth column, called
-    'NCBI Accession Numbers' in the 'species_table' dataframe and populate with data in
-    'all_accession_numbers'. 
-    
+    dataframe to find all associated NCBI accession numbers.
+
     :param species_table: dataframe, dataframe containing scientific names and taxonomy IDs
     :param logger: logger object
-    :param retries: parser argument, maximum number of retries excepted if network error encountered
-    :param output: path, output directory for genomic files
-    :param genbank: booleon, cmd-line argumen to enable/disable downloading of GenBank files
-    :param timeout_limit: int, cmd-line argument, timeout of URL connection (s)
-    
+    :param args: parser arguments
+
     Return modified dataframe, with four columns.
     """
     logger.info(
@@ -510,12 +497,7 @@ def collate_accession_numbers(
     )
     species_table["NCBI Accession Numbers"] = species_table.apply(
         lambda column: get_accession_numbers(
-            column["NCBI Taxonomy ID"][9:],
-            logger,
-            retries,
-            output,
-            genbank,
-            timeout_limit,
+            column["NCBI Taxonomy ID"][9:], column, logger, args.retries, args
         ),
         axis=1,
     )
@@ -524,32 +506,39 @@ def collate_accession_numbers(
     return species_table
 
 
-def get_accession_numbers(taxonomy_id, logger, retries, output, genbank, timeout_limit):
+def get_accession_numbers(taxonomy_id, df_row, logger, retries, args):
     """Return all NCBI accession numbers associated with NCBI Taxonomy Id.
 
     Use Entrez elink function to pull down the assembly IDs of all genomic
-    assemblies stored in the NCBI Assembly database that are associated
-    with each NCBI Taxonomy ID stored in the dataframe passed to the function.
+    assemblies in the NCBI Assembly database associated with the passed
+    taxonomy ID.
+
     Use Entrez epost to post all assembly IDs to NCBI as a single query for
     subsequent Entrez efetch of all associated accession numbers.
-    Accession numbers are returned as a string 'NCBI_accession_numbers'.
-    
+
+    Format accession numbers into a human-readable list, 'all_accession_numbers'.
+
     :param taxonomy_id: str, NCBI taxonomy ID
+    :param df_row: pd series, row from dataframe
     :param logger: logger object
     :param retries: parser argument, maximum number of retries excepted if network error encountered
-    :param output: path, output directory for genomic files
-    :param genbank: booleon, cmd-line argumen to enable/disable downloading of GenBank files
-    :param timeout_limit: int, cmd-line argument, timeout_limit of URL connection (s)
+    :param args: parser arguments
 
-    Return NCBI accession numbers.
+    Return list of NCBI accession numbers.
     """
     # If previously failed to retrieve the taxonomy ID cancel retrieval of accession numbers
     if taxonomy_id == "NA":
+        logger.info(
+            (
+                "Previously failed to retrieve taxonomy for {} {}.\n"
+                "Returning 'NA' for accession numbers."
+            ).format(df_row[0], df_row[1])
+        )
         return "NA"
 
     # Retrieve all IDs of genomic assemblies for taxonomy ID
 
-    logger.info("(Retrieving assembly IDs for NCBI:txid{}".format(taxonomy_id))
+    logger.info("Retrieving assembly IDs for NCBI:txid{}".format(taxonomy_id))
 
     with entrez_retry(
         logger,
@@ -566,8 +555,8 @@ def get_accession_numbers(taxonomy_id, logger, retries, output, genbank, timeout
     if assembly_number_record == "NA":
         logger.error(
             (
-                "Entrez failed to retrieve assembly IDs, for NCBI:txid{}."
-                "Exiting retrieval of accession numbers for {}"
+                "Entrez failed to retrieve assembly IDs, for NCBI:txid{}.\n"
+                "Returning 'NA' for accession numbers for NCBI:txid{}"
             ).format(taxonomy_id, taxonomy_id),
             exc_info=1,
         )
@@ -583,19 +572,21 @@ def get_accession_numbers(taxonomy_id, logger, retries, output, genbank, timeout
         logger.error(
             (
                 "Entrez failed to retrieve assembly IDs, for NCBI:txid{}."
-                "Exiting retrieval of accession numbers for {}"
+                "Exiting retrieval of accession numbers for NCBI:txid{}"
             ).format(taxonomy_id, taxonomy_id),
             exc_info=1,
         )
         return "NA"
 
-    logger.info("(Finished processing retrieval of assembly ID)")
-
-    # Post all assembly IDs to Entrez-NCBI for downstream pulldown of accession number
-    # assocated with each assembly ID
+    logger.info(
+        "Finished processing retrieval of assembly IDs for NCBI:txid{}".format(
+            taxonomy_id
+        )
+    )
 
     # compile list of ids in suitable format for epost
     id_post_list = str(",".join(assembly_id_list))
+    # Post all assembly IDs to Entrez-NCBI for downstream pulldown of accession numbers
     epost_search_results = Entrez.read(
         entrez_retry(logger, retries, Entrez.epost, "Assembly", id=id_post_list)
     )
@@ -605,7 +596,7 @@ def get_accession_numbers(taxonomy_id, logger, retries, output, genbank, timeout
         logger.error(
             (
                 "Entrez failed to post assembly IDs, for NCBI:txid{}."
-                "Exiting retrieval of accession numbers for {}"
+                "Exiting retrieval of accession numbers for NCBI:txid{}"
             ).format(taxonomy_id, taxonomy_id),
             exc_info=1,
         )
@@ -616,11 +607,10 @@ def get_accession_numbers(taxonomy_id, logger, retries, output, genbank, timeout
     epost_query_key = epost_search_results["QueryKey"]
 
     logger.info(
-        "(Finished processing positing of assembly IDs for accession number fetch)"
+        "Finished processing positing of assembly IDs for fetching accession numbers"
     )
 
     # Pull down all accession numbers
-
     ncbi_accession_numbers_list = []
 
     with entrez_retry(
@@ -638,8 +628,8 @@ def get_accession_numbers(taxonomy_id, logger, retries, output, genbank, timeout
     if accession_record == "NA":
         logger.error(
             (
-                "Entrez failed to post assembly IDs, for NCBI:txid{}."
-                "Exiting retrieval of accession numbers for {}"
+                "Entrez failed to retireve accession numbers, for NCBI:txid{}."
+                "Exiting retrieval of accession numbers for NCBI:txid{}"
             ).format(taxonomy_id, taxonomy_id),
             exc_info=1,
         )
@@ -647,123 +637,131 @@ def get_accession_numbers(taxonomy_id, logger, retries, output, genbank, timeout
 
     # Extract accession numbers from document summary
 
-    try:
-        # Find total number of accession numbers
-        number_of_accession_numbers = len(
-            accession_record["DocumentSummarySet"]["DocumentSummary"]
-        )
+    # Find total number of accession numbers
+    number_of_accession_numbers = len(
+        accession_record["DocumentSummarySet"]["DocumentSummary"]
+    )
 
-        for index_number in range(number_of_accession_numbers):
+    # Retrieve accession number for assembly ID
+    for index_number in tqdm(
+        range(number_of_accession_numbers), desc="Retrieving accession numbers"
+    ):
+        try:
             new_accession_number = accession_record["DocumentSummarySet"][
                 "DocumentSummary"
             ][index_number]["AssemblyAccession"]
             ncbi_accession_numbers_list.append(new_accession_number)
-            index_number += 1
 
-    except IndexError:
-        logger.error(
-            "No accession number retrieved from NCBI\nfor assembly ID {} of {}".format(
-                index_number, number_of_accession_numbers
-            ),
-            exc_info=1,
-        )
-        return "NA"
+        except IndexError:
+            logger.error(
+                "No accession number retrieved from NCBI for assembly ID {} of {}".format(
+                    index_number, number_of_accession_numbers
+                ),
+                exc_info=1,
+            )
+            return "NA"
+
+        # If downloading of GenBank files is enabled, download Genbank files
+        if args.genbank is True:
+            get_genbank_files(
+                new_accession_number,
+                accession_record["DocumentSummarySet"]["DocumentSummary"][index_number][
+                    "AssemblyName"
+                ],
+                taxonomy_id,
+                index_number,
+                number_of_accession_numbers,
+                logger,
+                retries,
+                args,
+            )
+
+        index_number += 1
 
     logger.info(
-        "(Finished processing retrieval associated accession numbers of Taxonomy ID)"
+        "Finished processing retrieval accession numbers for NCBI:txid:{}".format(
+            taxonomy_id
+        )
     )
 
     # Process accession numbers into human readable list for dataframe
     ncbi_accession_numbers = ", ".join(ncbi_accession_numbers_list)
 
-    # If downloading of GenBank files is enabled, download GenBank files
-    if genbank is True:
-        get_genbank_files(
-            assembly_id_list, taxonomy_id, logger, output, retries, timeout_limit
-        )
-
     return ncbi_accession_numbers
 
 
 def get_genbank_files(
-    assembly_ids, taxonomy_id, logger, output, retries, timeout_limit
+    accession_number,
+    assembly_name,
+    taxonomy_id,
+    id_count,
+    total_id_count,
+    logger,
+    retries,
+    args,
 ):
-    """Pull down GenBank files from NCBI.
+    """Coordiante download of GenBank from NCBI.
 
-    Retrieved necessary data to compile URL, and pass
-    data to to function to create URL. Pass URL to a function
-    to download GenBank file.
-
-    :param assembly_ids: list, list of all assembly IDs
+    :param accession_number: str, accession number
+    :param assembly_name: str, name of assembly from NCBI record
+    :param taxonomy_id: str, taxonomy ID of host species
+    :param id_count: int, index number of associated assembly ID in list of all IDs
+    :param total_id_count: total number of retrieved assembly IDs for species
     :param logger: logger object
-    :param output: cmd args, defines output directory
-    :param retries: cmd args, defines maximum number of retries if network error encountered
-    :param force: booleon, cmd-line argument to enable/disable over writing of existing files
-    :param timeout_limit: int, cmd-line argument, timeout of URL connection (s)
+    :param retries: parser args, defines maximum number of retries if network error encountered
+    :param args: parse arguments
 
     Return nothing.
     """
     logger.info(
-        "Initating pull down of GenBank files for NCBI:txid{}".format(taxonomy_id)
+        "Preparing to download GenBank file for assembly {} of {}".format(
+            id_count, total_id_count
+        )
     )
-    count = 1
-    id_index = 0
-    for id_index in range(len(assembly_ids)):
-        logger.info(
-            "Preparing download of GenBank file {} of {} for NCBI:txid{}".format(
-                (id_index + 1), len(assembly_ids), taxonomy_id
-            )
-        )
-        with entrez_retry(
-            logger,
-            retries,
-            Entrez.esummary,
-            db="assembly",
-            id=assembly_ids[id_index],
-            report="full",
-        ) as genbank_handle:
-            genbank_record = Entrez.read(genbank_handle, validate=False)
-            genbank_summary = genbank_record["DocumentSummarySet"]["DocumentSummary"][0]
-        # compile url for download
-        genbank_url, filestem, accession_number = compile_url(genbank_summary, logger)
-        # if downloaded file is not to be written to STDOUT, compile output path
-        if output is not sys.stdout:
-            out_file_path = compile_output_path(
-                output, filestem, "genomic.gbff.fz", logger
-            )
-        else:
-            out_file_path = output
 
-        # download GenBank file
-        download_file(
-            genbank_url, timeout_limit, out_file_path, logger, accession_number,
-        )
+    # compile url for download
+    genbank_url, filestem = compile_url(accession_number, assembly_name, logger)
 
-        logger.info(
-            "Finished download of GenBank file. Accesion {}".format(accession_number)
+    # if downloaded file is not to be written to STDOUT, compile output path
+    if args.output is not sys.stdout:
+        out_file_path = compile_output_path(
+            args.output, filestem, "genomic.gbff.fz", logger
         )
+    else:
+        out_file_path = args.output
 
-        count += 1
-        id_index += 1
+    # download GenBank file
+    download_file(
+        genbank_url, args.timeout, out_file_path, logger, accession_number,
+    )
+
+    logger.info(
+        "Finished downloading GenBank file for assembly {} of {}".format(
+            id_count, total_id_count
+        )
+    )
 
     return
 
 
-def compile_url(data_summary, logger):
+def compile_url(accession_number, assembly_name, logger):
     """Compile url for file download.
 
-    Extract the assembly name from the record summary and replace
-    escape characters with underscores. This is becuase NCBI records
-    can include a varierty of escape charcters in its records, but
-    requires inclusion of underscores within its urls. Use the
-    assembly name and accession number to generate the filestem.
+    Reformate assembly name, replacing escape characters with underscors.
+    This is because NCBI records can include a variety of escape characters
+    in its records, but requires inclusion of underscores within its urls.
+
+    Use ccession number and assembly name to generate file stem.
+
     Use the file stem to arquire the GCstem (region of the url which
     dictates the type of genome record, i.e. reference or assembly), and
     accession number block (in the format of nnn/nnn/nnn in the url).
-    Regions of the url are compiled together with the ftpstem:
-    ftp://ftp.ncni.nlm.nih.gov/genomes/all/.
 
-    :param data_summary: record dictionary, summary region of NCBI record
+    Regions of the url are compiled together with the ftpstem (prefix):
+    "ftp://ftp.ncni.nlm.nih.gov/genomes/all/".
+
+    :param accession_number: str, asseccion number of genomic assembly
+    :param assembly_name: str, name of genomic assembly from NCBI record
     :param logger: logger object
 
     Return str, url required for download.
@@ -771,9 +769,9 @@ def compile_url(data_summary, logger):
     logger.info("Compiling URL for download")
     # Extract assembly name, removing alterantive escape characters
     escape_characters = re.compile(r"[\s/,#\(\)]")
-    escape_name = re.sub(escape_characters, "_", data_summary["AssemblyName"])
+    escape_name = re.sub(escape_characters, "_", assembly_name)
     # compile filstem
-    filestem = "_".join([data_summary["AssemblyAccession"], escape_name])
+    filestem = "_".join([accession_number, escape_name])
     # separate out filesteam into GCstem, intergers and version number
     gcstem, accession_block, _ = tuple(filestem.split("_", 2))
     # separate identifying numbers from version number
@@ -786,7 +784,6 @@ def compile_url(data_summary, logger):
     return (
         f"ftp://ftp.ncbi.nlm.nih.gov/genomes/all/{gcstem}/{url_accession_block}/{filestem}/{filestem}_genomic.gbff.gz",
         filestem,
-        data_summary["AssemblyAccession"],
     )
 
 
@@ -797,11 +794,9 @@ def compile_output_path(output, filestem, suffix, logger):
     Suffix for GenBank file is _genomic.gbff.gz
 
     :param output: cmd-args, path to directory for download files to be written
-    :param accession_number: str, accession number
+    :param filestem: str, file stem of GenBank file
     :param suffix: str, file extension
     :param logger: logger object
-    :param force: booleon, cmd-line argument to enable/disable over writing of existing files
-    :param nodelete: boolean, cmd-line args to enable/disable deleting of existing files in outdir
 
     Return path.
     """
@@ -809,14 +804,14 @@ def compile_output_path(output, filestem, suffix, logger):
     return output / "_".join([filestem.replace(".", "_"), suffix])
 
 
-def download_file(genbank_url, timeout_limit, out_file_path, logger, accession):
+def download_file(genbank_url, timeout_limit, out_file_path, logger, accession_number):
     """Download file.
-    
+
     :param genbank_url: str, url of file to be downloaded
     :param timeout_limit: int, cmd-line args, timout out of URL connection (s)
     :param out_file_path: path, output directory for file to be written to
     :param accession: str, accession number of genome
-    
+
     Return nothing.
     """
     # Try URL connection
@@ -824,18 +819,20 @@ def download_file(genbank_url, timeout_limit, out_file_path, logger, accession):
         response = urlopen(genbank_url, timeout=timeout_limit)
     except HTTPError:
         logger.error(
-            "Failed to download GenBank file for {}".format(accession), exc_info=1,
+            "Failed to download GenBank file for {}".format(accession_number),
+            exc_info=1,
         )
         return
     except URLError:
         logger.error(
-            "Failed to download GenBank file for {}".format(accession), exc_info=1,
+            "Failed to download GenBank file for {}".format(accession_number),
+            exc_info=1,
         )
         return
     except timeout:
         logger.error(
             "Download timed out, thus failed to download GenBank file for {}".format(
-                accession
+                accession_number
             ),
             exc_info=1,
         )
@@ -847,7 +844,7 @@ def download_file(genbank_url, timeout_limit, out_file_path, logger, accession):
     bytes_downloaded = 0
     bsize = 1_048_576
     try:
-        logger.info("Downloading file. Accession: {}".format(accession))
+        logger.info("Downloading file. Accession: {}".format(accession_number))
         with open(out_file_path, "wb") as out_handle:
             while True:
                 buffer = response.read(bsize)
@@ -861,7 +858,7 @@ def download_file(genbank_url, timeout_limit, out_file_path, logger, accession):
                 )
                 logger.info(download_progress)
     except IOError:
-        logger.error("Download failed for {}".format(accession), exc_info=1)
+        logger.error("Download failed for {}".format(accession_number), exc_info=1)
         return
 
     return
