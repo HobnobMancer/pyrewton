@@ -4,6 +4,9 @@
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> update module docstring
 :cmd_args df_input: path, path to input dataframe
 :cmd_args force: bool, force overwriting files in output directory
 :cmd_args genbank: path, path to directory containing GenBank files
@@ -17,6 +20,7 @@
 :func check_input: Check paths to input dataframe and GenBank files are valid
 :func make_output_directory: Establish output directory
 :func get_input_df: parse input dataframe
+<<<<<<< HEAD
 :func create_dataframe: build dataframe summarising CAZy annotation in GenBank files
 :func create_df_foundation: Parse input dataframe row
 :func build_df_foundation: Compile row data for dataframe
@@ -57,6 +61,12 @@ import sys
 >>>>>>> create parser function and update build logger
 
 :func main:...
+=======
+:func get_dataframe: build dataframe summarising CAZy annotation in GenBank files
+:func create_df_foundation: Parse input dataframe row
+:func build_df_foundation: Compile row data for dataframe
+:func get_protein_data: Retrieve protein name and IDs
+>>>>>>> update module docstring
 
 Generate summary dataframe and of annotated CAZy classes in all GenBank
 files associated with a given species.
