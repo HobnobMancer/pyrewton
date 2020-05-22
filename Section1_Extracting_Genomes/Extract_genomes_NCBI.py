@@ -231,18 +231,13 @@ def main():
     logger.info("Program finished and exiting")
 
 
-def build_logger(
-    script_name, log_file, date_of_pulldown, time_of_pulldown
-) -> logging.Logger:
+def build_logger(script_name, log_file,) -> logging.Logger:
     """Return a logger for this script.
 
     Enables logger for script, sets parameters and creates new file to store log.
 
-    :param script_name: Name of script
-    :param custom_string: Additional string parsed from cmdline by user - required for log
-                    file to be written out
-    :param date_of_pulldown: Data run was initiated
-    :param time_of_pulldown: Time run was initiated
+    :param script_name: str, name of script
+    :param log_file: parser argument, enable writing out of log file
 
     Return logger object.
     """
