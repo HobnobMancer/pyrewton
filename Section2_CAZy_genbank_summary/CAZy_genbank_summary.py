@@ -2,9 +2,23 @@
 # -*- coding: utf-8 -*-
 """Create summary of annotated CAZy classes in GenBank files.
 
-:cmd_args:...
+:cmd_args df_input: path, path to input dataframe
+:cmd_args force: bool, force overwriting files in output directory
+:cmd_args genbank: path, path to directory containing GenBank files
+:cmd_args log: path, path to direct writing out log file
+:cmd_args nodelete: not delete existing files in output directory
+:cmd_args output: path, path to output directory
 
-:func main:...
+:func build_parser: Build paser to allow cmd-line operation
+:func main: Coordinate calling of other functions
+:func build_logger: Build logger
+:func check_input: Check paths to input dataframe and GenBank files are valid
+:func make_output_directory: Establish output directory
+:func get_input_df: parse input dataframe
+:func get_dataframe: build dataframe summarising CAZy annotation in GenBank files
+:func create_df_foundation: Parse input dataframe row
+:func build_df_foundation: Compile row data for dataframe
+:func get_protein_data: Retrieve protein name and IDs
 
 Generate summary dataframe and of annotated CAZy classes in all GenBank
 files associated with a given species.
