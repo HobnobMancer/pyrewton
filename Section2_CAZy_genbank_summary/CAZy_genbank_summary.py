@@ -1136,14 +1136,14 @@ def get_protein_data(accession_number, total_accession, genbank_input, logger):
 =======
         logger.info(
             (
-                f"Null value ('NA') was contained in cell for {accession}, exiting retrieval of protein data.\n"
+                f"Null value ('NA') was contained in cell for {accession_number}, exiting retrieval of protein data.\n"
                 "Returning null ('NA') value."
             )
         )
         return (['NA', 'NA'])
     
     # Retrieve GenBank (gb) file
-    gb_file = list(Path(bpath).glob(rf"{accession[count-1]}*.gbff.fz"))
+    gb_file = list(Path(bpath).glob(rf"{accession_number}*.gbff.fz"))
 
     # check file was retrieved, not multiple or none
     if length(gb_file) > 1 or len(gb_file) == 0:
