@@ -438,7 +438,7 @@ def get_protein_data(accession_number, genbank_input, logger):
             )
         )
         return (['NA', 'NA'])
-    
+
     # Retrieve GenBank (gb) file
     gb_file = list(Path(bpath).glob(rf"{accession_number}*.gbff.fz"))
 
@@ -447,7 +447,7 @@ def get_protein_data(accession_number, genbank_input, logger):
         # log error and return 'NA' for protein name and protein ID
         logger.warning(
             (
-                f"Failed to retrieve GenBank file for {accession}.\n"
+                f"Failed to retrieve GenBank file for {accession_number}.\n"
                 "Returning null ('NA') value for protein name and ID"
             )
         )
