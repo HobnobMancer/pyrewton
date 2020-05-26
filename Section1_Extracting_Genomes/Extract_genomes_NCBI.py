@@ -525,7 +525,8 @@ def collate_accession_numbers(species_table, logger, args):
     return species_table
 
 
-def get_accession_numbers(taxonomy_id, df_row, logger, retries, args):
+def get_accession_numbers(df_row, logger, args):
+    # taxonomy_id, df_row, logger, retries, args):
     """Return all NCBI accession numbers associated with NCBI Taxonomy Id.
 
     Use Entrez elink function to pull down the assembly IDs of all genomic
@@ -537,34 +538,37 @@ def get_accession_numbers(taxonomy_id, df_row, logger, retries, args):
 
     Format accession numbers into a human-readable list, 'all_accession_numbers'.
 
-    :param taxonomy_id: str, NCBI taxonomy ID
+    Reminder of Pandas series structure:
+    df_row[0]: Genus
+    df_row[1]: Species
+    df_row[2]: Taxonomy ID
+
     :param df_row: pd series, row from dataframe
     :param logger: logger object
-    :param retries: parser argument, maximum number of retries excepted if network error encountered
     :param args: parser arguments
 
     Return list of NCBI accession numbers.
     """
     # If previously failed to retrieve the taxonomy ID cancel retrieval of accession numbers
     if taxonomy_id == "NA":
-        logger.info(
+        logger.warning(
             (
-                "Previously failed to retrieve taxonomy for {} {}.\n"
+                f"Previously failed to retrieve taxonomy for {df_row[0][0]}.{df_row[1]}.\n"
                 "Returning 'NA' for accession numbers."
-            ).format(df_row[0], df_row[1])
+            )
         )
         return "NA"
 
     # Retrieve all IDs of genomic assemblies for taxonomy ID
 
-    logger.info("Retrieving assembly IDs for NCBI:txid{}".format(taxonomy_id))
-
+    logger.info(f"Retrieving assembly IDs for {df_row[2]}")
+    # df_row[2][9:] removes 'NCBI:txid' prefix
     with entrez_retry(
         logger,
-        retries,
+        args.retries,
         Entrez.elink,
         dbfrom="Taxonomy",
-        id=taxonomy_id,
+        id=df_row[2][9:],
         db="Assembly",
         linkname="taxonomy_assembly",
     ) as assembly_number_handle:
@@ -574,9 +578,9 @@ def get_accession_numbers(taxonomy_id, df_row, logger, retries, args):
     if assembly_number_record == "NA":
         logger.error(
             (
-                "Entrez failed to retrieve assembly IDs, for NCBI:txid{}.\n"
-                "Returning 'NA' for accession numbers for NCBI:txid{}"
-            ).format(taxonomy_id, taxonomy_id),
+                f"Entrez failed to retrieve assembly IDs, for {df_row[2]}.\n"
+                "Returning null value 'NA' for accession numbers."
+            ),
             exc_info=1,
         )
         return assembly_number_record
@@ -590,24 +594,20 @@ def get_accession_numbers(taxonomy_id, df_row, logger, retries, args):
     except IndexError:
         logger.error(
             (
-                "Entrez failed to retrieve assembly IDs, for NCBI:txid{}."
-                "Exiting retrieval of accession numbers for NCBI:txid{}"
+                f"Entrez failed to retrieve assembly IDs, for {df_row[2]}."
+                "Exiting retrieval of accession numbers, and returning null value 'NA'"
             ).format(taxonomy_id, taxonomy_id),
             exc_info=1,
         )
         return "NA"
 
-    logger.info(
-        "Finished processing retrieval of assembly IDs for NCBI:txid{}".format(
-            taxonomy_id
-        )
-    )
+    logger.info(f"Posting assembly IDs for {df_row[2]} to retrieve accession numbers")
 
     # compile list of ids in suitable format for epost
     id_post_list = str(",".join(assembly_id_list))
     # Post all assembly IDs to Entrez-NCBI for downstream pulldown of accession numbers
     epost_search_results = Entrez.read(
-        entrez_retry(logger, retries, Entrez.epost, "Assembly", id=id_post_list)
+        entrez_retry(logger, args.retries, Entrez.epost, "Assembly", id=id_post_list)
     )
 
     # test record was returned, if failed to return exit retrieval of assembly IDs
@@ -625,16 +625,14 @@ def get_accession_numbers(taxonomy_id, df_row, logger, retries, args):
     epost_webenv = epost_search_results["WebEnv"]
     epost_query_key = epost_search_results["QueryKey"]
 
-    logger.info(
-        "Finished processing positing of assembly IDs for fetching accession numbers"
-    )
+    logger.info(f"Retrieving accession numbers for {df_row[2]}")
 
     # Pull down all accession numbers
     ncbi_accession_numbers_list = []
 
     with entrez_retry(
         logger,
-        retries,
+        args.retries,
         Entrez.efetch,
         db="Assembly",
         query_key=epost_query_key,
@@ -647,12 +645,12 @@ def get_accession_numbers(taxonomy_id, df_row, logger, retries, args):
     if accession_record == "NA":
         logger.error(
             (
-                "Entrez failed to retireve accession numbers, for NCBI:txid{}."
-                "Exiting retrieval of accession numbers for NCBI:txid{}"
+                f"Entrez failed to retireve accession numbers, for {df_row[2]}."
+                "Exiting retrieval of accession numbers, and returning null value 'NA'"
             ).format(taxonomy_id, taxonomy_id),
             exc_info=1,
         )
-        return accession_record
+        return 'NA'
 
     # Extract accession numbers from document summary
 
@@ -663,8 +661,8 @@ def get_accession_numbers(taxonomy_id, df_row, logger, retries, args):
 
     # Retrieve accession number for assembly ID
     for index_number in tqdm(
-        range(number_of_accession_numbers),
-        desc=f"Retrieving accessions (txid:{taxonomy_id})",
+        range(len(accession_record["DocumentSummarySet"]["DocumentSummary"])),
+        desc=f"Retrieving accessions ({df_row[2]})",
     ):
         try:
             new_accession_number = accession_record["DocumentSummarySet"][
@@ -674,8 +672,10 @@ def get_accession_numbers(taxonomy_id, df_row, logger, retries, args):
 
         except IndexError:
             logger.error(
-                "No accession number retrieved from NCBI for assembly ID {} of {}".format(
-                    index_number, number_of_accession_numbers
+                (
+                    f"No accession number retrieved from NCBI for assembly ID {index_number}"
+                    f"of {len(accession_record[" DocumentSummarySet "][" DocumentSummary "])}.\n"
+                    "Returning null value of 'NA'"
                 ),
                 exc_info=1,
             )
