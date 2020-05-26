@@ -171,6 +171,15 @@ def build_parser():
         default=10,
         help="Timeout for URL connections, in seconds",
     )
+    # Add option for more detail (verbose) logging
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        default=False,
+        help="Set logger level to 'INFO'",
+    )
 
     return parser
 
@@ -187,6 +196,7 @@ def main():
 
     Return 'species_table' dataframe.
     """
+    # Programme preparation:
     # Parse arguments
     parser = build_parser()
     args = parser.parse_args()
@@ -196,7 +206,7 @@ def main():
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
-    logger = build_logger("Extract_genomes_NCBI", args.log)
+    logger = build_logger("Extract_genomes_NCBI", args)
     # logger = logging.getLogger("Extract_genomes_NCBI")
     logger.info("Run initated")
 
@@ -204,7 +214,7 @@ def main():
     if args.output is not sys.stdout:
         make_output_directory(args.output, logger, args.force, args.nodelete)
 
-    # Invoke main usage of script
+    # Invoke main usage of programme
     # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
     species_table = parse_input_file(args.input_file, logger, args.retries)
 
@@ -224,18 +234,24 @@ def main():
     logger.info("Program finished and exiting")
 
 
-def build_logger(script_name, log_file) -> logging.Logger:
+def build_logger(script_name, args) -> logging.Logger:
     """Return a logger for this script.
 
     Enables logger for script, sets parameters and creates new file to store log.
 
     :param script_name: str, name of script
-    :param log_file: parser argument, enable writing out of log file
+    :param args: parser argument
 
     Return logger object.
     """
     logger = logging.getLogger(script_name)
-    logger.setLevel(logging.WARNING)
+
+    # Check if verbose logging enabled
+    if args.verbose is True:
+        logger.setLevel(logging.INFO)
+    else:
+        logger.setLevel(logging.WARNING)
+
     # Set format of loglines
     log_formatter = logging.Formatter(
         script_name + ": {} - {}".format("%(asctime)s", "%(message)s")
@@ -248,8 +264,8 @@ def build_logger(script_name, log_file) -> logging.Logger:
     logger.addHandler(console_log_handler)
 
     # Setup file handler to log to a file
-    if log_file is not None:
-        file_log_handler = logging.FileHandler(log_file)
+    if args.log is not None:
+        file_log_handler = logging.FileHandler(args.log)
         file_log_handler.setLevel(logging.INFO)
         file_log_handler.setFormatter(log_formatter)
         logger.addHandler(file_log_handler)
