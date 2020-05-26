@@ -98,8 +98,8 @@ def build_parser():
     parser.add_argument(
         "-f",
         "--force",
-        type=bool,
-        metavar="force file overwritting",
+        dest="force",
+        action="store_true",
         default=False,
         help="Force file over writting",
     )
@@ -202,7 +202,7 @@ def main():
     # Initiate logger
     # Note: log file only created if specified at cmdline
     logger = build_logger(
-        "Extract_genomes_NCBI", args.log, date_of_pulldown, time_of_pulldown
+        "Extract_genomes_NCBI", args.log
     )
     # logger = logging.getLogger("Extract_genomes_NCBI")
     logger.info("Run initated")
@@ -242,8 +242,7 @@ def build_logger(script_name, log_file) -> logging.Logger:
     Return logger object.
     """
     logger = logging.getLogger(script_name)
-    logger.setLevel(logging.DEBUG)
-
+    logger.setLevel(logging.WARNING)
     # Set format of loglines
     log_formatter = logging.Formatter(
         script_name + ": {} - {}".format("%(asctime)s", "%(message)s")
@@ -251,14 +250,14 @@ def build_logger(script_name, log_file) -> logging.Logger:
 
     # Setup console handler to log to terminal
     console_log_handler = logging.StreamHandler()
-    console_log_handler.setLevel(logging.DEBUG)
+    console_log_handler.setLevel(logging.WARNING)
     console_log_handler.setFormatter(log_formatter)
     logger.addHandler(console_log_handler)
 
     # Setup file handler to log to a file
     if log_file is not None:
         file_log_handler = logging.FileHandler(log_file)
-        file_log_handler.setLevel(logging.DEBUG)
+        file_log_handler.setLevel(logging.INFO)
         file_log_handler.setFormatter(log_formatter)
         logger.addHandler(file_log_handler)
 
@@ -655,7 +654,7 @@ def get_accession_numbers(taxonomy_id, df_row, logger, retries, args):
 
     # Retrieve accession number for assembly ID
     for index_number in tqdm(
-        range(number_of_accession_numbers), desc="Retrieving accession numbers"
+        range(number_of_accession_numbers), desc=f"Retrieving accessions (txid:{taxonomy_id})"
     ):
         try:
             new_accession_number = accession_record["DocumentSummarySet"][
@@ -857,17 +856,13 @@ def download_file(genbank_url, timeout_limit, out_file_path, logger, accession_n
     try:
         logger.info("Downloading file. Accession: {}".format(accession_number))
         with open(out_file_path, "wb") as out_handle:
-            while True:
-                buffer = response.read(bsize)
-                if not buffer:
-                    break
-                bytes_downloaded += len(buffer)
-                out_handle.write(buffer)
-                download_progress = r"%10d  [%3.2f%%]" % (
-                    bytes_downloaded,
-                    bytes_downloaded * 100.0 / file_size,
-                )
-                logger.info(download_progress)
+            # Using leave=False as this will be an internally-nested progress bar
+            with tqdm(total=file_size, leave=False, desc=accession_number) as pbar:
+                while True:
+                    buffer = response.read(bsize)
+                    if not buffer:
+                        break
+                    pbar.update(len(buffer))
     except IOError:
         logger.error("Download failed for {}".format(accession_number), exc_info=1)
         return
