@@ -107,8 +107,8 @@ def build_parser():
     parser.add_argument(
         "-g",
         "--genbank",
-        type=bool,
-        metavar="genbank file (.gbff)",
+        dest="genbank",
+        action="store_true",
         default=True,
         help="Disable pulldown of GenBank (.gbff) files",
     )
@@ -137,8 +137,8 @@ def build_parser():
     parser.add_argument(
         "-n",
         "--nodelete",
-        type=bool,
-        metavar="not to delete exisiting files",
+        dest="nodelete",
+        action="store_true",
         default=False,
         help="enable/disable deletion of exisiting files",
     )
@@ -201,9 +201,7 @@ def main():
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
-    logger = build_logger(
-        "Extract_genomes_NCBI", args.log
-    )
+    logger = build_logger("Extract_genomes_NCBI", args.log)
     # logger = logging.getLogger("Extract_genomes_NCBI")
     logger.info("Run initated")
 
@@ -654,7 +652,8 @@ def get_accession_numbers(taxonomy_id, df_row, logger, retries, args):
 
     # Retrieve accession number for assembly ID
     for index_number in tqdm(
-        range(number_of_accession_numbers), desc=f"Retrieving accessions (txid:{taxonomy_id})"
+        range(number_of_accession_numbers),
+        desc=f"Retrieving accessions (txid:{taxonomy_id})",
     ):
         try:
             new_accession_number = accession_record["DocumentSummarySet"][
