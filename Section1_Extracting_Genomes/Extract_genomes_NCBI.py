@@ -231,7 +231,7 @@ def main():
     logger.info("Program finished and exiting")
 
 
-def build_logger(script_name, log_file,) -> logging.Logger:
+def build_logger(script_name, log_file) -> logging.Logger:
     """Return a logger for this script.
 
     Enables logger for script, sets parameters and creates new file to store log.
