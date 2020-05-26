@@ -458,7 +458,7 @@ def get_tax_id(genus_species, logger, line_number, retries):
     Return NCBI taxonomy ID.
     """
     # check for potential mistake in taxonomy ID prefix
-    if bool(re.search(r"\d", genus_species)) is True:
+    if re.search(r"\d", genus_species):
         logger.warning(
             (
                 "Warning: Number with no 'NCBI:txid' prefix found line {}.\n"

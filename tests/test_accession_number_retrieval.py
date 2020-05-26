@@ -36,8 +36,8 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
         # Parse file containing test inputs
         self.input_file_path = self.input_dir / "test_inputs.txt"
 
-        with open(self.input_file_path) as file:
-            input_list = file.read().splitlines()
+        with open(self.input_file_path) as ifh:
+            input_list = ifh.read().splitlines()
 
         # Define test inputs
         self.df_row_data = []
