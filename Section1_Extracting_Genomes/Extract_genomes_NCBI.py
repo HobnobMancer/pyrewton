@@ -187,11 +187,6 @@ def main():
 
     Return 'species_table' dataframe.
     """
-    # Capture date and time script is executed
-    date = datetime.datetime.now()
-    date_of_pulldown = date.strftime("%Y-%m-%d")
-    time_of_pulldown = date.strftime("%H:%M")
-
     # Parse arguments
     parser = build_parser()
     args = parser.parse_args()
