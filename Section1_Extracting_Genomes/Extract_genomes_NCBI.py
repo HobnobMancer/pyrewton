@@ -293,7 +293,7 @@ def make_output_directory(output, logger, force, nodelete):
     # If output directory specificed at cmd-line, check output directory does not already exist
     if output.exists():
         if force is False:
-            logger.info(
+            logger.critical(
                 (
                     "Output directory already exists and forced overwrite not enabled.\n"
                     "Terminating program."
@@ -302,7 +302,7 @@ def make_output_directory(output, logger, force, nodelete):
             sys.exit(1)
         else:
             if nodelete is False:
-                logger.info(
+                logger.warning(
                     (
                         "Output directory already exists and forced complete overwrite enabled.\n"
                         "Deleting existing content in outdir."
@@ -311,7 +311,7 @@ def make_output_directory(output, logger, force, nodelete):
                 # delete existing content in outdir
                 shutil.rmtree(output)
             else:
-                logger.info(
+                logger.warning(
                     (
                         "Output directory already exists and forced addition of files "
                         "to outdir enables."
@@ -354,7 +354,7 @@ def parse_input_file(input_filename, logger, retries):
     # test path to input file exists, if not exit programme
     if not input_filename.is_file():
         # report to user and exit programme
-        logger.info(
+        logger.critical(
             (
                 "Input file not found. Check filename, extension and directory is correct.\n"
                 "Terminating program."
@@ -444,9 +444,9 @@ def get_genus_species_name(taxonomy_id, logger, line_number, retries):
     except IndexError:
         logger.error(
             (
-                "Entrez failed to retrieve scientific name, for species in line {} of input file.\n"
-                "Potential typo in taxonomy ID, check input. Returned 'NA'."
-            ).format(line_number),
+                f"Entrez failed to retrieve scientific name, for NCBI:txid{taxonomy_id}.\n"
+                "Potential typo in taxonomy ID, check input. Returned null value 'NA'."
+            ),
             exc_info=1,
         )
         return "NA"
@@ -470,10 +470,10 @@ def get_tax_id(genus_species, logger, line_number, retries):
     if re.search(r"\d", genus_species):
         logger.warning(
             (
-                "Warning: Number with no 'NCBI:txid' prefix found line {}.\n"
-                "Typo in scientific name of ID missing 'NCBI:txid' prefix.\n"
+                f"Number with no 'NCBI:txid' prefix found line {line_number} ('{genus_species}').\n"
+                "Maybe yypo in scientific name or ID missing 'NCBI:txid' prefix.\n"
                 "Inturpretted as scientific name. Returning taxonomy ID as 'NA'.\n"
-            ).format(line_number),
+            ),
             exc_info=1,
         )
         return "NA"
@@ -491,9 +491,9 @@ def get_tax_id(genus_species, logger, line_number, retries):
     except IndexError:
         logger.error(
             (
-                "Entrez failed to retrieve taxonomy ID, for species in line {} of input file."
-                "Potential typo in species name."
-            ).format(line_number),
+                f"Entrez failed to retrieve taxonomy ID, for {genus_species}"
+                "Potential typo in species name. Returning taxonomy ID as null value 'NA'"
+            ),
             exc_info=1,
         )
         return "NA"
