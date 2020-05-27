@@ -198,57 +198,57 @@ def main():
     # Programme preparation:
     # Parse arguments
     parser = build_parser()
-    args = parser.parse_args()
+    pargs = parser.parse_args()
 
     # Add users email address from parser
-    Entrez.email = args.user_email
+    Entrez.email = pargs.user_email
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
-    logger = build_logger("Extract_genomes_NCBI", args)
+    logger = build_logger("Extract_genomes_NCBI", pargs)
     # logger = logging.getLogger("Extract_genomes_NCBI")
     logger.info("Run initated")
 
     # If specified output directory for genomic files, create output directory
-    if args.output is not sys.stdout:
-        make_output_directory(args.output, logger, args.force, args.nodelete)
+    if pargs.output is not sys.stdout:
+        make_output_directory(pargs.output, logger, pargs.force, pargs.nodelete)
 
     # Invoke main usage of programme
     # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
-    species_table = parse_input_file(args.input_file, logger, args.retries)
+    species_table = parse_input_file(pargs.input_file, logger, pargs.retries)
 
     # Pull down accession numbers and GenBank files (if not disabled)
     species_table["NCBI Accession Numbers"] = species_table.apply(
-        get_accession_numbers, args=(logger, args)
+        get_accession_numbers, args=(logger, pargs), axis=1
     )
     logger.info("Generated species table")
 
     # Write out dataframe
-    if args.dataframe is not sys.stdout:
+    if pargs.dataframe is not sys.stdout:
         write_out_dataframe(
-            species_table, logger, args.dataframe, args.force, args.nodelete
+            species_table, logger, pargs.dataframe, pargs.force, pargs.nodelete
         )
     else:
-        species_table.to_csv(args.dataframe)
+        species_table.to_csv(pargs.dataframe)
 
     # Program finished
     logger.info("Program finished and exiting")
 
 
-def build_logger(script_name, args) -> logging.Logger:
+def build_logger(script_name, pargs) -> logging.Logger:
     """Return a logger for this script.
 
     Enables logger for script, sets parameters and creates new file to store log.
 
     :param script_name: str, name of script
-    :param args: parser argument
+    :param pargs: parser argument
 
     Return logger object.
     """
     logger = logging.getLogger(script_name)
 
     # Check if verbose logging enabled
-    if args.verbose is True:
+    if pargs.verbose is True:
         logger.setLevel(logging.INFO)
     else:
         logger.setLevel(logging.WARNING)
@@ -265,8 +265,8 @@ def build_logger(script_name, args) -> logging.Logger:
     logger.addHandler(console_log_handler)
 
     # Setup file handler to log to a file
-    if args.log is not None:
-        file_log_handler = logging.FileHandler(args.log)
+    if pargs.log is not None:
+        file_log_handler = logging.FileHandler(pargs.log)
         file_log_handler.setLevel(logging.INFO)
         file_log_handler.setFormatter(log_formatter)
         logger.addHandler(file_log_handler)
@@ -499,8 +499,7 @@ def get_tax_id(genus_species, logger, line_number, retries):
         return "NA"
 
 
-def get_accession_numbers(df_row, logger, args):
-    # taxonomy_id, df_row, logger, retries, args):
+def get_accession_numbers(df_row, logger, pargs):
     """Return all NCBI accession numbers associated with NCBI Taxonomy ID.
 
     Use Entrez elink function to pull down the assembly IDs of all genomic
@@ -539,7 +538,7 @@ def get_accession_numbers(df_row, logger, args):
     # df_row[2][9:] removes 'NCBI:txid' prefix
     with entrez_retry(
         logger,
-        args.retries,
+        pargs.retries,
         Entrez.elink,
         dbfrom="Taxonomy",
         id=df_row[2][9:],
@@ -581,7 +580,7 @@ def get_accession_numbers(df_row, logger, args):
     id_post_list = str(",".join(assembly_id_list))
     # Post all assembly IDs to Entrez-NCBI for downstream pulldown of accession numbers
     epost_search_results = Entrez.read(
-        entrez_retry(logger, args.retries, Entrez.epost, "Assembly", id=id_post_list)
+        entrez_retry(logger, pargs.retries, Entrez.epost, "Assembly", id=id_post_list)
     )
 
     # test record was returned, if failed to return exit retrieval of assembly IDs
@@ -606,7 +605,7 @@ def get_accession_numbers(df_row, logger, args):
 
     with entrez_retry(
         logger,
-        args.retries,
+        pargs.retries,
         Entrez.efetch,
         db="Assembly",
         query_key=epost_query_key,
@@ -652,7 +651,7 @@ def get_accession_numbers(df_row, logger, args):
             return "NA"
 
         # If downloading of GenBank files is enabled, download Genbank files
-        if args.genbank is True:
+        if pargs.genbank is True:
             get_genbank_files(
                 new_accession_number,
                 accession_record["DocumentSummarySet"]["DocumentSummary"][index_number][
@@ -662,7 +661,7 @@ def get_accession_numbers(df_row, logger, args):
                 index_number,
                 len(accession_record["DocumentSummarySet"]["DocumentSummary"]),
                 logger,
-                args,
+                pargs,
             )
 
         index_number += 1
@@ -682,7 +681,7 @@ def get_genbank_files(
     id_count,
     total_id_count,
     logger,
-    args,
+    pargs,
 ):
     """Coordiante download of GenBank from NCBI.
 
@@ -692,8 +691,7 @@ def get_genbank_files(
     :param id_count: int, index number of associated assembly ID in list of all IDs
     :param total_id_count: total number of retrieved assembly IDs for species
     :param logger: logger object
-    :param retries: parser args, defines maximum number of retries if network error encountered
-    :param args: parse arguments
+    :param timeout_limit: int, timeout of URL connection
 
     Return nothing.
     """
@@ -701,21 +699,16 @@ def get_genbank_files(
     genbank_url, filestem = compile_url(accession_number, assembly_name, logger)
 
     # if downloaded file is not to be written to STDOUT, compile output path
-    if args.output is not sys.stdout:
+    if pargs.output is not sys.stdout:
         out_file_path = compile_output_path(
-            args.output, filestem, "genomic.gbff.fz", logger
+            pargs.output, filestem, "genomic.gbff.fz", logger
         )
     else:
-        out_file_path = args.output
+        out_file_path = pargs.output
 
     # download GenBank file
     download_file(
-        genbank_url,
-        args.timeout,
-        out_file_path,
-        logger,
-        accession_number,
-        "GenBank file",
+        genbank_url, pargs, out_file_path, logger, accession_number, "GenBank file",
     )
 
     return
@@ -788,20 +781,22 @@ def compile_output_path(output, filestem, suffix, logger):
 
 
 def download_file(
-    genbank_url, timeout_limit, out_file_path, logger, accession_number, file_type
+    genbank_url, pargs, out_file_path, logger, accession_number, file_type
 ):
     """Download file.
 
     :param genbank_url: str, url of file to be downloaded
-    :param timeout_limit: int, cmd-line args, timout out of URL connection (s)
+    :param args: parser arguments
     :param out_file_path: path, output directory for file to be written to
-    :param accession: str, accession number of genome
+    :param logger: logger object
+    :param accession_number: str, accession number of genome
+    :param file_type: str, denotes in logger file type downloaded
 
     Return nothing.
     """
     # Try URL connection
     try:
-        response = urlopen(genbank_url, timeout=timeout_limit)
+        response = urlopen(genbank_url, timeout=pargs.timeout)
 
     except HTTPError:
         logger.error(
