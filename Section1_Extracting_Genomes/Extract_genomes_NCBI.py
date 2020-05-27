@@ -701,7 +701,7 @@ def get_genbank_files(
     # if downloaded file is not to be written to STDOUT, compile output path
     if args.output is not sys.stdout:
         out_file_path = compile_output_path(
-            args.output, filestem, "genomic.gbff.fz", logger
+            args.output, filestem, "genomic.gbff.gz", logger
         )
     else:
         out_file_path = args.output
