@@ -758,7 +758,7 @@ def compile_url(accession_number, assembly_name, logger):
     return (
         (
             f"ftp://ftp.ncbi.nlm.nih.gov/genomes/all/{gcstem}/"
-            f"{url_accession_block}/{filestem}/{filestem}_genomic.gbff.gz",
+            f"{url_accession_block}/{filestem}/{filestem}_genomic.gbff.gz"
         ),
         filestem,
     )
@@ -797,19 +797,16 @@ def download_file(
     # Try URL connection
     try:
         response = urlopen(genbank_url, timeout=pargs.timeout)
-
     except HTTPError:
         logger.error(
             f"Failed to download {file_type} for {accession_number}", exc_info=1,
         )
         return
-
     except URLError:
         logger.error(
             f"Failed to download {file_type} for {accession_number}", exc_info=1,
         )
         return
-
     except timeout:
         logger.error(
             f"Failed to download {file_type} for {accession_number}", exc_info=1,
