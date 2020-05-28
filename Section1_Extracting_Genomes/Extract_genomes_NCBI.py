@@ -52,6 +52,7 @@ import argparse
 import logging
 import re
 import shutil
+import subprocess
 import sys
 import time
 
@@ -682,6 +683,7 @@ def get_genbank_files(
     total_id_count,
     logger,
     args,
+    suffix="genomic.gbff.gz",
 ):
     """Coordiante download of GenBank from NCBI.
 
@@ -696,13 +698,11 @@ def get_genbank_files(
     Return nothing.
     """
     # compile url for download
-    genbank_url, filestem = compile_url(accession_number, assembly_name, logger)
+    genbank_url, filestem = compile_url(accession_number, assembly_name, logger, suffix)
 
     # if downloaded file is not to be written to STDOUT, compile output path
     if args.output is not sys.stdout:
-        out_file_path = compile_output_path(
-            args.output, filestem, "genomic.gbff.gz", logger
-        )
+        out_file_path = args.output / f"{filestem}_{suffix}"
     else:
         out_file_path = args.output
 
@@ -718,8 +718,8 @@ def compile_url(
     accession_number,
     assembly_name,
     logger,
+    suffix,
     ftpstem="ftp://ftp.ncbi.nlm.nih.gov/genomes/all",
-    suffix="genomic.gbff.gz",
 ):
     """Compile url for file download.
 
@@ -765,22 +765,6 @@ def compile_url(
         (f"{ftpstem}/{gcstem}/{url_accession_block}/{filestem}/{filestem}_{suffix}"),
         filestem,
     )
-
-
-def compile_output_path(output, filestem, suffix, logger):
-    """Compile path for output file.
-
-    Standardised file name of accession_number.suffix.
-    Suffix for GenBank file is _genomic.gbff.gz
-
-    :param output: cmd-args, path to directory for download files to be written
-    :param filestem: str, file stem of GenBank file
-    :param suffix: str, file extension
-    :param logger: logger object
-
-    Return path.
-    """
-    return output / "_".join([filestem.replace(".", "_"), suffix])
 
 
 def download_file(
@@ -839,7 +823,35 @@ def download_file(
 
     logger.info(f"Finished downloading GenBank file for {accession_number}", exc_info=1)
 
-    return
+    return extract_file(out_file_path, logger)
+
+
+def extract_file(downloaded_file, logger):
+    """Return the path to the extract file.
+
+    :param downloaded_file: Path, path to gzipped downloaded file with ".gz" suffix
+    :param logger: logging object
+    """
+    # Extract file from gzipped file
+    if downloaded_file.suffix == ".gz":
+        extracted_file = downloaded_file.with_suffix("")  # Strips .gz from filename
+    else:
+        logger.info("File not extracted")
+
+    if extracted_file.exists():
+        logger.warning(
+            f"Output file {extracted_file} already exists, not extracting file"
+        )
+    else:
+        logger.info(f"Extracting {downloaded_file} to {extracted_file}")
+        try:
+            with open(extracted_file, "w") as efh:
+                subprocess.call(["gunzip", "-c", downloaded_file], stdout=efh)
+                logger.info(f"Archive extracted to {extracted_file}")
+        except IOError:
+            logger.error(f"Extracting file {downloaded_file} failed", exc_info=True)
+
+    return extracted_file
 
 
 def entrez_retry(logger, retries, entrez_func, *func_args, **func_kwargs):
