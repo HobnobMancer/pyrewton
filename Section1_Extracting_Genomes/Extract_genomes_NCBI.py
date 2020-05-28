@@ -714,7 +714,13 @@ def get_genbank_files(
     return
 
 
-def compile_url(accession_number, assembly_name, logger):
+def compile_url(
+    accession_number,
+    assembly_name,
+    logger,
+    ftpstem="ftp://ftp.ncbi.nlm.nih.gov/genomes/all",
+    suffix="genomic.gbff.gz",
+):
     """Compile url for file download.
 
     Reformate assembly name, replacing escape characters with underscors.
@@ -724,8 +730,8 @@ def compile_url(accession_number, assembly_name, logger):
     Use ccession number and assembly name to generate file stem.
 
     Use the file stem to arquire the GCstem (region of the url which
-    dictates the type of genome record, i.e. reference or assembly), and
-    accession number block (in the format of nnn/nnn/nnn in the url).
+    dictates the type of genome record, i.e. reference (GCF) or assembly (GCA)),
+    and accession number block (in the format of nnn/nnn/nnn in the url).
 
     Regions of the url are compiled together with the ftpstem (prefix):
     "ftp://ftp.ncni.nlm.nih.gov/genomes/all/".
@@ -756,10 +762,7 @@ def compile_url(accession_number, assembly_name, logger):
 
     # return url for downloading file
     return (
-        (
-            f"ftp://ftp.ncbi.nlm.nih.gov/genomes/all/{gcstem}/"
-            f"{url_accession_block}/{filestem}/{filestem}_genomic.gbff.gz"
-        ),
+        (f"{ftpstem}/{gcstem}/{url_accession_block}/{filestem}/{filestem}_{suffix}"),
         filestem,
     )
 
