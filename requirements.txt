@@ -9,3 +9,4 @@ pydocstyle
 pycodestyle
 pylint
 pytest
+pytest-ordering
