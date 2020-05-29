@@ -48,6 +48,15 @@ Extract_genomes_NCBI takes a plain text file containing species scientific names
 User email address: Email address of user must be provided
 
 **Optional arguments:**\
+`-d, --`dataframe`\
+&emsp;&emsp;Specify output path for dataframe, which will be saved as a .csv file (inclusion of file extensions is optional). If not provided dataframe will be written out to STDOUT.
+
+`-f, --force`\
+&emsp;&emsp;Enable writting in specificed output directory if output directory already exists.
+
+`-g, --genbank`\
+&emsp;&emsp;Enable or disable downloading of GenBank files.
+
 `-h, --help`\
 &emsp;&emsp;Display help messages and exit
 
@@ -68,7 +77,10 @@ including filename.
 If not option is given no log file will be written out,
 however, logs will still be printed to the terminal.
 
--`-o, --output`\
+`-n, --nodelete`\
+&emsp;&emsp;Enable not deleting files in existing output directory. If not enabled, output directory exists and writing in output directory is 'forced' then files in output directory will not be deleted, and new files will be written to the output directory.
+
+`-o, --output`\
 &emsp;&emsp;Specify filename (with extension) of output file.
 If only the filename is given, Extract_genomes_NCBI.py
 the output file will be written to the current working
@@ -79,10 +91,16 @@ the current directory with the standard name:
 "Extract_genomes_NCBI_Date_Time", where _Date_ and _Time_
 are the date and time script was invoked, respectively.
 
-- `-r, --retries`\
+`-r, --retries`\
 &emsp;&emsp;Specifiy maximum number of retries before cancelling call to NCBI
 if a network error is encountered. The default is a maximum of 10 retries. When
 maximum is reached, a value of 'NA' is returned.
+
+`-t, --timeout`\
+&emsp;&emsp;Specify timeout limit of URL connection when downloading GenBank files. Default is 10 seconds.
+
+`-v, --verbose`\
+&emsp;&emsp;Enable verbose logging - changes logger level from WARNING to INFO.
 
 ## Troubleshooting and common errors
 
@@ -203,4 +221,4 @@ This test tests the functions `get_genus_species_name()` and `get_tax_id()`, usi
 expected results.
 
 **test_accession_number_retrieval.py**\
-This test test the function `get_accession_numbers()`, `get_a_id_retry`, to ensure that Entrez can call to the NCBI database. Owing to the frequent updating of the NCBI Assembly database it is not possible to compare the results from the NCBI call against expected results.
+This test test the function `get_accession_numbers()` to ensure that Entrez can call to the NCBI database. Owing to the frequent updating of the NCBI Assembly database it is not possible to compare the results from the NCBI call against expected results.

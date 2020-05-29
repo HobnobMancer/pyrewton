@@ -14,17 +14,19 @@
 :cmd_args --timeout: timeout limit of URL connection
 :cmd_args --verbose: set logging level to 'INFO'
 
+:func build_parser: create parser object
 :func main: generate a dataframe of scientific names, taxonomy IDs and accession numbers
 :func build_logger: creates logger object
 :func make_output_directory: create directory for genomic files to be written to
 :func parse_input_file: parse input file
+:func parse_line: coordinate retrieval of scientific names and taxonomy IDs
 :func get_genus_species_name: retrieve scientific name from taxonomy ID
 :func get_tax_id: retrieve NCBI taxonomy ID from scientific name
 :func get_accession_numbers: retrieves all accessions associated to given taxonomy ID
 :func get_genbank_files: organise download of genbank files
 :func compile_URL: create URL for downloading file
-:func compile_output_path: create file name and path to output directory for downloaded files
 :func download_file: download file using provided URL
+:func entrez_retry: perform call to NCBI using Entrez
 :func write_out_dataframe: write out species table as .csv file
 
 Generates dataframe containing scientific names, taxonomy IDs and accession numbers.
@@ -829,34 +831,6 @@ def download_file(
         )
 
         return
-
-
-def extract_file(downloaded_file, logger):
-    """Return the path to the extract file.
-
-    :param downloaded_file: Path, path to gzipped downloaded file with ".gz" suffix
-    :param logger: logging object
-    """
-    # Extract file from gzipped file
-    if downloaded_file.suffix == ".gz":
-        extracted_file = downloaded_file.with_suffix("")  # Strips .gz from filename
-    else:
-        logger.info("File not extracted")
-
-    if extracted_file.exists():
-        logger.warning(
-            f"Output file {extracted_file} already exists, not extracting file"
-        )
-    else:
-        logger.info(f"Extracting {downloaded_file} to {extracted_file}")
-        try:
-            with open(extracted_file, "w") as efh:
-                subprocess.call(["gunzip", "-c", downloaded_file], stdout=efh)
-                logger.info(f"Archive extracted to {extracted_file}")
-        except IOError:
-            logger.error(f"Extracting file {downloaded_file} failed", exc_info=True)
-
-    return extracted_file
 
 
 def entrez_retry(logger, retries, entrez_func, *func_args, **func_kwargs):
