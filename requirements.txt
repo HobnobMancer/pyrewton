@@ -9,5 +9,6 @@ pydocstyle
 pycodestyle
 pylint
 pytest
+pytest-cov
 pytest-ordering
 tqdm
