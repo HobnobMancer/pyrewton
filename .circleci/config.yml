@@ -1,14 +1,9 @@
 version: 2.1
 
 orbs:
-  python: circleci/python@0.2.1
-  codecov: codecov/codecov@1.0.2
+  codecov: codecov/codecov@1.0.5
 
 jobs:
-  build:
-    steps:
-      - codecov/upload:
-          file: {{ coverage_report_filepath }}
   build-and-test:
     executor: python/default
 
@@ -45,6 +40,16 @@ jobs:
           command: |
             . venv/bin/activate
             pytest -v
+      
+      - store_artifacts:
+          path: tests/test_output
+          destination: tests/test_output
+      - store_artifacts:
+          path: .coverage.xml
+          destination: .coverage.xml
+          
+      - codecov/upload:
+          file: .coverage.xml
 
 workflows:
   main:
