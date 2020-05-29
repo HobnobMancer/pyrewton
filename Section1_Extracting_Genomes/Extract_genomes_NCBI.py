@@ -58,6 +58,7 @@ import time
 
 from pathlib import Path
 from socket import timeout
+from typing import List, Optional
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
@@ -67,7 +68,7 @@ from Bio import Entrez
 from tqdm import tqdm
 
 
-def build_parser():
+def build_parser(argv: Optional[List] = None):
     """Return ArgumentParser parser for script."""
     # Create parser object
     parser = argparse.ArgumentParser(
@@ -181,10 +182,15 @@ def build_parser():
         help="Set logger level to 'INFO'",
     )
 
-    return parser
+    if argv is None:
+        # parse command-line
+        return parser
+    else:
+        # return namespace
+        return parser.parse_args(argv)
 
 
-def main():
+def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
     """Generate dataframe containing scientific names, taxonomy IDs and accession numbers.
 
     Parse input file to create dataframe ('species_table') of scientific name and taxonomy ID.
@@ -198,15 +204,21 @@ def main():
     """
     # Programme preparation:
     # Parse arguments
-    parser = build_parser()
-    args = parser.parse_args()
+    # Check if namepsace isn't passed, if not parse command-line
+    if argv is None:
+        # Parse command-line
+        parser = build_parser()
+        args = parser.parse_args()
+    else:
+        args = build_parser(argv).parse_args()
 
     # Add users email address from parser
     Entrez.email = args.user_email
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
-    logger = build_logger("Extract_genomes_NCBI", args)
+    if logger is None:
+        logger = build_logger("Extract_genomes_NCBI", args)
     # logger = logging.getLogger("Extract_genomes_NCBI")
     logger.info("Run initated")
 
@@ -248,12 +260,6 @@ def build_logger(script_name, args) -> logging.Logger:
     """
     logger = logging.getLogger(script_name)
 
-    # Check if verbose logging enabled
-    if args.verbose is True:
-        logger.setLevel(logging.INFO)
-    else:
-        logger.setLevel(logging.WARNING)
-
     # Set format of loglines
     log_formatter = logging.Formatter(
         script_name + ": {} - {}".format("%(asctime)s", "%(message)s")
@@ -261,14 +267,20 @@ def build_logger(script_name, args) -> logging.Logger:
 
     # Setup console handler to log to terminal
     console_log_handler = logging.StreamHandler()
-    console_log_handler.setLevel(logging.WARNING)
+    if args.verbose is True:
+        console_log_handler.setLevel(logging.INFO)
+    else:
+        console_log_handler.setLevel(logging.WARNING)
     console_log_handler.setFormatter(log_formatter)
     logger.addHandler(console_log_handler)
 
     # Setup file handler to log to a file
     if args.log is not None:
         file_log_handler = logging.FileHandler(args.log)
-        file_log_handler.setLevel(logging.INFO)
+        if args.verbose is True:
+            file_log_handler.setLevel(logging.INFO)
+        else:
+            file_log_handler.setLevel(logging.WARNING)
         file_log_handler.setFormatter(log_formatter)
         logger.addHandler(file_log_handler)
 
