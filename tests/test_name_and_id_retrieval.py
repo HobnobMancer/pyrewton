@@ -68,7 +68,7 @@ class TestName_and_IDRetrieval(unittest.TestCase):
     @pytest.mark.run(order=3)
     def test_scientific_name_retrieval(self):
         """Tests Entrez call to NCBI to retrieve scientific name from taxonomy ID.
-        
+
         Tests that correct output is returned from from get_genus_species_name()
         function in Extract_genomes_NCBI.py.
         """
