@@ -1,6 +1,0 @@
-input_retries:10
-input_taxonomy_id:5061
-input_genus_species_name:Aspergillus nidulans
-input_line_number:0
-input_df_row_genus:Aspergillus
-input_df_row_species:nidulans
