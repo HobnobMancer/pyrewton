@@ -8,7 +8,6 @@ import unittest
 from argparse import Namespace
 from pathlib import Path
 
-import pandas as pd
 import pytest
 
 from Bio import Entrez
@@ -40,13 +39,11 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
             test_inputs = json.load(ifh)
 
         # create dataframe for test
-        self.df_row_data = []
-        self.df_row_data.append(test_inputs["df_row_genus"])
-        self.df_row_data.append(test_inputs["df_row_species"])
-        self.df_row_data.append(test_inputs["taxonomy_id"])
         # Genus / Species / Taxonomy ID
-        self.test_df = pd.DataFrame(self.df_row_data, columns=["G", "S", "T_ID"])
-        print(self.test_df)
+        self.row_data = []
+        self.row_data.append(test_inputs["df_row_genus"])
+        self.row_data.append(test_inputs["df_row_species"])
+        self.row_data.append(test_inputs["taxonomy_id"])
 
         # Define Namespace and disable genbank download
         self.argsdict = {"args": Namespace(genbank=False, retries=10)}
@@ -57,5 +54,5 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
     def test_accession_number_retrieval(self):
         """Tests multiplpe Entrez calls to NCBI to retrieve accession numbers."""
         Extract_genomes_NCBI.get_accession_numbers(
-            self.test_df, self.logger, self.argsdict["args"],
+            self.row_data, self.logger, self.argsdict["args"]
         )
