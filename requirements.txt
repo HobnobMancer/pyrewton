@@ -10,3 +10,4 @@ pycodestyle
 pylint
 pytest
 pytest-ordering
+tqdm
