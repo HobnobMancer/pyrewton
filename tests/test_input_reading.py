@@ -37,14 +37,9 @@ class Test_parsing_input_file(unittest.TestCase):
         )
 
         # Retrieve 'retries' argument from test inputs
-        self.input_file_path = self.input_dir / "test_inputs.txt"
-
-        with open(self.input_file_path) as file:
-            input_list = file.read().splitlines()
-
-        for line in input_list:
-            if line.startswith("input_retries"):
-                self.retries = line[-2:]
+        with (self.input_dir / "EgN_test_inputs.json").open("r") as ifh:
+            test_inputs = json.load(ifh)
+        self.retries = test_inputs["retries"]
 
     # Define tests
 
