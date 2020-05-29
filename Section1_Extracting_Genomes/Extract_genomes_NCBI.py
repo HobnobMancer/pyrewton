@@ -658,9 +658,6 @@ def get_accession_numbers(df_row, logger, args):
                 accession_record["DocumentSummarySet"]["DocumentSummary"][index_number][
                     "AssemblyName"
                 ],
-                df_row[2],
-                index_number,
-                len(accession_record["DocumentSummarySet"]["DocumentSummary"]),
                 logger,
                 args,
             )
@@ -676,24 +673,15 @@ def get_accession_numbers(df_row, logger, args):
 
 
 def get_genbank_files(
-    accession_number,
-    assembly_name,
-    taxonomy_id,
-    id_count,
-    total_id_count,
-    logger,
-    args,
-    suffix="genomic.gbff.gz",
+    accession_number, assembly_name, logger, args, suffix="genomic.gbff.gz",
 ):
     """Coordiante download of GenBank from NCBI.
 
     :param accession_number: str, accession number
     :param assembly_name: str, name of assembly from NCBI record
-    :param taxonomy_id: str, taxonomy ID of host species
-    :param id_count: int, index number of associated assembly ID in list of all IDs
-    :param total_id_count: total number of retrieved assembly IDs for species
     :param logger: logger object
-    :param timeout_limit: int, timeout of URL connection
+    :param args: parser arguments
+    :param suffix: str, suffix of file
 
     Return nothing.
     """
@@ -702,7 +690,7 @@ def get_genbank_files(
 
     # if downloaded file is not to be written to STDOUT, compile output path
     if args.output is not sys.stdout:
-        out_file_path = args.output / f"{filestem}_{suffix}"
+        out_file_path = args.output / "_".join([filestem.replace(".", "_"), suffix])
     else:
         out_file_path = args.output
 
@@ -749,20 +737,19 @@ def compile_url(
     # compile filstem
     filestem = "_".join([accession_number, escape_name])
 
-    # separate out filesteam into GCstem, intergers and version number
-    gcstem, accession_block, _ = tuple(filestem.split("_", 2))
+    # separate out filesteam into GCstem, accession number intergers and discarded
+    url_parts = tuple(filestem.split("_", 2))
 
     # separate identifying numbers from version number
-    accession_intergers = accession_block.split(".")[0]
-
-    # generate accession number block for url in format (nnn\nnn\nnn)
-    url_accession_block = "/".join(
-        [accession_intergers[i : i + 3] for i in range(0, len(accession_intergers), 3)]
+    sub_directories = "/".join(
+        [url_parts[1][i : i + 3] for i in range(0, len(url_parts[1].split(".")[0]), 3)]
     )
 
     # return url for downloading file
     return (
-        (f"{ftpstem}/{gcstem}/{url_accession_block}/{filestem}/{filestem}_{suffix}"),
+        "{0}/{1}/{2}/{3}/{3}_{4}".format(
+            ftpstem, url_parts[0], sub_directories, filestem, suffix
+        ),
         filestem,
     )
 
@@ -800,30 +787,36 @@ def download_file(
         )
         return
 
-    # Download file
-    logger.info("Opened URL and parsed metadata")
-    file_size = int(response.info().get("Content-length"))
-    bsize = 1_048_576
-    try:
-        with open(out_file_path, "wb") as out_handle:
-            # Using leave=False as this will be an internally-nested progress bar
-            with tqdm(
-                total=file_size,
-                leave=False,
-                desc=f"Downloading {accession_number} {file_type}",
-            ) as pbar:
-                while True:
-                    buffer = response.read(bsize)
-                    if not buffer:
-                        break
-                    pbar.update(len(buffer))
-    except IOError:
-        logger.error(f"Download failed for {accession_number}", exc_info=1)
+    if out_file_path.exists():
+        logger.warning(f"Output file {out_file_path} exists, not downloading")
+    else:
+        # Download file
+        logger.info("Opened URL and parsed metadata")
+        file_size = int(response.info().get("Content-length"))
+        bsize = 1_048_576
+        try:
+            with open(out_file_path, "wb") as out_handle:
+                # Using leave=False as this will be an internally-nested progress bar
+                with tqdm(
+                    total=file_size,
+                    leave=False,
+                    desc=f"Downloading {accession_number} {file_type}",
+                ) as pbar:
+                    while True:
+                        buffer = response.read(bsize)
+                        if not buffer:
+                            break
+                        pbar.update(len(buffer))
+                        out_handle.write(buffer)
+        except IOError:
+            logger.error(f"Download failed for {accession_number}", exc_info=1)
+            return
+
+        logger.info(
+            f"Finished downloading GenBank file for {accession_number}", exc_info=1
+        )
+
         return
-
-    logger.info(f"Finished downloading GenBank file for {accession_number}", exc_info=1)
-
-    return extract_file(out_file_path, logger)
 
 
 def extract_file(downloaded_file, logger):
