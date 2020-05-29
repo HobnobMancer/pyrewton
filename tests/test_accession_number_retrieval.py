@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 import unittest
 
@@ -35,22 +36,14 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
         self.logger.addHandler(logging.NullHandler())
 
         # Parse file containing test inputs
-        self.input_file_path = self.input_dir / "test_inputs.txt"
-
-        with open(self.input_file_path) as ifh:
-            input_list = ifh.read().splitlines()
-
-        # Define test inputs
-        self.df_row_data = []
-        for line in input_list:
-            if line.startswith("input_taxonomy_id:"):
-                self.input_tax_id = line[18:]
-            elif line.startswith("input_df_row_genus:"):
-                self.df_row_data.append(line)[19:]
-            elif line.startswith("input_df_row_species:"):
-                self.df_row_data.append(line)[21:]
+        with (self.input_dir / "EgN_test_inputs.json").open("r") as ifh:
+            test_inputs = json.load(ifh)
 
         # create dataframe for test
+        self.df_row_data = []
+        self.df_row_data.append(test_inputs["df_row_genus"])
+        self.df_row_data.append(test_inputs["df_row_species"])
+        self.df_row_data.append(test_inputs["taxonomy_id"])
         # Genus / Species / Taxonomy ID
         self.test_df = pd.DataFrame(self.df_row_data, columns=["G", "S", "T_ID"])
         print(self.test_df)

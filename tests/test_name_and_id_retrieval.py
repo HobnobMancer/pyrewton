@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 import unittest
 from pathlib import Path
@@ -34,34 +35,22 @@ class TestName_and_IDRetrieval(unittest.TestCase):
         self.logger.addHandler(logging.NullHandler())
 
         # Parse file containing test inputs
-        self.input_file_path = self.input_dir / "test_inputs.txt"
-
-        with open(self.input_file_path) as file:
-            input_list = file.read().splitlines()
+        with (self.input_dir / "EgN_test_inputs.json").open("r") as ifh:
+            test_inputs = json.load(ifh)
 
         # Define test inputs
-        for line in input_list:
-            if line.startswith("retries"):
-                self.retries = line[-1:]
-            elif line.startswith("input_taxonomy_id:"):
-                self.input_tax_id = line[18:]
-            elif line.startswith("input_genus_species_name:"):
-                self.input_genus_species_name = line[25:]
-            elif line.startswith("input_line_number:"):
-                self.input_line_number = 0
+        self.retries = test_inputs["retries"]
+        self.input_tax_id = test_inputs["taxonomy_id"]
+        self.input_genus_species_name = test_inputs["genus_species_name"]
+        self.input_line_number = test_inputs["line_number"]
 
         # Parse file containing test targets
-        self.target_file_path = self.target_dir / "test_targets.txt"
-
-        with open(self.target_file_path) as file:
-            target_list = file.read().splitlines()
+        with (self.target_dir / "EgN_test_targets.json").open("r") as ifh:
+            test_targets = json.load(ifh)
 
         # Degine test targets
-        for line in target_list:
-            if line.startswith("target_genus_species_name:"):
-                self.target_genus_species_name = line[26:]
-            elif line.startswith("target_taxonomy_id:"):
-                self.target_tax_id = line[19:]
+        self.target_genus_species_name = test_targets["target_genus_species_name"]
+        self.target_tax_id = test_targets["target_taxonomy_id"]
 
     # Define tests
 
