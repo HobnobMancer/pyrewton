@@ -43,8 +43,8 @@ class Test_parsing_input_file(unittest.TestCase):
             input_list = file.read().splitlines()
 
         for line in input_list:
-            if line.startswith("retries"):
-                self.retries = line[-1:]
+            if line.startswith("input_retries"):
+                self.retries = line[-2:]
 
     # Define tests
 
