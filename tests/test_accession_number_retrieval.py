@@ -3,10 +3,14 @@
 
 import logging
 import unittest
+
+from argparse import Namespace
 from pathlib import Path
 
-from Bio import Entrez
+import pandas as pd
 import pytest
+
+from Bio import Entrez
 
 from Section1_Extracting_Genomes import Extract_genomes_NCBI
 
@@ -30,9 +34,6 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
         self.logger = logging.getLogger("Test_name_and_ID_Retrieval logger")
         self.logger.addHandler(logging.NullHandler())
 
-        # Disable GenBank file
-        self.args = False
-
         # Parse file containing test inputs
         self.input_file_path = self.input_dir / "test_inputs.txt"
 
@@ -42,28 +43,26 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
         # Define test inputs
         self.df_row_data = []
         for line in input_list:
-            if line.startswith("retries"):
-                self.retries = line[-1:]
-            elif line.startswith("input_taxonomy_id:"):
+            if line.startswith("input_taxonomy_id:"):
                 self.input_tax_id = line[18:]
-            elif line.startswith("input_assembly_id_list:"):
-                self.input_assembly_id_list = line[23:]
             elif line.startswith("input_df_row_genus:"):
                 self.df_row_data.append(line)[19:]
             elif line.startswith("input_df_row_species:"):
                 self.df_row_data.append(line)[21:]
+
+        # create dataframe for test
+        # Genus / Species / Taxonomy ID
+        self.test_df = pd.DataFrame(self.df_row_data, columns=["G", "S", "T_ID"])
+        print(self.test_df)
+
+        # Define Namespace and disable genbank download
+        self.argsdict = {"args": Namespace(genbank=False, retries=10)}
 
     # Define function to test
 
     @pytest.mark.run(order=5)
     def test_accession_number_retrieval(self):
         """Tests multiplpe Entrez calls to NCBI to retrieve accession numbers."""
-        with pytest.raises(TypeError) as exc:
-            Extract_genomes_NCBI.get_accession_numbers(
-                self.input_tax_id,
-                self.df_row_data,
-                self.logger,
-                self.retries,
-                self.args,
-            )
-        assert str(exc.value) == "'NoneType' object is not subscriptable"
+        Extract_genomes_NCBI.get_accession_numbers(
+            self.test_df, self.logger, self.argsdict["args"],
+        )
