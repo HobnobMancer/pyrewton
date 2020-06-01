@@ -1,4 +1,5 @@
-<img src="Notebooks/PhDRepoCover.png" style="width = 300 float: right;">
+<img src="Notebooks/PhDRepoCover.png" style="width: 250px; float: right;">
+
 
 # EastBIO PhD Project Supplementary Material
 
