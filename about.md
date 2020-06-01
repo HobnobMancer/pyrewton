@@ -18,8 +18,8 @@ The `Jupyter` notebook environments has been used to facilitate explanation the 
 
 ## Table of Contents
 
-1. [Files_and_Directories](#Files and Directories)
-2. [Quick_Start](#Quick Start)
+1. [Files and Directories](#Files_and_Directories)
+2. [Quick Start](#Quick_Start)
 3. [Notebooks](#Notebooks)
 4. [Help](#Help)
 
