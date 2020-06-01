@@ -1,4 +1,7 @@
+<img src="Notebooks/PhDRepoCover.png" style="width: 150px; float: right;">
+
 # EastBIO PhD Project Supplementary Material
+
 ## Identifying, Characterising & Engineering Plant Cell Wall Degrading Enzymes for Enhanced Biocatalysts in Biofuel Production
 
 
