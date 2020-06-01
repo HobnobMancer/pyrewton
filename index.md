@@ -1,7 +1,3 @@
-layout: page
-title: "Home"
-permalink: https://hobnobmancer.github.io/PhD_Project_Scripts/
-
 # EastBIO PhD Project Supplementary Material
 ## Identifying, Characterising & Engineering Plant Cell Wall Degrading Enzymes for Enhanced Biocatalysts in Biofuel Production
 
