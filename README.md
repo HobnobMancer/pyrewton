@@ -1,5 +1,4 @@
 permalink: /index.html
-
 # EASTBIO PhD Project Scripts
 
 [![Funding](https://img.shields.io/badge/Funding-EASTBio-blue)](http://www.eastscotbiodtp.ac.uk/)
