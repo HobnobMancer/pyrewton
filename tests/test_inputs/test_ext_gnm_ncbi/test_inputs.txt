@@ -1,4 +1,0 @@
-input_taxonomy_id:5061
-input_genus_species_name:Aspergillus nidulans
-input_line_number:0
-input_assembly_id_list:6106631,6106621

@@ -1,42 +1,76 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""Pull down genomic assemblies from NCBI database.
 
-# Script pulls down assembles from NCBI database with genus/species names and taxonomy ID input
+:cmd_args user_email: email address of user
+:cmd_args --dataframe: output directory for dataframe
+:cmd_args --force: force writing in output directory
+:cmd_args --genbank: enable/disable GenBank file download
+:cmd_args --input_file: path of input file
+:cmd_args --log: enable log file writing
+:cmd_args --nodelete: enable/disabling removal of exiting files in output
+:cmd_args --output: output directory for downloaded files
+:cmd_args --retries: maximum number of retries if network error occurs
+:cmd_args --timeout: timeout limit of URL connection
+:cmd_args --verbose: set logging level to 'INFO'
+
+:func build_parser: create parser object
+:func main: generate a dataframe of scientific names, taxonomy IDs and accession numbers
+:func build_logger: creates logger object
+:func make_output_directory: create directory for genomic files to be written to
+:func parse_input_file: parse input file
+:func parse_line: coordinate retrieval of scientific names and taxonomy IDs
+:func get_genus_species_name: retrieve scientific name from taxonomy ID
+:func get_tax_id: retrieve NCBI taxonomy ID from scientific name
+:func get_accession_numbers: retrieves all accessions associated to given taxonomy ID
+:func get_genbank_files: organise download of genbank files
+:func compile_URL: create URL for downloading file
+:func download_file: download file using provided URL
+:func entrez_retry: perform call to NCBI using Entrez
+:func write_out_dataframe: write out species table as .csv file
+
+Generates dataframe containing scientific names, taxonomy IDs and accession numbers.
+Pulls down and stores genomic assemblies and GenBank filesfrom NCBI Assembly database.
+
+Author:
+Emma E. M. Hobbs
+
+Contact
+eemh1@st-andrews.ac.uk
+
+Emma E. M. Hobbs,
+Biomolecular Sciences Building,
+University of St Andrews,
+North Haugh Campus,
+St Andrews,
+KY16 9ST
+Scotland,
+UK
+
+The MIT License
+"""
 
 import argparse
-import datetime
 import logging
 import re
+import shutil
 import sys
 import time
-from pathlib import Path
 
-from Bio import Entrez
+from pathlib import Path
+from socket import timeout
+from typing import List, Optional
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
+
 import pandas as pd
 
+from Bio import Entrez
+from tqdm import tqdm
 
-def main():
-    """Generates datafame containing genus/species name with NCBI taxonomy and accession numbers
 
-    Pass input file (containing unique species on each line, idenfitied by their genus/species
-    name or NCBI Taxonomy ID) tp parse_input_file() function, which acquires missing genus/species
-    names and NCBI taxonomy IDs as appropriate. Genus/species names and associated NCBI
-    Taxonomy ID are stored in a generated dataframe with three columns: 'Genus', 'Species',
-    and 'NCBI Taxonomy ID'. Parse_input_file() returns the generated dataframe which is stored in
-    the variable 'species_table'.
-    Pass the 'species_table' dataframe to collate_accession_numbers(), which acquires all associated
-    NCBI accession numbers for each Taxonomy ID. Acquired accession numbers are stored in a new
-    column in the dataframe, titled 'NCBI Accession Numbers'. The modified dataframe is returned
-    from collate_accession_numbers() and stored in the variable 'species_table'.
-
-    Return 'species_table' dataframe.
-    """
-
-    # Capture date and time script is executed
-    date = datetime.datetime.now()
-    date_of_pulldown = date.strftime("%Y-%m-%d")
-    time_of_pulldown = date.strftime("%H:%M")
-
+def build_parser(argv: Optional[List] = None):
+    """Return ArgumentParser parser for script."""
     # Create parser object
     parser = argparse.ArgumentParser(
         prog="Extract_genomes_NCBI.py",
@@ -53,6 +87,33 @@ def main():
         default=None,
         help="Email address of user, this must be provided",
     )
+    # Add dataframe write out options
+    # if not given dataframe written to STDOUT
+    parser.add_argument(
+        "-d",
+        "--dataframe",
+        type=Path,
+        default=sys.stdout,
+        help="Location of file for species table to be written to",
+    )
+    # Add option to force file over writting
+    parser.add_argument(
+        "-f",
+        "--force",
+        dest="force",
+        action="store_true",
+        default=False,
+        help="Force file over writting",
+    )
+    # Add option to disable pull down of GenBank files
+    parser.add_argument(
+        "-g",
+        "--genbank",
+        dest="genbank",
+        action="store_true",
+        default=True,
+        help="Disable pulldown of GenBank (.gbff) files",
+    )
     # Add input file name option
     # If not given input will be taken from STDIN
     parser.add_argument(
@@ -61,18 +122,7 @@ def main():
         type=Path,
         metavar="input file name",
         default=sys.stdin,
-        help="input filename",
-    )
-    # Add output file name option
-    # Must include file extension
-    # If not given, output will be written to STDOUT
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        metavar="output file name",
-        default=sys.stdout,
-        help="output filename",
+        help="Input filename",
     )
     # Add log file name option
     # If not given, no log file will be written out
@@ -84,44 +134,132 @@ def main():
         default=None,
         help="Defines log file name and/or path",
     )
+    # Add option to prevent over writing of existing files
+    # and cause addition of files to output directory
+    parser.add_argument(
+        "-n",
+        "--nodelete",
+        dest="nodelete",
+        action="store_true",
+        default=False,
+        help="enable/disable deletion of exisiting files",
+    )
+    # Add output file name option
+    # Must include file extension
+    # If not given, output will be written to STDOUT
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        metavar="output file name",
+        default=sys.stdout,
+        help="Output filename",
+    )
+    # Add custom maximum number of retries if network error is encountered
+    parser.add_argument(
+        "-r",
+        "--retries",
+        type=int,
+        metavar="maximum number of retries",
+        default=10,
+        help="Defines the maximum number of retries if network errors are encountered",
+    )
+    # Add option to alter timeout allowance before cancelling downloading of files
+    parser.add_argument(
+        "-t",
+        "--timeout",
+        dest="timeout",
+        action="store",
+        default=10,
+        help="Timeout for URL connections, in seconds",
+    )
+    # Add option for more detail (verbose) logging
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        default=False,
+        help="Set logger level to 'INFO'",
+    )
 
-    # Parse arguments into args variable
-    args = parser.parse_args()
+    if argv is None:
+        # parse command-line
+        return parser
+    else:
+        # return namespace
+        return parser.parse_args(argv)
+
+
+def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
+    """Generate dataframe containing scientific names, taxonomy IDs and accession numbers.
+
+    Parse input file to create dataframe ('species_table') of scientific name and taxonomy ID.
+
+    Pass the 'species_table' dataframe to collate_accession_numbers(), to retrieve all associated
+    NCBI accession numbers. Store accession numbers in new column.
+
+    If enabled, write out dataframe to .csv file.
+
+    Return 'species_table' dataframe.
+    """
+    # Programme preparation:
+    # Parse arguments
+    # Check if namepsace isn't passed, if not parse command-line
+    if argv is None:
+        # Parse command-line
+        parser = build_parser()
+        args = parser.parse_args()
+    else:
+        args = build_parser(argv).parse_args()
 
     # Add users email address from parser
     Entrez.email = args.user_email
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
-    build_logger("Extract_genomes_NCBI", args.log, date_of_pulldown, time_of_pulldown)
-    logger = logging.getLogger("Extract_genomes_NCBI")
+    if logger is None:
+        logger = build_logger("Extract_genomes_NCBI", args)
+    # logger = logging.getLogger("Extract_genomes_NCBI")
     logger.info("Run initated")
 
-    # Invoke main usage of script
+    # If specified output directory for genomic files, create output directory
+    if args.output is not sys.stdout:
+        make_output_directory(args.output, logger, args.force, args.nodelete)
+
+    # Invoke main usage of programme
     # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
-    species_table = parse_input_file(args.input_file, logger)
+    species_table = parse_input_file(args.input_file, logger, args.retries)
 
-    species_table = collate_accession_numbers(species_table, logger)
+    # Pull down accession numbers and GenBank files (if not disabled)
+    species_table["NCBI Accession Numbers"] = species_table.apply(
+        get_accession_numbers, args=(logger, args), axis=1
+    )
     logger.info("Generated species table")
-    print("\nSpecies table:\n", species_table)
+
+    # Write out dataframe
+    if args.dataframe is not sys.stdout:
+        write_out_dataframe(
+            species_table, logger, args.dataframe, args.force, args.nodelete
+        )
+    else:
+        species_table.to_csv(args.dataframe)
+
+    # Program finished
+    logger.info("Program finished and exiting")
 
 
-def build_logger(
-    script_name, log_file, date_of_pulldown, time_of_pulldown
-) -> logging.Logger:
-    """"Return a logger for this script.
-    
-    script_name: Name of script
-    custom_string: Additional string parsed from cmdline by user - required for log
-                    file to be written out
-    date_of_pulldown: Data run was initiated
-    time_of_pulldown: Time run was initiated
+def build_logger(script_name, args) -> logging.Logger:
+    """Return a logger for this script.
 
     Enables logger for script, sets parameters and creates new file to store log.
-    """
 
+    :param script_name: str, name of script
+    :param args: parser argument
+
+    Return logger object.
+    """
     logger = logging.getLogger(script_name)
-    logger.setLevel(logging.DEBUG)
 
     # Set format of loglines
     log_formatter = logging.Formatter(
@@ -130,88 +268,131 @@ def build_logger(
 
     # Setup console handler to log to terminal
     console_log_handler = logging.StreamHandler()
-    console_log_handler.setLevel(logging.DEBUG)
+    if args.verbose is True:
+        console_log_handler.setLevel(logging.INFO)
+    else:
+        console_log_handler.setLevel(logging.WARNING)
     console_log_handler.setFormatter(log_formatter)
     logger.addHandler(console_log_handler)
 
     # Setup file handler to log to a file
-    if log_file is not None:
-        file_log_handler = logging.FileHandler(log_file)
-        file_log_handler.setLevel(logging.DEBUG)
+    if args.log is not None:
+        file_log_handler = logging.FileHandler(args.log)
+        if args.verbose is True:
+            file_log_handler.setLevel(logging.INFO)
+        else:
+            file_log_handler.setLevel(logging.WARNING)
         file_log_handler.setFormatter(log_formatter)
         logger.addHandler(file_log_handler)
 
     return logger
 
 
-def parse_input_file(input_filename, logger):
+def make_output_directory(output, logger, force, nodelete):
+    """Create output directory for genomic files.
+
+    Check if directory indicated for output existed already.
+    If so check if force overwrite enabled. If not terminate programme.
+    If so, check if deletion of exiting files was enabled.
+    If so, exiting files in output directory are deleted.
+    Create output directory, expecting error if already exists.
+
+    :param output: Path, path to output directory
+    :param logger: logger object
+    :param force: bool, cmd-line args to enable/disable over writing existing directory
+    :param nodelete: bool, cmd-line args to enable/disable deleting of existing files
+
+    Return nothing.
+    """
+    logger.info("Checking if specified output directory for genomic files exists.")
+    # If output directory specificed at cmd-line, check output directory does not already exist
+    if output.exists():
+        if force is False:
+            logger.critical(
+                (
+                    "Output directory already exists and forced overwrite not enabled.\n"
+                    "Terminating program."
+                )
+            )
+            sys.exit(1)
+        else:
+            if nodelete is False:
+                logger.warning(
+                    (
+                        "Output directory already exists and forced complete overwrite enabled.\n"
+                        "Deleting existing content in outdir."
+                    )
+                )
+                # delete existing content in outdir
+                shutil.rmtree(output)
+            else:
+                logger.warning(
+                    (
+                        "Output directory already exists and forced addition of files "
+                        "to outdir enables."
+                    )
+                )
+    # Recursively make output directory (directory may exist if
+    # --force==True and --nodelete==True, so exist_ok is required)
+    output.mkdir(exist_ok=True)
+    return
+
+
+def parse_input_file(input_filename, logger, retries):
     """Parse input file, returning dataframe of species names and NCBI Taxonomy IDs.
 
-    Read input file passed to the function, performing the appropriate action depending
-    on each line's content.
-    Comments: Indicated with the first character of '#', perform no action.
-    NCBI Taxonomy ID: Indicated with the first nine characters of 'NCBI:txid', pass 
-    the Taxonomy ID (excluding the 'NCBI:txid' prefix) to get_genus_species_name() to 
-    return associated scientific name.
-    Genus/species name: Indicated by lack of '#' and 'NCBI:txid', pass genus/species
-    name to get get_tax_ID() to return associated NCBI Taxonomy ID with 'NCBI:txid'
-    prefix.
-    Split genus and species name into separate variables. Store genus, species and
-    associated Taxonomy ID in the list 'line_data'. Append 'line_data' to
-    'all_species_data' list. Repeat for each line.
+    Read input file. Calling functions as appropriate to retrieve scientific name
+    or taxonomy ID if the other is given.
+
+    Input file formating:
+    Comments indicated with the first character of '#', perform no action.
+    NCBI Taxonomy ID: Indicated with the first nine characters of 'NCBI:txid', pass
+    to get_genus_species_name() to retrieve scientific name.
+    Genus/species name: Indicated by lack of '#' and 'NCBI:txid', pass to get_tax_id()
+    to return NCBI Taxonomy ID.
+
+    Split genus and species name into separate variables, to be stored in separate
+    dataframe columns.
+
     Generate a dataframe with three columns: 'Genus', 'Species' and 'NCBI Taxonomy ID'.
-    Use data from 'all_species_data' to fill out dataframe.
+
+    :param input_filename: args, if specific name of input file, otherwise input taken from STDIN
+    :param logger: logger object
+    :param retries: parser argument, maximum number of retries excepted if network error encountered
 
     Return dataframe.
     """
-
     # open working_species_list.txt and extract lines, without newline character
     # then create genus name, species name and taxonomy ID tuplet
     all_species_data = []
 
     # test path to input file exists, if not exit programme
-    if input_filename.is_file() == False:
+    if not input_filename.is_file():
         # report to user and exit programme
-        logger.error(
-            "Input file not found.\nCheck filename, extension and directory is correct.\nTerminating program.",
+        logger.critical(
+            (
+                "Input file not found. Check filename, extension and directory is correct.\n"
+                "Terminating program."
+            ),
             exc_info=1,
         )
         sys.exit(1)
 
     # if path to input file exists proceed
     # parse input file
-    try:
-        with open(input_filename) as file:
-            input_list = file.read().splitlines()
-    except IOError:
-        # if input file cannot be read, programme terminates
-        logger.error(
-            "Input file was found but could not be read\nTerminating programming",
-            exc_info=1,
-        )
-        sys.exit(1)
-
-    number_of_lines = len(input_list)
-    line_count = 1
+    with open(input_filename) as file:
+        input_list = file.read().splitlines()
 
     # Parse input, retrieving tax ID or scientific name as appropriate
-    for line in input_list:
-        logger.info("Processing line {} of {}".format(line_count, number_of_lines))
-        if line[0] != "#":
-            if line.startswith("NCBI:txid"):
-                gs_name = get_genus_species_name(line[9:], logger, line_count)
-                line_data = gs_name.split()
-                line_data.append(line)
-                all_species_data.append(line_data)
-            else:
-                tax_id = get_tax_ID(line, logger, line_count)
-                line_data = line.split()
-                line_data.append(tax_id)
-                all_species_data.append(line_data)
-        logger.info(
-            "Finished processing line {} of {}".format(line_count, number_of_lines)
-        )
+    line_count = 0
+    for line in tqdm(input_list, desc="Reading lines"):
         line_count += 1
+
+        if line.startswith("#"):
+            continue
+
+        line_data = parse_line(line, logger, line_count, retries)
+        all_species_data.append(line_data)
 
     logger.info("Finished reading and closed input file")
 
@@ -224,568 +405,459 @@ def parse_input_file(input_filename, logger):
     return species_table
 
 
-def get_genus_species_name(taxonomy_id, logger, line_number):
+def parse_line(line, logger, line_count, retries):
+    """Coordinate retrieval of scientific name or taxonomy ID.
+
+    Read line from input file, calling functions as appropriate to retrieve
+    scientific name or taxonomy ID.
+
+    :param line: str, line from input file
+    :param logger: logger object
+    :line_count: number of line in input file - enable tracking if error occurs
+    :param retries: parser argument, maximum number of retries excepted if network error encountered
+
+    Return list of genus, species and taxonomy ID"""
+    # For taxonomy ID retrieve scientific name
+    if line.startswith("NCBI:txid"):
+        gs_name = get_genus_species_name(line[9:], logger, line_count, retries)
+        line_data = gs_name.split()
+        line_data.append(line)
+    # For scientific name retrieve taxonomy ID
+    else:
+        tax_id = get_tax_id(line, logger, line_count, retries)
+        line_data = line.split()
+        line_data.append(tax_id)
+
+    return line_data
+
+
+def get_genus_species_name(taxonomy_id, logger, line_number, retries):
     """Fetch scientific name associated with the NCBI Taxonomy ID.
 
     Use Entrez efetch function to pull down the scientific name (genus/species name)
-    in the     NCBI Taxonomy database, associated with the taxonomy ID passed to the
+    in the NCBI Taxonomy database, associated with the taxonomy ID passed to the
     function.
+
+    :param taxonomy_id: str, NCBI taxonomy ID
+    :param logger: logger object
+    :param line_number: int, line number in input file containing taxonomy ID
+    :param retries: parser argument, maximum number of retries excepted if network error encountered
+
+    Return scientific name.
     """
+    # Retrieve scientific name
+    with entrez_retry(
+        logger, retries, Entrez.efetch, db="Taxonomy", id=taxonomy_id, retmode="xml"
+    ) as handle:
+        record = Entrez.read(handle)
 
-    logger.info("(Retrieving genus/species name using Taxonomy ID)")
-
+    # extract scientific name from record
     try:
-        with Entrez.efetch(db="Taxonomy", id=taxonomy_id, retmode="xml") as handle:
-            record = Entrez.read(handle)
+        return record[0]["ScientificName"]
 
     except IndexError:
         logger.error(
-            "Entrez failed to retrieve scientific name, for speices in line {} of input file.\nPotential tpyo in taxonomy ID, check input.\nTerminating programming to avoid downstream processing errors".format(
-                line_number
+            (
+                f"Entrez failed to retrieve scientific name, for NCBI:txid{taxonomy_id}.\n"
+                "Potential typo in taxonomy ID, check input. Returned null value 'NA'."
             ),
             exc_info=1,
         )
-        sys.exit(1)
-
-    except IOError:
-        # log error
-        logger.error(
-            "Network error encountered during retrieval of scientific\nname for species in line {} of inputfile,\nretrying in 10s".format(
-                line_number
-            )
-        )
-        time.sleep(10)
-        # initiate retries
-        record = get_genus_species_name_retry(taxonomy_id, logger, line_number)
-
-    return record[0]["ScientificName"]
+        return "NA"
 
 
-def get_tax_ID(genus_species, logger, line_number):
+def get_tax_id(genus_species, logger, line_number, retries):
     """Pull down taxonomy ID from NCBI, using genus/species name as query.
 
     Use Entrez esearch function to pull down the NCBI Taxonomy ID of the
     species name passed to the function. Return the NCBI Taxonomy ID with
     the prefix 'NCBI:txid'.
-    """
 
+    :param genus_species: str, scientific name of species
+    :param logger: logger object
+    :param line_number: int, number of line containing the species name in the input file.
+    :param retries: parser argument, maximum number of retries excepted if network error encountered
+
+    Return NCBI taxonomy ID.
+    """
     # check for potential mistake in taxonomy ID prefix
-    if bool(re.search(r"\d", genus_species)) == True:
-        logger.error(
-            "Warning: Number found in genus-species name,\n when trying to retrieve taxonomy ID for species on line {}.\nPotential typo in taxonomy ID, so taxonomy ID misinturpretted as genus-species name.\nTerminating program to avoid downstream processing errors".format(
-                line_number
+    if re.search(r"\d", genus_species):
+        logger.warning(
+            (
+                f"Number with no 'NCBI:txid' prefix found line {line_number} ('{genus_species}').\n"
+                "Maybe yypo in scientific name or ID missing 'NCBI:txid' prefix.\n"
+                "Inturpretted as scientific name. Returning taxonomy ID as 'NA'.\n"
             ),
             exc_info=1,
         )
-        sys.exit(1)
+        return "NA"
 
     else:
-        logger.info("(Retrieving taxonomy ID using genus/species name)")
+        with entrez_retry(
+            logger, retries, Entrez.esearch, db="Taxonomy", term=genus_species
+        ) as handle:
+            record = Entrez.read(handle)
 
-        try:
-            with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
-                record = Entrez.read(handle)
-
-        except IndexError:
-            logger.error(
-                "Entrez failed to retrieve taxonomy ID, for species in line {} of input file.\nPotential typo in species name.\nTerminating program to avoid downstream processing errors".format(
-                    line_number
-                ),
-                exc_info=1,
-            )
-            sys.exit(1)
-
-        except IOError:
-            # log error
-            logger.error("Network error encountered, retrying in 10s")
-            time.sleep(10)
-            # initate retries
-            record = get_tax_id_retry(genus_species, logger, line_number)
-
-        return "NCBI:txid" + record["IdList"][0]
-
-
-def collate_accession_numbers(species_table, logger):
-    """Return dataframe with column containing all associated NCBI accession numbers.
-
-    Pass each Taxonomy ID in the 'NCBI Taxonomy ID' column of the 'species_table'
-    dataframe to get_accession_numbers() to find all associated NCBI accession numbers.
-    Format object returned from get_accession_numbers into a human-readable list. Append list
-    of accession numbers to 'all_accession_numbers' list. Create fourth column, called
-    'NCBI Accession Numbers' in the 'species_table' dataframe and populate with data in
-    'all_accession_numbers'. 
-    
-    Return modified dataframe, with four columns.
-    """
-
-    all_accession_numbers = []
-    tax_id_total_count = len(species_table["NCBI Taxonomy ID"])
-    tax_id_counter = 1
-    logger.info(
-        "Aquiring accession numbers from NCBI Assembly database for NCBI Taxonomy IDs"
-    )
-    for NCBI_taxonomy_id in species_table["NCBI Taxonomy ID"]:
-        logger.info(
-            "Acquiring accession numbers for NCBI Taxonomy ID {} of {}".format(
-                tax_id_counter, tax_id_total_count
-            )
-        )
-        working_tax_id = NCBI_taxonomy_id[9:]
-        all_accession_numbers.append(get_accession_numbers(working_tax_id, logger))
-        logger.info(
-            "Completed retrieving accession numbers of Taxonomy ID {} of {}".format(
-                tax_id_counter, tax_id_total_count
-            )
-        )
-        tax_id_counter += 1
-
-    # add accession numbers to the dataframe
-    logger.info("Adding accession numbers to dataframe")
-    species_table["NCBI Accession Numbers"] = all_accession_numbers
-    return species_table
-
-
-def get_accession_numbers(taxonomy_id, logger):
-    """Return all NCBI accession numbers associated with NCBI Taxonomy Id.
-
-    Use Entrez elink function to pull down the assembly IDs of all genomic
-    assemblies stored in the NCBI Assembly database that are associated
-    with each NCBI Taxonomy ID stored in the dataframe passed to the function.
-    Use Entrez epost to post all assembly IDs to NCBI as a single query for
-    subsequent Entrez efetch of all associated accession numbers.
-    Accession numbers are returned as a string 'NCBI_accession_numbers'.
-    """
-
-    # Retrieve all IDs of genomic assemblies for taxonomy ID
-
+    # extract taxonomy ID from record
     try:
-        with Entrez.elink(
-            dbfrom="Taxonomy",
-            id=taxonomy_id,
-            db="Assembly",
-            linkname="taxonomy_assembly",
-        ) as assembly_number_handle:
-            assembly_number_record = Entrez.read(assembly_number_handle)
-            assembly_id_list = [
-                dict["Id"] for dict in assembly_number_record[0]["LinkSetDb"][0]["Link"]
-            ]
+        return "NCBI:txid" + record["IdList"][0]
 
     except IndexError:
         logger.error(
-            "Entrez failed to retrieve assembly IDs, for NCBI:txid{}.\nExiting retrieval of accession numbers for {}".format(
-                taxonomy_id, taxonomy_id
+            (
+                f"Entrez failed to retrieve taxonomy ID, for {genus_species}"
+                "Potential typo in species name. Returning taxonomy ID as null value 'NA'"
             ),
             exc_info=1,
         )
-        return ()
+        return "NA"
 
-    except IOError:
-        # log error
-        logger.error(
-            "Network error encountered during retrieval of assembly IDs, for NCBI:txid{},\n retrying in 10s".format(
-                taxonomy_id
+
+def get_accession_numbers(df_row, logger, args):
+    """Return all NCBI accession numbers associated with NCBI Taxonomy ID.
+
+    Use Entrez elink function to pull down the assembly IDs of all genomic
+    assemblies in the NCBI Assembly database associated with the passed
+    taxonomy ID.
+
+    Use Entrez epost to post all assembly IDs to NCBI as a single query for
+    subsequent Entrez efetch of all associated accession numbers.
+
+    Format accession numbers into a human-readable list, 'all_accession_numbers'.
+
+    Reminder of Pandas series structure:
+    df_row[0]: Genus
+    df_row[1]: Species
+    df_row[2]: Taxonomy ID
+
+    :param df_row: pd series, row from dataframe
+    :param logger: logger object
+    :param args: parser arguments
+
+    Return list of NCBI accession numbers.
+    """
+    # If previously failed to retrieve the taxonomy ID cancel retrieval of accession numbers
+    if df_row[2] == "NA":
+        logger.warning(
+            (
+                f"Previously failed to retrieve taxonomy for {df_row[0][0]}.{df_row[1]}.\n"
+                "Returning 'NA' for accession numbers."
             )
         )
-        time.sleep(10)
-        # initate retries
-        assembly_id_list = get_assembly_ids_retry(taxonomy_id, logger)
-        if assembly_id_list == None:
-            return ()
+        return "NA"
 
-    logger.info("(Finished processing retrieval of assembly ID)")
+    # Retrieve all IDs of genomic assemblies for taxonomy ID
 
-    # Post all assembly IDs to Entrez-NCBI for downstream pulldown of accession number
-    # assocated with each assembly ID
+    logger.info(f"Retrieving assembly IDs for {df_row[2]}")
+    # df_row[2][9:] removes 'NCBI:txid' prefix
+    with entrez_retry(
+        logger,
+        args.retries,
+        Entrez.elink,
+        dbfrom="Taxonomy",
+        id=df_row[2][9:],
+        db="Assembly",
+        linkname="taxonomy_assembly",
+    ) as assembly_number_handle:
+        assembly_number_record = Entrez.read(assembly_number_handle)
 
+    # test record was returned, if failed to return exit retrieval of assembly IDs
+    if assembly_number_record == "NA":
+        logger.error(
+            (
+                f"Entrez failed to retrieve assembly IDs, for {df_row[2]}.\n"
+                "Returning null value 'NA' for accession numbers."
+            ),
+            exc_info=1,
+        )
+        return assembly_number_record
+
+    # extract assembly IDs from record
     try:
-        epost_search_results = Entrez.read(
-            Entrez.epost("Assembly", id=str(",".join(assembly_id_list)))
-        )
+        assembly_id_list = [
+            dict["Id"] for dict in assembly_number_record[0]["LinkSetDb"][0]["Link"]
+        ]
 
-    except RuntimeError:
+    except IndexError:
         logger.error(
-            "Entrez failed to post assembly IDs for NCBI:txid{}.\nEntrez could not retrieve document summary.\nPotential incorrect formatting of assembly IDs,\nor query too large.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
-                taxonomy_id, taxonomy_id
+            (
+                f"Entrez failed to retrieve assembly IDs, for {df_row[2]}."
+                "Exiting retrieval of accession numbers, and returning null value 'NA'"
             ),
             exc_info=1,
         )
-        return ()
+        return "NA"
 
-    except IOError:
-        # log error
+    logger.info(f"Posting assembly IDs for {df_row[2]} to retrieve accession numbers")
+
+    # compile list of ids in suitable format for epost
+    id_post_list = str(",".join(assembly_id_list))
+    # Post all assembly IDs to Entrez-NCBI for downstream pulldown of accession numbers
+    epost_search_results = Entrez.read(
+        entrez_retry(logger, args.retries, Entrez.epost, "Assembly", id=id_post_list)
+    )
+
+    # test record was returned, if failed to return exit retrieval of assembly IDs
+    if epost_search_results == "NA":
         logger.error(
-            "Network error encountered during assembly id posting for NCBI:txid{},\n retrying in 10s".format(
-                taxonomy_id
-            )
+            (
+                f"Entrez failed to post assembly IDs, for {df_row[2]}.\n"
+                "Exiting retrieval of accession numbers, and returning null value 'NA'"
+            ),
+            exc_info=1,
         )
-        time.sleep(10)
-        # initiate retries
-        epost_search_results = post_assembly_ids_retry(
-            assembly_id_list, logger, taxonomy_id
-        )
-        if epost_search_results == None:
-            return ()
+        return epost_search_results
 
     # Retrieve web environment and query key from Entrez epost
     epost_webenv = epost_search_results["WebEnv"]
     epost_query_key = epost_search_results["QueryKey"]
 
-    logger.info(
-        "(Finished processing positing of assembly IDs for accession number fetch)"
-    )
+    logger.info(f"Retrieving accession numbers for {df_row[2]}")
 
     # Pull down all accession numbers
+    ncbi_accession_numbers_list = []
 
-    NCBI_accession_numbers_list = []
+    with entrez_retry(
+        logger,
+        args.retries,
+        Entrez.efetch,
+        db="Assembly",
+        query_key=epost_query_key,
+        WebEnv=epost_webenv,
+        rettype="docsum",
+        retmode="xml",
+    ) as accession_handle:
+        accession_record = Entrez.read(accession_handle, validate=False)
 
-    try:
-        with Entrez.efetch(
-            db="Assembly",
-            query_key=epost_query_key,
-            WebEnv=epost_webenv,
-            rettype="docsum",
-            retmode="xml",
-        ) as accession_handle:
-            accession_record = Entrez.read(accession_handle, validate=False)
-
-    except RuntimeError:
+    if accession_record == "NA":
         logger.error(
-            "Entrez could not retrieve document summary when retrieving accession numbers.\nPotential incorrect formatting of assembly IDs,\nor query too large.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
-                taxonomy_id
+            (
+                f"Entrez failed to retireve accession numbers, for {df_row[2]}."
+                "Exiting retrieval of accession numbers, and returning null value 'NA'"
             ),
             exc_info=1,
         )
-        return ()
-
-    except IOError:
-        # log error
-        logger.error(
-            "Network error encountered during accession number retrieval\nfor NCBI:txid{},retrying in 10s".format(
-                taxonomy_id
-            )
-        )
-        time.sleep(10)
-        # initate retries
-        accession_record = get_accession_numbers_retry(
-            epost_query_key, epost_webenv, logger, taxonomy_id
-        )
-        if accession_record == None:
-            return ()
-
-    # Find total number of accession numbers
-    number_of_accession_numbers = len(
-        accession_record["DocumentSummarySet"]["DocumentSummary"]
-    )
+        return "NA"
 
     # Extract accession numbers from document summary
-
-    try:
-        for index_number in range(number_of_accession_numbers):
+    for index_number in tqdm(
+        range(len(accession_record["DocumentSummarySet"]["DocumentSummary"])),
+        desc=f"Retrieving accessions ({df_row[2]})",
+    ):
+        try:
             new_accession_number = accession_record["DocumentSummarySet"][
                 "DocumentSummary"
             ][index_number]["AssemblyAccession"]
-            NCBI_accession_numbers_list.append(new_accession_number)
-            index_number += 1
+            ncbi_accession_numbers_list.append(new_accession_number)
 
-    except IndexError:
-        logger.error(
-            "No accession number retrieved from NCBI\nfor assembly ID {} of {}".format(
-                index_number, number_of_accession_numbers
-            ),
-            exc_info=1,
-        )
+        except IndexError:
+            total_assemblies = len(
+                accession_record["DocumentSummarySet"]["DocumentSummary"]
+            )
+            logger.error(
+                (
+                    f"No accession number retrieved from NCBI for assembly ID {index_number}"
+                    f"of {total_assemblies}.\n"
+                    "Returning null value of 'NA'"
+                ),
+                exc_info=1,
+            )
+            return "NA"
 
-    logger.info(
-        "(Finished processing retrieval associated accession numbers of Taxonomy ID)"
-    )
+        # If downloading of GenBank files is enabled, download Genbank files
+        if args.genbank is True:
+            get_genbank_files(
+                new_accession_number,
+                accession_record["DocumentSummarySet"]["DocumentSummary"][index_number][
+                    "AssemblyName"
+                ],
+                logger,
+                args,
+            )
+
+        index_number += 1
+
+    logger.info(f"Finished processing retrieval accession numbers for {df_row[2]}")
 
     # Process accession numbers into human readable list for dataframe
-    NCBI_accession_numbers = ", ".join(NCBI_accession_numbers_list)
+    ncbi_accession_numbers = ", ".join(ncbi_accession_numbers_list)
 
-    return NCBI_accession_numbers
-
-
-# Functions for retrying call to NCBI with network error is encountered
-
-# If network error encountered during retrieval of scientific name
-def get_genus_species_name_retry(taxonomy_id, logger, line_number, retries=10):
-    """Retries call to NCBI Taxonomy database to retrieve scientific name.
-
-    The maximum number of retries is 10. Retry initiated when network
-    error encountered. If no recorded is returned for non-network error issue,
-    such as record does not exist, or typo in given taxonomy ID,
-    programme terminates.
-
-    Function only invoked if network  error encountered during call to NCBI
-    using Entrez in another function.
-
-    Return record.
-    """
-
-    record = None
-    tries = 0
-
-    while record is None and tries < retries:
-        try:
-            with Entrez.efetch(db="Taxonomy", id=taxonomy_id, retmode="xml") as handle:
-                record = Entrez.read(handle)
-
-        # If network error not encountered but no record returned, terminate programme
-        except IndexError:
-            logger.error(
-                "Entrez failed to retrieve scientific name, for species in line {} of input file.\nPotential typo in taxonomy ID, check input.\nTerminating programming to avoid downstream processing errors".format(
-                    line_number
-                ),
-                exc_info=1,
-            )
-            sys.exit(1)
-
-        except IOError:
-            # log retry attempt
-            if tries < tries:
-                logger.error(
-                    "Network error encountered during try no.{}.\nRetrying in 10s".format(
-                        tries
-                    ),
-                    exc_info=1,
-                )
-                time.sleep(10)
-            tries += 1
-
-    if record is None:
-        logger.error(
-            "Network error encountered after 10 attempts.\nTerminating programme",
-            exc_info=1,
-        )
-        sys.exit(1)
-
-    return record
+    return ncbi_accession_numbers
 
 
-# If network error encountered during retrieval of taxonomy ID
-def get_tax_id_retry(genus_species, logger, line_number, retries=10):
-    """Retries call to NCBI Taxonomy database to retrieve taxonomy ID.
-
-    The maximum number of retries is 10. Retry initiated when network
-    error encountered. If no recorded is returned for non-network error
-    issue, such as record does not exist, or type in the given scientific
-    name, programme terminates.
-
-    Function all invoked if network error encountered during call to NCBI
-    using Entrez in another function.
-
-    Return record.
-    """
-
-    record = None
-    tries = 0
-
-    while record is None and tries < retries:
-        try:
-            with Entrez.esearch(db="Taxonomy", term=genus_species) as handle:
-                record = Entrez.read(handle)
-
-        # If network error not encountered but no recorded returned, terminate programme
-        except IndexError:
-            logger.error(
-                "Entrez failed to retrieve taxonomy ID, for species in line {} of input file.\nPotential typo in species name.\nTerminating program to avoid downstream processing errors".format(
-                    line_number
-                ),
-                exc_info=1,
-            )
-            sys.exit(1)
-
-        except IOError:
-            # log retry attempt
-            if tries < tries:
-                logger.error(
-                    "Network error encountered during try no.{}.\nRetrying in 10s".format(
-                        tries
-                    ),
-                    exc_info=1,
-                )
-                time.sleep(10)
-            tries += 1
-
-    if record is None:
-        logger.error(
-            "Network error encountered after 10 attempts.\nTerminating programme",
-            exc_info=1,
-        )
-        sys.exit(1)
-
-    return record
-
-
-# If network error encountered during retrieval of assembly IDs
-def get_assembly_ids_retry(taxonomy_id, logger, retries=10):
-    """Retries call to NCBI Assembly database to retrieve accession numbers.
-
-    The maximum number of retries is 10. Retry initiated when network
-    error encountered. If no record is returned for non-network error issue,
-    such as record does not exist, or type is given taxonomy ID,
-    exits function.
-
-    Function only invoked if network error encountered during call to
-    NCBI using Entrez in another function.
-
-    Return list of assembly IDs for given taxonomy ID.
-    """
-
-    record = None
-    tries = 0
-
-    while record is None and tries < retries:
-        try:
-            with Entrez.elink(
-                dbfrom="Taxonomy",
-                id=taxonomy_id,
-                db="Assembly",
-                linkname="taxonomy_assembly",
-            ) as handle:
-                record = Entrez.read(handle)
-                assembly_id_list = [
-                    dict["Id"] for dict in record[0]["LinkSetDb"][0]["Link"]
-                ]
-
-        # If network error not encountered but no record returned
-        # terminate collection of accession numbers
-        except IndexError:
-            logger.error(
-                "Entrez failed to retrieve assembly IDs for NCBI:txid{}.\nExiting retrieval of accession numbers for {}".format(
-                    taxonomy_id, taxonomy_id, exc_info=1
-                )
-            )
-            return ()
-
-        except IOError:
-            # log retry attempt
-            if tries < tries:
-                logger.error(
-                    "Network error encountered during try no.{}.\nRetrying in 10s".format(
-                        tries
-                    ),
-                    exc_info=1,
-                )
-                time.sleep(10)
-            tries += 1
-
-    if record is None:
-        logger.error(
-            "Network error encountered after 10 attempts.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
-                taxonomy_id
-            ),
-            exc_info=1,
-        )
-        return ()
-
-    return assembly_id_list
-
-
-# If network error encountered during posting of assembly IDs
-def post_assembly_ids_retry(assembly_id_list, logger, taxonomy_id, retries=10):
-    """Retries call to NCBI Assembly database to post assembly IDs.
-
-    The maximum number of retries is 10. Retry initiated when network error
-    encountered. If no record is returned for non-network error issue,
-    such as post is too large, exits function.
-
-    Function only invoked if network error encountered during call to
-    NCBI using Entrez in another function.
-
-    Return record.
-    """
-
-    record = None
-    tries = 0
-
-    while record is None and tries < retries:
-        try:
-            record = Entrez.read(
-                Entrez.epost("Assembly", id=str(",".join(assembly_id_list)))
-            )
-
-        # If non-network work error encountered
-        # terminate posting of assembly IDs
-        except RuntimeError:
-            logger.error(
-                "Entrez failed to post assembly IDs for NCBI:txid{}.\nEntrez could not retrieve document summary.\nPotentially incorrect formatting of assembly IDS,\nor query too large.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
-                    taxonomy_id, taxonomy_id
-                ),
-                exc_info=1,
-            )
-            return ()
-
-        except IOError:
-            # log retry attempt
-            if tries < tries:
-                logger.error(
-                    "Network error encountered during try no.{}.\nRetrying in 10s".format(
-                        tries
-                    ),
-                    exc_info=1,
-                )
-                time.sleep(10)
-            tries += 1
-
-    if record is None:
-        logger.error(
-            "Network error encountered after 10 attempts.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
-                taxonomy_id
-            ),
-            exc_info=1,
-        )
-        return ()
-
-    return record
-
-
-# If network error encountered during retrieval of accession numbers
-def get_accession_numbers_retry(
-    epost_query_key, epost_webenv, logger, taxonomy_id, retries=10
+def get_genbank_files(
+    accession_number, assembly_name, logger, args, suffix="genomic.gbff.gz",
 ):
-    """Retries call to NCBI Assembly database to retrieve accession numbers.
+    """Coordiante download of GenBank from NCBI.
 
-    The maximum number of retries is 10. Retry initiated when network error
-    encountered. If no record is returned for non-network error issue,
-    exits retrieval of accession numbers for given taxonomy ID.
+    :param accession_number: str, accession number
+    :param assembly_name: str, name of assembly from NCBI record
+    :param logger: logger object
+    :param args: parser arguments
+    :param suffix: str, suffix of file
 
-    Function only invoked if network error encountered during call to
-    NCBI using Entrez in another function.
-
-    Return record.
+    Return nothing.
     """
+    # compile url for download
+    genbank_url, filestem = compile_url(accession_number, assembly_name, logger, suffix)
 
+    # if downloaded file is not to be written to STDOUT, compile output path
+    if args.output is not sys.stdout:
+        out_file_path = args.output / "_".join([filestem.replace(".", "_"), suffix])
+    else:
+        out_file_path = args.output
+
+    # download GenBank file
+    download_file(
+        genbank_url, args, out_file_path, logger, accession_number, "GenBank file",
+    )
+
+    return
+
+
+def compile_url(
+    accession_number,
+    assembly_name,
+    logger,
+    suffix,
+    ftpstem="ftp://ftp.ncbi.nlm.nih.gov/genomes/all",
+):
+    """Compile url for file download.
+
+    Reformate assembly name, replacing escape characters with underscors.
+    This is because NCBI records can include a variety of escape characters
+    in its records, but requires inclusion of underscores within its urls.
+
+    Use ccession number and assembly name to generate file stem.
+
+    Use the file stem to arquire the GCstem (region of the url which
+    dictates the type of genome record, i.e. reference (GCF) or assembly (GCA)),
+    and accession number block (in the format of nnn/nnn/nnn in the url).
+
+    Regions of the url are compiled together with the ftpstem (prefix):
+    "ftp://ftp.ncni.nlm.nih.gov/genomes/all/".
+
+    :param accession_number: str, asseccion number of genomic assembly
+    :param assembly_name: str, name of genomic assembly from NCBI record
+    :param logger: logger object
+
+    Return str, url required for download.
+    """
+    # Extract assembly name, removing alterantive escape characters
+    escape_characters = re.compile(r"[\s/,#\(\)]")
+    escape_name = re.sub(escape_characters, "_", assembly_name)
+
+    # compile filstem
+    filestem = "_".join([accession_number, escape_name])
+
+    # separate out filesteam into GCstem, accession number intergers and discarded
+    url_parts = tuple(filestem.split("_", 2))
+
+    # separate identifying numbers from version number
+    sub_directories = "/".join(
+        [url_parts[1][i : i + 3] for i in range(0, len(url_parts[1].split(".")[0]), 3)]
+    )
+
+    # return url for downloading file
+    return (
+        "{0}/{1}/{2}/{3}/{3}_{4}".format(
+            ftpstem, url_parts[0], sub_directories, filestem, suffix
+        ),
+        filestem,
+    )
+
+
+def download_file(
+    genbank_url, args, out_file_path, logger, accession_number, file_type
+):
+    """Download file.
+
+    :param genbank_url: str, url of file to be downloaded
+    :param args: parser arguments
+    :param out_file_path: path, output directory for file to be written to
+    :param logger: logger object
+    :param accession_number: str, accession number of genome
+    :param file_type: str, denotes in logger file type downloaded
+
+    Return nothing.
+    """
+    # Try URL connection
+    try:
+        response = urlopen(genbank_url, timeout=args.timeout)
+    except HTTPError:
+        logger.error(
+            f"Failed to download {file_type} for {accession_number}", exc_info=1,
+        )
+        return
+    except URLError:
+        logger.error(
+            f"Failed to download {file_type} for {accession_number}", exc_info=1,
+        )
+        return
+    except timeout:
+        logger.error(
+            f"Failed to download {file_type} for {accession_number}", exc_info=1,
+        )
+        return
+
+    if out_file_path.exists():
+        logger.warning(f"Output file {out_file_path} exists, not downloading")
+    else:
+        # Download file
+        logger.info("Opened URL and parsed metadata")
+        file_size = int(response.info().get("Content-length"))
+        bsize = 1_048_576
+        try:
+            with open(out_file_path, "wb") as out_handle:
+                # Using leave=False as this will be an internally-nested progress bar
+                with tqdm(
+                    total=file_size,
+                    leave=False,
+                    desc=f"Downloading {accession_number} {file_type}",
+                ) as pbar:
+                    while True:
+                        buffer = response.read(bsize)
+                        if not buffer:
+                            break
+                        pbar.update(len(buffer))
+                        out_handle.write(buffer)
+        except IOError:
+            logger.error(f"Download failed for {accession_number}", exc_info=1)
+            return
+
+        logger.info(
+            f"Finished downloading GenBank file for {accession_number}", exc_info=1
+        )
+
+        return
+
+
+def entrez_retry(logger, retries, entrez_func, *func_args, **func_kwargs):
+    """Call to NCBI using Entrez.
+
+    Maximum number of retries is 10, retry initated when network error encountered.
+
+    :param logger: logger object
+    :param retries: parser argument, maximum number of retries excepted if network error encountered
+    :param entrez_func: function, call method to NCBI
+    :param *func_args: tuple, arguments passed to Entrez function
+    :param ** func_kwargs: dictionary, keyword arguments passed to Entrez function
+
+    Returns record.
+    """
     record = None
+    retries = 10
     tries = 0
 
     while record is None and tries < retries:
         try:
-            with Entrez.efetch(
-                db="Assembly",
-                query_key=epost_query_key,
-                WebEnv=epost_webenv,
-                rettype="docsum",
-                retmode="xml",
-            ) as handle:
-                record = Entrez.read(handle, validate=False)
-
-        except RuntimeError:
-            logger.error(
-                "Entrez could not retrieve document summary when retrieving accession numbers.\nPotential incorrect formatting of assembly IDs,\nor query too large.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
-                    taxonomy_id
-                ),
-                exc_info=1,
-            )
-            return ()
+            record = entrez_func(*func_args, **func_kwargs)
 
         except IOError:
             # log retry attempt
-            if tries < tries:
-                logger.error(
-                    "Network error encountered during try no.{}.\nRetrying in 10s".format(
-                        tries
-                    ),
+            if tries < retries:
+                logger.warning(
+                    f"Network error encountered during try no.{tries}.\nRetrying in 10s",
                     exc_info=1,
                 )
                 time.sleep(10)
@@ -793,14 +865,46 @@ def get_accession_numbers_retry(
 
     if record is None:
         logger.error(
-            "Network error encountered after 10 attempts.\nExiting retrieval of accession numbers for NCBI:txid{}".format(
-                taxonomy_id
-            ),
-            exc_info=1,
+            "Network error encountered too many times. Exiting attempt to call to NCBI"
         )
-        return ()
+        return "NA"
 
     return record
+
+
+def write_out_dataframe(species_table, logger, outdir, force, nodelete):
+    """Write out dataframe to output directory.
+
+    :param species_table: pandas dataframe
+    :param logger: logger object
+    :param outdir: cmd-args, Path, output directory
+    :param force: booleon, cmd-line argument to enable/disable over writing of existing files
+    :param nodelete: boolean, cmd-line args to enable/disable deleting of existing files in outdir
+
+    return Nothing.
+    """
+    # Check if overwrite of existing directory will occur
+    logger.info("Checking if output directory for dataframe already exists")
+    if outdir.exists():
+        if force is False:
+            logger.warning(
+                "Specified directory for dataframe already exists.\nExiting writing out dataframe."
+            )
+            return ()
+        else:
+            logger.warning(
+                "Specified directory for dataframe already exists.\nForced overwritting enabled."
+            )
+    logger.info("Writing out species dataframe to directory")
+
+    # Check if user included .csv file extension
+    if outdir.endswith(".csv"):
+        species_table.to_csv(outdir)
+    else:
+        out_df = outdir + ".csv"
+        species_table.to_csv(out_df)
+
+    return ()
 
 
 if __name__ == "__main__":

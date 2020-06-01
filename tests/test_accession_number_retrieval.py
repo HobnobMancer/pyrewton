@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 import unittest
+
+from argparse import Namespace
 from pathlib import Path
 
-from Bio import Entrez
 import pytest
+
+from Bio import Entrez
 
 from Section1_Extracting_Genomes import Extract_genomes_NCBI
 
@@ -31,40 +35,24 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
         self.logger.addHandler(logging.NullHandler())
 
         # Parse file containing test inputs
-        self.input_file_path = self.input_dir / "test_inputs.txt"
+        with (self.input_dir / "EgN_test_inputs.json").open("r") as ifh:
+            test_inputs = json.load(ifh)
 
-        with open(self.input_file_path) as file:
-            input_list = file.read().splitlines()
+        # create dataframe for test
+        # Genus / Species / Taxonomy ID
+        self.row_data = []
+        self.row_data.append(test_inputs["df_row_genus"])
+        self.row_data.append(test_inputs["df_row_species"])
+        self.row_data.append(test_inputs["taxonomy_id"])
 
-        # Define test inputs
-        for line in input_list:
-            if line.startswith("input_taxonomy_id:"):
-                self.input_tax_id = line[18:]
-            elif line.startswith("input_assembly_id_list:"):
-                self.input_assembly_id_list = line[23:]
+        # Define Namespace and disable genbank download
+        self.argsdict = {"args": Namespace(genbank=False, retries=10)}
 
-    # Define tests
+    # Define function to test
 
-    @pytest.mark.run(order=7)
-    def test_assembly_id_retrieval(self):
+    @pytest.mark.run(order=5)
+    def test_accession_number_retrieval(self):
         """Tests multiplpe Entrez calls to NCBI to retrieve accession numbers."""
-
-        Extract_genomes_NCBI.get_accession_numbers(self.input_tax_id, self.logger)
-
-    @pytest.mark.run(order=8)
-    def test_assembly_id_retry(self):
-        """Tests function to retry Entrez call after network error encountered."""
-
-        Extract_genomes_NCBI.get_assembly_ids_retry(self.input_tax_id, self.logger)
-
-    @pytest.mark.run(order=9)
-    def test_assembly_posting_and_accession_retry(self):
-        """Tests function to retry Entrez call after network error encountered."""
-
-        record = Extract_genomes_NCBI.post_assembly_ids_retry(
-            self.input_assembly_id_list, self.logger, self.input_tax_id
-        )
-
-        Extract_genomes_NCBI.get_accession_numbers_retry(
-            record["QueryKey"], record["WebEnv"], self.logger, self.input_tax_id
+        Extract_genomes_NCBI.get_accession_numbers(
+            self.row_data, self.logger, self.argsdict["args"]
         )

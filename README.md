@@ -54,6 +54,15 @@ Extract_genomes_NCBI takes a plain text file containing species scientific names
 User email address: Email address of user must be provided
 
 **Optional arguments:**\
+`-d, --`dataframe`\
+&emsp;&emsp;Specify output path for dataframe, which will be saved as a .csv file (inclusion of file extensions is optional). If not provided dataframe will be written out to STDOUT.
+
+`-f, --force`\
+&emsp;&emsp;Enable writting in specificed output directory if output directory already exists.
+
+`-g, --genbank`\
+&emsp;&emsp;Enable or disable downloading of GenBank files.
+
 `-h, --help`\
 &emsp;&emsp;Display help messages and exit
 
@@ -74,7 +83,10 @@ including filename.
 If not option is given no log file will be written out,
 however, logs will still be printed to the terminal.
 
--`o, --output`\
+`-n, --nodelete`\
+&emsp;&emsp;Enable not deleting files in existing output directory. If not enabled, output directory exists and writing in output directory is 'forced' then files in output directory will not be deleted, and new files will be written to the output directory.
+
+`-o, --output`\
 &emsp;&emsp;Specify filename (with extension) of output file.
 If only the filename is given, Extract_genomes_NCBI.py
 the output file will be written to the current working
@@ -84,6 +96,17 @@ If not option is given an output file will be written to
 the current directory with the standard name:
 "Extract_genomes_NCBI_Date_Time", where _Date_ and _Time_
 are the date and time script was invoked, respectively.
+
+`-r, --retries`\
+&emsp;&emsp;Specifiy maximum number of retries before cancelling call to NCBI
+if a network error is encountered. The default is a maximum of 10 retries. When
+maximum is reached, a value of 'NA' is returned.
+
+`-t, --timeout`\
+&emsp;&emsp;Specify timeout limit of URL connection when downloading GenBank files. Default is 10 seconds.
+
+`-v, --verbose`\
+&emsp;&emsp;Enable verbose logging - changes logger level from WARNING to INFO.
 
 ## Troubleshooting and common errors
 
@@ -99,20 +122,12 @@ file is provided.
 
 **IOError**\
 This error will occur if there is a network issue when using Entrez
-to call to NCBI. The script will automatically retry the call.
+to call to NCBI. The script will automatically retry the call the set
+maximum number of times.
 
-If a network error occurs during the retrieval of a scientific name
-or taxonomy ID the program will terminate, to avoid errors occuring
-during downstream processing that will cause the program to
-automatically terminate.
-
-If a network error occurs during the retrievel of the accession
-numbers, the program will exit the process of the retrieval of
-the accession numbers and start processing the retrieval of the
-taxonomy ID in the dataframe. This is so a second attempt to
-retrieve the accession numbers can be performed by reinvoking
-the script, only for the species for which the retrieval
-previously failed, thus reducing demand on the NCBI database.
+If the maximum number of retries is met before connecting to NCBI
+without encountering a network error, 'NA' is returned and stored
+in the dataframe.
 
 **FileNotFoundError**\
 This error will occur is the incorrect path is provided as the
@@ -129,22 +144,21 @@ the given taxonomy ID.
 This is potentially caused by a typo in the taxonomy id provided
 in the input file.
 
-If this error occurs the program terminates to avoid errors
-occuring during downstream processing that will cause the
-program to automatically terminate.
+If this error occurs the string 'NA' will be returned.
 
 **IndexError during taxonomy ID retrieval**\
 This occurs when Entrez fails to retrieve a taxonomy ID for
-the given scientific name.
+the given scientific name. Returns 'NA'.
 
 This is potentially caused by a typo in the species name in the
 input file, or a typo in a taxonomy ID 'NCBI:txid' prefix,
 causing the program to misinturpret the ID as a species name
 and use it to try and retrieve a scientific name.
 
-If this error occurs the program terminates to avoid errors
-occuring during downstream processing that will cause the
-program to automatically terminate.
+If this error occurs the string 'NA' will be returned.
+If no taxonomy ID is available for the retrieval of accession numbers,
+the retrieval of accession numbers is cancelled and a value of 'NA' is
+returned.
 
 **IndexError during assembly ID retrieval**\
 This occurs when Entrez fails to retrieve assembly IDs from
@@ -156,7 +170,8 @@ to ensure there are 'directly' linked assemblies and not
 only 'subtree' assemblies.
 
 If this error occurs the program with exit the retrieve of
-the assembly IDs and not retrieve the NCBI accession numbers.
+the assembly IDs and not retrieve the NCBI accession numbers,
+and return the string 'NA'.
 This allows for troubleshooting using on the specie(s)
 for which it is required, to reduce demand on NCBI.
 
@@ -170,7 +185,8 @@ the assembly IDs or the request is too large for Entrez/
 NCBI. If this is the case, repeat the procedure in batches.
 
 If this error occurs the program with exit the posting of
-the assembly IDs and not retrieve the NCBI accession numbers.
+the assembly IDs and not retrieve the NCBI accession numbers,
+and return the string 'NA'.
 This allows for troubleshooting using on the specie(s)
 for which it is required, to reduce demand on NCBI.
 
@@ -183,7 +199,7 @@ the assembly IDs or the request is too large for Entrez/
 NCBI. If this is the case, repeat the procedure in batches.
 
 If this error occurs the program with exit the retrieval of
-the NCBI accession numbers.
+the NCBI accession numbers, and return the string 'NA'.
 This allows for troubleshooting using on the specie(s)
 for which it is required, to reduce demand on NCBI.
 
@@ -207,11 +223,8 @@ ability to open and read a given input file, defined using
 the `pathlib` `Path` module.
 
 **test_name_and_id_retrieval.py**\
-This test tests the functions `get_genus_species_name()`, `get_g_s_name_retry`,
-`get_tax_id()` and `get_t_ix_retry`, using provided inputs. The result of the
-Entrez calls to the NCBI database are compared against
+This test tests the functions `get_genus_species_name()` and `get_tax_id()`, using provided inputs. The result of the Entrez calls to the NCBI database are compared against
 expected results.
 
 **test_accession_number_retrieval.py**\
-This test test the `get_accession_numbers()`, `get_a_id_retry`, `post_a_ids_retry` and `get_a_n_retry` functions, to ensure that Entrez can call to the NCBI database. Owing to the frequent updating of the NCBI Assembly database it is not possible to
-compare the results from the NCBI call against expected results.
+This test test the function `get_accession_numbers()` to ensure that Entrez can call to the NCBI database. Owing to the frequent updating of the NCBI Assembly database it is not possible to compare the results from the NCBI call against expected results.
