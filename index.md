@@ -1,3 +1,8 @@
+---
+title: HomePage
+filename: index.md
+--- 
+
 <img src="Notebooks/PhDRepoCover.png" style="width: 200px; float: right;">
 
 
