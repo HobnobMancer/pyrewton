@@ -36,7 +36,7 @@ The quickest way to install the programme `ProtEng` is to use pip: `pip3 install
 
 ### Notebooks
 
-Jupyter notebooks are accessible via these pages, but also via the terminal if the programme `Proteng` is installed on your system.
+Jupyter notebooks are accessible via [this page](https://hobnobmancer.github.io/PhD_Project_Scripts/notebooks.md), but also via the terminal if the programme `Proteng` is installed on your system.
 
 From the top level of the repository directory on your system, start the `Jupyter` notebook server by issuing the command:
 `jupyter notebook`
