@@ -961,11 +961,18 @@ def get_genbank_file(accession, args, logger):
 <<<<<<< HEAD
 =======
 def get_protein_data(accession_number, genbank_input, logger):
+<<<<<<< HEAD
     """Retrieve protein names and ID from GenBank file.
 >>>>>>> add gb_file search and error logging
 
 def get_record_feature(feature, qualifier, logger):
     """Retrieve data from GenBank record feature.
+=======
+    """Retrieve protein ID, locus tag and function from GenBank file.
+
+    From each record the protein ID, locus tag and function will be retrieved,
+    and stored as a list.
+>>>>>>> add parsing of genbank files
 
     :param feature: feature object, GenBank file record feature
     :param qualifier: str, key of feature attribute
@@ -1167,14 +1174,18 @@ def get_protein_data(accession_number, total_accession, genbank_input, logger):
 =======
 =======
     if accession_number == "NA":
+<<<<<<< HEAD
 >>>>>>> remove lambda
         logger.info(
+=======
+        logger.warning(
+>>>>>>> add parsing of genbank files
             (
                 f"Null value ('NA') was contained in cell for {accession_number},"
                 "exiting retrieval of protein data.\nReturning null ('NA') value."
             )
         )
-        return ["NA", "NA"]
+        return ["NA", "NA", "NA"]
 
     # Retrieve GenBank (gb) file
     gb_file = list(Path(genbank_input).glob(rf"{accession_number}*.gbff.fz"))
@@ -1189,18 +1200,37 @@ def get_protein_data(accession_number, total_accession, genbank_input, logger):
             )
         )
 <<<<<<< HEAD
+<<<<<<< HEAD
         return (['NA', 'NA'])
 >>>>>>> add gb_file search and error logging
 =======
         return ["NA", "NA"]
 >>>>>>> remove lambda
+=======
+        return ["NA", "NA", "NA"]
+>>>>>>> add parsing of genbank files
 
     else:
         # Retrieve protein data
-        with open(gb_file) as gb_handle:
-            print("filler to remove error at return below")
+        with gzip.open("GCA_001515345_1_ASM151534v1_genomic.gbff.gz", "rt") as handle:
+            # create list to store all protein data retrieved from GenBank file, making it a tuple
+            all_protein_data = []
+            for gb_record in SeqIO.parse(handle, "genbank"):
+                # create a list to store data for a single protein
+                # make sure list is empty before parsing first feature
+                protein_data = []
+                for (index, feature) in enumerate(gb_record.features):
+                    # empty protein data list so as not to contaminate data of next protein
+                    protein_data = []
+                    # Parse over only protein encoding features (type = 'CDS')
+                    if feature.type == "CDS":
+                        protein_data.append(feature.qualifiers["protein_id"][0])
+                        protein_data.append(feature.qualifiers["locus_tag"][0])
+                        protein_data.append("; ".join(feature.qualifiers["product"]))
+                        # add protein data to total protein data list
+                        all_protein_data.append(protein_data)
 
-    return (protein_name, protein_id)
+    return all_protein_data
 
 
 def get_cazy_data(protein_id, logger):
