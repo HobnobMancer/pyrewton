@@ -37,18 +37,17 @@ jobs:
             pip install -e .
 
       - run:
-          name: test
+          name: run tests
           command: |
             . venv/bin/activate
-            pytest -v
-      
+            pytest -v --cov=pyani --cov-report xml:.coverage.xml
       - store_artifacts:
           path: tests/test_output
           destination: tests/test_output
       - store_artifacts:
           path: .coverage.xml
           destination: .coverage.xml
-          
+
       - codecov/upload:
           file: .coverage.xml
 
