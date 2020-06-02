@@ -42,6 +42,7 @@ The MIT License
 """
 
 import argparse
+import gzip
 import logging
 import shutil
 import sys
@@ -402,9 +403,13 @@ def get_df_foundation_data(df_row, args, logger):
         # construct data for completed row, then compile all dataframe data
         index = 0
         for index in range(len(protein_data)):
-            # add protein name and ID as individual items so as not create list within a list
+            # add protein ID, locus tag and function as individual items so as not to create a tuple
             all_rows_data.append(
-                row_foundation.append(protein_data[index][0], protein_data[index][1],)
+                row_foundation.append(
+                    protein_data[index][0],
+                    protein_data[index][1],
+                    protein_data[index][2],
+                )
             )
             index += 1
             count += 1
