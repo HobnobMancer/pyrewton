@@ -1,4 +1,4 @@
-<img src="Notebooks/PhDRepoCover.png" style="width: 200px; float: right;">
+<img src="Notebooks/PhDRepoCover.png" style="width: 225px; float: right;">
 
 
 # EastBIO PhD Project Supplementary Material
@@ -15,13 +15,13 @@
 
 This repository contains files used during the EastBIO PhD Project, for the identification of engineering candidates to enhance biocatalysis for biofuel production.
 
-The `Jupyter` notebook environments has been used to facilitate explanation the function and operation of the command-line python programmes used. These notebooks include explantory text and snippets of code extract to illustrate code function, and thus not all code snippets are runnable in the `Jupyter` environment.
+The `Jupyter` notebook environments have been used to facilitate explanation of the function and operation of the command-line python programmes used. These notebooks include explanatory text and snippets of code extract to illustrate code function, and thus not all code snippets are runnable in the `Jupyter` environment.
 
 ## Table of Contents
 
-1. [Files and Directories](#Files_and_Directories)
-2. [Quick Start](#Quick_Start)
-3. [Notebooks](#Notebooks)
+1. [Files and Directories](#Files)
+2. [Quick Start](#Quick)
+3. [Use the Notebooks](#Use)
 4. [Help](#Help)
 
 ### Files and Directories
@@ -31,27 +31,30 @@ The `Jupyter` notebook environments has been used to facilitate explanation the 
 
 ### Quick Start
 
-The quickest way to install the programme `ProtEng` is to use pip: `pip3 install Proteng -e`. This will install all required Python packages and dependicies.\
+The quickest way to install the programme `ProtEng` is to use pip: `pip3 install Proteng -e`. This will install all required Python packages and dependencies.\
 **Note:** [Conda](https://docs.conda.io/en/latest/) will need to be installed on your system.
 
-### Notebooks
+### Use the Notebooks
 
-Jupyter notebooks are accessible via [this page](https://hobnobmancer.github.io/PhD_Project_Scripts/notebooks.md), but also via the terminal if the programme `Proteng` is installed on your system.
+Jupyter notebooks are accessible here, but also via the terminal if the programme `Proteng` is installed on your system.
 
 From the top level of the repository directory on your system, start the `Jupyter` notebook server by issuing the command:
-`jupyter notebook`
-This will opena new browser window or tab containing the Jupyter homepage, with a listing of all files and directories as laid out in the repository.\
+`Jupyter notebook`
+This will opena  new browser window or tab containing the Jupyter homepage, with a listing of all files and directories as laid out in the repository.\
 Navigate to the 'Notebook/' directory, containing all Jupyter notebooks for the repository. To open a notebook simple click on the title of the notebook.
 
 For more information please see the Jupyter notebook [Quick-start guide](https://jupyter-notebook-beginner-guide.readthedocs.io/en/latest/?fbclid=IwAR1yIwkYCDjcw5FJZ7CfKES3l72HubqGYGcFrVrUKwWZoYh4NHy3VVu0AgQ) and [tutorial](https://www.tutorialspoint.com/jupyter/jupyter_quick_guide.htm).
 
-Each notebook is named to match the number of the section of the programme to which it is associated, such that the first notebook (01_Extracting_GenBank_files) refers to Section1_Extracting_genomes within the repository, as made explictiy clear in the notebook itself.
+Each notebook is named to match the number of the section of the programme to which it is associated, such that the first notebook (01_Extracting_GenBank_files) refers to Section1_Extracting_genomes within the repository, as made explicitly clear in the notebook itself.
 Again note that these notebooks contain exerts of code to facilitate the explanation of the code architecture and function, as well as details provided on how the code was implemented during the project. Therefore, the code in many of the code cells is not runnable and replication or exploration of the data should be performed using the original scripts provided within the repository.
 
-If you are new or have little experience of using command-line programmes and/or the Python coding language, please read the approrpirate notesbooks before using the associated scripts and posting queries/issues on the GitHub pages. The notebooks have been written so that those of all experience levels should be able to understand how and why the script operates.
+If you are new or have little experience of using command-line programmes and/or the Python coding language, please read the appropriate notebooks  before using the associated scripts and posting queries/issues on the GitHub pages. The notebooks have been written so that those of all experience levels should be able to understand how and why the script operates.
+
+- [01_Downloading_GenBank_file](https://hobnobmancer.github.io/PhD_Project_Scripts/Notebooks/01_Downloading_Genbank_files.ipynb)\
+Notebook for `Section1_Extracting_Genomes`, which contains the Python script downloading GenBank files from the NCBI Assembly database.
 
 ### Help
 
 Many of the common errors expected to arise during the operation of the scripts provided in this repository are named in the repository README, including the probable causes of these issues.
 
-Please raise any issues with any of the programmes at the GitHub issues pages for this repositroy, by following [the link](https://github.com/HobnobMancer/PhD_Project_Scripts/issues).
+Please raise any issues with any of the programmes at the GitHub issues pages for this repository, by following [the link](https://github.com/HobnobMancer/PhD_Project_Scripts/issues).
