@@ -95,7 +95,7 @@ def build_parser(argv: Optional[List] = None):
         "--dataframe",
         type=Path,
         default=sys.stdout,
-        help="Location of file for species table to be written to",
+        help="Location of file for species table to be written to, include .csv extention",
     )
     # Add option to force file over writting
     parser.add_argument(
@@ -902,12 +902,7 @@ def write_out_dataframe(species_table, logger, outdir, force, nodelete):
             )
     logger.info("Writing out species dataframe to directory")
 
-    # Check if user included .csv file extension
-    if outdir.endswith(".csv"):
-        species_table.to_csv(outdir)
-    else:
-        out_df = outdir + ".csv"
-        species_table.to_csv(out_df)
+    species_table.to_csv(outdir)
 
     return ()
 
