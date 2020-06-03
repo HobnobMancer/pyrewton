@@ -51,8 +51,9 @@ A brief overview of each script.
 Extract_genomes_NCBI takes a plain text file containing species scientific names or NCBI taxonomy as input. The script will find the corresponding taxonomy ID or scientific name, as appropriate, as well as retrieve all directly linked accession numbers, generating a dataframe of 'Genus', 'Species', 'NCBI Taxonomy ID' and 'NCBI Accession number'.
 
 **Invoking the script from the command line:**\
-**Positional arguments:**\
-User email address: Email address of user must be provided
+**Compulsory arguments:**\
+`-u, --user`\
+&emsp;&emsp;Although indicated as optional, Entez requires an email address must be provided. If not provided the programme will log this as an error and terminate.
 
 **Optional arguments:**\
 `-d, --`dataframe`\
