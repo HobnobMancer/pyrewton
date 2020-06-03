@@ -344,8 +344,9 @@ def create_dataframe(input_df, args, logger):
             "Genus",
             "Species",
             "NCBI Accession Number",
-            "Protein Name",
-            "Protein ID",
+            "NCBI Protein ID",
+            "Locus Tag",
+            "NCBI Recorded Function",
         ],
     )
 
