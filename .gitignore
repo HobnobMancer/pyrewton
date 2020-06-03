@@ -1,6 +1,17 @@
 # Ignore VS Code config
 .vscode
 
+# Coverage test output
+cover/
+htmlcov/
+.coverage
+.coverage.*
+
+# Emacs edit files
+*~
+*#
+.#
+
 # Ignore log files
 *.log
 
