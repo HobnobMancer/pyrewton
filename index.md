@@ -16,34 +16,36 @@ The `Jupyter` notebook environments have been used to facilitate explanation of 
 
 ## Table of Contents
 
-1. [Files and Directories](#Files)
-2. [Quick Start](#Quick)
-3. [Use the Notebooks](#Use)
-4. [Help](#Help)
+1. [Files and Directories](#linkfiles)
+2. [Quick Start](#linkquick)
+3. [Notebooks](#linkuse)
+4. [Help](#linkhelp)
 
-### Files and Directories
+### Files and Directories<a id="linkfile"><a/>
 
 - `Section1_Extracting_Genomes/`: directory containing Python script and input file for downloading GenBank files for species of interest.
 - `Section2_CAZy_genbank_summary/`: directory containing Python script for summarising the already annotated CAZy content within GenBank files.
 
-### Quick Start
+### Quick Start<a id="linkquick"><a/>
 
-The quickest way to install the programme `ProtEng` is to use pip: `pip3 install Proteng -e`. This will install all required Python packages and dependencies.\
-**Note:** [Conda](https://docs.conda.io/en/latest/) will need to be installed on your system.
+The quickest way to install the programme `ProtEng` is to use pip: `pip3 install Proteng -e`. This will install all required Python packages and dependencies.<br/>
+<font color='red'><b>Note:<b/> [Conda](https://docs.conda.io/en/latest/) will need to be installed on your system.</font>
 
-### Use the Notebooks
+### Notebooks <a id="linkuse"><a/>
 
 Jupyter notebooks are accessible here, but also via the terminal if the programme `Proteng` is installed on your system.
 
-**Access the notebooks in browser:**\
+**Access the notebooks in browser:**
 
-- [01_Downloading_GenBank_file](https://hobnobmancer.github.io/PhD_Project_Scripts/Notebooks/01_Downloading_Genbank_files.ipynb)\
-Notebook for `Section1_Extracting_Genomes`, which contains the Python script downloading GenBank files from the NCBI Assembly database.
+- [01_Downloading_GenBank_file](https://hobnobmancer.github.io/PhD_Project_Scripts/Notebooks/01_Downloading_GenBank_Files.html)<br/>
+Notebook for `Section1_Extracting_Genomes`, which explains the function and operation of the Python script downloading GenBank files from the NCBI Assembly database.
+- [02_CAZy_GenBank_Summary](https://hobnobmancer.github.io/PhD_Project_Scripts/Notebooks/02_CAZy_GenBank_Summary.html)<br/>
+Notebook for `Section2_CAZy_GenBank_Summary`, which explains the function and operation of the script for summarising the gene annotations which are linked to a [CAZy](http://www.cazy.org/) database entry.
 
-**Access the notebooks via the terminal:**\
+**Access the notebooks via the terminal:**<br/>
 From the top level of the repository directory on your system, start the `Jupyter` notebook server by issuing the command:
 `Jupyter notebook`
-This will opena  new browser window or tab containing the Jupyter homepage, with a listing of all files and directories as laid out in the repository.\
+This will opena  new browser window or tab containing the Jupyter homepage, with a listing of all files and directories as laid out in the repository.<br/>
 Navigate to the 'Notebook/' directory, containing all Jupyter notebooks for the repository. To open a notebook simple click on the title of the notebook.
 
 For more information please see the Jupyter notebook [Quick-start guide](https://jupyter-notebook-beginner-guide.readthedocs.io/en/latest/?fbclid=IwAR1yIwkYCDjcw5FJZ7CfKES3l72HubqGYGcFrVrUKwWZoYh4NHy3VVu0AgQ) and [tutorial](https://www.tutorialspoint.com/jupyter/jupyter_quick_guide.htm).
@@ -53,7 +55,7 @@ Again note that these notebooks contain exerts of code to facilitate the explana
 
 If you are new or have little experience of using command-line programmes and/or the Python coding language, please read the appropriate notebooks  before using the associated scripts and posting queries/issues on the GitHub pages. The notebooks have been written so that those of all experience levels should be able to understand how and why the script operates.
 
-### Help
+### Help<a id="linkhelp"><a/>
 
 Many of the common errors expected to arise during the operation of the scripts provided in this repository are named in the repository README, including the probable causes of these issues.
 
