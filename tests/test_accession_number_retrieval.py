@@ -50,7 +50,7 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
 
     # Define function to test
 
-    @pytest.mark.run(order=5)
+    @pytest.mark.run(order=8)
     def test_accession_number_retrieval(self):
         """Tests multiplpe Entrez calls to NCBI to retrieve accession numbers."""
         Extract_genomes_NCBI.get_accession_numbers(
