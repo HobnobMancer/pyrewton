@@ -29,8 +29,8 @@ The `Jupyter` notebook environments have been used to facilitate explanation of 
 ### Quick Start<a id="linkquick"><a/>
 
 The quickest way to install the programme `ProtEng` is to use pip: `pip3 install Proteng -e`. This will install all required Python packages and dependencies.<br/>
-<font color="red"><b>Note:</b></font> [Conda](https://docs.conda.io/en/latest/) will need to be installed on your system.
-
+<font color="red"><b>Note:</b></font> [Conda](https://docs.conda.io/en/latest/) will need to be installed on your system.<br/>
+<br/>
 ### Notebooks <a id="linkuse"><a/>
 
 Jupyter notebooks are accessible here, but also via the terminal if the programme `Proteng` is installed on your system.
