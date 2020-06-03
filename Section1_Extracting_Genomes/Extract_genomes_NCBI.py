@@ -81,7 +81,8 @@ def build_parser(argv: Optional[List] = None):
     # Add arguments to parser
     # Add user email address
     parser.add_argument(
-        "user_email",
+        "-u"
+        "--user",
         type=str,
         metavar="user email address",
         default=None,
@@ -213,15 +214,19 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     else:
         args = build_parser(argv).parse_args()
 
-    # Add users email address from parser
-    Entrez.email = args.user_email
-
     # Initiate logger
     # Note: log file only created if specified at cmdline
     if logger is None:
         logger = build_logger("Extract_genomes_NCBI", args)
     # logger = logging.getLogger("Extract_genomes_NCBI")
     logger.info("Run initated")
+    
+    # Add users email address from parser
+    if args.user == None:
+        logger.error("No user email provided. Email MUST be providd. Terminating programme")
+        sys.exit(1)
+    else:
+        Entrez.email = args.user
 
     # If specified output directory for genomic files, create output directory
     if args.output is not sys.stdout:
