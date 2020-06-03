@@ -1,6 +1,3 @@
-<img src="Notebooks/PhDRepoCover.png" style="width: 225px; float: right;">
-
-
 # EastBIO PhD Project Supplementary Material
 
 ## Identifying, Characterising & Engineering Plant Cell Wall Degrading Enzymes for Enhanced Biocatalysts in Biofuel Production
@@ -38,6 +35,12 @@ The quickest way to install the programme `ProtEng` is to use pip: `pip3 install
 
 Jupyter notebooks are accessible here, but also via the terminal if the programme `Proteng` is installed on your system.
 
+**Access the notebooks in browser:**\
+
+- [01_Downloading_GenBank_file](https://hobnobmancer.github.io/PhD_Project_Scripts/Notebooks/01_Downloading_Genbank_files.ipynb)\
+Notebook for `Section1_Extracting_Genomes`, which contains the Python script downloading GenBank files from the NCBI Assembly database.
+
+**Access the notebooks via the terminal:**\
 From the top level of the repository directory on your system, start the `Jupyter` notebook server by issuing the command:
 `Jupyter notebook`
 This will opena  new browser window or tab containing the Jupyter homepage, with a listing of all files and directories as laid out in the repository.\
@@ -49,9 +52,6 @@ Each notebook is named to match the number of the section of the programme to wh
 Again note that these notebooks contain exerts of code to facilitate the explanation of the code architecture and function, as well as details provided on how the code was implemented during the project. Therefore, the code in many of the code cells is not runnable and replication or exploration of the data should be performed using the original scripts provided within the repository.
 
 If you are new or have little experience of using command-line programmes and/or the Python coding language, please read the appropriate notebooks  before using the associated scripts and posting queries/issues on the GitHub pages. The notebooks have been written so that those of all experience levels should be able to understand how and why the script operates.
-
-- [01_Downloading_GenBank_file](https://hobnobmancer.github.io/PhD_Project_Scripts/Notebooks/01_Downloading_Genbank_files.ipynb)\
-Notebook for `Section1_Extracting_Genomes`, which contains the Python script downloading GenBank files from the NCBI Assembly database.
 
 ### Help
 
