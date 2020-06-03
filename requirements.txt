@@ -2,6 +2,7 @@ autopep8
 bandit
 biopython
 black
+coverage
 flake8
 mypy
 pandas
