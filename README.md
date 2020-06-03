@@ -219,6 +219,9 @@ are named using the contracted version of the scripts name, such that
 
 ### Extract_genomes_NCBI
 
+**test_housekeeping.py**\
+This tests the building of the parser, logger and output directory via their respecitive functions, which must all operate correctly in order for the programme to be functional.
+
 **test_input_reading.py**\
 This tests the ability of the `parse_inputfile()` function's
 ability to open and read a given input file, defined using
