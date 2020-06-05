@@ -45,6 +45,63 @@ Miniconda3 environment file is also available in the GitHub repository: 'environ
 ## Scripts
 
 A brief overview of each script.
+.
+├── codecov.yml
+├── Computational_Overall_Flow_Chart.pptx
+├── config.yml
+├── conftest.py
+├── coverage.xml
+├── environment.yml
+├── index.md
+├── LICENSE
+├── README.md
+├── requirements.txt
+├── setup.py
+├── assets
+│   ├── _documents required for GitHub pages_
+├── pyrewton
+│   ├── __init__.py
+│   ├── directory_handling
+│   │   ├── __init__.py
+│   │   ├── output_dir_handling_main.py
+│   │   └── __pycache__
+│   │       ├── __init__.cpython-37.pyc
+│   │       └── output_dir_handling_main.cpython-37.pyc
+│   ├── loggers
+│   │   ├── __init__.py
+│   │   ├── logger_pyrewton_main.py
+│   │   └── __pycache__
+│   │       ├── __init__.cpython-37.pyc
+│   │       └── logger_pyrewton_main.cpython-37.pyc
+│   ├── parsers
+│   │   ├── __init__.py
+│   │   ├── parser_get_ncbi_genomes.py
+│   │   └── __pycache__
+│   │       ├── __init__.cpython-37.pyc
+│   │       └── parser_get_ncbi_genomes.cpython-37.pyc
+│   ├── genbank
+│       └── get_ncbi_genomes
+│           ├── get_ncbi_genomes.py
+│           ├── get_ncbi_genomes_template_input_file.txt
+│           ├── __init__.py
+│           ├── __pycache__
+│           │   ├── get_ncbi_genomes.cpython-37.pyc
+│           │   └── __init__.cpython-37.pyc
+│           ├── selected_species_list.txt
+│           └── working_species_list.txt
+└── tests
+    ├── test_accession_number_retrieval.py
+    ├── test_housekeeping.py
+    ├── test_input_reading.py
+    ├── test_inputs
+    │   └── gt_ncbi_gnms_test_inputs
+    │       ├── gt_ncbi_gnms_reading_test_input.txt
+    │       └── gt_ncbi_gnms_test_inputs.json
+    ├── test_name_and_id_retrieval.py
+    └── test_targets
+        └── gt_ncbi_gnms_test_targets
+            ├── gt_ncbi_gnms_test_df.csv
+            └── gt_ncbi_gnms_test_targets.json
 
 ### Extract_genomes_NCBI
 
