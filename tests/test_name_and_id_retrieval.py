@@ -9,7 +9,7 @@ from pathlib import Path
 from Bio import Entrez
 import pytest
 
-from Section1_Extracting_Genomes import Extract_genomes_NCBI
+from pyrewton.genbank.get_ncbi_genomes import get_ncbi_genomes
 
 # Define dummy email for Entrez
 Entrez.email = "my.email@my.domain"
@@ -27,15 +27,15 @@ class TestName_and_IDRetrieval(unittest.TestCase):
 
         # Define test directories
         self.test_dir = Path("tests")
-        self.input_dir = self.test_dir / "test_inputs" / "test_ext_gnm_ncbi"
-        self.target_dir = self.test_dir / "test_targets" / "test_ext_gnm_ncbi"
+        self.input_dir = self.test_dir / "test_inputs" / "gt_ncbi_test_inputs"
+        self.target_dir = self.test_dir / "test_targets" / "gt_ncbi_test_targets"
 
         # Null logger instance
         self.logger = logging.getLogger("Test_name_and_ID_Retrieval logger")
         self.logger.addHandler(logging.NullHandler())
 
         # Parse file containing test inputs
-        with (self.input_dir / "EgN_test_inputs.json").open("r") as ifh:
+        with (self.input_dir / "gt_ncbi_gnms_test_inputs.json").open("r") as ifh:
             test_inputs = json.load(ifh)
 
         # Define test inputs
@@ -45,7 +45,7 @@ class TestName_and_IDRetrieval(unittest.TestCase):
         self.input_line_number = test_inputs["line_number"]
 
         # Parse file containing test targets
-        with (self.target_dir / "EgN_test_targets.json").open("r") as ifh:
+        with (self.target_dir / "gt_ncbi_gnms_test_targets.json").open("r") as ifh:
             test_targets = json.load(ifh)
 
         # Degine test targets
@@ -64,7 +64,7 @@ class TestName_and_IDRetrieval(unittest.TestCase):
 
         self.assertEqual(
             self.target_genus_species_name,
-            Extract_genomes_NCBI.get_genus_species_name(
+            get_ncbi_genomes.get_genus_species_name(
                 self.input_tax_id, self.logger, self.input_line_number, self.retries
             ),
         )
@@ -75,7 +75,7 @@ class TestName_and_IDRetrieval(unittest.TestCase):
 
         self.assertEqual(
             "NCBI:txid" + self.target_tax_id,
-            Extract_genomes_NCBI.get_tax_id(
+            get_ncbi_genomes.get_tax_id(
                 self.input_genus_species_name,
                 self.logger,
                 self.input_line_number,
