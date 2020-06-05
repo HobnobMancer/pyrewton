@@ -1,10 +1,6 @@
-# This is the input file for Extract_genomes_NCBI.py
-# This file can be used as the input file by default, by not
-# passing the optional input argument to Extract_genomes_NCBI.py.
-# Alternatively, this file can be used as a template,
-# to create a new input file list.
+# This is a template input file for get_ncbi_genomes.py
 #
-# An input file for Extract_genomes_NCBI.py must adhere to
+# An input file for get_ncbi_genomes.py must adhere to
 # these rules:
 # 1. The file must contain NO blank lines
 # 2. Comments are distinguished by starting the line with
@@ -16,10 +12,8 @@
 #    and leave the rest of the line blank
 # 6. Each line must contain a unique species, additionally,
 #    the scientific name OR taxonomy ID must be given
-# 
-# To use this file as the input file for Extract_genomes_NCBI.py
-# simple write over the species names and taxonomy IDs, below.
-# Any unwanted comments can also be removed.
+#
+# A working example is shown below
 #
 # Fungal species:
 Aspergillus fumigatus
