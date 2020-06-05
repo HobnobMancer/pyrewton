@@ -27,8 +27,8 @@ class TestName_and_IDRetrieval(unittest.TestCase):
 
         # Define test directories
         self.test_dir = Path("tests")
-        self.input_dir = self.test_dir / "test_inputs" / "gt_ncbi_test_inputs"
-        self.target_dir = self.test_dir / "test_targets" / "gt_ncbi_test_targets"
+        self.input_dir = self.test_dir / "test_inputs" / "gt_ncbi_gnms_test_inputs"
+        self.target_dir = self.test_dir / "test_targets" / "gt_ncbi_gnms_test_targets"
 
         # Null logger instance
         self.logger = logging.getLogger("Test_name_and_ID_Retrieval logger")
