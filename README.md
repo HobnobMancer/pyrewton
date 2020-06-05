@@ -45,6 +45,7 @@ Miniconda3 environment file is also available in the GitHub repository: 'environ
 ## Scripts
 
 A brief overview of each script.
+```bash
 .
 ├── codecov.yml
 ├── Computational_Overall_Flow_Chart.pptx
@@ -102,6 +103,7 @@ A brief overview of each script.
         └── gt_ncbi_gnms_test_targets
             ├── gt_ncbi_gnms_test_df.csv
             └── gt_ncbi_gnms_test_targets.json
+```
 
 ### Extract_genomes_NCBI
 
