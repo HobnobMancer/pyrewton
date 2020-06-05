@@ -12,7 +12,7 @@ import pytest
 
 from Bio import Entrez
 
-from Section1_Extracting_Genomes import Extract_genomes_NCBI
+from pyrewton.genbank.get_ncbi_genomes import get_ncbi_genomes
 
 Entrez.email = "proteng.ext_gnm_ncbi@my.domain"
 
@@ -28,14 +28,14 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
 
         # Define test directories
         self.test_dir = Path("tests")
-        self.input_dir = self.test_dir / "test_inputs" / "test_ext_gnm_ncbi"
+        self.input_dir = self.test_dir / "test_inputs" / "gt_ncbi_gnms_test_inputs"
 
         # Null logger instance
-        self.logger = logging.getLogger("Test_name_and_ID_Retrieval logger")
+        self.logger = logging.getLogger("Test_ac_number_retrieval logger")
         self.logger.addHandler(logging.NullHandler())
 
         # Parse file containing test inputs
-        with (self.input_dir / "EgN_test_inputs.json").open("r") as ifh:
+        with (self.input_dir / "gt_ncbi_gnms_test_inputs.json").open("r") as ifh:
             test_inputs = json.load(ifh)
 
         # create dataframe for test
@@ -53,6 +53,6 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
     @pytest.mark.run(order=8)
     def test_accession_number_retrieval(self):
         """Tests multiplpe Entrez calls to NCBI to retrieve accession numbers."""
-        Extract_genomes_NCBI.get_accession_numbers(
+        get_ncbi_genomes.get_accession_numbers(
             self.row_data, self.logger, self.argsdict["args"]
         )
