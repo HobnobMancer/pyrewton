@@ -22,25 +22,36 @@ The `Jupyter` notebook environments have been used to facilitate explanation of 
 4. [Help](#linkhelp)
 
 ### Files and Directories<a id="linkfile"><a/>
+  
+The repository is separated into documentation and program modules.
 
-- `Section1_Extracting_Genomes/`: directory containing Python script and input file for downloading GenBank files for species of interest.
-- `Section2_CAZy_genbank_summary/`: directory containing Python script for summarising the already annotated CAZy content within GenBank files.
+Inital plans and devleopment plans are stored within the [Wiki](https://github.com/HobnobMancer/PhD_Project_Scripts/wiki).
+
+- `assets/`: directory containing all files needed for the GitHub page.
+- `notebooks/`: directory containing all jupyter notebooks, and html copies used for easier in-browser viewing via the GitHub page.
+- `pyrewton/`: directory containing all `pyrewton` program modules (including all submodules and Python scripts).
+  - `parsers/`: directory containing all Python scripts for building parsers used in `pyrewton`.
+  - `loggers/`: directory containing all Python scripts for building loggers in `pyrewton`.
+  - `directory_handling/`: directory containing all Python scripts for handling directories in `pyrewton`, including retrieving program inputs, and creating output directories.
+  - `genbank/`: directory containing all submodules which are involved in retrieving NCBI GenBank files, and retrieving data from GenBank files.
+    - `get_genomes_ncbi/`: directory containing the submodule `get_genomes_ncbi`, which takes a list of species (in a plain text file) and download all directly linked GenBank (.gbff) files in the NCBI Assembly database.
+- `tests/`: directory containing all `pytest` test files for testing `pyrewton` during development, including subdirectories for test inputs and targets, with each the test inputs and targets for each `pyrewton` Python script contained within its own subdirectory.
 
 ### Quick Start<a id="linkquick"><a/>
 
-The quickest way to install the programme `ProtEng` is to use pip: `pip3 install Proteng -e`. This will install all required Python packages and dependencies.<br/>
-<font color="red"><b>Note:</b></font> [Conda](https://docs.conda.io/en/latest/) will need to be installed on your system.<br/>
-<br/>
+The quickest way to install the programme `pyrewton` is to use pip: `pip3 install pyrewton -e`. This will install all required Python packages and dependencies.<br/>
+<font color="red"><b>Note:</b></font> [Conda](https://docs.conda.io/en/latest/) will need to be installed on your system.
+
 ### Notebooks <a id="linkuse"><a/>
 
 Jupyter notebooks are accessible here, but also via the terminal if the programme `Proteng` is installed on your system.
 
 **Access the notebooks in browser:**
 
-- [01_Downloading_GenBank_file](https://hobnobmancer.github.io/PhD_Project_Scripts/Notebooks/01_Downloading_GenBank_Files.html)<br/>
-Notebook for `Section1_Extracting_Genomes`, which explains the function and operation of the Python script downloading GenBank files from the NCBI Assembly database.
-- [02_CAZy_GenBank_Summary](https://hobnobmancer.github.io/PhD_Project_Scripts/Notebooks/02_CAZy_GenBank_Summary.html)<br/>
-Notebook for `Section2_CAZy_GenBank_Summary`, which explains the function and operation of the script for summarising the gene annotations which are linked to a [CAZy](http://www.cazy.org/) database entry.
+- [01_downloading_genbank_files](https://github.com/HobnobMancer/PhD_Project_Scripts/blob/HMancer-repo-restructuring/notebooks/01_downloading_genbank_files.html)<br/>
+Notebook for `get_ncbi_genomes`, which explains the function and operation of the Python script for downloading GenBank files from the NCBI Assembly database.
+- [02_cazyme_genbank_annotation_summary](https://github.com/HobnobMancer/PhD_Project_Scripts/blob/HMancer-repo-restructuring/notebooks/02_cazyme_genbank_annotation_summary.html)<br/>
+Notebook for `get_cazyme_annotation_summary`, which explains the function and operation of the script for summarising the gene annotations which indicated to be cazymes (carbohydrate processing enzymes).
 
 **Access the notebooks via the terminal:**<br/>
 From the top level of the repository directory on your system, start the `Jupyter` notebook server by issuing the command:
