@@ -49,14 +49,11 @@ Generates dataframe containing scientific names, taxonomy IDs and accession numb
 Pulls down and stores genomic assemblies and GenBank filesfrom NCBI Assembly database.
 """
 
-import argparse
 import logging
 import re
-import shutil
 import sys
 import time
 
-from pathlib import Path
 from socket import timeout
 from typing import List, Optional
 from urllib.error import HTTPError, URLError
@@ -67,7 +64,9 @@ import pandas as pd
 from Bio import Entrez
 from tqdm import tqdm
 
+from pyrewton.loggers.logger_pyrewton_main import build_logger
 from pyrewton.parsers.parser_get_ncbi_genomes import build_parser
+from pyrewton.directory_handling.output_dir_handling_main import make_output_directory
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
@@ -132,95 +131,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # Program finished
     logger.info("Program finished and exiting")
-
-
-def build_logger(script_name, args) -> logging.Logger:
-    """Return a logger for this script.
-
-    Enables logger for script, sets parameters and creates new file to store log.
-
-    :param script_name: str, name of script
-    :param args: parser argument
-
-    Return logger object.
-    """
-    logger = logging.getLogger(script_name)
-
-    # Set format of loglines
-    log_formatter = logging.Formatter(
-        script_name + ": {} - {}".format("%(asctime)s", "%(message)s")
-    )
-
-    # Setup console handler to log to terminal
-    console_log_handler = logging.StreamHandler()
-    if args.verbose is True:
-        console_log_handler.setLevel(logging.INFO)
-    else:
-        console_log_handler.setLevel(logging.WARNING)
-    console_log_handler.setFormatter(log_formatter)
-    logger.addHandler(console_log_handler)
-
-    # Setup file handler to log to a file
-    if args.log is not None:
-        file_log_handler = logging.FileHandler(args.log)
-        if args.verbose is True:
-            file_log_handler.setLevel(logging.INFO)
-        else:
-            file_log_handler.setLevel(logging.WARNING)
-        file_log_handler.setFormatter(log_formatter)
-        logger.addHandler(file_log_handler)
-
-    return logger
-
-
-def make_output_directory(output, logger, force, nodelete):
-    """Create output directory for genomic files.
-
-    Check if directory indicated for output existed already.
-    If so check if force overwrite enabled. If not terminate programme.
-    If so, check if deletion of exiting files was enabled.
-    If so, exiting files in output directory are deleted.
-    Create output directory, expecting error if already exists.
-
-    :param output: Path, path to output directory
-    :param logger: logger object
-    :param force: bool, cmd-line args to enable/disable over writing existing directory
-    :param nodelete: bool, cmd-line args to enable/disable deleting of existing files
-
-    Return nothing.
-    """
-    logger.info("Checking if specified output directory for genomic files exists.")
-    # If output directory specificed at cmd-line, check output directory does not already exist
-    if output.exists():
-        if force is False:
-            logger.critical(
-                (
-                    "Output directory already exists and forced overwrite not enabled.\n"
-                    "Terminating program."
-                )
-            )
-            sys.exit(1)
-        else:
-            if nodelete is False:
-                logger.warning(
-                    (
-                        "Output directory already exists and forced complete overwrite enabled.\n"
-                        "Deleting existing content in outdir."
-                    )
-                )
-                # delete existing content in outdir
-                shutil.rmtree(output)
-            else:
-                logger.warning(
-                    (
-                        "Output directory already exists and forced addition of files "
-                        "to outdir enables."
-                    )
-                )
-    # Recursively make output directory (directory may exist if
-    # --force==True and --nodelete==True, so exist_ok is required)
-    output.mkdir(exist_ok=True)
-    return
 
 
 def parse_input_file(input_filename, logger, retries):
