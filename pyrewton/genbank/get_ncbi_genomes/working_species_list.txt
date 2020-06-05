@@ -1,5 +1,4 @@
-# Total three species
-# This is a working list to help with drafting Extract_genomes_NCBI.py
+# This file is the test input file used for drafting get_ncbi_genomes.py
 # The taxanomic id provided is for Aspergillus niger (2020-03-20)
 Aspergillus fumigatus
 Aspergillus nidulans
