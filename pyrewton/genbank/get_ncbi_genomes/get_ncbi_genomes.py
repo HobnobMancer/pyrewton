@@ -1,5 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Author:
+# Emma E. M. Hobbs
+
+# Contact
+# eemh1@st-andrews.ac.uk
+
+# Emma E. M. Hobbs,
+# Biomolecular Sciences Building,
+# University of St Andrews,
+# North Haugh Campus,
+# St Andrews,
+# KY16 9ST
+# Scotland,
+# UK
+
+# The MIT License
 """Pull down GenBank files (.gbff) from NCBI database.
 
 :cmd_args --user: email address of user
@@ -31,23 +47,6 @@
 
 Generates dataframe containing scientific names, taxonomy IDs and accession numbers.
 Pulls down and stores genomic assemblies and GenBank filesfrom NCBI Assembly database.
-
-Author:
-Emma E. M. Hobbs
-
-Contact
-eemh1@st-andrews.ac.uk
-
-Emma E. M. Hobbs,
-Biomolecular Sciences Building,
-University of St Andrews,
-North Haugh Campus,
-St Andrews,
-KY16 9ST
-Scotland,
-UK
-
-The MIT License
 """
 
 import argparse
@@ -101,7 +100,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     logger.info("Run initated")
 
     # Add users email address from parser
-    if args.user == None:
+    if args.user is None:
         logger.error(
             "No user email provided. Email MUST be providd. Terminating programme"
         )
