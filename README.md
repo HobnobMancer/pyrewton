@@ -1,5 +1,6 @@
-# EASTBIO PhD Project Scripts
+# EastBIO PhD Project Scripts, packaged into `pyrewton`
 
+[![DOI](https://zenodo.org/badge/243783792.svg)](https://zenodo.org/badge/latestdoi/243783792)
 [![Funding](https://img.shields.io/badge/Funding-EASTBio-blue)](http://www.eastscotbiodtp.ac.uk/)
 [![PhD licence](https://img.shields.io/badge/Licence-MIT-green)](https://opensource.org/licenses/MIT)
 [![CircleCI](https://img.shields.io/badge/CircleCI-Passing-brightgreen)](https://circleci.com/product/)
@@ -12,7 +13,7 @@
 1. [Overview](#Overview)
 2. [Installation](#Installation)
     - [Requirements](#Requirements)
-3. [Scripts](#Scripts)
+3. [pyrewton Modules](#pyrewton-Modules)
     - [Extract_genomes_NCBI](#Extract_genomes_NCBI)
 4. [Troubleshooting and common errors](#Troubleshooting-and-common-errors)
     - [Extract_genomes_NCBI](#Extract_genomes_NCBI)
@@ -21,30 +22,29 @@
 
 ## Overview
 
-PhD_Project_Scripts contains all scripts associated with the EASTBio Proteng project.
+The repository PhD_Project_Scripts contains all scripts associated with the EASTBio PhD project 'Identifying Engineering Candidates for Advanced Biocatalysis in Biofuel Production'.
 
-Completed scripts are packaged into `Proteng`.
+Completed scripts are packaged into `pyrewton`, which is free to use under the MIT license. `pyreqton` is a Python3 script package that can be run at the command line. It supports the downloading of all genomic assemblies (as GenBank files .gbff) from the [NCBI Assembly database](https://www.ncbi.nlm.nih.gov/assembly) asscoiated with each species passed to the program, and summarising the cazyme annotations within those GenBank files.
 
-`Proteng` is a Python3 script package that supports the pull down of genomic assemblies from the [NCBI Assembly database](https://www.ncbi.nlm.nih.gov/assembly).
-
-[In GitHub](https://github.com/HobnobMancer/PhD_Project_Scripts) each section of the project is given its own directory and subdirectories within.
+`pyrewton` is built up of multiple Python modules, which either perform a 'housekeeping' task such as logger building, or perform a main operation of `pyrewton`, such as coordianting the downloading of GenBank files. All modules, submodules and asscoiated Python scripts are located within the `pyrewton` directory.
 
 ## Installation
 
-The easiest way to install `proteng` is to use `pip`:\
-`pip3 install Proteng`.\
+The easiest way to install `pyrewto` is to use `pip`:  
+`pip3 install -e <path to directory containing pyrewton setup.py>`.  
 This will install all required Python packages dependencies.
 
 ## Requirements
 
-Scripts are written using:\
-Python = 3.7\
-Miniconda3 managed microenvironment, incorporated code checkers are included in list form in 'requirements.txt'\
+Scripts are written using:  
+Python = 3.7  
+Miniconda3 managed microenvironment, incorporated code checkers are included in list form in 'requirements.txt'  
 Miniconda3 environment file is also available in the GitHub repository: 'environment.yml'.
 
-## Scripts
+## pyrewton Modules
 
-A brief overview of each script.
+Below is a directory plan of the pyrewton module structure, followed by a breif overview of each module's function.
+
 ```bash
 .
 ├── codecov.yml
