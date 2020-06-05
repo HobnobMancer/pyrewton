@@ -12,14 +12,14 @@ import pytest
 
 from Bio import Entrez
 
-from Section1_Extracting_Genomes import Extract_genomes_NCBI
+from pyrewton import directory_handling, loggers, parsers, genbank
 
-Entrez.email = "proteng.ext_gnm_ncbi@my.domain"
+Entrez.email = "my_email@my.domain"
 
 
 class Test_housekeeping_functions(unittest.TestCase):
 
-    """Class defining tests of Extract_genomes_NCBI.py housekeeping functions.
+    """Class defining tests of get_ncbi_genomes.py housekeeping functions.
 
     These include creating the parser, the logger and output dir.
     """
@@ -31,13 +31,11 @@ class Test_housekeeping_functions(unittest.TestCase):
 
         # Define test directories
         self.test_dir = Path("tests")
-        self.output_dir = (
-            self.test_dir / "test_targets" / "test_ext_gnm_ncbi" / "EgN_target_dir"
-        )
-        self.df_output = self.output_dir / "test_df.csv"
+        self.output_dir = self.test_dir / "test_targets" / "gt_ncbi_gnms_test_targets"
+        self.df_output = self.output_dir / "gt_ncbi_gnms_test_df.csv"
 
         # Null logger instance
-        self.logger = logging.getLogger("Test_name_and_ID_Retrieval logger")
+        self.logger = logging.getLogger("Test_logger_parser_output")
         self.logger.addHandler(logging.NullHandler())
 
         # Define test inputs
@@ -55,23 +53,25 @@ class Test_housekeeping_functions(unittest.TestCase):
     @pytest.mark.run(order=1)
     def test_build_parser(self):
         """Tests building of parser"""
-        Extract_genomes_NCBI.build_parser()
+        parsers.parser_get_ncbi_genomes.build_parser()
 
     @pytest.mark.run(order=2)
     def test_build_logger(self):
-        "Tests building of logger" ""
-        Extract_genomes_NCBI.build_logger(self.test_logger, self.argsdict["args"])
+        """Tests building of logger"""
+        loggers.logger_pyrewton_main.build_logger(
+            self.test_logger, self.argsdict["args"]
+        )
 
     @pytest.mark.run(order=3)
     def test_output_dir_creation(self):
         """Tests function for creating output dir"""
-        Extract_genomes_NCBI.make_output_directory(
+        directory_handling.output_dir_handling_main.make_output_directory(
             self.output_dir, self.logger, True, True
         )
 
     @pytest.mark.run(order=4)
     def test_writing_df(self):
         """Tests function for writing out created dataframe"""
-        Extract_genomes_NCBI.write_out_dataframe(
+        genbank.get_ncbi_genomes.get_ncbi_genomes.write_out_dataframe(
             self.df, self.logger, self.df_output, True, False
         )
