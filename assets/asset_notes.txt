@@ -1,0 +1,1 @@
+File to store randome notes for development of github pages
