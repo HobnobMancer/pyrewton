@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
 
-  <title>01_Downloading_GenBank_Files</title>
+  <title>01_downloading_genbank_files</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
@@ -16345,117 +16345,14 @@ Adapted from GitHub theme
         </div>
         <div class="inner_cell">
           <div class="text_cell_render border-box-sizing rendered_html">
-            <h1 id="Section-1:-Extracting-GenBank-files-from-NCBI">Section 1: Extracting GenBank files from NCBI<a
-                class="anchor-link" href="#Section-1:-Extracting-GenBank-files-from-NCBI">&#182;</a></h1>
+            <h1 id="01-Downloading-GenBank-files">01 Downloading GenBank files<a class="anchor-link"
+                href="#01-Downloading-GenBank-files">&#182;</a></h1>
+            <h2 id="pyrewton-module-genbank-submodule-get_ncbi_genomes">pyrewton module genbank submodule
+              get_ncbi_genomes<a class="anchor-link"
+                href="#pyrewton-module-genbank-submodule-get_ncbi_genomes">&#182;</a></h2>
             <p>This notebook describes the process of downloading GenBank files for all genomic assemblies associated
               with each species of interest.</p>
-            <p>This notebook refers to the Python script Extract_genomes_NCBI.py, included in the <code>Proteng</code>
-              package.</p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p>
-              <font color=red><b>Note</b></font>, that this notebook does not include the entirity of script code, but
-              instead includes exerts to help illustrate the programme arcitecture and function. Specifically, the
-              function <code>main</code>, which orchestrates the calling of functions to perform the overal operation of
-              the script is excluded from this notebook, as well as logging and error checking.
-            </p>
-            <p>Additionally, in some instances sections of code have been removed, replaced by a comment to indicate the
-              intent or function of the code and/or introduced later on in the notebook than is reflected in the code.
-              This is to enable a detailed description of the code function at a more logical, and oppertune time.</p>
-            <p>For the complete script, navigate to
-              <code>Section1_Extracting_genomes_NCBI/Extract_genomes_NCBI.py</code> within the repository.</p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <h2 id="Contents">Contents<a class="anchor-link" href="#Contents">&#182;</a></h2>
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <ul>
-              <li><a href="#linkoperating">Operating the script</a></li>
-              <li><a href="#linkinput">Script input</a></li>
-              <li><a href="#linkcommand">Command line options</a></li>
-              <li><a href="#linkimports">Python imports</a></li>
-              <li><a href="#linkparsing">Parsing the input file and creating the dataframe</a>
-                <ul>
-                  <li><a href="#linkscientific">Scientific name and Taxonomy ID retrieval</a></li>
-                  <li><a href="#linkcdf">Creating the dataframe</a></li>
-                </ul>
-              </li>
-              <li><a href="#linkretrieving">Retrieving accession numbers</a>
-                -<a href="#linkassemblyids">Retrieval of assembly IDs</a>
-                -<a href="#linkanretrieve">Retrieval of the accession numbers</a></li>
-              <li><a href="#linkgenbank">Downloading GenBank file</a>
-                <ul>
-                  <li><a href="#linkurl">Compiling the URL</a></li>
-                  <li><a href="#linkdownload">Downloading the GenBank file</a></li>
-                </ul>
-              </li>
-              <li><a href="#linkoutdf">Writing out the dataframe</a></li>
-            </ul>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p><a id="linkoperating"><a /></p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <h2 id="Operating-the-script">Operating the script<a class="anchor-link"
-                href="#Operating-the-script">&#182;</a></h2>
-            <p>The script <code>Extract_genomes_NCBI.py</code> is written as a command-line programme and thus is mostly
-              easily operated via the command-line. The standard structure of the command-line call to operate the
-              script is:
-              <code>python3 Extract_genomes_NCBI.py &lt;user email&gt; &lt;options&gt;</code></p>
-            <p>Multiple options are avilable to customise the operation of the script to the users needs. A full list of
-              the available options are included in the README.</p>
-            <p>A email address must be provided becuase this is a requirement to access the NCBI database remotely using
-              <code>Entrez</code>.</p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p>
-              <div class="alert-info">
-                For the dowloading of the GenBank files for the project, the following code was run at the
-                command-line:<br />
-                <code>python3 Extract_genomes_NCBI.py dumpy_email@domain.ext -i Species_list.txt -o 2020_05_31_GenBank_file_pulldown/ -l 2020_05_31_GB_file_download -v -d 2020_05_31_genome_dataframe.csv</code>
-              </div>
-            </p>
+            <p>This notebook refers to the <code>pyrewton</code> submodule <code>get_ncbi_genomes</code>.</p>
 
           </div>
         </div>
@@ -16467,161 +16364,280 @@ Adapted from GitHub theme
           <div class="text_cell_render border-box-sizing rendered_html">
             <p>
               <div class="alert-danger">
-                <b>Note:</b>Before using the script <code>Extract_genomes_NCBI.py</code> read the documentation for
-                Entrez, taking care to note expected practises laid out under <em>'Frequency, Timing and Registration of
-                  E-utility URL Requests'</em>. Failing to meet the expected practises can result in restricted access
-                or banned access to the Entrez utilitity.
+                <p></p>
+                <b>Note:</b> this notebook does not include the entirity of script code, but
+                instead includes exerts to help illustrate the programme arcitecture and function. Specifically, the
+                function <em>main</em>, which orchestrates the calling of functions to perform the overal operation
+                of
+                the script is excluded from this notebook, as well as logging and error checking.
+                <p></p>
               </div>
             </p>
-            <p>Entrez documentation can be found at the following links:</p>
-            <ul>
-              <li><a href="https://www.ncbi.nlm.nih.gov/books/NBK25497/">'Entrez documentation'</a></li>
-              <li><a href="https://biopython.org/DIST/docs/api/Bio.Entrez-module.html">'BioPython Entrez modeul
-                  documentation'</a></li>
-            </ul>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p><a id="linkinput"><a /></p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <h2 id="Script-input">Script input<a class="anchor-link" href="#Script-input">&#182;</a></h2>
-            <p>The script takes a plain text file as input, containing a list of the species of interst. Each line
-              contains a unique species, identified by their scientific name or NCIB taxonomy ID (including the
-              'NCBI:txid' prefix).</p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
             <p>
-              <div class="alert-info">
-                For the downloading of the GenBank files for the project, the file <code>Species_list.txt</code> within
-                the <code>Section1_Extracting_genomes_NCBI</code> was used as the input file.
+              <div class="alert-danger">
+                <p></p>
+                <p>Additionally, in some instances sections of code have been removed, replaced by
+                  a comment to indicate the
+                  intent or function of the code and/or introduced later on in the notebook than is reflected in the
+                  code.
+                  This is to enable a detailed description of the code function at a more logical, and oppertune time.
+                </p>
+                <p></p>
               </div>
             </p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p><a id="linkcommand"><a /></p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <h2 id="Command-line-options">Command-line options<a class="anchor-link"
-                href="#Command-line-options">&#182;</a></h2>
-            <p>The script is designed as command-line programme, and thus operation of the script is customisable by
-              passing arguments from the command-line.</p>
-            <p><strong>Compulsory argument</strong><br>
-              The option <code>-u</code> or <code>--user</code>
-              <font color=red><b>must</b></font> be used in order to provider the users email address, becuase this is a
-              requiremnt for Entrez which is used to call to NCBI.</p>
-            <p><strong>Optional arguments</strong><br></p>
-            <p><code>-d, --dataframe</code><br>
-              &emsp;&emsp;Specify output path for dataframe, which will be saved as a .csv file (inclusion of file
-              extensions is optional). If not provided dataframe will be written out to STDOUT.</p>
-            <p><code>-f, --force</code><br>
-              &emsp;&emsp;Enable writting in specificed output directory if output directory already exists.</p>
-            <p><code>-g, --genbank</code><br>
-              &emsp;&emsp;Enable or disable downloading of GenBank files.</p>
-            <p><code>-h, --help</code><br>
-              &emsp;&emsp;Display help messages and exit</p>
-            <p><code>-i, --input</code><br>
-              &emsp;&emsp;Specify input filename (with extension) input file.
-              If only the filename is supplied Extract_genomes_NCBI.py
-              will only look in the curent working directory, otherwise
-              provide path to input file.
-              If no option is given the default input file
-              "Extract_genomes_NCBI_input_file.txt", located in the
-              same directory as Extract_genomes_NCBI.py, will be used.</p>
-            <p><code>-l, --log</code><br>
-              &emsp;&emsp;Specify name of log file (With extension).
-              If only filename is given, log file will be written out
-              to the current working directory, otherwise provide path
-              including filename.
-              If not option is given no log file will be written out,
-              however, logs will still be printed to the terminal.</p>
-            <p><code>-n, --nodelete</code><br>
-              &emsp;&emsp;Enable not deleting files in existing output directory. If not enabled, output directory
-              exists and writing in output directory is 'forced' then files in output directory will not be deleted, and
-              new files will be written to the output directory.</p>
-            <p><code>-o, --output</code><br>
-              &emsp;&emsp;Specify filename (with extension) of output file.
-              If only the filename is given, Extract_genomes_NCBI.py
-              the output file will be written to the current working
-              directory, otherwise provide path to desired directory,
-              including filename.
-              If not option is given an output file will be written to
-              the current directory with the standard name:
-              "Extract_genomes_NCBI_Date_Time", where <em>Date</em> and <em>Time</em>
-              are the date and time script was invoked, respectively.</p>
-            <p><code>-r, --retries</code><br>
-              &emsp;&emsp;Specifiy maximum number of retries before cancelling call to NCBI
-              if a network error is encountered. The default is a maximum of 10 retries. When
-              maximum is reached, a value of 'NA' is returned.</p>
-            <p><code>-t, --timeout</code><br>
-              &emsp;&emsp;Specify timeout limit of URL connection when downloading GenBank files. Default is 10 seconds.
+            <p></p>
+            <p>
+              <div class="alert-success">
+                <p></p>
+                <p>For the complete script, navigate to
+                  <em>pyrewton/genbank/get_ncbi_genomes</em> within the
+                  repository.</p>
             </p>
-            <p><code>-v, --verbose</code><br>
-              &emsp;&emsp;Enable verbose logging - changes logger level from WARNING to INFO.</p>
+          </div>
+          </p>
 
-          </div>
         </div>
       </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <h2 id="Contents">Contents<a class="anchor-link" href="#Contents">&#182;</a></h2>
         </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p><a id="linkimports"><a /></p>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <ul>
+            <li><a href="#linkoperating">Operating the script</a></li>
+            <li><a href="#linkinput">Script input</a></li>
+            <li><a href="#linkcommand">Command line options</a></li>
+            <li><a href="#linkimports">Python imports</a></li>
+            <li><a href="#linkparsing">Parsing the input file and creating the dataframe</a>
+              <ul>
+                <li><a href="#linkscientific">Scientific name and Taxonomy ID retrieval</a></li>
+                <li><a href="#linkcdf">Creating the dataframe</a></li>
+              </ul>
+            </li>
+            <li><a href="#linkretrieving">Retrieving accession numbers</a>
+              -<a href="#linkassemblyids">Retrieval of assembly IDs</a>
+              -<a href="#linkanretrieve">Retrieval of the accession numbers</a></li>
+            <li><a href="#linkgenbank">Downloading GenBank file</a>
+              <ul>
+                <li><a href="#linkurl">Compiling the URL</a></li>
+                <li><a href="#linkdownload">Downloading the GenBank file</a></li>
+              </ul>
+            </li>
+            <li><a href="#linkoutdf">Writing out the dataframe</a></li>
+          </ul>
 
-          </div>
         </div>
       </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <p><a id="linkoperating"><a /></p>
+
         </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <h2 id="Operating-the-script">Operating the script<a class="anchor-link"
+              href="#Operating-the-script">&#182;</a></h2>
+          <p>The script <code>get_ncbi_genomes.py</code> is written as a command-line programme and thus is most
+            easily operated via the command-line. The standard structure of the command-line call to operate the
+            script is:
+            <code>python3 Extract_genomes_NCBI.py -u &lt;user email&gt; &lt;other options&gt;</code></p>
+          <p>Multiple options are avilable to customise the operation of the script to the users needs. A full list of
+            the available options are included in the README.</p>
+          <p>A email address must be provided becuase this is a requirement to access the NCBI database remotely using
+            <code>Entrez</code>.</p>
+
+        </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <p>
+            <div class="alert-info">
+              For the dowloading of the GenBank files for the PhD project, the following code was run at the
+              command-line:
+            </div>
+          </p>
+          <blockquote>
+            <p>
+              <code>python3 Extract_genomes_NCBI.py -u eemh1@st-andrews.ac.uk -i selected_species_list.txt -o 2020_05_31_GenBank_file_pulldown/ -l 2020_05_31_GB_file_download -v -d 2020_05_31_genome_dataframe.csv</code>
+            </p>
+          </blockquote>
+
+        </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <p>
+            <div class="alert-danger">
+              <b>Note:</b> Before using the script <em>get_ncbi_genomes.py</em> read the documentation for Entrez,
+              taking
+              care to note expected practises laid out under <em>'Frequency, Timing and Registration of E-utility URL
+                Requests'</em>. Failing to meet the expected practises can result in restricted access or banned
+              access to the Entrez utilitity.
+            </div>
+          </p>
+          <p>Entrez documentation can be found at the following links:</p>
+          <ul>
+            <li><a href="https://www.ncbi.nlm.nih.gov/books/NBK25497/">'Entrez documentation'</a></li>
+            <li><a href="https://biopython.org/DIST/docs/api/Bio.Entrez-module.html">'BioPython Entrez modeul
+                documentation'</a></li>
+          </ul>
+
+        </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <p><a id="linkinput"><a /></p>
+
+        </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <h2 id="Script-input">Script input<a class="anchor-link" href="#Script-input">&#182;</a></h2>
+          <p>The script takes a plain text file as input, containing a list of the species of interst. Each line
+            contains a unique species, identified by their scientific name or NCIB taxonomy ID (including the
+            'NCBI:txid' prefix). An input file template can be found within the <code>get_ncbi_genomes</code>
+            directory within the repository.</p>
+
+        </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <p>
+            <div class="alert-info">
+              For the downloading of the GenBank files for the PhD project, the file
+              selected_species_list.txt within the get_ncbi_genomes directory was used as
+              the input file.
+            </div>
+          </p>
+
+        </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <p><a id="linkcommand"><a /></p>
+
+        </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <h2 id="Command-line-options">Command-line options<a class="anchor-link"
+              href="#Command-line-options">&#182;</a></h2>
+          <p>The script is designed as command-line programme, and thus operation of the script is customisable by
+            passing arguments from the command-line.</p>
+          <p><strong>Compulsory argument</strong><br>
+            The option <code>-u</code> or <code>--user</code>
+            <font color=red><b>must</b></font> be used in order to provider the users email address, becuase this is a
+            requiremnt for Entrez which is used to call to NCBI.</p>
+          <p><strong>Optional arguments</strong><br></p>
+          <p><code>-d, --dataframe</code><br>
+            &emsp;&emsp;Specify output path for dataframe (include file extensions). If not provided dataframe will be
+            written out to STDOUT.</p>
+          <p><code>-f, --force</code><br>
+            &emsp;&emsp;Enable writting in specificed output directory if output directory already exists.</p>
+          <p><code>-g, --genbank</code><br>
+            &emsp;&emsp;Enable or disable downloading of GenBank files.</p>
+          <p><code>-h, --help</code><br>
+            &emsp;&emsp;Display help messages and exit</p>
+          <p><code>-i, --input</code><br>
+            &emsp;&emsp;Specify path to input filename (include extension) input file. If not given input will be
+            taken from STDIN.</p>
+          <p><code>-l, --log</code><br>
+            &emsp;&emsp;Specify name of log file (include extension). If not option is given no log file will be
+            written out,
+            however, logs will still be printed to the terminal.</p>
+          <p><code>-n, --nodelete</code><br>
+            &emsp;&emsp;Enable not deleting files in existing output directory. If not enabled, output directory
+            exists and writing in output directory is 'forced' then files in output directory will not be deleted, and
+            new files will be written to the output directory.</p>
+          <p><code>-o, --output</code><br>
+            &emsp;&emsp;Specify filename (including extension) of output file. If not given output will be wrtten to
+            STDOUT.
+            If only the filename is given, Extract_genomes_NCBI.py</p>
+          <p><code>-r, --retries</code><br>
+            &emsp;&emsp;Specifiy maximum number of retries of trying to call to NCBI before cancelling retrying call
+            to NCBI. The default is a maximum of 10 retries.</p>
+          <p><code>-t, --timeout</code><br>
+            &emsp;&emsp;Specify timeout limit of URL connection when downloading GenBank files. Default is 10 seconds.
+          </p>
+          <p><code>-v, --verbose</code><br>
+            &emsp;&emsp;Enable verbose logging - changes logger level from WARNING to INFO.</p>
+
+        </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <p><a id="linkimports"><a /></p>
+
+        </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <h2 id="Python-imports">Python imports<a class="anchor-link" href="#Python-imports">&#182;</a></h2>
+        </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing code_cell rendered">
+      <div class="input">
+        <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
         <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <h2 id="Python-imports">Python imports<a class="anchor-link" href="#Python-imports">&#182;</a></h2>
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing code_cell rendered">
-        <div class="input">
-          <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-          <div class="inner_cell">
-            <div class="input_area">
-              <div class=" highlight hl-ipython3">
-                <pre><span></span><span class="kn">import</span> <span class="nn">argparse</span>
+          <div class="input_area">
+            <div class=" highlight hl-ipython3">
+              <pre><span></span><span class="kn">import</span> <span class="nn">argparse</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
@@ -16639,75 +16655,52 @@ Adapted from GitHub theme
 <span class="kn">from</span> <span class="nn">Bio</span> <span class="kn">import</span> <span class="n">Entrez</span>
 <span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
 </pre>
-              </div>
-
             </div>
+
           </div>
         </div>
-
       </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
+
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <p><a id="linkparsing"><a /></p>
+
         </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <h2 id="Parsing-the-input-file-and-creating-the-dataframe">Parsing the input file and creating the
+            dataframe<a class="anchor-link" href="#Parsing-the-input-file-and-creating-the-dataframe">&#182;</a></h2>
+          <p>The input file is either taken from STDIN or if a path was provided at the command-line, it is taken from
+            where the path directs.</p>
+          <p>Opening and parsing of the input file is performed by the function <code>parse_input_file</code>.</p>
+          <p>Initially, it is checked that the path to the input file is valid and if not, the programme terminates.
+            Afterwards, the file is opened, and parsed line-by-line.</p>
+
+        </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing code_cell rendered">
+      <div class="input">
+        <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
         <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p><a id="linkparsing"><a /></p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <h2 id="Parsing-the-input-file-and-creating-the-dataframe">Parsing the input file and creating the
-              dataframe<a class="anchor-link" href="#Parsing-the-input-file-and-creating-the-dataframe">&#182;</a></h2>
-            <p>The input file is either taken from STDIN or if a path was provided at the command-line, it is taken from
-              where the path directs.</p>
-            <p>Opening and parsing of the input file is performed by the function <code>parse_input_file</code>.</p>
-            <p>Initially, it is checked that the path to the input file is valid and if not, the programme terminates.
-              Afterwards, the file is opened, and parsed line-by-line.</p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing code_cell rendered">
-        <div class="input">
-          <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-          <div class="inner_cell">
-            <div class="input_area">
-              <div class=" highlight hl-ipython3">
-                <pre><span></span><span class="k">def</span> <span class="nf">parse_input_file</span><span class="p">(</span><span class="n">input_filename</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">retries</span><span class="p">):</span>
+          <div class="input_area">
+            <div class=" highlight hl-ipython3">
+              <pre><span></span><span class="k">def</span> <span class="nf">parse_input_file</span><span class="p">(</span><span class="n">input_filename</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">retries</span><span class="p">):</span>
     
     <span class="c1"># test path to input file exists, if not exit programme</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">input_filename</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="c1"># report to user and exit programme</span>
-</pre>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p>If the input file is retrievable, the file is parsed line-by-line.</p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing code_cell rendered">
-        <div class="input">
-          <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-          <div class="inner_cell">
-            <div class="input_area">
-              <div class=" highlight hl-ipython3">
-                <pre><span></span>    <span class="c1"># if path to input file exists proceed</span>
+    
+    <span class="c1"># if path to input file exists proceed</span>
     <span class="c1"># parse input file</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">input_filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
         <span class="n">input_list</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
@@ -16729,42 +16722,42 @@ Adapted from GitHub theme
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">species_table</span>
 </pre>
-              </div>
-
             </div>
+
           </div>
         </div>
-
       </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
+
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <p>The function <code>parse_line</code> coordinates the approrpiate calling of functions to retrieve the
+            NCBI taxonomy ID if the scientific name is provided, retrieve the scientific name if the taxonomy ID is
+            provided or perform no function if a comment is passed (indicated by the starting line character '#').</p>
+          <p>The scientific name and taxonomy ID is stored as a single list for each species. This list contains the 3
+            elements:</p>
+          <ul>
+            <li>The species 'Genus' name</li>
+            <li>The species 'Species' name</li>
+            <li>The species taxonomy ID (including the 'NCBI:txid' prefix).</li>
+          </ul>
+          <p>The list is returned by the function and added to the tuple <code>all_species_data</code> within the
+            <code>parse_input_file</code> function. This creates a tuple, with each element containing the
+            indentification data for a unique species.</p>
+
         </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing code_cell rendered">
+      <div class="input">
+        <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
         <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p>The function <code>parse_line</code> coordinates the approrpiate calling of functions to retrieve the
-              NCBI taxonomy ID if the scientific name is provided, retrieve the scientific name if the taxonomy ID is
-              provided or perform no function if a comment is passed (indicated by the starting line character '#').</p>
-            <p>The scientific name and taxonomy ID is stored as a single list for each species. This list contains the 3
-              elements:</p>
-            <ul>
-              <li>The species 'Genus' name</li>
-              <li>The species 'Species' name</li>
-              <li>The species taxonomy ID (including the 'NCBI:txid' prefix).</li>
-            </ul>
-            <p>The list is returned by the function and added to the tuple <code>all_species_data</code> within the
-              <code>parse_input_file</code> function. This creates a tuple, with each element containing the
-              indentification data for a unique species.</p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing code_cell rendered">
-        <div class="input">
-          <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-          <div class="inner_cell">
-            <div class="input_area">
-              <div class=" highlight hl-ipython3">
-                <pre><span></span><span class="k">def</span> <span class="nf">parse_line</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">line_count</span><span class="p">,</span> <span class="n">retries</span><span class="p">):</span>
+          <div class="input_area">
+            <div class=" highlight hl-ipython3">
+              <pre><span></span><span class="k">def</span> <span class="nf">parse_line</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">line_count</span><span class="p">,</span> <span class="n">retries</span><span class="p">):</span>
     
     <span class="c1"># For taxonomy ID retrieve scientific name</span>
     <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;NCBI:txid&quot;</span><span class="p">):</span>
@@ -16780,57 +16773,63 @@ Adapted from GitHub theme
 
     <span class="k">return</span> <span class="n">line_data</span>
 </pre>
-              </div>
-
             </div>
+
           </div>
         </div>
-
       </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
+
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <p><a id="linkscientific"><a /></p>
+
         </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <h3 id="Scientific-name-and-Taxonomy-ID-retrieval">Scientific name and Taxonomy ID retrieval<a
+              class="anchor-link" href="#Scientific-name-and-Taxonomy-ID-retrieval">&#182;</a></h3>
+          <p>The retrieval of the scientific names and taxonomy ID from the NCBI Taxonomy databased is performed by
+            the functions <code>get_genus_species_name</code> and <code>get_taxonomy_ID</code>.</p>
+          <p>Each function calls to the NCBI Taxonomy database using entrez.</p>
+
+        </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <p>
+            <div class="alert-danger">
+              If the retrieval of scientific name or taxonomy ID fails, the null value 'NA' is returned.
+              The retreieval of scientific name has the additional test to check if the 'name' passed to the function
+              contains any numbers. IF so the null value is returned 'NA', the most common cause for this is a typo in
+              the scientific name or exclusion of the taxonomy ID prefix 'NCBI:txid' in the taxonomy ID written in the
+              input.
+              More detail on the probably causes of common errors is discussed in the projects README.md file.
+            </div>
+          </p>
+
+        </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing code_cell rendered">
+      <div class="input">
+        <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
         <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p><a id="linkscientific"><a /></p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <h3 id="Scientific-name-and-Taxonomy-ID-retrieval">Scientific name and Taxonomy ID retrieval<a
-                class="anchor-link" href="#Scientific-name-and-Taxonomy-ID-retrieval">&#182;</a></h3>
-            <p>The retrieval of the scientific names and taxonomy ID from the NCBI Taxonomy databased is performed by
-              the functions <code>get_genus_species_name</code> and <code>get_taxonomy_ID</code>.</p>
-            <p>Each function calls to the NCBI Taxonomy database using entrez.</p>
-            <p>
-              <div class="alert-danger">If the scientific name or taxonomy ID was failed to be retrieved the
-                <code>pandas</code> module
-                recognised null value 'NA'. More detail on the probably causes of common errors is discussed in the
-                project's README.md file.</div>
-            </p>
-            <p>
-              <div class="alert-warning">
-                The retrieve of scientific names has the additional test to check if the 'name' passed to the function
-                contains any number. If so, the null value is returned 'NA', the most common cause for this is inclusion
-                of a taxonomy ID in the input file without the prefix 'NCBI:txid'.
-              </div>
-            </p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing code_cell rendered">
-        <div class="input">
-          <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-          <div class="inner_cell">
-            <div class="input_area">
-              <div class=" highlight hl-ipython3">
-                <pre><span></span><span class="k">def</span> <span class="nf">get_genus_species_name</span><span class="p">(</span><span class="n">taxonomy_id</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">line_number</span><span class="p">,</span> <span class="n">retries</span><span class="p">):</span>
+          <div class="input_area">
+            <div class=" highlight hl-ipython3">
+              <pre><span></span><span class="k">def</span> <span class="nf">get_genus_species_name</span><span class="p">(</span><span class="n">taxonomy_id</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">line_number</span><span class="p">,</span> <span class="n">retries</span><span class="p">):</span>
 
     <span class="c1"># Retrieve scientific name</span>
     <span class="k">with</span> <span class="n">entrez_retry</span><span class="p">(</span>
@@ -16867,187 +16866,19 @@ Adapted from GitHub theme
         <span class="c1"># log error</span>
         <span class="k">return</span> <span class="s2">&quot;NA&quot;</span>
 </pre>
-              </div>
-
             </div>
-          </div>
-        </div>
-
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p>
-            </p>
 
           </div>
         </div>
       </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p><a id="linkcdf"><a /></p>
 
-          </div>
-        </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
       </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <h3 id="Creating-the-dataframe">Creating the dataframe<a class="anchor-link"
-                href="#Creating-the-dataframe">&#182;</a></h3>
-            <p>The <code>pandas</code> module is used to create a dataframe, within the <code>parse_input_file</code>
-              function, with three columns:</p>
-            <ul>
-              <li>Genus</li>
-              <li>Species</li>
-              <li>NCBI Taxonomy ID
-                With a unique species per line.</li>
-            </ul>
-            <p><code>Pandas</code> enables easier and faster storage and malipulation of dataframes than other table
-              creating packages. More information is <a href="https://pandas.pydata.org/">available at</a>.</p>
-            <p>The dataframe (<code>species_table</code>) is returned to the function <code>main</code>.</p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing code_cell rendered">
-        <div class="input">
-          <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-          <div class="inner_cell">
-            <div class="input_area">
-              <div class=" highlight hl-ipython3">
-                <pre><span></span>    <span class="n">species_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-        <span class="n">all_species_data</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Genus&quot;</span><span class="p">,</span> <span class="s2">&quot;Species&quot;</span><span class="p">,</span> <span class="s2">&quot;NCBI Taxonomy ID&quot;</span><span class="p">]</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">species_table</span>
-</pre>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p><a id="linkretrieving"><a /></p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <h2 id="Retrieving-accession-numbers">Retrieving accession numbers<a class="anchor-link"
-                href="#Retrieving-accession-numbers">&#182;</a></h2>
-            <p>The <code>pandas</code> module allows simultanous applying of a function to a dataframe, iterating over a
-              given axis (row or column). This results in a 100-times faster processing of the dataframe than using a
-              traditional Pythonic <code>for loop</code>. Therefore, the <code>pandas apply</code> function is used to
-              retrieve the accession numbers of all genomic assemblies associated with each taxonomy ID within the
-              <code>species_table</code> dataframe; this is completed by calling the function
-              <code>get_accession_numbers</code>, and retrieved accession numbers are stored in a new column in the
-              dataframe: <code>NCBI Accession Numbers</code>.</p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p>
-              <div class="alert-danger">
-                As before, if the retrieval of the asseccion numbers fails at any point, the null value 'NA' is
-                returned, and the retrieval of the accession numbers is exited.
-              </div>
-            </p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing code_cell rendered">
-        <div class="input">
-          <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-          <div class="inner_cell">
-            <div class="input_area">
-              <div class=" highlight hl-ipython3">
-                <pre><span></span><span class="n">species_table</span><span class="p">[</span><span class="s2">&quot;NCBI Accession Numbers&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">species_table</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
-    <span class="n">get_accession_numbers</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">args</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
-<span class="p">)</span>
-</pre>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p>
-              <div class="alert-danger">
-                If the taxonomy ID was failed to be retrieved previously (and was thus stored as 'NA') a null value of
-                'NA' will automatically be returned for accession numbers'.
-              </div>
-            </p>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p>The <code>pandas apply</code> function passes a <code>pandas series</code> with each element (or cell
-              within the dataframe) accessible via an index number, similar to accessing an element in a list.</p>
-            <p>The <code>apply function</code> is applied to each row of the dataframe thus each column is given its own
-              index number, in order to access the appropriate data. In this case the index number assignments are:</p>
-            <blockquote>
-              <p>df_row[0]: Genus
-                df_row[1]: Species
-                df_row[2]: Taxonomy ID</p>
-            </blockquote>
-
-          </div>
-        </div>
-      </div>
-      <div class="cell border-box-sizing text_cell rendered">
-        <div class="prompt input_prompt">
-        </div>
-        <div class="inner_cell">
-          <div class="text_cell_render border-box-sizing rendered_html">
-            <p>
-              <div class="alert-warning">
-                Entrez will only retrieve the accession numbers of genomic assembly entries, within the NCBI Assembly
-                database, which are <strong>directly</strong> linked to the taxonomy entry (identified by its taxonomy
-                ID); it will not return accession numbers for genomic assembly entries which are
-                <strong>subtree</strong> linked.
-            </p>
-            <p><strong>Directly</strong> linked entries are those that have the organism assigned as the source organism
-              for the data.<br>
-              <strong>Subtree</strong> linked entries are those record assocated with taxonomy node, and all nodes which
-              are underneath.</p>
-            <p>Browsing a taxonomy entry witihn the NCBI Taxonomy database via the browser will quickly identify if any
-              genomic assemblies have been directly linked.
-          </div>
-          </p>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <p><a id="linkcdf"><a /></p>
 
         </div>
       </div>
@@ -17057,30 +16888,19 @@ Adapted from GitHub theme
       </div>
       <div class="inner_cell">
         <div class="text_cell_render border-box-sizing rendered_html">
-          <p><a id="linkassemblyids"><a /></p>
-
-        </div>
-      </div>
-    </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
-      </div>
-      <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <h3 id="Retrieval-of-assembly-IDs">Retrieval of assembly IDs<a class="anchor-link"
-              href="#Retrieval-of-assembly-IDs">&#182;</a></h3>
-        </div>
-      </div>
-    </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
-      </div>
-      <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <p><code>Entrez</code> is used to perform the call to the NCBI Assembly database. Owing to the taxonomy IDs
-            for a species being stored within the NCBI Taxonomy database the <code>Entrez</code> function
-            <code>elink</code> is used to retrieve the IDs of all genomic assemblies within the NCBI Assebmly database
-            that are associated with the provided taxonomy ID.</p>
+          <h3 id="Creating-the-dataframe">Creating the dataframe<a class="anchor-link"
+              href="#Creating-the-dataframe">&#182;</a></h3>
+          <p>The <code>pandas</code> module is used to create a dataframe, within the <code>parse_input_file</code>
+            function, with three columns:</p>
+          <ul>
+            <li>Genus</li>
+            <li>Species</li>
+            <li>NCBI Taxonomy ID
+              With a unique species per line.</li>
+          </ul>
+          <p><code>Pandas</code> enables easier and faster storage and malipulation of dataframes than other table
+            creating packages. More information is <a href="https://pandas.pydata.org/">available at</a>.</p>
+          <p>The dataframe (<code>species_table</code>) is returned to the function <code>main</code>.</p>
 
         </div>
       </div>
@@ -17091,7 +16911,161 @@ Adapted from GitHub theme
         <div class="inner_cell">
           <div class="input_area">
             <div class=" highlight hl-ipython3">
-              <pre><span></span><span class="k">def</span> <span class="nf">get_accession_numbers</span><span class="p">(</span><span class="n">df_row</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+              <pre><span></span>    <span class="n">species_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+        <span class="n">all_species_data</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Genus&quot;</span><span class="p">,</span> <span class="s2">&quot;Species&quot;</span><span class="p">,</span> <span class="s2">&quot;NCBI Taxonomy ID&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">species_table</span>
+</pre>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <p><a id="linkretrieving"><a /></p>
+
+        </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <h2 id="Retrieving-accession-numbers">Retrieving accession numbers<a class="anchor-link"
+              href="#Retrieving-accession-numbers">&#182;</a></h2>
+          <p>The <code>pandas</code> module allows simultanous applying of a function to a dataframe, iterating over a
+            given axis (row or column). This results in a 100-times faster processing of the dataframe than using a
+            traditional Pythonic <code>for loop</code>. Therefore, the <code>pandas apply</code> function is used to
+            retrieve the accession numbers of all genomic assemblies associated with each taxonomy ID within the
+            <code>species_table</code> dataframe; this is completed by calling the function
+            <code>get_accession_numbers</code>, and retrieved accession numbers are stored in a new column in the
+            dataframe: <code>NCBI Accession Numbers</code>.</p>
+
+        </div>
+      </div>
+    </div>
+    <div class="cell border-box-sizing text_cell rendered">
+      <div class="prompt input_prompt">
+      </div>
+      <div class="inner_cell">
+        <div class="text_cell_render border-box-sizing rendered_html">
+          <p>
+            <div class="alert-warning">
+              Entrez will only retrieve the accession numbers of genomic assembly entries, within the NCBI Assembly
+              database, which are <strong>directly</strong> linked to the taxonomy entry (identified by its taxonomy
+              ID); it will not return accession numbers for genomic assembly entries which are
+              <strong>subtree</strong> linked.
+          </p>
+          <p><strong>Directly</strong> linked entries are those that have the organism assigned as the source organism
+            for the data.<br>
+            <strong>Subtree</strong> linked entries are those record assocated with taxonomy node, and all nodes which
+            are underneath.</p>
+          <p>Browsing a taxonomy entry witihn the NCBI Taxonomy database via the browser will quickly identify if any
+            genomic assemblies have been directly linked.
+        </div>
+        </p>
+
+      </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <p>
+          <div class="alert-danger">
+            As before, if the retrieval of the asseccion numbers fails at any point, the null value 'NA' is returned,
+            and the retrieval of the accession numbers is exited.
+        </p>
+        <p>If the taxonomy ID was failed to be retrieved previously (and was thus stored as 'NA') a null value of 'NA'
+          will automatically be returned for accession numbers'.
+      </div>
+      </p>
+
+    </div>
+  </div>
+  </div>
+  <div class="cell border-box-sizing code_cell rendered">
+    <div class="input">
+      <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+      <div class="inner_cell">
+        <div class="input_area">
+          <div class=" highlight hl-ipython3">
+            <pre><span></span><span class="n">species_table</span><span class="p">[</span><span class="s2">&quot;NCBI Accession Numbers&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">species_table</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+    <span class="n">get_accession_numbers</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">args</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+<span class="p">)</span>
+</pre>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <p>The <code>pandas apply</code> function passes a <code>pandas series</code> with each element (or cell within
+          the dataframe) accessible via an index number, similar to accessing an element in a list.</p>
+        <ul>
+          <li>df_row[0]: Genus</li>
+          <li>df_row[1]: Species</li>
+          <li>df_row[2]: Taxonomy ID</li>
+        </ul>
+
+      </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <p><a id="linkassemblyids"><a /></p>
+
+      </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <h3 id="Retrieval-of-assembly-IDs">Retrieval of assembly IDs<a class="anchor-link"
+            href="#Retrieval-of-assembly-IDs">&#182;</a></h3>
+      </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <p><code>Entrez</code> is used to perform the call to the NCBI Assembly database. Owing to the taxonomy IDs for
+          a species being stored within the NCBI Taxonomy database the <code>Entrez</code> function <code>elink</code>
+          is used to retrieve the IDs of all genomic assemblies within the NCBI Assebmly database that are linked with
+          the species NCBI Taxonomy database entry.</p>
+
+      </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing code_cell rendered">
+    <div class="input">
+      <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+      <div class="inner_cell">
+        <div class="input_area">
+          <div class=" highlight hl-ipython3">
+            <pre><span></span><span class="k">def</span> <span class="nf">get_accession_numbers</span><span class="p">(</span><span class="n">df_row</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
         <span class="k">with</span> <span class="n">entrez_retry</span><span class="p">(</span>
         <span class="n">logger</span><span class="p">,</span>
         <span class="n">args</span><span class="o">.</span><span class="n">retries</span><span class="p">,</span>
@@ -17103,34 +17077,33 @@ Adapted from GitHub theme
     <span class="p">)</span> <span class="k">as</span> <span class="n">assembly_number_handle</span><span class="p">:</span>
         <span class="n">assembly_number_record</span> <span class="o">=</span> <span class="n">Entrez</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">assembly_number_handle</span><span class="p">)</span>
 </pre>
-            </div>
-
           </div>
+
         </div>
       </div>
-
     </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
+
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <p>This retrieves a list of IDs for all genomic assemblies associated with the taxonomy ID. To minimus the
+          number of calls to the NCBI database, the list of IDs is posted as a single query to NCBI using
+          <code>Entrez</code>, of which the web environment and query key is retrieved to facilitate the retrieval of
+          the accession numbers of the identified genomic assemblies.</p>
+
       </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing code_cell rendered">
+    <div class="input">
+      <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
       <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <p>This retrieves a list of IDs for all genomic assemblies associated with the taxonomy ID. To minimus the
-            number of calls to the NCBI database, the list of IDs is posted as a single query to NCBI using
-            <code>Entrez</code>.</p>
-          <p>The web environment and query key are retrieved to facilitate the retrieval of the accession numbers of the
-            identified genomic assemblies.</p>
-
-        </div>
-      </div>
-    </div>
-    <div class="cell border-box-sizing code_cell rendered">
-      <div class="input">
-        <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-        <div class="inner_cell">
-          <div class="input_area">
-            <div class=" highlight hl-ipython3">
-              <pre><span></span>    <span class="c1"># compile list of ids in suitable format for epost</span>
+        <div class="input_area">
+          <div class=" highlight hl-ipython3">
+            <pre><span></span>    <span class="c1"># compile list of ids in suitable format for epost</span>
     <span class="n">id_post_list</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">assembly_id_list</span><span class="p">))</span>
     <span class="c1"># Post all assembly IDs to Entrez-NCBI for downstream pulldown of accession numbers</span>
     <span class="n">epost_search_results</span> <span class="o">=</span> <span class="n">Entrez</span><span class="o">.</span><span class="n">read</span><span class="p">(</span>
@@ -17141,52 +17114,52 @@ Adapted from GitHub theme
     <span class="n">epost_webenv</span> <span class="o">=</span> <span class="n">epost_search_results</span><span class="p">[</span><span class="s2">&quot;WebEnv&quot;</span><span class="p">]</span>
     <span class="n">epost_query_key</span> <span class="o">=</span> <span class="n">epost_search_results</span><span class="p">[</span><span class="s2">&quot;QueryKey&quot;</span><span class="p">]</span>
 </pre>
-            </div>
-
           </div>
-        </div>
-      </div>
-
-    </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
-      </div>
-      <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <p><a id="linkanretrieve"><a /></p>
 
         </div>
       </div>
     </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
-      </div>
-      <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <h3 id="Retrieval-of-the-accession-numbers">Retrieval of the accession numbers<a class="anchor-link"
-              href="#Retrieval-of-the-accession-numbers">&#182;</a></h3>
-        </div>
-      </div>
-    </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
-      </div>
-      <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <p><code>Entrez</code> is used again to retrieval the accession numbers from the previously posted query. The
-            accession numbers are collated into a single list, which is then converted into a string, this prevents the
-            storage/appearance of list book ending sequare brackets <code>[]</code> within the final dataframe.</p>
 
-        </div>
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <p><a id="linkanretrieve"><a /></p>
+
       </div>
     </div>
-    <div class="cell border-box-sizing code_cell rendered">
-      <div class="input">
-        <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-        <div class="inner_cell">
-          <div class="input_area">
-            <div class=" highlight hl-ipython3">
-              <pre><span></span><span class="n">ncbi_accession_numbers_list</span> <span class="o">=</span> <span class="p">[]</span>
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <h3 id="Retrieval-of-the-accession-numbers">Retrieval of the accession numbers<a class="anchor-link"
+            href="#Retrieval-of-the-accession-numbers">&#182;</a></h3>
+      </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <p><code>Entrez</code> is used again for retrieval the accession numbers from the previously posted query. The
+          accession numbers are collated into a single list, which is then converted into a string, this prevents the
+          appearance of list book ending sequare brackets <code>[]</code> within the final dataframe.</p>
+
+      </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing code_cell rendered">
+    <div class="input">
+      <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+      <div class="inner_cell">
+        <div class="input_area">
+          <div class=" highlight hl-ipython3">
+            <pre><span></span><span class="n">ncbi_accession_numbers_list</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">with</span> <span class="n">entrez_retry</span><span class="p">(</span>
         <span class="n">logger</span><span class="p">,</span>
@@ -17216,7 +17189,7 @@ Adapted from GitHub theme
             <span class="c1"># log error and return null value</span>
             <span class="k">return</span> <span class="s2">&quot;NA&quot;</span>
         
-        <span class="c1"># GenBank file download enabling check</span>
+        <span class="c1"># Download genbank file for genomic assemble entry</span>
 
         <span class="n">index_number</span> <span class="o">+=</span> <span class="mi">1</span>
 
@@ -17225,54 +17198,54 @@ Adapted from GitHub theme
 
     <span class="k">return</span> <span class="n">ncbi_accession_numbers</span>
 </pre>
-            </div>
-
           </div>
-        </div>
-      </div>
-
-    </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
-      </div>
-      <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <p><a id="linkgenbank"><a /></p>
 
         </div>
       </div>
     </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
-      </div>
-      <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <h2 id="Downloading-GenBank-files">Downloading GenBank files<a class="anchor-link"
-              href="#Downloading-GenBank-files">&#182;</a></h2>
-        </div>
-      </div>
-    </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
-      </div>
-      <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <p>Prior to add the retrieved accession number to the growing list of accessio numbers, a check is performed
-            to see if the the downloading of the GenBank file (.gbff) associated with the genomic assembly entry is to
-            be downloaded.</p>
-          <p>If enabled, the downloading of the GenBank file is initated by called to the <code>get_genbank_files</code>
-            function.</p>
 
-        </div>
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <p><a id="linkgenbank"><a /></p>
+
       </div>
     </div>
-    <div class="cell border-box-sizing code_cell rendered">
-      <div class="input">
-        <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-        <div class="inner_cell">
-          <div class="input_area">
-            <div class=" highlight hl-ipython3">
-              <pre><span></span>        <span class="c1"># If downloading of GenBank files is enabled, download Genbank files</span>
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <h2 id="Downloading-GenBank-files">Downloading GenBank files<a class="anchor-link"
+            href="#Downloading-GenBank-files">&#182;</a></h2>
+      </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <p>Prior to adding the newly retrieved accession number to the growing list of all accession numbers for a
+          specific species, a check is performed to see if the the downloading of the GenBank file (.gbff) of the
+          genomic assembly entry is enabled.</p>
+        <p>If enabled, the downloading of the GenBank file is initated by calling the <code>get_genbank_files</code>
+          function.</p>
+
+      </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing code_cell rendered">
+    <div class="input">
+      <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+      <div class="inner_cell">
+        <div class="input_area">
+          <div class=" highlight hl-ipython3">
+            <pre><span></span>        <span class="c1"># If downloading of GenBank files is enabled, download Genbank files</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">genbank</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
             <span class="n">get_genbank_files</span><span class="p">(</span>
                 <span class="n">new_accession_number</span><span class="p">,</span>
@@ -17292,32 +17265,32 @@ Adapted from GitHub theme
     <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;genomic.gbff.gz&quot;</span><span class="p">,</span>
 <span class="p">):</span>
 </pre>
-            </div>
-
           </div>
+
         </div>
       </div>
-
     </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
+
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <p>The downloading of any file requires a URL address from which to download a file, and an output path to write
+          the downloaded data too. The creation of both is orchestrated by the <code>get_genbank_files</code> function.
+        </p>
+
       </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing code_cell rendered">
+    <div class="input">
+      <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
       <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <p>The downloading of any file requires a URL address from which to download a file, and an output path to
-            write the downloaded data too. The creation of both is orchestrated by the <code>get_genbank_files</code>
-            function.</p>
-
-        </div>
-      </div>
-    </div>
-    <div class="cell border-box-sizing code_cell rendered">
-      <div class="input">
-        <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-        <div class="inner_cell">
-          <div class="input_area">
-            <div class=" highlight hl-ipython3">
-              <pre><span></span><span class="k">def</span> <span class="nf">get_genbank_files</span><span class="p">(</span>
+        <div class="input_area">
+          <div class=" highlight hl-ipython3">
+            <pre><span></span><span class="k">def</span> <span class="nf">get_genbank_files</span><span class="p">(</span>
     <span class="n">accession_number</span><span class="p">,</span>
     <span class="n">assembly_name</span><span class="p">,</span>
     <span class="n">logger</span><span class="p">,</span>
@@ -17341,43 +17314,49 @@ Adapted from GitHub theme
 
     <span class="k">return</span>
 </pre>
-            </div>
-
           </div>
+
         </div>
       </div>
-
     </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
+
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <p><a id="linkurl"><a /></p>
+
       </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <h3 id="Compiling-the-URL">Compiling the URL<a class="anchor-link" href="#Compiling-the-URL">&#182;</a></h3>
+        <p>NCBI records can include a variety of escape characters within its records, but requires all escape
+          characters to be written as underscores within its URLs. The <code>regular expression</code> module of Python
+          is used to replace any escape charcters with underscords, prior to compiling the URL.</p>
+        <p>
+          <div class="alert-warning">NCBI genomic assembly files are avaialble for download from the NCBI FTP site hence
+            the prefix (the ftpstem)
+            and structure of the compiled URL does not match the structure of the URL when searching the NCBI Assembly
+            database in-browser.</div>
+        </p>
+
+      </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing code_cell rendered">
+    <div class="input">
+      <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
       <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <p><a id="linkurl"><a /></p>
-
-        </div>
-      </div>
-    </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
-      </div>
-      <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <h3 id="Compiling-the-URL">Compiling the URL<a class="anchor-link" href="#Compiling-the-URL">&#182;</a></h3>
-          <p>NCBI records can include a variety of escape characters within its records, but requires all escape
-            characters to be written as underscores within its URLS. The <code>regular expression</code> module of
-            Python is used to replace any escape charcters with underscords, prior to compiling the URL.</p>
-
-        </div>
-      </div>
-    </div>
-    <div class="cell border-box-sizing code_cell rendered">
-      <div class="input">
-        <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-        <div class="inner_cell">
-          <div class="input_area">
-            <div class=" highlight hl-ipython3">
-              <pre><span></span><span class="k">def</span> <span class="nf">compile_url</span><span class="p">(</span>
+        <div class="input_area">
+          <div class=" highlight hl-ipython3">
+            <pre><span></span><span class="k">def</span> <span class="nf">compile_url</span><span class="p">(</span>
     <span class="n">accession_number</span><span class="p">,</span>
     <span class="n">assembly_name</span><span class="p">,</span>
     <span class="n">logger</span><span class="p">,</span>
@@ -17408,46 +17387,46 @@ Adapted from GitHub theme
         <span class="n">filestem</span><span class="p">,</span>
     <span class="p">)</span>
 </pre>
-            </div>
-
           </div>
+
         </div>
       </div>
-
     </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
+
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <p><a id="linkdownload"><a /></p>
+
       </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <h3 id="Downloading-the-GenBank-file">Downloading the GenBank file<a class="anchor-link"
+            href="#Downloading-the-GenBank-file">&#182;</a></h3>
+        <p>The downloading of the GenBank file is initated with calling the <code>download_file</code> function.</p>
+        <p>The URL connection is coordinated by the Python <code>urllib</code> module (<a
+            href="https://docs.python.org/3/library/urllib.html">Documentation found here</a>.</p>
+        <p>The Python <code>tqdm</code> module is also used provide a visual log of the download progress in the
+          terminal.</p>
+
+      </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing code_cell rendered">
+    <div class="input">
+      <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
       <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <p><a id="linkdownloading"><a /></p>
-
-        </div>
-      </div>
-    </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
-      </div>
-      <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <h3 id="Downloading-the-GenBank-file">Downloading the GenBank file<a class="anchor-link"
-              href="#Downloading-the-GenBank-file">&#182;</a></h3>
-          <p>The downloading of the GenBank file is initated with calling the <code>download_file</code> function.</p>
-          <p>The URL connection is coordinated by the Python <code>urllib</code> module (<a
-              href="https://docs.python.org/3/library/urllib.html">Documentation found here</a>.</p>
-          <p>The Python <code>tqdm</code> module is also used provide a visual log of the download progress in the
-            terminal.</p>
-
-        </div>
-      </div>
-    </div>
-    <div class="cell border-box-sizing code_cell rendered">
-      <div class="input">
-        <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-        <div class="inner_cell">
-          <div class="input_area">
-            <div class=" highlight hl-ipython3">
-              <pre><span></span><span class="c1"># Try URL connection</span>
+        <div class="input_area">
+          <div class=" highlight hl-ipython3">
+            <pre><span></span><span class="c1"># Try URL connection</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">response</span> <span class="o">=</span> <span class="n">urlopen</span><span class="p">(</span><span class="n">genbank_url</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">HTTPError</span><span class="p">,</span> <span class="n">URLError</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span>
@@ -17480,53 +17459,53 @@ Adapted from GitHub theme
         <span class="k">return</span>
     
 </pre>
-            </div>
-
           </div>
+
         </div>
       </div>
-
     </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
+
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <p><a id="linkoutdf"><a /></p>
+
       </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <h2 id="Writing-out-the-dataframe">Writing out the dataframe<a class="anchor-link"
+            href="#Writing-out-the-dataframe">&#182;</a></h2>
+        <p>If the option to write out the dataframe to a file, rather than STDOUT, is enabled, the function
+          <code>write_out_dataframe</code> will be called.</p>
+        <p>The dataframe is written out as a .csv file (column-separated values format), to allow the opening and
+          reading of the file by several packages including Microsoft Offic Excel, as well as easy parsing of the
+          dataframe by other <code>pandas</code> using Python scripts.</p>
+        <p>
+          <div class="alert-danger\">
+            When providing the output path for the .csv file, make sure to include the .csv extention. This will not
+            prevent file being written out but when the file is written out it will be missing the '.csv' extention in
+            its path otherwise.
+          </div>
+        </p>
+
+      </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing code_cell rendered">
+    <div class="input">
+      <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
       <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <p><a id="linkoutdf"><a /></p>
-
-        </div>
-      </div>
-    </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
-      </div>
-      <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <h2 id="Writing-out-the-dataframe">Writing out the dataframe<a class="anchor-link"
-              href="#Writing-out-the-dataframe">&#182;</a></h2>
-          <p>If the option to write out the dataframe to a file, rather than STDOUT, is enabled, the function
-            <code>write_out_dataframe</code> will be called.</p>
-          <p>The dataframe is written out as a .csv file (column-separated values format), to allow the opening and
-            reading of the file by several packages including Microsoft Offic Excel, as well as easy parsing of the
-            dataframe by other <code>pandas</code> using Python scripts.</p>
-          <p>
-            <div class="alert-warning">
-              When providing the output path for the .csv file, make sure to include the .csv extention. This will not
-              prevent file being written out but when the file is written out it will be missing the '.csc' extention in
-              its path otherwise.
-            </div>
-          </p>
-
-        </div>
-      </div>
-    </div>
-    <div class="cell border-box-sizing code_cell rendered">
-      <div class="input">
-        <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-        <div class="inner_cell">
-          <div class="input_area">
-            <div class=" highlight hl-ipython3">
-              <pre><span></span><span class="k">def</span> <span class="nf">write_out_dataframe</span><span class="p">(</span><span class="n">species_table</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">outdir</span><span class="p">,</span> <span class="n">force</span><span class="p">,</span> <span class="n">nodelete</span><span class="p">):</span>
+        <div class="input_area">
+          <div class=" highlight hl-ipython3">
+            <pre><span></span><span class="k">def</span> <span class="nf">write_out_dataframe</span><span class="p">(</span><span class="n">species_table</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">outdir</span><span class="p">,</span> <span class="n">force</span><span class="p">,</span> <span class="n">nodelete</span><span class="p">):</span>
 
     <span class="c1"># Check if overwrite of existing directory will occur</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Checking if output directory for dataframe already exists&quot;</span><span class="p">)</span>
@@ -17550,36 +17529,37 @@ Adapted from GitHub theme
 
     <span class="k">return</span>
 </pre>
-            </div>
-
           </div>
+
         </div>
       </div>
-
     </div>
-    <div class="cell border-box-sizing text_cell rendered">
-      <div class="prompt input_prompt">
+
+  </div>
+  <div class="cell border-box-sizing text_cell rendered">
+    <div class="prompt input_prompt">
+    </div>
+    <div class="inner_cell">
+      <div class="text_cell_render border-box-sizing rendered_html">
+        <p>
+          <div class="alert-info">
+            For the downloading of GenBank files for the project, the dataframe was written out to
+            '2020_05_31_genomes_dataframe.csv', stored within the same directory as the script
+            (<em>get_ncbi_genomes</em>). The following
+            dataframe was written:
+          </div>
+        </p>
+
       </div>
+    </div>
+  </div>
+  <div class="cell border-box-sizing code_cell rendered">
+    <div class="input">
+      <div class="prompt input_prompt">In&nbsp;[6]:</div>
       <div class="inner_cell">
-        <div class="text_cell_render border-box-sizing rendered_html">
-          <p>
-            <div class="alert-info">
-              For the downloading of GenBank files for the project, the dataframe was written out to
-              '2020_05_31_genomes_dataframe.csv', stored within <code>Section1_Extracting_Genomes</code>. The following
-              dataframe was written:
-            </div>
-          </p>
-
-        </div>
-      </div>
-    </div>
-    <div class="cell border-box-sizing code_cell rendered">
-      <div class="input">
-        <div class="prompt input_prompt">In&nbsp;[6]:</div>
-        <div class="inner_cell">
-          <div class="input_area">
-            <div class=" highlight hl-ipython3">
-              <pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+        <div class="input_area">
+          <div class=" highlight hl-ipython3">
+            <pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span>
@@ -17590,276 +17570,276 @@ Adapted from GitHub theme
     <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Genus&quot;</span><span class="p">,</span> <span class="s2">&quot;Species&quot;</span><span class="p">,</span> <span class="s2">&quot;NCBI Taxonomy ID&quot;</span><span class="p">,</span> <span class="s2">&quot;NCBI Accession Numbers&quot;</span><span class="p">]</span>
 <span class="p">))</span>
 </pre>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      <div class="output_wrapper">
-        <div class="output">
-
-
-          <div class="output_area">
-
-            <div class="prompt"></div>
-
-
-
-            <div class="output_html rendered_html output_subarea ">
-              <div>
-                <style scoped>
-                  .dataframe tbody tr th:only-of-type {
-                    vertical-align: middle;
-                  }
-
-                  .dataframe tbody tr th {
-                    vertical-align: top;
-                  }
-
-                  .dataframe thead th {
-                    text-align: right;
-                  }
-                </style>
-                <table border="1" class="dataframe">
-                  <thead>
-                    <tr style="text-align: right;">
-                      <th></th>
-                      <th>Genus</th>
-                      <th>Species</th>
-                      <th>NCBI Taxonomy ID</th>
-                      <th>NCBI Accession Numbers</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <th>0</th>
-                      <td>Aspergillus</td>
-                      <td>fumigatus</td>
-                      <td>NCBI:txid746128</td>
-                      <td>GCA_012656185.1, GCA_012656215.1, GCA_01265616...</td>
-                    </tr>
-                    <tr>
-                      <th>1</th>
-                      <td>Aspergillus</td>
-                      <td>nidulans</td>
-                      <td>NCBI:txid162425</td>
-                      <td>GCA_011075025.1, GCA_011074995.1</td>
-                    </tr>
-                    <tr>
-                      <th>2</th>
-                      <td>Aspergillus</td>
-                      <td>niger</td>
-                      <td>NCBI:txid5061</td>
-                      <td>GCA_011316255.1, GCA_009812365.1, GCA_00463431...</td>
-                    </tr>
-                    <tr>
-                      <th>3</th>
-                      <td>Aspergillus</td>
-                      <td>sydowii</td>
-                      <td>NCBI:txid75750</td>
-                      <td>GCA_009828905.1, GCA_009193685.1</td>
-                    </tr>
-                    <tr>
-                      <th>4</th>
-                      <td>Fusarium</td>
-                      <td>graminearum</td>
-                      <td>NCBI:txid5518</td>
-                      <td>GCA_012959185.1, GCA_006942295.1, GCA_90049270...</td>
-                    </tr>
-                    <tr>
-                      <th>5</th>
-                      <td>Fusarium</td>
-                      <td>oxysporum</td>
-                      <td>NCBI:txid5507</td>
-                      <td>GCA_011428085.1, GCA_011426355.1, GCA_01142633...</td>
-                    </tr>
-                    <tr>
-                      <th>6</th>
-                      <td>Fusarium</td>
-                      <td>proliferatum</td>
-                      <td>NCBI:txid948311</td>
-                      <td>GCA_003709405.1, GCA_003705095.1, GCA_00370496...</td>
-                    </tr>
-                    <tr>
-                      <th>7</th>
-                      <td>Magnaporthe</td>
-                      <td>grisea</td>
-                      <td>NCBI:txid148305</td>
-                      <td>GCF_004355905.1, GCA_003933175.1, GCA_00292524...</td>
-                    </tr>
-                    <tr>
-                      <th>8</th>
-                      <td>Magnaporthe</td>
-                      <td>oryzae</td>
-                      <td>NCBI:txid318829</td>
-                      <td>GCA_012979135.1, GCA_012978465.1, GCA_01297841...</td>
-                    </tr>
-                    <tr>
-                      <th>9</th>
-                      <td>Mycosphaerella</td>
-                      <td>graminicola</td>
-                      <td>NCBI:txid1047171</td>
-                      <td>GCA_902712725.1, GCA_003613095.1, GCA_00361118...</td>
-                    </tr>
-                    <tr>
-                      <th>10</th>
-                      <td>Rhynchosporium</td>
-                      <td>agropyri</td>
-                      <td>NCBI:txid914238</td>
-                      <td>GCA_900074905.1</td>
-                    </tr>
-                    <tr>
-                      <th>11</th>
-                      <td>Rhynchosporium</td>
-                      <td>commune</td>
-                      <td>NCBI:txid914237</td>
-                      <td>GCA_900074885.1</td>
-                    </tr>
-                    <tr>
-                      <th>12</th>
-                      <td>Rhynchosporium</td>
-                      <td>secalis</td>
-                      <td>NCBI:txid38038</td>
-                      <td>GCA_900074895.1</td>
-                    </tr>
-                    <tr>
-                      <th>13</th>
-                      <td>Trichoderma</td>
-                      <td>asperellum</td>
-                      <td>NCBI:txid101201</td>
-                      <td>GCA_004154885.1, GCA_000733085.2</td>
-                    </tr>
-                    <tr>
-                      <th>14</th>
-                      <td>Trichoderma</td>
-                      <td>atroviride</td>
-                      <td>NCBI:txid63577</td>
-                      <td>GCA_002916895.1, GCA_001599035.1, GCA_000963795.1</td>
-                    </tr>
-                    <tr>
-                      <th>15</th>
-                      <td>Trichoderma</td>
-                      <td>citrinoviride</td>
-                      <td>NCBI:txid58853</td>
-                      <td>GCF_003025115.1</td>
-                    </tr>
-                    <tr>
-                      <th>16</th>
-                      <td>Trichoderma</td>
-                      <td>harzianum</td>
-                      <td>NCBI:txid5544</td>
-                      <td>GCA_010015525.1, GCA_002894145.1, GCA_00283884...</td>
-                    </tr>
-                    <tr>
-                      <th>17</th>
-                      <td>Trichoderma</td>
-                      <td>reesei</td>
-                      <td>NCBI:txid51453</td>
-                      <td>GCA_004762065.1, GCA_001999515.1</td>
-                    </tr>
-                    <tr>
-                      <th>18</th>
-                      <td>Ustilago</td>
-                      <td>maydis</td>
-                      <td>NCBI:txid5270</td>
-                      <td>GCA_001736185.1, GCA_001736215.1, GCA_00173615...</td>
-                    </tr>
-                    <tr>
-                      <th>19</th>
-                      <td>Ustilago</td>
-                      <td>bromivora</td>
-                      <td>NCBI:txid307758</td>
-                      <td>GCA_900101485.1, GCA_900080155.1</td>
-                    </tr>
-                    <tr>
-                      <th>20</th>
-                      <td>Albugo</td>
-                      <td>candida</td>
-                      <td>NCBI:txid65357</td>
-                      <td>GCA_000326065.1, GCA_000326045.1, GCA_00130677...</td>
-                    </tr>
-                    <tr>
-                      <th>21</th>
-                      <td>Hyaloperonospora</td>
-                      <td>arabidopsidis</td>
-                      <td>NCBI:txid272952</td>
-                      <td>GCA_001414525.1, GCA_001414265.1</td>
-                    </tr>
-                    <tr>
-                      <th>22</th>
-                      <td>Phytophthora</td>
-                      <td>cinnamomi</td>
-                      <td>NCBI:txid4785</td>
-                      <td>GCA_002734105.1, GCA_002734125.1, GCA_00131450...</td>
-                    </tr>
-                    <tr>
-                      <th>23</th>
-                      <td>Phytophthora</td>
-                      <td>capsici</td>
-                      <td>NCBI:txid4784</td>
-                      <td>GCA_004138045.1, GCA_004137965.1, GCA_00413797...</td>
-                    </tr>
-                    <tr>
-                      <th>24</th>
-                      <td>Phytophthora</td>
-                      <td>infestans</td>
-                      <td>NCBI:txid4787</td>
-                      <td>GCA_012552325.1, GCA_012295175.1, GCA_01131631...</td>
-                    </tr>
-                    <tr>
-                      <th>25</th>
-                      <td>Phytophthora</td>
-                      <td>parasitica</td>
-                      <td>NCBI:txid4792</td>
-                      <td>GCA_000509525.1, GCA_000509505.1, GCA_00050946...</td>
-                    </tr>
-                    <tr>
-                      <th>26</th>
-                      <td>Phytophthora</td>
-                      <td>ramorum</td>
-                      <td>NCBI:txid164328</td>
-                      <td>GCA_004343245.1, GCA_003956735.1, GCA_00296891...</td>
-                    </tr>
-                    <tr>
-                      <th>27</th>
-                      <td>Phytophthora</td>
-                      <td>sojae</td>
-                      <td>NCBI:txid67593</td>
-                      <td>GCA_009848525.1, GCF_000149755.1</td>
-                    </tr>
-                    <tr>
-                      <th>28</th>
-                      <td>Plasmopara</td>
-                      <td>viticola</td>
-                      <td>NCBI:txid143451</td>
-                      <td>GCA_001695595.3, GCA_003123765.1, GCA_001974925.1</td>
-                    </tr>
-                    <tr>
-                      <th>29</th>
-                      <td>Plasmopara</td>
-                      <td>halstedii</td>
-                      <td>NCBI:txid4781</td>
-                      <td>GCA_004380875.1, GCA_003724065.1, GCA_00364046...</td>
-                    </tr>
-                    <tr>
-                      <th>30</th>
-                      <td>Plasmopara</td>
-                      <td>obducens</td>
-                      <td>NCBI:txid162140</td>
-                      <td>GCA_003640625.1, GCA_003640485.1</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
           </div>
 
         </div>
       </div>
-
     </div>
+
+    <div class="output_wrapper">
+      <div class="output">
+
+
+        <div class="output_area">
+
+          <div class="prompt"></div>
+
+
+
+          <div class="output_html rendered_html output_subarea ">
+            <div>
+              <style scoped>
+                .dataframe tbody tr th:only-of-type {
+                  vertical-align: middle;
+                }
+
+                .dataframe tbody tr th {
+                  vertical-align: top;
+                }
+
+                .dataframe thead th {
+                  text-align: right;
+                }
+              </style>
+              <table border="1" class="dataframe">
+                <thead>
+                  <tr style="text-align: right;">
+                    <th></th>
+                    <th>Genus</th>
+                    <th>Species</th>
+                    <th>NCBI Taxonomy ID</th>
+                    <th>NCBI Accession Numbers</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th>0</th>
+                    <td>Aspergillus</td>
+                    <td>fumigatus</td>
+                    <td>NCBI:txid746128</td>
+                    <td>GCA_012656185.1, GCA_012656215.1, GCA_01265616...</td>
+                  </tr>
+                  <tr>
+                    <th>1</th>
+                    <td>Aspergillus</td>
+                    <td>nidulans</td>
+                    <td>NCBI:txid162425</td>
+                    <td>GCA_011075025.1, GCA_011074995.1</td>
+                  </tr>
+                  <tr>
+                    <th>2</th>
+                    <td>Aspergillus</td>
+                    <td>niger</td>
+                    <td>NCBI:txid5061</td>
+                    <td>GCA_011316255.1, GCA_009812365.1, GCA_00463431...</td>
+                  </tr>
+                  <tr>
+                    <th>3</th>
+                    <td>Aspergillus</td>
+                    <td>sydowii</td>
+                    <td>NCBI:txid75750</td>
+                    <td>GCA_009828905.1, GCA_009193685.1</td>
+                  </tr>
+                  <tr>
+                    <th>4</th>
+                    <td>Fusarium</td>
+                    <td>graminearum</td>
+                    <td>NCBI:txid5518</td>
+                    <td>GCA_012959185.1, GCA_006942295.1, GCA_90049270...</td>
+                  </tr>
+                  <tr>
+                    <th>5</th>
+                    <td>Fusarium</td>
+                    <td>oxysporum</td>
+                    <td>NCBI:txid5507</td>
+                    <td>GCA_011428085.1, GCA_011426355.1, GCA_01142633...</td>
+                  </tr>
+                  <tr>
+                    <th>6</th>
+                    <td>Fusarium</td>
+                    <td>proliferatum</td>
+                    <td>NCBI:txid948311</td>
+                    <td>GCA_003709405.1, GCA_003705095.1, GCA_00370496...</td>
+                  </tr>
+                  <tr>
+                    <th>7</th>
+                    <td>Magnaporthe</td>
+                    <td>grisea</td>
+                    <td>NCBI:txid148305</td>
+                    <td>GCF_004355905.1, GCA_003933175.1, GCA_00292524...</td>
+                  </tr>
+                  <tr>
+                    <th>8</th>
+                    <td>Magnaporthe</td>
+                    <td>oryzae</td>
+                    <td>NCBI:txid318829</td>
+                    <td>GCA_012979135.1, GCA_012978465.1, GCA_01297841...</td>
+                  </tr>
+                  <tr>
+                    <th>9</th>
+                    <td>Mycosphaerella</td>
+                    <td>graminicola</td>
+                    <td>NCBI:txid1047171</td>
+                    <td>GCA_902712725.1, GCA_003613095.1, GCA_00361118...</td>
+                  </tr>
+                  <tr>
+                    <th>10</th>
+                    <td>Rhynchosporium</td>
+                    <td>agropyri</td>
+                    <td>NCBI:txid914238</td>
+                    <td>GCA_900074905.1</td>
+                  </tr>
+                  <tr>
+                    <th>11</th>
+                    <td>Rhynchosporium</td>
+                    <td>commune</td>
+                    <td>NCBI:txid914237</td>
+                    <td>GCA_900074885.1</td>
+                  </tr>
+                  <tr>
+                    <th>12</th>
+                    <td>Rhynchosporium</td>
+                    <td>secalis</td>
+                    <td>NCBI:txid38038</td>
+                    <td>GCA_900074895.1</td>
+                  </tr>
+                  <tr>
+                    <th>13</th>
+                    <td>Trichoderma</td>
+                    <td>asperellum</td>
+                    <td>NCBI:txid101201</td>
+                    <td>GCA_004154885.1, GCA_000733085.2</td>
+                  </tr>
+                  <tr>
+                    <th>14</th>
+                    <td>Trichoderma</td>
+                    <td>atroviride</td>
+                    <td>NCBI:txid63577</td>
+                    <td>GCA_002916895.1, GCA_001599035.1, GCA_000963795.1</td>
+                  </tr>
+                  <tr>
+                    <th>15</th>
+                    <td>Trichoderma</td>
+                    <td>citrinoviride</td>
+                    <td>NCBI:txid58853</td>
+                    <td>GCF_003025115.1</td>
+                  </tr>
+                  <tr>
+                    <th>16</th>
+                    <td>Trichoderma</td>
+                    <td>harzianum</td>
+                    <td>NCBI:txid5544</td>
+                    <td>GCA_010015525.1, GCA_002894145.1, GCA_00283884...</td>
+                  </tr>
+                  <tr>
+                    <th>17</th>
+                    <td>Trichoderma</td>
+                    <td>reesei</td>
+                    <td>NCBI:txid51453</td>
+                    <td>GCA_004762065.1, GCA_001999515.1</td>
+                  </tr>
+                  <tr>
+                    <th>18</th>
+                    <td>Ustilago</td>
+                    <td>maydis</td>
+                    <td>NCBI:txid5270</td>
+                    <td>GCA_001736185.1, GCA_001736215.1, GCA_00173615...</td>
+                  </tr>
+                  <tr>
+                    <th>19</th>
+                    <td>Ustilago</td>
+                    <td>bromivora</td>
+                    <td>NCBI:txid307758</td>
+                    <td>GCA_900101485.1, GCA_900080155.1</td>
+                  </tr>
+                  <tr>
+                    <th>20</th>
+                    <td>Albugo</td>
+                    <td>candida</td>
+                    <td>NCBI:txid65357</td>
+                    <td>GCA_000326065.1, GCA_000326045.1, GCA_00130677...</td>
+                  </tr>
+                  <tr>
+                    <th>21</th>
+                    <td>Hyaloperonospora</td>
+                    <td>arabidopsidis</td>
+                    <td>NCBI:txid272952</td>
+                    <td>GCA_001414525.1, GCA_001414265.1</td>
+                  </tr>
+                  <tr>
+                    <th>22</th>
+                    <td>Phytophthora</td>
+                    <td>cinnamomi</td>
+                    <td>NCBI:txid4785</td>
+                    <td>GCA_002734105.1, GCA_002734125.1, GCA_00131450...</td>
+                  </tr>
+                  <tr>
+                    <th>23</th>
+                    <td>Phytophthora</td>
+                    <td>capsici</td>
+                    <td>NCBI:txid4784</td>
+                    <td>GCA_004138045.1, GCA_004137965.1, GCA_00413797...</td>
+                  </tr>
+                  <tr>
+                    <th>24</th>
+                    <td>Phytophthora</td>
+                    <td>infestans</td>
+                    <td>NCBI:txid4787</td>
+                    <td>GCA_012552325.1, GCA_012295175.1, GCA_01131631...</td>
+                  </tr>
+                  <tr>
+                    <th>25</th>
+                    <td>Phytophthora</td>
+                    <td>parasitica</td>
+                    <td>NCBI:txid4792</td>
+                    <td>GCA_000509525.1, GCA_000509505.1, GCA_00050946...</td>
+                  </tr>
+                  <tr>
+                    <th>26</th>
+                    <td>Phytophthora</td>
+                    <td>ramorum</td>
+                    <td>NCBI:txid164328</td>
+                    <td>GCA_004343245.1, GCA_003956735.1, GCA_00296891...</td>
+                  </tr>
+                  <tr>
+                    <th>27</th>
+                    <td>Phytophthora</td>
+                    <td>sojae</td>
+                    <td>NCBI:txid67593</td>
+                    <td>GCA_009848525.1, GCF_000149755.1</td>
+                  </tr>
+                  <tr>
+                    <th>28</th>
+                    <td>Plasmopara</td>
+                    <td>viticola</td>
+                    <td>NCBI:txid143451</td>
+                    <td>GCA_001695595.3, GCA_003123765.1, GCA_001974925.1</td>
+                  </tr>
+                  <tr>
+                    <th>29</th>
+                    <td>Plasmopara</td>
+                    <td>halstedii</td>
+                    <td>NCBI:txid4781</td>
+                    <td>GCA_004380875.1, GCA_003724065.1, GCA_00364046...</td>
+                  </tr>
+                  <tr>
+                    <th>30</th>
+                    <td>Plasmopara</td>
+                    <td>obducens</td>
+                    <td>NCBI:txid162140</td>
+                    <td>GCA_003640625.1, GCA_003640485.1</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
   </div>
   </div>
 </body>
