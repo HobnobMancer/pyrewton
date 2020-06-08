@@ -103,35 +103,35 @@ Below is a directory plan of the pyrewton module structure, followed by a brief 
             └── working_species_list.txt
 ```
 
-### assets
+#### assets
 
 Directory containing all files needed for the GitHub page.
 
-### notebooks
+#### notebooks
 
 Directory containing all jupyter notebooks, and html copies used for easier in-browser viewing via the GitHub pages.
 
-### tests
+#### tests
 
 Directory containing all `pytest` files for testing `pyrewton` during development, including subdirectories for test inputs and targets, with each module/submodule possessing its own specific test input and target subdirectory.
 
-### pyrewton
+#### pyrewton
 
 Directory containing all `pyrewton` program modules (including all submodules and Python scripts).
 
-#### pyrewton module: parsers
+##### pyrewton module: parsers
 
 Directory containing all Python scripts for building command-line parsers.
 
-#### pyrewton module: loggers
+##### pyrewton module: loggers
 
 Directory containing Python scripts for building loggers.
 
-#### pyrewton module: directory_handling
+##### pyrewton module: directory_handling
 
 Directory containing all Python scripts for handling directories in `pyrewton` Python scripts, including retrieving program inputs and creating output directories.
 
-#### pyrewton module: genbank
+##### pyrewton module: genbank
 
 Directory containing all submodules that are involved in retrieving NCBI GenBank files and data from said files:
 
@@ -139,7 +139,7 @@ Directory containing all submodules that are involved in retrieving NCBI GenBank
 
 Directory containing the submodule that takes a list of species and downloads all directly linked GenBank (.gbff) files in the NCBI Assembly database.
 
-### pyrewton modules
+## pyrewton modules
 
 Below describes the operation and functionality of each pyrewton module/submodule, including a listing of the command-line options.
 
