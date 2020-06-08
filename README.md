@@ -59,7 +59,7 @@ Below is a directory plan of the pyrewton module structure, followed by a brief 
 ├── requirements.txt
 ├── setup.py
 ├── assets
-│   ├── _documents required for GitHub pages_
+│   ├── GitHub page documents
 ├── tests
 │   ├── test_accession_number_retrieval.py
 │   ├── test_housekeeping.py
