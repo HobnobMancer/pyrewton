@@ -26,6 +26,8 @@ The repository PhD_Project_Scripts contains all scripts associated with the EAST
 
 Completed scripts are packaged into `pyrewton`, which is a programme free to use under the MIT license. `pyrewton` is a Python3 script package that can be run at the command line. `pyrewton` is built up of multiple Python modules, which either perform a 'housekeeping' task such as logger building, or perform a main operation of `pyrewton`, such as coordinating the downloading of GenBank files. All modules, submodules and associated Python scripts are located within the `pyrewton` directory. Specifically, it supports the downloading of all genomic assemblies (as GenBank files .gbff) from the [NCBI Assembly database](https://www.ncbi.nlm.nih.gov/assembly) associated with each species passed to the program, and summarising the cazyme annotations within those GenBank files.
 
+Inital plans and devleopment plans are stored within the [Wiki](https://github.com/HobnobMancer/PhD_Project_Scripts/wiki).
+
 ## Installation
 
 The easiest way to install `pyrewton` is to use `pip`:  
