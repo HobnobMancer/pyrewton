@@ -927,12 +927,49 @@ def get_genbank_file(accession, args, logger):
         )
     )
 
-    # Gather row data
-    row_foundation = []  # genus, species and accession
-    # complete row data includes genus, species, accession, protein name, protein ID
+    # convert human readable list of accession numbers into Python list
+    accession_list = df_row[3].split(", ")
+
+    # create empty list to store all row_data lists, producing a tuple
     all_rows_data = []  # data for all rows
 
-    accession_list = df_row[3].split(", ")
+    # open GenBank file of each accession number in the list and retrieve
+    # all protein data in that GenBank file, stored as a tuple with each
+    # list in the tuple containing data for a unique protein
+    for accession in tqdm(accession_list, desc="Compiling data"):
+        protein_data = get_protein_data(accession, args.genbank, logger)
+
+        # For each unique protein in the GenBank file, create a new row in
+        # dataframe by compiling the protein's data into a single list
+        # and adding the list to the all_rows_data tuple
+        tuple_index = 0
+        list_index = 0
+        for tuple_index in range(len(protein_data)):
+            # create empty list to store data for new dataframe row
+            row_data = []
+
+            # add genus, species, taxonomy ID and accession number to row_data
+            row_data.append(df_row[0])
+            row_data.append(df_row[1])
+            row_data.append(df_row[2])
+            row_data.append(df_row[3])
+
+            # add protein data one item at a time, so they can populate different
+            # columns in the data frame
+            for list_index in range(len(protein_data[tuple_index])):
+                row_data.append(protein_data[tuple_index][list_index])
+                list_index += 1
+
+            # add row_data to all_row_data tuple
+            all_rows_data.append(row_data)
+            tuple_index += 1
+
+    #  adding to a list of row_data containing:
+    # genus, species, accession number, protein ID, locus tag, location
+    # and function
+
+    # Which is then added to tuple of all row data, with each item being
+    # a unique row containing a unique protein
 
     count = 1
     for accession in tqdm(accession_list, desc="Compiling data"):
@@ -941,12 +978,13 @@ def get_genbank_file(accession, args, logger):
         # construct data for completed row, then compile all dataframe data
         index = 0
         for index in range(len(protein_data)):
-            # add protein ID, locus tag and function as individual items so as not to create a tuple
+            # add protein ID, locus tag, location and function as individual items so as not to create a tuple
             all_rows_data.append(
                 row_foundation.append(
                     protein_data[index][0],
                     protein_data[index][1],
                     protein_data[index][2],
+                    protein_data[index][3],
                 )
             )
             index += 1
@@ -1193,10 +1231,11 @@ def get_protein_data(accession_number, total_accession, genbank_input, logger):
 >>>>>>> add parsing of genbank files
             (
                 f"Null value ('NA') was contained in cell for {accession_number},"
-                "exiting retrieval of protein data.\nReturning null ('NA') value."
+                "exiting retrieval of protein data.\nReturning null ('NA') value"
+                "for all protein data"
             )
         )
-        return ["NA", "NA", "NA"]
+        return ["NA", "NA", "NA", "NA"]
 
     # Retrieve GenBank (gb) file
     gb_file = list(Path(genbank_input).glob(rf"{accession_number}*.gbff.fz"))
@@ -1207,9 +1246,10 @@ def get_protein_data(accession_number, total_accession, genbank_input, logger):
         logger.warning(
             (
                 f"Failed to retrieve GenBank file for {accession_number}.\n"
-                "Returning null ('NA') value for protein name and ID"
+                "Returning null ('NA') value for all protein data"
             )
         )
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         return (['NA', 'NA'])
@@ -1220,6 +1260,9 @@ def get_protein_data(accession_number, total_accession, genbank_input, logger):
 =======
         return ["NA", "NA", "NA"]
 >>>>>>> add parsing of genbank files
+=======
+        return ["NA", "NA", "NA", "NA"]
+>>>>>>> add data for unique protein to df row
 
     else:
         all_protein_data = []
