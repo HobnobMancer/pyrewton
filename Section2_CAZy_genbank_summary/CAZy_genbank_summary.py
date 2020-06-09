@@ -61,7 +61,7 @@ def build_parser():
     """Return ArgumentParser parser for script."""
     # Create parser object
     parser = argparse.ArgumentParser(
-        prog="CAZy_genbank_summary.py",
+        prog="cazy_genbank_summary.py",
         description="Generate summary of CAZy annotation in GenBank files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
@@ -139,8 +139,8 @@ def main():
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
-    build_logger("CAZy_genbank_summary", args.log)
-    logger = logging.getLogger("CAZy_genbank_summary")
+    build_logger("cazy_genbank_summary", args.log)
+    logger = logging.getLogger("cazy_genbank_summary")
     logger.info("Run initated")
 
     # Check inputs are valid
@@ -156,7 +156,7 @@ def main():
     input_df = get_input_df(args.df_input, logger)
 
     # Build dataframe
-    CAZy_summary_df = create_dataframe(input_df, args, logger)
+    cazy_summary_df = create_dataframe(input_df, args, logger)
 
     # Create summary charts of CAZy annotation distribution
 
@@ -564,7 +564,7 @@ def get_cazy_data(protein_id, logger):
     return  # list, first CAZy class and then protein function
 
 
-def create_summary_chart(CAZy_fam_column, logger):
+def create_summary_chart(cazy_fam_column, logger):
     # Use seaborn to create summary chart
     return
 
