@@ -208,7 +208,7 @@ def check_input(args, logger):
     Return nothing if paths are valid.
     """
     logger.info("Checking path to input dataframe is valid")
-    if (args.input_df).is_file() is False:
+    if (args.df_input).is_file() is False:
         logger.info(
             (
                 "Input dataframe not found. Check filename, extension and directory are correct."
@@ -334,7 +334,7 @@ def create_dataframe(input_df, args, logger):
     # protein ID
     all_foundation_data = []  # empty list to store all data for foundation dataframe
     all_foundation_data.append(
-        input_df.apply(get_df_foundation_data, args=(args, logger)), axis=1
+        input_df.apply(get_df_foundation_data, args=(args, logger), axis=1),
     )
 
     # create foundation dataframe
