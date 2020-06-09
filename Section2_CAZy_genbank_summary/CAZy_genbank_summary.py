@@ -338,7 +338,7 @@ def create_dataframe(input_df, args, logger):
     )
 
     # create foundation dataframe
-    CAZy_summary_df = pd.Dataframe(
+    cazy_summary_df = pd.Dataframe(
         all_foundation_data,
         columns=[
             "Genus",
@@ -350,12 +350,14 @@ def create_dataframe(input_df, args, logger):
         ],
     )
 
+    print(cazy_summary_df)
+
     # Add CAZy data to dataframe
     # if cazy class returned full section will be titled 'cazy class',
     # if familied returned use 'cazy family' instead
-    CAZy_summary_df["Cazy Class", "Function"] = CAZy_summary_df.apply(
-        lambda column: get_cazy_data(column["Protein ID"], logger), axis=1
-    )
+    # CAZy_summary_df["Cazy Class", "Function"] = CAZy_summary_df.apply(
+    #     lambda column: get_cazy_data(column["Protein ID"], logger), axis=1
+    # )
 
 
 def get_df_foundation_data(df_row, args, logger):
@@ -420,38 +422,23 @@ def get_df_foundation_data(df_row, args, logger):
             # add protein data one item at a time, so they can populate different
             # columns in the data frame
             for list_index in range(len(protein_data[tuple_index])):
-                row_data.append(protein_data[tuple_index][list_index])
+                try:
+                    row_data.append(protein_data[tuple_index][list_index])
+                except IndexError:
+                    logger.warning(
+                        (
+                            "Error occurred when retrieving protein data from"
+                            "list of all protein data.\nAdding null value 'NA'"
+                            "to dataframe row."
+                        ),
+                        exc_info=1,
+                    )
+                    row_data.append("NA")
                 list_index += 1
 
             # add row_data to all_row_data tuple
             all_rows_data.append(row_data)
             tuple_index += 1
-
-    #  adding to a list of row_data containing:
-    # genus, species, accession number, protein ID, locus tag, location
-    # and function
-
-    # Which is then added to tuple of all row data, with each item being
-    # a unique row containing a unique protein
-
-    count = 1
-    for accession in tqdm(accession_list, desc="Compiling data"):
-        row_foundation.append([df_row[0], df_row[1], accession])
-        protein_data = get_protein_data(accession, args.genbank, logger)
-        # construct data for completed row, then compile all dataframe data
-        index = 0
-        for index in range(len(protein_data)):
-            # add protein ID, locus tag, location and function as individual items so as not to create a tuple
-            all_rows_data.append(
-                row_foundation.append(
-                    protein_data[index][0],
-                    protein_data[index][1],
-                    protein_data[index][2],
-                    protein_data[index][3],
-                )
-            )
-            index += 1
-            count += 1
 
     return all_rows_data
 
@@ -472,11 +459,6 @@ def get_protein_data(accession_number, genbank_input, logger):
 
     Return tuple.
     """
-    # use accession number to open associated genbank file
-    # use SeqIO to extract protein ID and protein name
-    # return as list for dataframe
-    # will need to check if protein ID already present in dataframe, and is don't add
-
     # check if accession number was provided
     if accession_number == "NA":
         logger.warning(
