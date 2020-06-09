@@ -401,7 +401,8 @@ def get_df_foundation_data(df_row, args, logger):
     # open GenBank file of each accession number in the list and retrieve
     # all protein data in that GenBank file, stored as a tuple with each
     # list in the tuple containing data for a unique protein
-    for accession in tqdm(accession_list, desc="Compiling data"):
+    for accession in accession_list:
+        logger.info(f"Retrieving data for {accession}")
         protein_data = get_protein_data(accession, args.genbank, logger)
 
         # For each unique protein in the GenBank file, create a new row in
@@ -410,6 +411,7 @@ def get_df_foundation_data(df_row, args, logger):
         tuple_index = 0
         list_index = 0
         for tuple_index in range(len(protein_data)):
+            logger.info("adding protein data to row data")
             # create empty list to store data for new dataframe row
             row_data = []
 
@@ -439,6 +441,7 @@ def get_df_foundation_data(df_row, args, logger):
             # add row_data to all_row_data tuple
             all_rows_data.append(row_data)
             tuple_index += 1
+            logger.info(f"finished collecting data for {accession}")
 
     return all_rows_data
 
@@ -498,6 +501,7 @@ def get_protein_data(accession_number, genbank_input, logger):
         all_protein_data = []
         # Retrieve protein data
         with gzip.open(gb_file[0], "rt") as handle:
+            logger.info(f"opening gb file for {accession_number}")
             # create list to store all protein data retrieved from GenBank file, making it a tuple
             for gb_record in SeqIO.parse(handle, "genbank"):
                 for (index, feature) in enumerate(gb_record.features):
@@ -506,6 +510,7 @@ def get_protein_data(accession_number, genbank_input, logger):
                     # Parse over only protein encoding features (type = 'CDS')
                     if feature.type == "CDS":
                         # extract protein ID
+                        logger.info("retrieving protein data for CDS feature")
                         protein_data.append(
                             get_record_feature(feature, "protein_id", logger)
                         )
