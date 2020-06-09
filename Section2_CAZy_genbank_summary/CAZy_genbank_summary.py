@@ -1262,11 +1262,18 @@ def get_protein_data(accession_number, total_accession, genbank_input, logger):
     gb_file = list(Path(genbank_input).glob(rf"{file_stem}*.gbff.fz"))
 
     # check file was retrieved, not multiple or none
-    if len(gb_file) > 1 or len(gb_file) == 0:
-        # log error and return 'NA' for protein name and protein ID
+    if len(gb_file) == 0:
         logger.warning(
             (
-                f"Failed to retrieve GenBank file for {accession_number}.\n"
+                f"Retrieved 0 files for {accession_number}.\n"
+                "Returning null ('NA') value for all protein data"
+            )
+        )
+
+    if len(gb_file) > 1:
+        logger.warning(
+            (
+                f"Retrieved multiple files for {accession_number}.\n"
                 "Returning null ('NA') value for all protein data"
             )
         )
