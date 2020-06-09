@@ -470,8 +470,11 @@ def get_protein_data(accession_number, genbank_input, logger):
         )
         return ["NA", "NA", "NA", "NA"]
 
+    # replace '.' with '_' to match format in GenBank file name
+    file_stem = accession_number.replace(".", "_")
+
     # Retrieve GenBank (gb) file
-    gb_file = list(Path(genbank_input).glob(rf"{accession_number}*.gbff.fz"))
+    gb_file = list(Path(genbank_input).glob(rf"{file_stem}*.gbff.fz"))
 
     # check file was retrieved, not multiple or none
     if len(gb_file) > 1 or len(gb_file) == 0:
