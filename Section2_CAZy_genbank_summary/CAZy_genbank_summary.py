@@ -421,8 +421,8 @@ def get_df_foundation_data(df_row, args, logger):
 def get_protein_data(accession_number, genbank_input, logger):
     """Retrieve protein ID, locus tag and function from GenBank file.
 
-    From each record the protein ID, locus tag and function will be retrieved,
-    and stored as a list.
+    From each record the protein ID, locus tag, location and annotated
+    function is retrieved, and stored as a list.
 
     Lists wil be added to a single tuple containing all protein data.
 
@@ -464,26 +464,76 @@ def get_protein_data(accession_number, genbank_input, logger):
         return ["NA", "NA", "NA"]
 
     else:
+        all_protein_data = []
         # Retrieve protein data
-        with gzip.open("GCA_001515345_1_ASM151534v1_genomic.gbff.gz", "rt") as handle:
+        with gzip.open(gb_file[0], "rt") as handle:
             # create list to store all protein data retrieved from GenBank file, making it a tuple
-            all_protein_data = []
             for gb_record in SeqIO.parse(handle, "genbank"):
-                # create a list to store data for a single protein
-                # make sure list is empty before parsing first feature
-                protein_data = []
                 for (index, feature) in enumerate(gb_record.features):
                     # empty protein data list so as not to contaminate data of next protein
                     protein_data = []
                     # Parse over only protein encoding features (type = 'CDS')
                     if feature.type == "CDS":
-                        protein_data.append(feature.qualifiers["protein_id"][0])
-                        protein_data.append(feature.qualifiers["locus_tag"][0])
-                        protein_data.append("; ".join(feature.qualifiers["product"]))
-                        # add protein data to total protein data list
-                        all_protein_data.append(protein_data)
+                        # extract protein ID
+                        protein_data.append(
+                            get_record_feature(feature, "protein_id", logger)
+                        )
+                        # extract locus tag
+                        protein_data.append(
+                            get_record_feature(feature, "locus_tag", logger)
+                        )
+                        # extract location
+                        protein_data.append(
+                            get_record_feature(feature, "location", logger)
+                        )
+                        # extract annotated function of product
+                        protein_data.append(
+                            get_record_feature(feature, "product", logger)
+                        )
+
+                        # add protein data to total protein data list, only if data was retrieved
+                        if protein_data != ["NA", "NA", "NA", "NA"]:
+                            all_protein_data.append(protein_data)
+                        else:
+                            logger.warning(
+                                f"No data retrieved from CDS type feature, index: {index}",
+                                exc_info=1,
+                            )
 
     return all_protein_data
+
+
+def get_record_feature(feature, qualifier, logger):
+    """Retrieve data from GenBank record feature.
+
+    :param feature: feature object, GenBank file record feature
+    :param qualifier: str, key of feature attribute
+    :param logger: logger object
+
+    Return data from GenBank record feature, or "NA" if failed to retrieve.
+    """
+    # if called to extract location, extract location as human readable list
+    if qualifier == "location":
+        try:
+            location_list = []
+            for item in feature.location.parts:
+                location_list.append(str(item))
+            compiled_location = str(",".join(location_list))
+            return compiled_location
+        except AttributeError:
+            logger.warning(
+                "Failed to retrieve feature location, returning 'NA'", exc_info=1
+            )
+            return "NA"
+    else:
+        try:
+            data = feature.qualifiers[qualifier][0]
+            return data
+        except KeyError:
+            logger.warning(
+                f"Failed to retrieve feature {qualifier}, returning 'NA'", exc_info=1
+            )
+            return "NA"
 
 
 def get_cazy_data(protein_id, logger):
