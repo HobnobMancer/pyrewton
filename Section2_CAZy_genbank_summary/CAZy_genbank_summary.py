@@ -626,7 +626,7 @@ def create_dataframe(input_df, args, logger):
     )
 
     # create foundation dataframe
-    CAZy_summary_df = pd.Dataframe(
+    cazy_summary_df = pd.Dataframe(
         all_foundation_data,
         columns=[
             "Genus",
@@ -638,13 +638,21 @@ def create_dataframe(input_df, args, logger):
         ],
     )
 
+    print(cazy_summary_df)
+
     # Add CAZy data to dataframe
     # if cazy class returned full section will be titled 'cazy class',
     # if familied returned use 'cazy family' instead
+<<<<<<< HEAD
     CAZy_summary_df["Cazy Class", "Function"] = CAZy_summary_df.apply(
         lambda column: get_cazy_data(column["Protein ID"], logger), axis=1
 >>>>>>> add gb_file search and error logging
     )
+=======
+    # CAZy_summary_df["Cazy Class", "Function"] = CAZy_summary_df.apply(
+    #     lambda column: get_cazy_data(column["Protein ID"], logger), axis=1
+    # )
+>>>>>>> add printing of df to test script works
 
     # parse current cazy_summary_df, retreiving UniProtKB data for each protein
     df_index = 0
@@ -957,13 +965,25 @@ def get_genbank_file(accession, args, logger):
             # add protein data one item at a time, so they can populate different
             # columns in the data frame
             for list_index in range(len(protein_data[tuple_index])):
-                row_data.append(protein_data[tuple_index][list_index])
+                try:
+                    row_data.append(protein_data[tuple_index][list_index])
+                except IndexError:
+                    logger.warning(
+                        (
+                            "Error occurred when retrieving protein data from"
+                            "list of all protein data.\nAdding null value 'NA'"
+                            "to dataframe row."
+                        ),
+                        exc_info=1,
+                    )
+                    row_data.append("NA")
                 list_index += 1
 
             # add row_data to all_row_data tuple
             all_rows_data.append(row_data)
             tuple_index += 1
 
+<<<<<<< HEAD
     #  adding to a list of row_data containing:
     # genus, species, accession number, protein ID, locus tag, location
     # and function
@@ -999,6 +1019,9 @@ def get_genbank_file(accession, args, logger):
         # search for accession number's GenBank file
         if item.name.startswith(f"{file_stem}") and item.name.endswith(".gbff.gz"):
             gb_file.append(item)
+=======
+    return all_rows_data
+>>>>>>> add printing of df to test script works
 
     return gb_file
 
@@ -1185,11 +1208,6 @@ def get_protein_data(accession_number, total_accession, genbank_input, logger):
 
     Return...
     """
-    # use accession number to open associated genbank file
-    # use SeqIO to extract protein ID and protein name
-    # return as list for dataframe
-    # will need to check if protein ID already present in dataframe, and is don't add
-
     # check if accession number was provided
 <<<<<<< HEAD
     if accession_number == 'NA':
