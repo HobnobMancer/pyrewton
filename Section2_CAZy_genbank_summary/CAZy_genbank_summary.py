@@ -338,7 +338,7 @@ def create_dataframe(input_df, args, logger):
     )
 
     # create foundation dataframe
-    cazy_summary_df = pd.Dataframe(
+    cazy_summary_df = pd.DataFrame(
         all_foundation_data,
         columns=[
             "Genus",
@@ -346,6 +346,7 @@ def create_dataframe(input_df, args, logger):
             "NCBI Accession Number",
             "NCBI Protein ID",
             "Locus Tag",
+            "Gene locus",
             "NCBI Recorded Function",
         ],
     )
@@ -405,43 +406,54 @@ def get_df_foundation_data(df_row, args, logger):
         logger.info(f"Retrieving data for {accession}")
         protein_data = get_protein_data(accession, args.genbank, logger)
 
-        # For each unique protein in the GenBank file, create a new row in
-        # dataframe by compiling the protein's data into a single list
-        # and adding the list to the all_rows_data tuple
-        tuple_index = 0
-        list_index = 0
-        for tuple_index in range(len(protein_data)):
-            logger.info("adding protein data to row data")
-            # create empty list to store data for new dataframe row
-            row_data = []
+        # check if any data retrieved
+        if len(protein_data) == 0:
+            logger.warning(
+                (
+                    f"No protein data retrieved for {accession} from GenBank file.\n"
+                    "Most likely cause is GenBank file contained no CDS type features."
+                )
+            )
 
-            # add genus, species, taxonomy ID and accession number to row_data
-            row_data.append(df_row[0])
-            row_data.append(df_row[1])
-            row_data.append(df_row[2])
-            row_data.append(df_row[3])
+        # if data was returned add to list of all row data
+        else:
+            # For each unique protein in the GenBank file, create a new row in
+            # dataframe by compiling the protein's data into a single list
+            # and adding the list to the all_rows_data tuple
+            tuple_index = 0
+            list_index = 0
+            for tuple_index in range(len(protein_data)):
+                logger.info("adding protein data to row data")
+                # create empty list to store data for new dataframe row
+                row_data = []
 
-            # add protein data one item at a time, so they can populate different
-            # columns in the data frame
-            for list_index in range(len(protein_data[tuple_index])):
-                try:
-                    row_data.append(protein_data[tuple_index][list_index])
-                except IndexError:
-                    logger.warning(
-                        (
-                            "Error occurred when retrieving protein data from"
-                            "list of all protein data.\nAdding null value 'NA'"
-                            "to dataframe row."
-                        ),
-                        exc_info=1,
-                    )
-                    row_data.append("NA")
-                list_index += 1
+                # add genus, species, taxonomy ID and accession number to row_data
+                row_data.append(df_row[0])
+                row_data.append(df_row[1])
+                row_data.append(df_row[2])
+                row_data.append(df_row[3])
 
-            # add row_data to all_row_data tuple
-            all_rows_data.append(row_data)
-            tuple_index += 1
-            logger.info(f"finished collecting data for {accession}")
+                # add protein data one item at a time, so they can populate different
+                # columns in the data frame
+                for list_index in range(len(protein_data[tuple_index])):
+                    try:
+                        row_data.append(protein_data[tuple_index][list_index])
+                    except IndexError:
+                        logger.warning(
+                            (
+                                "Error occurred when retrieving protein data from"
+                                "list of all protein data.\nAdding null value 'NA'"
+                                "to dataframe row."
+                            ),
+                            exc_info=1,
+                        )
+                        row_data.append("NA")
+                    list_index += 1
+
+                # add row_data to all_row_data tuple
+                all_rows_data.append(row_data)
+                tuple_index += 1
+                logger.info(f"finished collecting data for {accession}")
 
     return all_rows_data
 
