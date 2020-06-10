@@ -345,12 +345,15 @@ def create_dataframe(input_df, args, logger):
     )
 
     # Retrieve data for dataframe foundation and add to empty dataframe
-    cazy_summary_df = pd.concat(
-        (input_df.apply(get_df_foundation_data, args=(args, logger), axis=1)),
-        ignore_index=True,
-    )
+    df_index = 0
+    for df_index in range(len(input_df["Genus"])):
+        cazy_summary_df = cazy_summary_df.append(
+            get_df_foundation_data(input_df.iloc[df_index], args, logger),
+            ignore_index=True,
+        )
+        df_index += 1
 
-    print(cazy_summary_df)
+    print("=====\nFoundation dataframe:\n", cazy_summary_df)
 
     # Add CAZy data to dataframe
     # if cazy class returned full section will be titled 'cazy class',
@@ -400,13 +403,6 @@ def get_df_foundation_data(df_row, args, logger):
         ]
     )
 
-    logger.info(
-        (
-            "Adding scientific name, accession numbers, protein names and IDs\n"
-            f"to dataframe for {df_row[0][0]}.{df_row[1]}, {df_row[2]}"
-        )
-    )
-
     # convert human readable list of accession numbers into Python list
     accession_list = df_row[3].split(", ")
 
@@ -414,7 +410,6 @@ def get_df_foundation_data(df_row, args, logger):
     # all protein data in that GenBank file, stored as a tuple with each
     # list in the tuple containing data for a unique protein
     for accession in accession_list:
-        logger.info(f"Retrieving data for {accession}")
         protein_data = get_protein_data(accession, args.genbank, logger)
 
         # check if any data retrieved
@@ -436,7 +431,7 @@ def get_df_foundation_data(df_row, args, logger):
                 "Gene Locus": "NA",
                 "NCBI Recorded Function": "NA",
             }
-            protein_data_df.append(new_df_row, ignore_index=True)
+            protein_data_df = protein_data_df.append(new_df_row, ignore_index=True)
 
         # if data was returned add to list of all row data
         else:
@@ -444,9 +439,10 @@ def get_df_foundation_data(df_row, args, logger):
             # dataframe. The data for each unique protein is stored as a single
             # list in the tuple protein_data
             protein_index = 0  # index number in protein_data tuple
-            for protein_index in range(len(protein_data)):
-                logger.info("adding protein data to row data")
-
+            for protein_index in tqdm(
+                range(len(protein_data)),
+                desc=f"Getting proteins {df_row[2]}-{accession}",
+            ):
                 # Compile data for new row to be added to dataframe
                 new_df_row = {
                     "Genus": df_row[0],
@@ -460,10 +456,10 @@ def get_df_foundation_data(df_row, args, logger):
                 }
 
                 # Add new row to dataframe
-                protein_data_df.append(new_df_row, ignore_index=True)
-
+                protein_data_df = protein_data_df.append(new_df_row, ignore_index=True)
                 protein_index += 1
-                logger.info(f"finished collecting data for {accession}")
+
+    print("debugging purposes: number of proteins: ", len(protein_data_df["Genus"]))
 
     return protein_data_df
 
@@ -541,7 +537,6 @@ def get_protein_data(accession_number, genbank_input, logger):
     all_protein_data = []
     # Retrieve protein data
     with gzip.open(gb_file[0], "rt") as handle:
-        logger.info(f"opening gb file for {accession_number}")
         # create list to store all protein data retrieved from GenBank file, making it a tuple
         for gb_record in SeqIO.parse(handle, "genbank"):
             for (index, feature) in enumerate(gb_record.features):
@@ -550,7 +545,6 @@ def get_protein_data(accession_number, genbank_input, logger):
                 # Parse over only protein encoding features (type = 'CDS')
                 if feature.type == "CDS":
                     # extract protein ID
-                    logger.info("retrieving protein data for CDS feature")
                     protein_data.append(
                         get_record_feature(feature, "protein_id", logger)
                     )
