@@ -476,8 +476,17 @@ def get_protein_data(accession_number, genbank_input, logger):
     # replace '.' with '_' to match format in GenBank file name
     file_stem = accession_number.replace(".", "_")
 
-    # Retrieve GenBank (gb) file
-    gb_file = list(Path(genbank_input).glob(rf"{file_stem}*.gbff.fz"))
+    # create empty list to store file entries, to allow checking if multiple files were retrieved
+    gb_file = []
+
+    # retrieve all files from directory
+    files_in_entries = (
+        entry for entry in Path(genbank_input).iterdir() if entry.is_file()
+    )
+    for item in files_in_entries:
+        # search for accession number's GenBank file
+        if item.name.startswith(f"{file_stem}") and item.name.endswith(".gbff.gz"):
+            gb_file.append(item)
 
     # check file was retrieved, not multiple or none
     if len(gb_file) == 0:
@@ -488,7 +497,7 @@ def get_protein_data(accession_number, genbank_input, logger):
             )
         )
 
-    if len(gb_file) > 1:
+    elif len(gb_file) > 1:
         logger.warning(
             (
                 f"Retrieved multiple files for {accession_number}.\n"
@@ -497,44 +506,49 @@ def get_protein_data(accession_number, genbank_input, logger):
         )
         return ["NA", "NA", "NA", "NA"]
 
-    else:
-        all_protein_data = []
-        # Retrieve protein data
-        with gzip.open(gb_file[0], "rt") as handle:
-            logger.info(f"opening gb file for {accession_number}")
-            # create list to store all protein data retrieved from GenBank file, making it a tuple
-            for gb_record in SeqIO.parse(handle, "genbank"):
-                for (index, feature) in enumerate(gb_record.features):
-                    # empty protein data list so as not to contaminate data of next protein
-                    protein_data = []
-                    # Parse over only protein encoding features (type = 'CDS')
-                    if feature.type == "CDS":
-                        # extract protein ID
-                        logger.info("retrieving protein data for CDS feature")
-                        protein_data.append(
-                            get_record_feature(feature, "protein_id", logger)
-                        )
-                        # extract locus tag
-                        protein_data.append(
-                            get_record_feature(feature, "locus_tag", logger)
-                        )
-                        # extract location
-                        protein_data.append(
-                            get_record_feature(feature, "location", logger)
-                        )
-                        # extract annotated function of product
-                        protein_data.append(
-                            get_record_feature(feature, "product", logger)
-                        )
+    # check if files is empty
+    if gb_file[0].stat().st_size == 0:
+        logger.warning(
+            (
+                f"GenBank file retrieved for {accession_number} is empty.\n"
+                "Returning null ('NA' value for all protein data"
+            )
+        )
+        return ["NA", "NA", "NA", "NA"]
 
-                        # add protein data to total protein data list, only if data was retrieved
-                        if protein_data != ["NA", "NA", "NA", "NA"]:
-                            all_protein_data.append(protein_data)
-                        else:
-                            logger.warning(
-                                f"No data retrieved from CDS type feature, index: {index}",
-                                exc_info=1,
-                            )
+    all_protein_data = []
+    # Retrieve protein data
+    with gzip.open(gb_file[0], "rt") as handle:
+        logger.info(f"opening gb file for {accession_number}")
+        # create list to store all protein data retrieved from GenBank file, making it a tuple
+        for gb_record in SeqIO.parse(handle, "genbank"):
+            for (index, feature) in enumerate(gb_record.features):
+                # empty protein data list so as not to contaminate data of next protein
+                protein_data = []
+                # Parse over only protein encoding features (type = 'CDS')
+                if feature.type == "CDS":
+                    # extract protein ID
+                    logger.info("retrieving protein data for CDS feature")
+                    protein_data.append(
+                        get_record_feature(feature, "protein_id", logger)
+                    )
+                    # extract locus tag
+                    protein_data.append(
+                        get_record_feature(feature, "locus_tag", logger)
+                    )
+                    # extract location
+                    protein_data.append(get_record_feature(feature, "location", logger))
+                    # extract annotated function of product
+                    protein_data.append(get_record_feature(feature, "product", logger))
+
+                    # add protein data to total protein data list, only if data was retrieved
+                    if protein_data != ["NA", "NA", "NA", "NA"]:
+                        all_protein_data.append(protein_data)
+                    else:
+                        logger.warning(
+                            f"No data retrieved from CDS type feature, index: {index}",
+                            exc_info=1,
+                        )
 
     return all_protein_data
 
