@@ -573,6 +573,7 @@ def create_dataframe(input_df, args, logger):
     """
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     # Create empty dataframe to add data to
     cazy_summary_df = pd.DataFrame(
         columns=[
@@ -626,17 +627,26 @@ def create_dataframe(input_df, args, logger):
     )
 
     # create foundation dataframe
+=======
+    # Create empty dataframe to add data to
+>>>>>>> change single list for all data to successive addtions to dataframe
     cazy_summary_df = pd.DataFrame(
-        all_foundation_data,
         columns=[
             "Genus",
             "Species",
+            "NCBI Taxonomy ID",
             "NCBI Accession Number",
             "NCBI Protein ID",
             "Locus Tag",
-            "Gene locus",
+            "Gene Locus",
             "NCBI Recorded Function",
-        ],
+        ]
+    )
+
+    # Retrieve data for dataframe foundation and add to empty dataframe
+    cazy_summary_df = pd.concat(
+        (input_df.apply(get_df_foundation_data, args=(args, logger), axis=1)),
+        ignore_index=True,
     )
 
     print(cazy_summary_df)
@@ -702,14 +712,22 @@ def get_df_foundation_data(df_row, args, logger):
 >>>>>>> remove lambda
     """Prepare row data to create dataframe.
 
+<<<<<<< HEAD
     Retrieve all row data for single species, as a tuple. Each row is represented
     as a unique list in tuple. Each row/list containing genus, species, accession
     number, protein name and protein ID, with a unique protein name and ID per
     row/list.
 >>>>>>> add gb_file search and error logging
+=======
+    Coordinate retrieval of protein data from GenBank files for every accession
+    number for the species passed to the function.
 
-    Will return multiple rows with the same accession number, but unique
-    protein ID.
+    Store data in a dataframe: Genus, Species, Tax ID, Accession number,
+    protein ID, locus tag, gene location, product.
+>>>>>>> change single list for all data to successive addtions to dataframe
+
+    Each row in dataframe contains a unique protein, and thus multiple rows
+    will have the same accession number.
 
     Any failed to retrieve data will be returned as pandas null value 'NA'.
 
@@ -724,6 +742,7 @@ def get_df_foundation_data(df_row, args, logger):
     :param logger: logger object
 
     Return dataframe.
+<<<<<<< HEAD
     """
     # Create empty dataframe to store data in
     protein_data_df = pd.DataFrame(
@@ -929,6 +948,23 @@ def get_genbank_file(accession, args, logger):
     # create empty list to store file entries, to allow checking if multiple files were retrieved
     gb_file = []
 =======
+=======
+    """
+    # Create empty dataframe to store data in
+    protein_data_df = pd.DataFrame(
+        columns=[
+            "Genus",
+            "Species",
+            "NCBI Taxonomy ID",
+            "NCBI Accession Number",
+            "NCBI Protein ID",
+            "Locus Tag",
+            "Gene Locus",
+            "NCBI Recorded Function",
+        ]
+    )
+
+>>>>>>> change single list for all data to successive addtions to dataframe
     logger.info(
         (
             "Adding scientific name, accession numbers, protein names and IDs\n"
@@ -938,9 +974,6 @@ def get_genbank_file(accession, args, logger):
 
     # convert human readable list of accession numbers into Python list
     accession_list = df_row[3].split(", ")
-
-    # create empty list to store all row_data lists, producing a tuple
-    all_rows_data = []  # data for all rows
 
     # open GenBank file of each accession number in the list and retrieve
     # all protein data in that GenBank file, stored as a tuple with each
@@ -957,47 +990,47 @@ def get_genbank_file(accession, args, logger):
                     "Most likely cause is GenBank file contained no CDS type features."
                 )
             )
+            # Add null values to dataframe for the accession number
+            new_df_row = {
+                "Genus": df_row[0],
+                "Species": df_row[1],
+                "NCBI Taxonomy ID": df_row[2],
+                "NCBI Accession Number": accession,
+                "NCBI Protein ID": "NA",
+                "Locus Tag": "NA",
+                "Gene Locus": "NA",
+                "NCBI Recorded Function": "NA",
+            }
+            protein_data_df.append(new_df_row, ignore_index=True)
 
         # if data was returned add to list of all row data
         else:
-            # For each unique protein in the GenBank file, create a new row in
-            # dataframe by compiling the protein's data into a single list
-            # and adding the list to the all_rows_data tuple
-            tuple_index = 0
-            list_index = 0
-            for tuple_index in range(len(protein_data)):
+            # For each unique protein in the GenBank file create a new row in
+            # dataframe. The data for each unique protein is stored as a single
+            # list in the tuple protein_data
+            protein_index = 0  # index number in protein_data tuple
+            for protein_index in range(len(protein_data)):
                 logger.info("adding protein data to row data")
-                # create empty list to store data for new dataframe row
-                row_data = []
 
-                # add genus, species, taxonomy ID and accession number to row_data
-                row_data.append(df_row[0])
-                row_data.append(df_row[1])
-                row_data.append(df_row[2])
-                row_data.append(df_row[3])
+                # Compile data for new row to be added to dataframe
+                new_df_row = {
+                    "Genus": df_row[0],
+                    "Species": df_row[1],
+                    "NCBI Taxonomy ID": df_row[2],
+                    "NCBI Accession Number": accession,
+                    "NCBI Protein ID": protein_data[protein_index][0],
+                    "Locus Tag": protein_data[protein_index][1],
+                    "Gene Locus": protein_data[protein_index][2],
+                    "NCBI Recorded Function": protein_data[protein_index][3],
+                }
 
-                # add protein data one item at a time, so they can populate different
-                # columns in the data frame
-                for list_index in range(len(protein_data[tuple_index])):
-                    try:
-                        row_data.append(protein_data[tuple_index][list_index])
-                    except IndexError:
-                        logger.warning(
-                            (
-                                "Error occurred when retrieving protein data from"
-                                "list of all protein data.\nAdding null value 'NA'"
-                                "to dataframe row."
-                            ),
-                            exc_info=1,
-                        )
-                        row_data.append("NA")
-                    list_index += 1
+                # Add new row to dataframe
+                protein_data_df.append(new_df_row, ignore_index=True)
 
-                # add row_data to all_row_data tuple
-                all_rows_data.append(row_data)
-                tuple_index += 1
+                protein_index += 1
                 logger.info(f"finished collecting data for {accession}")
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     #  adding to a list of row_data containing:
     # genus, species, accession number, protein ID, locus tag, location
@@ -1037,6 +1070,9 @@ def get_genbank_file(accession, args, logger):
 =======
     return all_rows_data
 >>>>>>> add printing of df to test script works
+=======
+    return protein_data_df
+>>>>>>> change single list for all data to successive addtions to dataframe
 
     return gb_file
 
@@ -1352,12 +1388,20 @@ def get_protein_data(accession_number, total_accession, genbank_input, logger):
                     protein_data.append(get_record_feature(feature, "product", logger))
 
                     # add protein data to total protein data list, only if data was retrieved
-                    if protein_data != ["NA", "NA", "NA", "NA"]:
-                        all_protein_data.append(protein_data)
+                    if len(protein_data) == 4:
+                        if protein_data != ["NA", "NA", "NA", "NA"]:
+                            all_protein_data.append(protein_data)
+                        else:
+                            logger.warning(
+                                f"No data retrieved from CDS type feature, index: {index}",
+                                exc_info=1,
+                            )
                     else:
                         logger.warning(
-                            f"No data retrieved from CDS type feature, index: {index}",
-                            exc_info=1,
+                            (
+                                f"Error occured during retrieval of data from feature, {index}\n"
+                                f"for {accession_number}. Returning no protein data"
+                            )
                         )
 
     return all_protein_data
