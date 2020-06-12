@@ -48,6 +48,7 @@ import shutil
 import sys
 
 from pathlib import Path
+from typing import List, Optional
 
 import pandas as pd
 import seaborn as sns
@@ -56,86 +57,24 @@ from Bio import SeqIO
 from bioservices import UniProt
 from tqdm import tqdm
 
+from pyrewton.parsers.parser_get_cazyme_annotations import build_parser
 
-def build_parser():
-    """Return ArgumentParser parser for script."""
-    # Create parser object
-    parser = argparse.ArgumentParser(
-        prog="cazy_genbank_summary.py",
-        description="Generate summary of CAZy annotation in GenBank files",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-
-    # Add arguments to parser
-    # Add option to specific input directory for dataframe
-    parser.add_argument(
-        "-d",
-        "--df_input",
-        type=Path,
-        metavar="input datafram name",
-        default=sys.stdin,
-        help="input dataframe path",
-    )
-    # Add option to force file over writting
-    parser.add_argument(
-        "-f",
-        "--force",
-        dest="force",
-        action="store_true",
-        default=False,
-        help="Force file over writting",
-    )
-    # Add option to specific input directory for GenBank files
-    parser.add_argument(
-        "-g",
-        "--genbank",
-        type=Path,
-        metavar="GenBank file directory",
-        default=sys.stdin,
-        help="GenBank file path directory",
-    )
-    # Add option to specific directory for log to be written out to
-    parser.add_argument(
-        "-l",
-        "--log",
-        type=Path,
-        metavar="log file name",
-        default=None,
-        help="Defines log file name and/or path",
-    )
-    # Add option to prevent over writing of existing files
-    # and cause addition of files to output directory
-    parser.add_argument(
-        "-n",
-        "--nodelete",
-        dest="nodelete",
-        action="store_true",
-        default=False,
-        help="enable/disable deletion of exisiting files",
-    )
-    # Add option to specific directory for output to be written to
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        metavar="output file name",
-        default=sys.stdout,
-        help="output filename",
-    )
-
-    return parser
-
-
-def main():
+def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
     """docstring summary.
 
     Detail.
 
     Return.
     """
-    # Create parser object for cmd-line ctrl
-    parser = build_parser()
-    args = parser.parse_args()
+    # Programme preparation:
+    # Parse arguments
+    # Check if namepsace isn't passed, if not parse command-line
+    if argv is None:
+        # Parse command-line
+        parser = build_parser()
+        args = parser.parse_args()
+    else:
+        args = build_parser(argv).parse_args()
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
