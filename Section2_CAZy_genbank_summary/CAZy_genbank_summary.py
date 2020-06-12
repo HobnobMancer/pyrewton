@@ -1,5 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Author:
+# Emma E. M. Hobbs
+# 
+# Contact
+# eemh1@st-andrews.ac.uk
+# 
+# Emma E. M. Hobbs,
+# Biomolecular Sciences Building,
+# University of St Andrews,
+# North Haugh Campus,
+# St Andrews,
+# KY16 9ST
+# Scotland,
+# UK
+# 
+# The MIT License
 """Create summary of annotated CAZy classes in GenBank files.
 
 :cmd_args df_input: path, path to input dataframe
@@ -20,25 +36,8 @@
 :func build_df_foundation: Compile row data for dataframe
 :func get_genbank_protein_data: Retrieve protein name and IDs
 
-Generate summary dataframe and of annotated CAZy classes in all GenBank
-files associated with a given species.
-
-Author:
-Emma E. M. Hobbs
-
-Contact
-eemh1@st-andrews.ac.uk
-
-Emma E. M. Hobbs,
-Biomolecular Sciences Building,
-University of St Andrews,
-North Haugh Campus,
-St Andrews,
-KY16 9ST
-Scotland,
-UK
-
-The MIT License
+Generate summary dataframe and of annotated cazymess in all GenBank
+files directly linked to a given species.
 """
 
 import argparse
