@@ -100,5 +100,35 @@ def get_genbank_file(accession, args, logger):
         # search for accession number's GenBank file
         if item.name.startswith(f"{file_stem}") and item.name.endswith(".gbff.gz"):
             gb_file.append(item)
+            
+    # check file was retrieved, not multiple or none
+    if len(gb_file) == 0:
+        logger.warning(
+            (
+                f"Retrieved 0 files for {accession_number}.\n"
+                "Returning null ('NA') value for all protein data"
+            )
+        )
+        return None
+
+    elif len(gb_file) > 1:
+        logger.warning(
+            (
+                f"Retrieved multiple files for {accession_number}.\n"
+                "Returning null ('NA') value for all protein data"
+            )
+        )
+        return None
+    
+    # check if files is empty
+    if gb_file[0].stat().st_size == 0:
+        logger.warning(
+            (
+                f"GenBank file retrieved for {accession_number} is empty.\n"
+                "Returning null ('NA' value for all protein data"
+            )
+        )
+        return None
+
 
     return gb_file
