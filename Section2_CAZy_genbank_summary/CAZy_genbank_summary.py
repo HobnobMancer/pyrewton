@@ -57,6 +57,7 @@ from Bio import SeqIO
 from bioservices import UniProt
 from tqdm import tqdm
 
+from pyrewton.loggers.logger_pyrewton_main import build_logger
 from pyrewton.parsers.parser_get_cazyme_annotations import build_parser
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
@@ -78,8 +79,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
-    build_logger("cazy_genbank_summary", args.log)
-    logger = logging.getLogger("cazy_genbank_summary")
+    if logger is None:
+        logger = build_logger("get_cazyme_annotations", args)
     logger.info("Run initated")
 
     # Check inputs are valid
@@ -102,40 +103,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Write out dataframe
 
     return
-
-
-def build_logger(script_name, log_file,) -> logging.Logger:
-    """Return a logger for this script.
-
-    Enables logger for script, sets parameters and creates new file to store log.
-
-    :param script_name: str, name of script
-    :param log_file: parser argument, enable writing out of log file
-
-    Return logger object.
-    """
-    logger = logging.getLogger(script_name)
-    logger.setLevel(logging.DEBUG)
-
-    # Set format of loglines
-    log_formatter = logging.Formatter(
-        script_name + ": {} - {}".format("%(asctime)s", "%(message)s")
-    )
-
-    # Setup console handler to log to terminal
-    console_log_handler = logging.StreamHandler()
-    console_log_handler.setLevel(logging.DEBUG)
-    console_log_handler.setFormatter(log_formatter)
-    logger.addHandler(console_log_handler)
-
-    # Setup file handler to log to a file
-    if log_file is not None:
-        file_log_handler = logging.FileHandler(log_file)
-        file_log_handler.setLevel(logging.DEBUG)
-        file_log_handler.setFormatter(log_formatter)
-        logger.addHandler(file_log_handler)
-
-    return logger
 
 
 def check_input(args, logger):
