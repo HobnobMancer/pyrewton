@@ -26,6 +26,7 @@
 :func create_df_foundation: Parse input dataframe row
 :func build_df_foundation: Compile row data for dataframe
 :func get_genbank_protein_data: Retrieve protein name and IDs
+<<<<<<< HEAD
 
 Generate summary dataframe and of annotated CAZy classes in all GenBank
 files associated with a given species.
@@ -71,6 +72,8 @@ import sys
 :func build_df_foundation: Compile row data for dataframe
 :func get_protein_data: Retrieve protein name and IDs
 >>>>>>> update module docstring
+=======
+>>>>>>> add call to UniProt
 
 Generate summary dataframe and of annotated CAZy classes in all GenBank
 files associated with a given species.
@@ -95,6 +98,7 @@ The MIT License
 
 import argparse
 import gzip
+import io
 import logging
 import shutil
 import sys
@@ -535,6 +539,7 @@ def create_dataframe(input_df, args, logger):
     """Build datafame.
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     -- Dev note: add explanation for for loops and not apply:
     httpS://ys-l.github.io/posts/2015/08/28/how-not-to-use-pandas-apply
 
@@ -543,6 +548,11 @@ def create_dataframe(input_df, args, logger):
 
     Per species, retrieve all protein names and IDs for every accession number,
 =======
+=======
+    -- Dev note: add explanation for for loops and not apply:
+    httpS://ys-l.github.io/posts/2015/08/28/how-not-to-use-pandas-apply
+
+>>>>>>> add call to UniProt
     Iterate over input dataframe row wise. This allows for converting human
     readable accession number list from a string to a Python list.
 
@@ -654,6 +664,7 @@ def create_dataframe(input_df, args, logger):
 
     print("=====\nFoundation dataframe:\n", cazy_summary_df)
 
+<<<<<<< HEAD
     # Add CAZy data to dataframe
     # if cazy class returned full section will be titled 'cazy class',
     # if familied returned use 'cazy family' instead
@@ -667,6 +678,25 @@ def create_dataframe(input_df, args, logger):
     #     lambda column: get_cazy_data(column["Protein ID"], logger), axis=1
     # )
 >>>>>>> add printing of df to test script works
+=======
+    # Build empty dataframe to store data retrieved from UniProtKB
+    # GO = Gene Ontology (GO) project
+    all_uniprotkb_data_df = pd.DataFrame(
+        columns=[
+            "UniProt entry ID",
+            "UniProt entry name",
+            "UniProt assigned protein names",
+            "Length (Aa)",
+            "Mass (Da)",
+            "Domains",
+            "Domain count",
+            "UniProt linked protien families",
+            "GO IDs",
+            "GO molecular function",
+            "GO biologocial process",
+        ]
+    )
+>>>>>>> add call to UniProt
 
     # parse current cazy_summary_df, retreiving UniProtKB data for each protein
     df_index = 0
@@ -680,6 +710,9 @@ def create_dataframe(input_df, args, logger):
     print("=====\nUniProt dataframe:\n", all_uniprotkb_data_df)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> add call to UniProt
     # join UniProt dataframe to foundation dataframe
     cazy_summary_df = pd.concat([cazy_summary_df, all_uniprotkb_data_df], axis=1)
 
@@ -765,6 +798,7 @@ def get_df_foundation_data(df_row, args, logger):
     accession_list = df_row[3].split(", ")
 
     # open GenBank file for each accession number in the list and retrieve
+<<<<<<< HEAD
     # all protein data in that GenBank file, stored as a tuple with each
     # list in the tuple containing data for a unique protein
     for accession in accession_list:
@@ -982,10 +1016,12 @@ def get_genbank_file(accession, args, logger):
     accession_list = df_row[3].split(", ")
 
     # open GenBank file of each accession number in the list and retrieve
+=======
+>>>>>>> add call to UniProt
     # all protein data in that GenBank file, stored as a tuple with each
     # list in the tuple containing data for a unique protein
     for accession in accession_list:
-        protein_data = get_protein_data(accession, args.genbank, logger)
+        protein_data = get_genbank_protein_data(accession, args, logger)  # tuple
 
         # check if any data retrieved
         if len(protein_data) == 0:
@@ -1008,7 +1044,7 @@ def get_genbank_file(accession, args, logger):
             }
             protein_data_df = protein_data_df.append(new_df_row, ignore_index=True)
 
-        # if data was returned add to list of all row data
+        # if data was returned add to dataframe, with unique protein per row
         else:
             # For each unique protein in the GenBank file create a new row in
             # dataframe. The data for each unique protein is stored as a single
@@ -1034,6 +1070,7 @@ def get_genbank_file(accession, args, logger):
                 protein_data_df = protein_data_df.append(new_df_row, ignore_index=True)
                 protein_index += 1
 
+<<<<<<< HEAD
     print("debugging purposes: number of proteins: ", len(protein_data_df["Genus"]))
 
 <<<<<<< HEAD
@@ -1077,11 +1114,14 @@ def get_genbank_file(accession, args, logger):
     return all_rows_data
 >>>>>>> add printing of df to test script works
 =======
+=======
+>>>>>>> add call to UniProt
     return protein_data_df
 >>>>>>> change single list for all data to successive addtions to dataframe
 
     return gb_file
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 def get_protein_data(accession_number, genbank_input, logger):
@@ -1092,6 +1132,9 @@ def get_protein_data(accession_number, genbank_input, logger):
 def get_record_feature(feature, qualifier, logger):
     """Retrieve data from GenBank record feature.
 =======
+=======
+def get_genbank_protein_data(accession_number, args, logger):
+>>>>>>> add call to UniProt
     """Retrieve protein ID, locus tag and function from GenBank file.
 
 <<<<<<< HEAD
@@ -1312,20 +1355,10 @@ def get_protein_data(accession_number, total_accession, genbank_input, logger):
         )
         return ["NA", "NA", "NA", "NA"]
 
-    # replace '.' with '_' to match format in GenBank file name
-    file_stem = accession_number.replace(".", "_")
-
-    # create empty list to store file entries, to allow checking if multiple files were retrieved
-    gb_file = []
-
-    # retrieve all files from directory
-    files_in_entries = (
-        entry for entry in Path(genbank_input).iterdir() if entry.is_file()
-    )
-    for item in files_in_entries:
-        # search for accession number's GenBank file
-        if item.name.startswith(f"{file_stem}") and item.name.endswith(".gbff.gz"):
-            gb_file.append(item)
+    # retrieve GenBank file for accession number
+    gb_file = get_genbank_file(
+        accession_number, args, logger
+    )  # list with GenBank file with index [0]
 
     # check file was retrieved, not multiple or none
     if len(gb_file) == 0:
@@ -1368,8 +1401,10 @@ def get_protein_data(accession_number, total_accession, genbank_input, logger):
         )
         return ["NA", "NA", "NA", "NA"]
 
+    # create empty list to store protein data
     all_protein_data = []
-    # Retrieve protein data
+
+    # Retrieve protein data from GenBank file
     with gzip.open(gb_file[0], "rt") as handle:
         # create list to store all protein data retrieved from GenBank file, making it a tuple
         for gb_record in SeqIO.parse(handle, "genbank"):
@@ -1393,14 +1428,24 @@ def get_protein_data(accession_number, total_accession, genbank_input, logger):
 
                     # add protein data to total protein data list, only if data was retrieved
                     if len(protein_data) == 4:
-                        if protein_data != ["NA", "NA", "NA", "NA"]:
-                            all_protein_data.append(protein_data)
-                        else:
+                        # if null value was returned for every feature attribute log error
+                        # and don't add to all_protein_data list
+                        if protein_data == ["NA", "NA", "NA", "NA"]:
                             logger.warning(
                                 f"No data retrieved from CDS type feature, index: {index}",
                                 exc_info=1,
                             )
+                        # if some data retrieved, add to all_protein_list
+                        else:
+                            all_protein_data.append(protein_data)
+                        # if some data was retrieved all to all_protein_data list
+                        if protein_data != ["NA", "NA", "NA", "NA"]:
+                            all_protein_data.append(protein_data)
+
                     else:
+                        # error occured in that one of the appending actions failed to append
+                        # and would lead to misalignment in the dataframe if added to the
+                        # all_protein_data list
                         logger.warning(
                             (
                                 f"Error occured during retrieval of data from feature, {index}\n"
@@ -1409,6 +1454,33 @@ def get_protein_data(accession_number, total_accession, genbank_input, logger):
                         )
 
     return all_protein_data
+
+
+def get_genbank_file(accession, args, logger):
+    """Retrieve GenBank file for accession number in local dir.
+
+    :param accession: str, accession number of GenBank file
+    :param args: parser arguments
+    :param logger: logger object
+
+    Return list of length 1, containing path to GenBank file.
+    """
+    # replace '.' with '_' to match format in GenBank file name
+    file_stem = accession.replace(".", "_")
+
+    # create empty list to store file entries, to allow checking if multiple files were retrieved
+    gb_file = []
+
+    # retrieve all files from directory
+    files_in_entries = (
+        entry for entry in Path(args.genbank).iterdir() if entry.is_file()
+    )
+    for item in files_in_entries:
+        # search for accession number's GenBank file
+        if item.name.startswith(f"{file_stem}") and item.name.endswith(".gbff.gz"):
+            gb_file.append(item)
+
+    return gb_file
 
 
 def get_record_feature(feature, qualifier, logger):
@@ -1442,6 +1514,50 @@ def get_record_feature(feature, qualifier, logger):
                 f"Failed to retrieve feature {qualifier}, returning 'NA'", exc_info=1
             )
             return "NA"
+
+
+def get_uniprotkb_data(df_row, logger):
+    """Coordinate retrieval of protein data from UniProtKB.
+
+    Reminder of structure of df_row (row from cazy_summary_df) when
+    retrieving specific data
+    df_row[0] = genus
+    df_row[1] = species
+    df_row[5] = protein unique locus tag
+
+    :param df_row: pandas series, row from cazy_summary_df dataframe
+    :param logger: logger object
+
+    Return dataframe.
+    """
+    # create query term
+    query = f'{df_row[5]} AND organism:"{df_row[0]} {df_row[1]}"'
+
+    # establish data to be retrieved from UniProt
+    columnlist = (
+        "id,entry name,protein names,length,mass,domains,domain,"
+        "families,"
+        "go-id,go(molecular function),go(biological process)"
+    )
+
+    # open connection to UniProt() and convert result into pandas df
+    search_result_df = pd.read_table(
+        io.StringIO(UniProt().search(query, columns=columnlist))
+    )
+
+    # rename columns to match to indicate UniProtKB source of data
+    search_result_df.rename(
+        columns={
+            "Entry": "UniProtKB Entry ID",
+            "Entry name": "UniProtKB Entry Name",
+            "Protein names": "UniProtKB Protein Names",
+            "Length": "Length (Aa)",
+            "Mass": "Mass (Da)",
+            "Protein families": "UniProtKB Linked Protein Families",
+        }
+    )
+
+    return search_result_df
 
 
 def get_cazy_data(protein_id, logger):
