@@ -326,7 +326,7 @@ def get_genbank_protein_data(accession_number, args, logger):
         return ["NA", "NA", "NA", "NA"]
 
     # retrieve GenBank file for accession number
-    gb_file = get_genbank_file(
+    gb_file = input_dir_get_cazyme_annotations.get_genbank_file(
         accession_number, args, logger
     )  # list with GenBank file with index [0]
 
@@ -411,33 +411,6 @@ def get_genbank_protein_data(accession_number, args, logger):
                         )
 
     return all_protein_data
-
-
-def get_genbank_file(accession, args, logger):
-    """Retrieve GenBank file for accession number in local dir.
-
-    :param accession: str, accession number of GenBank file
-    :param args: parser arguments
-    :param logger: logger object
-
-    Return list of length 1, containing path to GenBank file.
-    """
-    # replace '.' with '_' to match format in GenBank file name
-    file_stem = accession.replace(".", "_")
-
-    # create empty list to store file entries, to allow checking if multiple files were retrieved
-    gb_file = []
-
-    # retrieve all files from directory
-    files_in_entries = (
-        entry for entry in Path(args.genbank).iterdir() if entry.is_file()
-    )
-    for item in files_in_entries:
-        # search for accession number's GenBank file
-        if item.name.startswith(f"{file_stem}") and item.name.endswith(".gbff.gz"):
-            gb_file.append(item)
-
-    return gb_file
 
 
 def get_record_feature(feature, qualifier, logger):
