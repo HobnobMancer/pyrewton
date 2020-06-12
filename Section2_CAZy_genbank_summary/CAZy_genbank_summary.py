@@ -57,8 +57,10 @@ from Bio import SeqIO
 from bioservices import UniProt
 from tqdm import tqdm
 
+from pyrewton.directory_handling.output_dir_handling_main import make_output_directory
 from pyrewton.loggers.logger_pyrewton_main import build_logger
 from pyrewton.parsers.parser_get_cazyme_annotations import build_parser
+
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
     """docstring summary.
@@ -87,9 +89,9 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     check_input(args, logger)
     logger.info("Inputs accepted")
 
-    # If specified output directory for genomic files, create output directory
+    # If specified output directory, create output directory
     if args.output is not sys.stdout:
-        make_output_directory(args, logger)
+        make_output_directory(args.output, logger, args.force, args.nodelete)
 
     # Open input dataframe
     logger.info("Opening input dataframe")
@@ -135,62 +137,6 @@ def check_input(args, logger):
         )
         sys.exit(1)
 
-    return
-
-
-def make_output_directory(args, logger):
-    """Create output directory for genomic files.
-
-    Check if directory indicated for output existed already.
-    If so check if force overwrite enabled. If not terminate programme.
-    If so, check if deletion of exiting files was enabled.
-    If so, exiting files in output directory are deleted.
-    Create output directory, expecting error if already exists.
-
-    :param args: parser arguments
-    :param logger: logger object
-
-    Return nothing.
-    """
-    logger.info("Checking if specified output directory for genomic files exists.")
-    # If output directory specificed at cmd-line already exists, and 'force' not enabled
-    if (args.output).exists():
-        if (args.force) is False:
-            logger.info(
-                "Output directory already exists and forced overwrite not enabled.\n"
-                "Terminating programme."
-            )
-            sys.exit()
-        # If output directory exists and 'force' overwrite enabled
-        else:
-            # 'Nodelete' not enabled so delete output directory contents
-            if (args.nodelete) is False:
-                logger.info(
-                    "Output directory already exists and forced complete overwrite enabled.\n"
-                    "Deleting existing content in outdir."
-                )
-                # delete existing content in outdir
-                shutil.rmtree(args.output)
-            # 'Nodelete' enabled, don't empty directory
-            else:
-                logger.info(
-                    "Output directory already exists and forced addition of files"
-                    "to outdir enabled."
-                )
-    # Recursively make output directory
-    try:
-        (args.output).mkdir(exist_ok=True)
-    except OSError:
-        # this will occur if directory already exists
-        # ignored if forced over write enabled
-        if args.force is True:
-            return ()
-        else:
-            logger.error(
-                "OSError occured while creating output directory for genomic files.\n"
-                "Terminating programme."
-            )
-            sys.exit()
     return
 
 
