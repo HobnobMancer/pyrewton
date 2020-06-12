@@ -329,33 +329,11 @@ def get_genbank_protein_data(accession_number, args, logger):
     gb_file = input_dir_get_cazyme_annotations.get_genbank_file(
         accession_number, args, logger
     )  # list with GenBank file with index [0]
-
-    # check file was retrieved, not multiple or none
-    if len(gb_file) == 0:
-        logger.warning(
-            (
-                f"Retrieved 0 files for {accession_number}.\n"
-                "Returning null ('NA') value for all protein data"
-            )
-        )
-
-    elif len(gb_file) > 1:
-        logger.warning(
-            (
-                f"Retrieved multiple files for {accession_number}.\n"
-                "Returning null ('NA') value for all protein data"
-            )
-        )
-        return ["NA", "NA", "NA", "NA"]
-
-    # check if files is empty
-    if gb_file[0].stat().st_size == 0:
-        logger.warning(
-            (
-                f"GenBank file retrieved for {accession_number} is empty.\n"
-                "Returning null ('NA' value for all protein data"
-            )
-        )
+    
+    # If retrieving of GenBank file failed, return 'NA' for all protein data
+    # for accession number
+    if gb_file == None:
+        # error logging performd in get_genbank_file()
         return ["NA", "NA", "NA", "NA"]
 
     # create empty list to store protein data
