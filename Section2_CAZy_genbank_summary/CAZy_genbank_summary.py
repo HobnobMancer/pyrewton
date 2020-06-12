@@ -58,6 +58,7 @@ from bioservices import UniProt
 from tqdm import tqdm
 
 from pyrewton.directory_handling.output_dir_handling_main import make_output_directory
+from pyrewton.directory_handling import input_dir_get_cazyme_annotations
 from pyrewton.loggers.logger_pyrewton_main import build_logger
 from pyrewton.parsers.parser_get_cazyme_annotations import build_parser
 
@@ -86,7 +87,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     logger.info("Run initated")
 
     # Check inputs are valid
-    check_input(args, logger)
+    input_dir_get_cazyme_annotations.check_input(args, logger)
     logger.info("Inputs accepted")
 
     # If specified output directory, create output directory
@@ -95,7 +96,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # Open input dataframe
     logger.info("Opening input dataframe")
-    input_df = get_input_df(args.df_input, logger)
+    input_df = input_dir_get_cazyme_annotations.get_input_df(args.df_input, logger)
 
     # Build dataframe
     cazy_summary_df = create_dataframe(input_df, args, logger)
@@ -105,55 +106,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Write out dataframe
 
     return
-
-
-def check_input(args, logger):
-    """Check paths to input dataframe and GenBank files is valid.
-
-    :param args: parser arguments
-    :param logger: logger object
-
-    Return nothing if paths are valid.
-    """
-    logger.info("Checking path to input dataframe is valid")
-    if (args.df_input).is_file() is False:
-        logger.info(
-            (
-                "Input dataframe not found. Check filename, extension and directory are correct."
-                "\nTerminating program."
-            ),
-            exc_info=1,
-        )
-        sys.exit(1)
-
-    logger.info("Checking path to GenBank file containing directory is valid")
-    if (args.genbank).exists is False:
-        logger.info(
-            (
-                "GenBank file directory not found. Check correct directory was provided."
-                "\nTerminating program."
-            ),
-            exc_info=1,
-        )
-        sys.exit(1)
-
-    return
-
-
-def get_input_df(input_df, logger):
-    """Open input dataframe (df).
-
-    Input dataframe must contain at least columns titled:
-    'Genus', 'Species', 'NCBI Taxonomy ID', and 'NCBI Accession Numbers'.
-
-    Return dataframe.
-    """
-    input_df = pd.read_csv(
-        input_df,
-        header=0,
-        names=["Genus", "Species", "NCBI Taxonomy ID", "NCBI Accession Numbers"],
-    )
-    return input_df
 
 
 def create_dataframe(input_df, args, logger):
@@ -563,13 +515,6 @@ def get_uniprotkb_data(df_row, logger):
     )
 
     return search_result_df
-
-
-def get_cazy_data(protein_id, logger):
-    # use protein_id to call to UniProt
-    # if CAZy link return class - may return full family rather than class - no worries
-    # if no CAZy link return 'NA'
-    return  # list, first CAZy class and then protein function
 
 
 def create_summary_chart(cazy_fam_column, logger):
