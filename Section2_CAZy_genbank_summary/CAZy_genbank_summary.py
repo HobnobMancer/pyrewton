@@ -379,7 +379,9 @@ def create_dataframe(input_df, args, logger):
 
     # parse current cazy_summary_df, retreiving UniProtKB data for each protein
     df_index = 0
-    for df_index in range(len(cazy_summary_df["Genus"])):
+    for df_index in tqdm(
+        range(len(cazy_summary_df["Genus"])), desc="Retrieving UniProt data"
+    ):
         all_uniprotkb_data_df = all_uniprotkb_data_df.append(
             get_uniprotkb_data(cazy_summary_df.iloc[df_index], logger),
             ignore_index=True,
