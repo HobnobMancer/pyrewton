@@ -45,6 +45,7 @@ import argparse
 import gzip
 import io
 import logging
+import re
 import shutil
 import sys
 
@@ -686,9 +687,6 @@ def get_uniprotkb_data(df_row, logger):
 
     Return dataframe.
     """
-    # create query term
-    query = f'{df_row[5]} AND organism:"{df_row[0]} {df_row[1]}"'
-
     # establish data to be retrieved from UniProt
     columnlist = (
         "id,entry name,protein names,length,mass,domains,domain,"
@@ -696,10 +694,67 @@ def get_uniprotkb_data(df_row, logger):
         "go-id,go(molecular function),go(biological process)"
     )
 
-    # open connection to UniProt() and convert result into pandas df
+    # open connection to UniProt(), search and convert result into pandas df
     search_result_df = pd.read_table(
-        io.StringIO(UniProt().search(query, columns=columnlist))
+        io.StringIO(UniProt().search(query_3, columns=columnlist))
     )
+    search_result_df = pd.read_table(
+        io.StringIO(
+            UniProt().search(
+                f'{df_row[5]} AND organism:"{df_row[0]} {df_row[1]}"',
+                columns=columnlist,
+            )
+        )
+    )
+
+    # check data was returned
+    if len(search_result_df) == 0:
+        logger.warning(
+            (
+                f"No data returned from UniProt for locus tag:{df_row[5]}.\n"
+                "Returning null value 'NA' for all UniProt data"
+            )
+        )
+        null_data = {
+            "UniProtKB Entry ID": "NA",
+            "UniProtKB Entry Name": "NA",
+            "UniProtKB Protein Names": "NA",
+            "EC number": "NA",
+            "Length (Aa)": "NA",
+            "Mass (Da)": "NA",
+            "Domains": "NA",
+            "Domain count": "NA",
+            "UniProtKB Linked Protein Families": "NA",
+            "Gene ontology IDs": "NA",
+            "Gene ontology (molecular function)": "NA",
+            "Gene ontology (biological process)": "NA",
+        }
+        null_uniprot_df = pd.DataFrame(null_data)
+        return
+    # check if only one protein entry was returned
+    elif len(search_result_df) > 1:
+        logger.warning(
+            (
+                f"Multiple hits returned from UniProt for locus tag:{df_row[5]}.\n"
+                "Returning null value 'NA' for all UniProt data"
+            )
+        )
+        null_data = {
+            "UniProtKB Entry ID": "NA",
+            "UniProtKB Entry Name": "NA",
+            "UniProtKB Protein Names": "NA",
+            "EC number": "NA",
+            "Length (Aa)": "NA",
+            "Mass (Da)": "NA",
+            "Domains": "NA",
+            "Domain count": "NA",
+            "UniProtKB Linked Protein Families": "NA",
+            "Gene ontology IDs": "NA",
+            "Gene ontology (molecular function)": "NA",
+            "Gene ontology (biological process)": "NA",
+        }
+        null_uniprot_df = pd.DataFrame(null_data)
+        return
 
     # rename columns to match to indicate UniProtKB source of data
     search_result_df.rename(
@@ -712,6 +767,26 @@ def get_uniprotkb_data(df_row, logger):
             "Protein families": "UniProtKB Linked Protein Families",
         }
     )
+
+    # Retrieve EC number from 'UniProtKB Protein Names'
+    # or return 'NA' if not included
+    EC_search = re.findall(
+        r"\(EC [\d-]\d*\.[\d-]\d*\.[\d-]\d*\.[\d-]\d*\)", search_result_df[2]
+    )
+    if EC_search is None:
+        EC_number = "NA"
+    else:
+        # compiall EC together incase multiple are given
+        # and remove EC numbers from protein name
+        EC_number = ""
+        for EC in EC_search:
+            search_result_df[2] = search_result_df[2].replace(EC, "")
+            EC = EC.replace("(", "")
+            EC = EC.replace(")", "")
+            EC_number += EC
+
+    # Add EC number to dataframe0
+    search_result_df.insert(3, "EC number", EC_number)
 
     return search_result_df
 
