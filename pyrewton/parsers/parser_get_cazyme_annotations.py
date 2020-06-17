@@ -24,6 +24,7 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
+
 def build_parser(argv: Optional[List] = None):
     """Return ArgumentParser parser for script."""
     # Create parser object
@@ -80,7 +81,7 @@ def build_parser(argv: Optional[List] = None):
         default=False,
         help="enable/disable deletion of exisiting files",
     )
-    # Add option to specific directory for output to be written to
+    # Add option to specify directory for output to be written to
     parser.add_argument(
         "-o",
         "--output",
@@ -88,6 +89,15 @@ def build_parser(argv: Optional[List] = None):
         metavar="output file name",
         default=sys.stdout,
         help="output filename",
+    )
+    # Add option to specify verbose logging
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        default=False,
+        help="Set logger level to 'INFO'",
     )
 
     if argv is None:
