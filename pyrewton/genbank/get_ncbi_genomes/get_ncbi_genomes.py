@@ -66,7 +66,7 @@ from tqdm import tqdm
 
 from pyrewton.loggers.logger_pyrewton_main import build_logger
 from pyrewton.parsers.parser_get_ncbi_genomes import build_parser
-from pyrewton.directory_handling.output_dir_handling_main import make_output_directory
+from pyrewton.directory_handling import output_dir_handling_main
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
@@ -108,7 +108,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # If specified output directory for genomic files, create output directory
     if args.output is not sys.stdout:
-        make_output_directory(args.output, logger, args.force, args.nodelete)
+        output_dir_handling_main.make_output_directory(args.output, logger, args.force, args.nodelete)
 
     # Invoke main usage of programme
     # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
@@ -122,7 +122,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # Write out dataframe
     if args.dataframe is not sys.stdout:
-        write_out_dataframe(
+        output_dir_handling_main.write_out_dataframe(
             species_table, logger, args.dataframe, args.force, args.nodelete
         )
     else:
@@ -664,36 +664,6 @@ def entrez_retry(logger, retries, entrez_func, *func_args, **func_kwargs):
         return "NA"
 
     return record
-
-
-def write_out_dataframe(species_table, logger, outdir, force, nodelete):
-    """Write out dataframe to output directory.
-
-    :param species_table: pandas dataframe
-    :param logger: logger object
-    :param outdir: cmd-args, Path, output directory
-    :param force: booleon, cmd-line argument to enable/disable over writing of existing files
-    :param nodelete: boolean, cmd-line args to enable/disable deleting of existing files in outdir
-
-    return Nothing.
-    """
-    # Check if overwrite of existing directory will occur
-    logger.info("Checking if output directory for dataframe already exists")
-    if outdir.exists():
-        if force is False:
-            logger.warning(
-                "Specified directory for dataframe already exists.\nExiting writing out dataframe."
-            )
-            return ()
-        else:
-            logger.warning(
-                "Specified directory for dataframe already exists.\nForced overwritting enabled."
-            )
-    logger.info("Writing out species dataframe to directory")
-
-    species_table.to_csv(outdir)
-
-    return ()
 
 
 if __name__ == "__main__":
