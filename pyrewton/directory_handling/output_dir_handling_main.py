@@ -19,6 +19,7 @@
 """Contains generic functions for handling output directories.
 
 :func make_output_directory: create directory for files to be written to
+:func write_out_dataframe: write out data frame to csv file
 """
 
 import shutil
@@ -73,3 +74,33 @@ def make_output_directory(output, logger, force, nodelete):
     # --force==True and --nodelete==True, so exist_ok is required)
     output.mkdir(exist_ok=True)
     return
+
+
+def write_out_dataframe(species_table, logger, outdir, force, nodelete):
+    """Write out dataframe to output directory.
+
+    :param species_table: pandas dataframe
+    :param logger: logger object
+    :param outdir: cmd-args, Path, output directory
+    :param force: booleon, cmd-line argument to enable/disable over writing of existing files
+    :param nodelete: boolean, cmd-line args to enable/disable deleting of existing files in outdir
+
+    return Nothing.
+    """
+    # Check if overwrite of existing directory will occur
+    logger.info("Checking if output directory for dataframe already exists")
+    if outdir.exists():
+        if force is False:
+            logger.warning(
+                "Specified directory for dataframe already exists.\nExiting writing out dataframe."
+            )
+            return ()
+        else:
+            logger.warning(
+                "Specified directory for dataframe already exists.\nForced overwritting enabled."
+            )
+    logger.info("Writing out species dataframe to directory")
+
+    species_table.to_csv(outdir)
+
+    return ()
