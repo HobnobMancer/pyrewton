@@ -493,10 +493,31 @@ def get_uniprotkb_data(df_row, logger):
                 "Returning null value 'NA' for all UniProt data"
             )
         )
+<<<<<<< HEAD
         return pd.DataFrame(blank_data)
 
     # check if multiple entries were returned
     if len(search_result_df) > 1:
+=======
+        null_data = {
+            "UniProtKB Entry ID": "NA",
+            "UniProtKB Entry Name": "NA",
+            "UniProtKB Protein Names": "NA",
+            "EC number": "NA",
+            "Length (Aa)": "NA",
+            "Mass (Da)": "NA",
+            "Domains": "NA",
+            "Domain count": "NA",
+            "UniProtKB Linked Protein Families": "NA",
+            "Gene ontology IDs": "NA",
+            "Gene ontology (molecular function)": "NA",
+            "Gene ontology (biological process)": "NA",
+        }
+        return pd.DataFrame(null_data)
+
+    # check if multiple entries were returned
+    elif len(search_result_df) > 1:
+>>>>>>> add try/excpt for UniProt connection error
         logger.warning(
             (
                 f"Multiple hits returned from UniProt for locus tag:{df_row[5]}.\n"
