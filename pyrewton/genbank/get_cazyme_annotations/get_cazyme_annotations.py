@@ -48,6 +48,7 @@ import seaborn as sns
 
 from Bio import SeqIO
 from bioservices import UniProt
+from pandas.errors import EmptyDataError
 from tqdm import tqdm
 from urllib.error import HTTPError
 
@@ -463,7 +464,7 @@ def get_uniprotkb_data(df_row, logger):
                 "Returning null value 'NA' for all UniProt data"
             )
         )
-        null_data = {
+        data = {
             "UniProtKB Entry ID": "NA",
             "UniProtKB Entry Name": "NA",
             "UniProtKB Protein Names": "NA",
@@ -477,17 +478,17 @@ def get_uniprotkb_data(df_row, logger):
             "Gene ontology (molecular function)": "NA",
             "Gene ontology (biological process)": "NA",
         }
-        return pd.DataFrame(null_data)
+        return pd.DataFrame(data)
 
-    except pd.errors.EmptyDataError():
-        # No UniProt entries found for locus tag, return null data for 
+    except EmptyDataError:
+        # No UniProt entries found for locus tag, return null data for
         logger.warning(
             (
                 f"No data returned from UniProt for locus tag:{df_row[5]}.\n"
                 "Returning null value 'NA' for all UniProt data"
             )
         )
-        null_data = {
+        data = {
             "UniProtKB Entry ID": "NA",
             "UniProtKB Entry Name": "NA",
             "UniProtKB Protein Names": "NA",
@@ -501,10 +502,10 @@ def get_uniprotkb_data(df_row, logger):
             "Gene ontology (molecular function)": "NA",
             "Gene ontology (biological process)": "NA",
         }
-        return pd.DataFrame(null_data)
+        return pd.DataFrame(data)
 
     # check if multiple entries were returned
-    elif len(search_result_df) > 1:
+    if len(search_result_df) > 1:
         logger.warning(
             (
                 f"Multiple hits returned from UniProt for locus tag:{df_row[5]}.\n"
