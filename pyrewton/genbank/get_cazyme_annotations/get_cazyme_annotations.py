@@ -332,7 +332,7 @@ def get_genbank_protein_data(accession_number, args, logger):
 
     # If retrieving of GenBank file failed, return 'NA' for all protein data
     # for accession number
-    if gb_file == None:
+    if gb_file is None:
         # error logging performd in get_genbank_file()
         return ["NA", "NA", "NA", "NA"]
 
