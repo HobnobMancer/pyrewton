@@ -76,7 +76,7 @@ def make_output_directory(output, logger, force, nodelete):
     return
 
 
-def write_out_dataframe(species_table, logger, outdir, force, nodelete):
+def write_out_dataframe(dataframe, logger, outdir, force, nodelete):
     """Write out dataframe to output directory.
 
     :param species_table: pandas dataframe
@@ -101,6 +101,6 @@ def write_out_dataframe(species_table, logger, outdir, force, nodelete):
             )
     logger.info("Writing out species dataframe to directory")
 
-    species_table.to_csv(outdir)
+    dataframe.to_csv(outdir)
 
     return ()
