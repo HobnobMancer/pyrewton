@@ -1,5 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Author:
+# Emma E. M. Hobbs
+#
+# Contact
+# eemh1@st-andrews.ac.uk
+#
+# Emma E. M. Hobbs,
+# Biomolecular Sciences Building,
+# University of St Andrews,
+# North Haugh Campus,
+# St Andrews,
+# KY16 9ST
+# Scotland,
+# UK
+#
+# The MIT License
 """Create summary of annotated CAZy classes in GenBank files.
 
 :cmd_args df_input: path, path to input dataframe
@@ -20,25 +36,8 @@
 :func build_df_foundation: Compile row data for dataframe
 :func get_genbank_protein_data: Retrieve protein name and IDs
 
-Generate summary dataframe and of annotated CAZy classes in all GenBank
-files associated with a given species.
-
-Author:
-Emma E. M. Hobbs
-
-Contact
-eemh1@st-andrews.ac.uk
-
-Emma E. M. Hobbs,
-Biomolecular Sciences Building,
-University of St Andrews,
-North Haugh Campus,
-St Andrews,
-KY16 9ST
-Scotland,
-UK
-
-The MIT License
+Generate summary dataframe and of annotated cazymess in all GenBank
+files directly linked to a given species.
 """
 
 import argparse
@@ -50,6 +49,7 @@ import shutil
 import sys
 
 from pathlib import Path
+from typing import List, Optional
 
 import pandas as pd
 import seaborn as sns
@@ -58,104 +58,46 @@ from Bio import SeqIO
 from bioservices import UniProt
 from tqdm import tqdm
 
-
-def build_parser():
-    """Return ArgumentParser parser for script."""
-    # Create parser object
-    parser = argparse.ArgumentParser(
-        prog="cazy_genbank_summary.py",
-        description="Generate summary of CAZy annotation in GenBank files",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-
-    # Add arguments to parser
-    # Add option to specific input directory for dataframe
-    parser.add_argument(
-        "-d",
-        "--df_input",
-        type=Path,
-        metavar="input datafram name",
-        default=sys.stdin,
-        help="input dataframe path",
-    )
-    # Add option to force file over writting
-    parser.add_argument(
-        "-f",
-        "--force",
-        dest="force",
-        action="store_true",
-        default=False,
-        help="Force file over writting",
-    )
-    # Add option to specific input directory for GenBank files
-    parser.add_argument(
-        "-g",
-        "--genbank",
-        type=Path,
-        metavar="GenBank file directory",
-        default=sys.stdin,
-        help="GenBank file path directory",
-    )
-    # Add option to specific directory for log to be written out to
-    parser.add_argument(
-        "-l",
-        "--log",
-        type=Path,
-        metavar="log file name",
-        default=None,
-        help="Defines log file name and/or path",
-    )
-    # Add option to prevent over writing of existing files
-    # and cause addition of files to output directory
-    parser.add_argument(
-        "-n",
-        "--nodelete",
-        dest="nodelete",
-        action="store_true",
-        default=False,
-        help="enable/disable deletion of exisiting files",
-    )
-    # Add option to specific directory for output to be written to
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        metavar="output file name",
-        default=sys.stdout,
-        help="output filename",
-    )
-
-    return parser
+from pyrewton.directory_handling.output_dir_handling_main import make_output_directory
+from pyrewton.directory_handling import input_dir_get_cazyme_annotations
+from pyrewton.loggers.logger_pyrewton_main import build_logger
+from pyrewton.parsers.parser_get_cazyme_annotations import build_parser
 
 
-def main():
+def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
     """docstring summary.
 
     Detail.
 
     Return.
     """
-    # Create parser object for cmd-line ctrl
-    parser = build_parser()
-    args = parser.parse_args()
+    # Programme preparation:
+    # Parse arguments
+    # Check if namepsace isn't passed, if not parse command-line
+    if argv is None:
+        # Parse command-line
+        parser = build_parser()
+        args = parser.parse_args()
+    else:
+        args = build_parser(argv).parse_args()
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
-    build_logger("cazy_genbank_summary", args.log)
-    logger = logging.getLogger("cazy_genbank_summary")
+    if logger is None:
+        logger = build_logger("get_cazyme_annotations", args)
     logger.info("Run initated")
 
     # Check inputs are valid
-    check_input(args, logger)
+    input_dir_get_cazyme_annotations.check_input(args, logger)
     logger.info("Inputs accepted")
 
-    # If specified output directory for genomic files, create output directory
+    # If specified output directory, create output directory
     if args.output is not sys.stdout:
-        make_output_directory(args, logger)
+        make_output_directory(args.output, logger, args.force, args.nodelete)
 
     # Open input dataframe
     logger.info("Opening input dataframe")
-    input_df = get_input_df(args.df_input, logger)
+    input_df = input_dir_get_cazyme_annotations.get_input_df(args.df_input, logger)
 
     # Build dataframe
     cazy_summary_df = create_dataframe(input_df, args, logger)
@@ -165,145 +107,6 @@ def main():
     # Write out dataframe
 
     return
-
-
-def build_logger(script_name, log_file,) -> logging.Logger:
-    """Return a logger for this script.
-
-    Enables logger for script, sets parameters and creates new file to store log.
-
-    :param script_name: str, name of script
-    :param log_file: parser argument, enable writing out of log file
-
-    Return logger object.
-    """
-    logger = logging.getLogger(script_name)
-    logger.setLevel(logging.DEBUG)
-
-    # Set format of loglines
-    log_formatter = logging.Formatter(
-        script_name + ": {} - {}".format("%(asctime)s", "%(message)s")
-    )
-
-    # Setup console handler to log to terminal
-    console_log_handler = logging.StreamHandler()
-    console_log_handler.setLevel(logging.DEBUG)
-    console_log_handler.setFormatter(log_formatter)
-    logger.addHandler(console_log_handler)
-
-    # Setup file handler to log to a file
-    if log_file is not None:
-        file_log_handler = logging.FileHandler(log_file)
-        file_log_handler.setLevel(logging.DEBUG)
-        file_log_handler.setFormatter(log_formatter)
-        logger.addHandler(file_log_handler)
-
-    return logger
-
-
-def check_input(args, logger):
-    """Check paths to input dataframe and GenBank files is valid.
-
-    :param args: parser arguments
-    :param logger: logger object
-
-    Return nothing if paths are valid.
-    """
-    logger.info("Checking path to input dataframe is valid")
-    if (args.df_input).is_file() is False:
-        logger.info(
-            (
-                "Input dataframe not found. Check filename, extension and directory are correct."
-                "\nTerminating program."
-            ),
-            exc_info=1,
-        )
-        sys.exit(1)
-
-    logger.info("Checking path to GenBank file containing directory is valid")
-    if (args.genbank).exists is False:
-        logger.info(
-            (
-                "GenBank file directory not found. Check correct directory was provided."
-                "\nTerminating program."
-            ),
-            exc_info=1,
-        )
-        sys.exit(1)
-
-    return
-
-
-def make_output_directory(args, logger):
-    """Create output directory for genomic files.
-
-    Check if directory indicated for output existed already.
-    If so check if force overwrite enabled. If not terminate programme.
-    If so, check if deletion of exiting files was enabled.
-    If so, exiting files in output directory are deleted.
-    Create output directory, expecting error if already exists.
-
-    :param args: parser arguments
-    :param logger: logger object
-
-    Return nothing.
-    """
-    logger.info("Checking if specified output directory for genomic files exists.")
-    # If output directory specificed at cmd-line already exists, and 'force' not enabled
-    if (args.output).exists():
-        if (args.force) is False:
-            logger.info(
-                "Output directory already exists and forced overwrite not enabled.\n"
-                "Terminating programme."
-            )
-            sys.exit()
-        # If output directory exists and 'force' overwrite enabled
-        else:
-            # 'Nodelete' not enabled so delete output directory contents
-            if (args.nodelete) is False:
-                logger.info(
-                    "Output directory already exists and forced complete overwrite enabled.\n"
-                    "Deleting existing content in outdir."
-                )
-                # delete existing content in outdir
-                shutil.rmtree(args.output)
-            # 'Nodelete' enabled, don't empty directory
-            else:
-                logger.info(
-                    "Output directory already exists and forced addition of files"
-                    "to outdir enabled."
-                )
-    # Recursively make output directory
-    try:
-        (args.output).mkdir(exist_ok=True)
-    except OSError:
-        # this will occur if directory already exists
-        # ignored if forced over write enabled
-        if args.force is True:
-            return ()
-        else:
-            logger.error(
-                "OSError occured while creating output directory for genomic files.\n"
-                "Terminating programme."
-            )
-            sys.exit()
-    return
-
-
-def get_input_df(input_df, logger):
-    """Open input dataframe (df).
-
-    Input dataframe must contain at least columns titled:
-    'Genus', 'Species', 'NCBI Taxonomy ID', and 'NCBI Accession Numbers'.
-
-    Return dataframe.
-    """
-    input_df = pd.read_csv(
-        input_df,
-        header=0,
-        names=["Genus", "Species", "NCBI Taxonomy ID", "NCBI Accession Numbers"],
-    )
-    return input_df
 
 
 def create_dataframe(input_df, args, logger):
@@ -526,36 +329,14 @@ def get_genbank_protein_data(accession_number, args, logger):
         return ["NA", "NA", "NA", "NA"]
 
     # retrieve GenBank file for accession number
-    gb_file = get_genbank_file(
+    gb_file = input_dir_get_cazyme_annotations.get_genbank_file(
         accession_number, args, logger
     )  # list with GenBank file with index [0]
 
-    # check file was retrieved, not multiple or none
-    if len(gb_file) == 0:
-        logger.warning(
-            (
-                f"Retrieved 0 files for {accession_number}.\n"
-                "Returning null ('NA') value for all protein data"
-            )
-        )
-
-    elif len(gb_file) > 1:
-        logger.warning(
-            (
-                f"Retrieved multiple files for {accession_number}.\n"
-                "Returning null ('NA') value for all protein data"
-            )
-        )
-        return ["NA", "NA", "NA", "NA"]
-
-    # check if files is empty
-    if gb_file[0].stat().st_size == 0:
-        logger.warning(
-            (
-                f"GenBank file retrieved for {accession_number} is empty.\n"
-                "Returning null ('NA' value for all protein data"
-            )
-        )
+    # If retrieving of GenBank file failed, return 'NA' for all protein data
+    # for accession number
+    if gb_file == None:
+        # error logging performd in get_genbank_file()
         return ["NA", "NA", "NA", "NA"]
 
     # create empty list to store protein data
@@ -611,33 +392,6 @@ def get_genbank_protein_data(accession_number, args, logger):
                         )
 
     return all_protein_data
-
-
-def get_genbank_file(accession, args, logger):
-    """Retrieve GenBank file for accession number in local dir.
-
-    :param accession: str, accession number of GenBank file
-    :param args: parser arguments
-    :param logger: logger object
-
-    Return list of length 1, containing path to GenBank file.
-    """
-    # replace '.' with '_' to match format in GenBank file name
-    file_stem = accession.replace(".", "_")
-
-    # create empty list to store file entries, to allow checking if multiple files were retrieved
-    gb_file = []
-
-    # retrieve all files from directory
-    files_in_entries = (
-        entry for entry in Path(args.genbank).iterdir() if entry.is_file()
-    )
-    for item in files_in_entries:
-        # search for accession number's GenBank file
-        if item.name.startswith(f"{file_stem}") and item.name.endswith(".gbff.gz"):
-            gb_file.append(item)
-
-    return gb_file
 
 
 def get_record_feature(feature, qualifier, logger):
