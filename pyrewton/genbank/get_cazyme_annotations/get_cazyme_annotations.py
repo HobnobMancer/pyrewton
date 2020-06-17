@@ -185,7 +185,7 @@ def create_dataframe(input_df, args, logger):
         )
         df_index += 1
 
-    print("=====\nUniProt dataframe:\n", all_uniprotkb_data_df)
+    print("====\nUniProt dataframe:\n", all_uniprotkb_data_df)
 
     # join UniProt dataframe to foundation dataframe
     cazy_summary_df = pd.concat([cazy_summary_df, all_uniprotkb_data_df], axis=1)
