@@ -49,6 +49,7 @@ import seaborn as sns
 from Bio import SeqIO
 from bioservices import UniProt
 from tqdm import tqdm
+from urllib.error import HTTPError
 
 from pyrewton.directory_handling import output_dir_handling_main
 from pyrewton.directory_handling import input_dir_get_cazyme_annotations
@@ -444,18 +445,42 @@ def get_uniprotkb_data(df_row, logger):
         "go-id,go(molecular function),go(biological process)"
     )
 
-    # open connection to UniProt(), search and convert result into pandas df
-    search_result_df = pd.read_table(
-        io.StringIO(
-            UniProt().search(
-                f'{df_row[5]} AND organism:"{df_row[0]} {df_row[1]}"',
-                columns=columnlist,
+    try:
+        # open connection to UniProt(), search and convert result into pandas df
+        search_result_df = pd.read_table(
+            io.StringIO(
+                UniProt().search(
+                    f'{df_row[5]} AND organism:"{df_row[0]} {df_row[1]}"',
+                    columns=columnlist,
+                )
             )
         )
-    )
 
-    # check data was returned
-    if len(search_result_df) == 0:
+    except HTTPError:
+        logger.warning(
+            (
+                f"Network error occured when searching UniProt for locus tag:{df_row[5]}.\n"
+                "Returning null value 'NA' for all UniProt data"
+            )
+        )
+        null_data = {
+            "UniProtKB Entry ID": "NA",
+            "UniProtKB Entry Name": "NA",
+            "UniProtKB Protein Names": "NA",
+            "EC number": "NA",
+            "Length (Aa)": "NA",
+            "Mass (Da)": "NA",
+            "Domains": "NA",
+            "Domain count": "NA",
+            "UniProtKB Linked Protein Families": "NA",
+            "Gene ontology IDs": "NA",
+            "Gene ontology (molecular function)": "NA",
+            "Gene ontology (biological process)": "NA",
+        }
+        return pd.DataFrame(null_data)
+
+    except pd.errors.EmptyDataError():
+        # No UniProt entries found for locus tag, return null data for 
         logger.warning(
             (
                 f"No data returned from UniProt for locus tag:{df_row[5]}.\n"
@@ -477,7 +502,8 @@ def get_uniprotkb_data(df_row, logger):
             "Gene ontology (biological process)": "NA",
         }
         return pd.DataFrame(null_data)
-    # check if only one protein entry was returned
+
+    # check if multiple entries were returned
     elif len(search_result_df) > 1:
         logger.warning(
             (
