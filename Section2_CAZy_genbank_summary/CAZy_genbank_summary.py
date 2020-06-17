@@ -696,9 +696,6 @@ def get_uniprotkb_data(df_row, logger):
 
     # open connection to UniProt(), search and convert result into pandas df
     search_result_df = pd.read_table(
-        io.StringIO(UniProt().search(query_3, columns=columnlist))
-    )
-    search_result_df = pd.read_table(
         io.StringIO(
             UniProt().search(
                 f'{df_row[5]} AND organism:"{df_row[0]} {df_row[1]}"',
@@ -729,8 +726,7 @@ def get_uniprotkb_data(df_row, logger):
             "Gene ontology (molecular function)": "NA",
             "Gene ontology (biological process)": "NA",
         }
-        null_uniprot_df = pd.DataFrame(null_data)
-        return
+        return pd.DataFrame(null_data)
     # check if only one protein entry was returned
     elif len(search_result_df) > 1:
         logger.warning(
@@ -753,8 +749,7 @@ def get_uniprotkb_data(df_row, logger):
             "Gene ontology (molecular function)": "NA",
             "Gene ontology (biological process)": "NA",
         }
-        null_uniprot_df = pd.DataFrame(null_data)
-        return
+        return pd.DataFrame(null_data)
 
     # rename columns to match to indicate UniProtKB source of data
     search_result_df.rename(
@@ -789,13 +784,6 @@ def get_uniprotkb_data(df_row, logger):
     search_result_df.insert(3, "EC number", EC_number)
 
     return search_result_df
-
-
-def get_cazy_data(protein_id, logger):
-    # use protein_id to call to UniProt
-    # if CAZy link return class - may return full family rather than class - no worries
-    # if no CAZy link return 'NA'
-    return  # list, first CAZy class and then protein function
 
 
 def create_summary_chart(cazy_fam_column, logger):
