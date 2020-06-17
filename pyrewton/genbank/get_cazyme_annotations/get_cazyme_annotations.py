@@ -25,12 +25,7 @@
 :cmd_args nodelete: not delete existing files in output directory
 :cmd_args output: path, path to output directory
 
-:func build_parser: Build paser to allow cmd-line operation
 :func main: Coordinate calling of other functions
-:func build_logger: Build logger
-:func check_input: Check paths to input dataframe and GenBank files are valid
-:func make_output_directory: Establish output directory
-:func get_input_df: parse input dataframe
 :func create_dataframe: build dataframe summarising CAZy annotation in GenBank files
 :func create_df_foundation: Parse input dataframe row
 :func build_df_foundation: Compile row data for dataframe
@@ -55,7 +50,7 @@ from Bio import SeqIO
 from bioservices import UniProt
 from tqdm import tqdm
 
-from pyrewton.directory_handling.output_dir_handling_main import make_output_directory
+from pyrewton.directory_handling import output_dir_handling_main
 from pyrewton.directory_handling import input_dir_get_cazyme_annotations
 from pyrewton.loggers.logger_pyrewton_main import build_logger
 from pyrewton.parsers.parser_get_cazyme_annotations import build_parser
@@ -90,7 +85,9 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # If specified output directory, create output directory
     if args.output is not sys.stdout:
-        make_output_directory(args.output, logger, args.force, args.nodelete)
+        output_dir_handling_main.make_output_directory(
+            args.output, logger, args.force, args.nodelete
+        )
 
     # Open input dataframe
     logger.info("Opening input dataframe")
@@ -158,7 +155,9 @@ def create_dataframe(input_df, args, logger):
         )
         df_index += 1
 
-    print("=====\nFoundation dataframe:\n", cazy_summary_df)
+    # these are debugging purposes and will not be included in final version
+    print("=====Foundation dataframe======\n", cazy_summary_df, "\n")
+    cazy_summary_df.to_csv("foundation_dataframe.csv")
 
     # Build empty dataframe to store data retrieved from UniProtKB
     # GO = Gene Ontology (GO) project
