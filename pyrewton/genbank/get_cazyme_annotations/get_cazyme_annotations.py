@@ -40,15 +40,12 @@ Generate summary dataframe and of annotated cazymess in all GenBank
 files directly linked to a given species.
 """
 
-import argparse
 import gzip
 import io
 import logging
 import re
-import shutil
 import sys
 
-from pathlib import Path
 from typing import List, Optional
 
 import pandas as pd
