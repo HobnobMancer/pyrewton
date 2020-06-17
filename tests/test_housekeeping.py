@@ -12,7 +12,7 @@ import pytest
 
 from Bio import Entrez
 
-from pyrewton import directory_handling, loggers, parsers, genbank
+from pyrewton import directory_handling, loggers, parsers
 
 Entrez.email = "my_email@my.domain"
 
@@ -54,6 +54,7 @@ class Test_housekeeping_functions(unittest.TestCase):
     def test_build_parser(self):
         """Tests building of parser"""
         parsers.parser_get_ncbi_genomes.build_parser()
+        parsers.parser_get_cazyme_annotations()
 
     @pytest.mark.run(order=2)
     def test_build_logger(self):
@@ -72,6 +73,6 @@ class Test_housekeeping_functions(unittest.TestCase):
     @pytest.mark.run(order=4)
     def test_writing_df(self):
         """Tests function for writing out created dataframe"""
-        genbank.get_ncbi_genomes.get_ncbi_genomes.write_out_dataframe(
+        directory_handling.output_dir_handling_main.write_out_dataframe(
             self.df, self.logger, self.df_output, True, False
         )
