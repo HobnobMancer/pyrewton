@@ -54,7 +54,7 @@ class TestName_and_IDRetrieval(unittest.TestCase):
 
     # Define tests
 
-    @pytest.mark.run(order=6)
+    @pytest.mark.run(order=11)
     def test_scientific_name_retrieval(self):
         """Tests Entrez call to NCBI to retrieve scientific name from taxonomy ID.
 
@@ -69,7 +69,7 @@ class TestName_and_IDRetrieval(unittest.TestCase):
             ),
         )
 
-    @pytest.mark.run(order=7)
+    @pytest.mark.run(order=12)
     def test_taxonomy_id_retrieval(self):
         """Tests Entrez call to NCBI to retrieve taxonomy ID from scientific name."""
 
