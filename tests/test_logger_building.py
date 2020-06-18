@@ -7,10 +7,7 @@ import unittest
 from argparse import Namespace
 from pathlib import Path
 
-import pandas as pd
 import pytest
-
-from Bio import Entrez
 
 from pyrewton import loggers
 
