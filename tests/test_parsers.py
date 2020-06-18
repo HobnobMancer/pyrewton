@@ -6,8 +6,6 @@ import unittest
 
 import pytest
 
-from Bio import Entrez
-
 from pyrewton import parsers
 
 
