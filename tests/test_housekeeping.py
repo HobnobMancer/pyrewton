@@ -54,7 +54,7 @@ class Test_housekeeping_functions(unittest.TestCase):
     def test_build_parser(self):
         """Tests building of parser"""
         parsers.parser_get_ncbi_genomes.build_parser()
-        parsers.parser_get_cazyme_annotations()
+        parsers.parser_get_cazyme_annotations.build_parser()
 
     @pytest.mark.run(order=2)
     def test_build_logger(self):
