@@ -24,7 +24,7 @@ class Test_housekeeping_functions(unittest.TestCase):
         # Define test directories
         self.test_dir = Path("tests")
         self.output_dir = self.test_dir / "test_targets" / "out_dir_hndng_test_targets"
-        self.df_output = self.output_dir / "gt_ncbi_gnms_test_df.csv"
+        self.df_output = self.output_dir / "test_writing_df.csv"
 
         # Null logger instance
         self.logger = logging.getLogger("Test_logger_parser_output")
@@ -36,14 +36,14 @@ class Test_housekeeping_functions(unittest.TestCase):
 
     # Define function to test
 
-    @pytest.mark.run(order=3)
+    @pytest.mark.run(order=4)
     def test_output_dir_creation(self):
         """Tests function for creating output dir"""
         output_dir_handling_main.make_output_directory(
             self.output_dir, self.logger, True, True
         )
 
-    @pytest.mark.run(order=4)
+    @pytest.mark.run(order=5)
     def test_writing_df(self):
         """Tests function for writing out created dataframe"""
         output_dir_handling_main.write_out_dataframe(
