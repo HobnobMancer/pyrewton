@@ -185,7 +185,7 @@ def create_dataframe(input_df, args, logger):
         )
         df_index += 1
 
-    print("====\nUniProt dataframe:\n", all_uniprotkb_data_df)
+    print("=====\nUniProt dataframe:\n", all_uniprotkb_data_df)
 
     # join UniProt dataframe to foundation dataframe
     cazy_summary_df = pd.concat([cazy_summary_df, all_uniprotkb_data_df], axis=1)
@@ -493,39 +493,10 @@ def get_uniprotkb_data(df_row, logger):
                 "Returning null value 'NA' for all UniProt data"
             )
         )
-<<<<<<< HEAD
-<<<<<<< HEAD
         return pd.DataFrame(blank_data)
 
     # check if multiple entries were returned
     if len(search_result_df) > 1:
-=======
-        null_data = {
-=======
-        data = {
->>>>>>> attempt fix on uniprot() error catching
-            "UniProtKB Entry ID": "NA",
-            "UniProtKB Entry Name": "NA",
-            "UniProtKB Protein Names": "NA",
-            "EC number": "NA",
-            "Length (Aa)": "NA",
-            "Mass (Da)": "NA",
-            "Domains": "NA",
-            "Domain count": "NA",
-            "UniProtKB Linked Protein Families": "NA",
-            "Gene ontology IDs": "NA",
-            "Gene ontology (molecular function)": "NA",
-            "Gene ontology (biological process)": "NA",
-        }
-        return pd.DataFrame(data)
-
-    # check if multiple entries were returned
-<<<<<<< HEAD
-    elif len(search_result_df) > 1:
->>>>>>> add try/excpt for UniProt connection error
-=======
-    if len(search_result_df) > 1:
->>>>>>> attempt fix on uniprot() error catching
         logger.warning(
             (
                 f"Multiple hits returned from UniProt for locus tag:{df_row[5]}.\n"
