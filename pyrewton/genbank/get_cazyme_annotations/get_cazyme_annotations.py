@@ -612,7 +612,9 @@ def get_uniprotkb_data(df_row, logger):
             EC = EC.replace("(", "")
             EC = EC.replace(")", "")
             EC_number += EC
-
+            # Do I want to remove the EC number becuase if multiple are given,
+            # maybe helpful to see in the protein name section which EC number
+            # corresponds to which function
     # Add EC number to dataframe0
     search_result_df.insert(3, "EC number", EC_number)
 
