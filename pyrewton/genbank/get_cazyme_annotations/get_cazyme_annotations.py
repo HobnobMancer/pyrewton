@@ -44,7 +44,6 @@ import sys
 from typing import List, Optional
 
 import pandas as pd
-import seaborn as sns
 
 from Bio import SeqIO
 from bioservices import UniProt
@@ -619,21 +618,6 @@ def get_uniprotkb_data(df_row, logger):
     search_result_df.insert(3, "EC number", EC_number)
 
     return search_result_df
-
-
-def create_summary_chart(cazy_fam_column, logger):
-    # Use seaborn to create summary chart
-    return
-
-
-def write_out_df(df, output, logger):
-    # write out df to specified directory
-    return
-
-
-def write_out_chart(chart, output, logger):
-    # write out chart to specified directory
-    return
 
 
 if __name__ == "__main__":
