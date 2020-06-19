@@ -485,7 +485,7 @@ def get_uniprotkb_data(df_row, logger):
         )
         return pd.DataFrame(blank_data)
 
-    except EmptyDataError:
+    except EmptyDataError():
         # No UniProt entries found for locus tag, return null data for
         logger.warning(
             (
