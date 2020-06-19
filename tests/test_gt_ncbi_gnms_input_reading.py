@@ -42,12 +42,12 @@ class Test_parsing_input_file(unittest.TestCase):
 
     # Define tests
 
-    @pytest.mark.run(order=9)
+    @pytest.mark.run(order=4)
     def test_example_input_file_exists(self):
         """Tests that test input file, supplied with programme is present."""
         self.assertTrue(self.input_reading_path.is_file())
 
-    @pytest.mark.run(order=10)
+    @pytest.mark.run(order=5)
     def test_input_file(self):
         """Tests script can open and read supplied input file."""
         get_ncbi_genomes.parse_input_file(
