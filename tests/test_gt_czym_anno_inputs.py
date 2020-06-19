@@ -35,7 +35,7 @@ class Test_parsing_input_file(unittest.TestCase):
 
         # establish input paths
         self.input_df_path = self.input_dir / "test_input_df.csv"
-        self.genbank_file_path = self.input_dir / "test_genbank_file.gbff.gz"
+        self.genbank_file_path = self.input_dir / "test_genbank_files"
 
         # Define Namespace for input dataframe and GenBank file paths
 
@@ -50,7 +50,7 @@ class Test_parsing_input_file(unittest.TestCase):
     @pytest.mark.run(order=6)
     def test_input_validity_checking(self):
         """Tests the function which checks both inputs are reachable/available."""
-        check_input(self.argsdict, self.logger)
+        check_input(self.argsdict["args"], self.logger)
 
     @pytest.mark.run(order=7)
     def test_input_dataframe_retrieval(self):
@@ -60,4 +60,4 @@ class Test_parsing_input_file(unittest.TestCase):
     @pytest.mark.run(order=8)
     def test_genbank_reading(self):
         """Tests ability to read and process GenBank file."""
-        get_genbank_file("test_genbank_file", self.argsdict, self.logger)
+        get_genbank_file("GCA_011074995.1", self.argsdict["args"], self.logger)
