@@ -57,7 +57,7 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
             self.row_data, self.logger, self.argsdict["args"]
         )
 
-    @pytest.mark.tun(order=14)
+    @pytest.mark.run(order=14)
     def test_compiling_url(self):
         """Test generation of URL for downloading GenBank files."""
         get_ncbi_genomes.compile_url(
