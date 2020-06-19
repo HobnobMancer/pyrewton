@@ -145,6 +145,7 @@ def create_dataframe(input_df, args, logger):
             "Locus Tag",
             "Gene Locus",
             "NCBI Recorded Function",
+            "Protein Sequence",
         ]
     )
 
@@ -237,6 +238,7 @@ def get_df_foundation_data(df_row, args, logger):
             "Locus Tag",
             "Gene Locus",
             "NCBI Recorded Function",
+            "Protein Sequence",
         ]
     )
 
@@ -267,6 +269,7 @@ def get_df_foundation_data(df_row, args, logger):
                 "Locus Tag": "NA",
                 "Gene Locus": "NA",
                 "NCBI Recorded Function": "NA",
+                "Protein Sequence": "NA",
             }
             protein_data_df = protein_data_df.append(new_df_row, ignore_index=True)
 
@@ -290,6 +293,7 @@ def get_df_foundation_data(df_row, args, logger):
                     "Locus Tag": protein_data[protein_index][1],
                     "Gene Locus": protein_data[protein_index][2],
                     "NCBI Recorded Function": protein_data[protein_index][3],
+                    "Protein Sequence": protein_data[protein_index][4],
                 }
 
                 # Add new row to dataframe
@@ -324,7 +328,7 @@ def get_genbank_protein_data(accession_number, args, logger):
                 "for all protein data"
             )
         )
-        return ["NA", "NA", "NA", "NA"]
+        return ["NA", "NA", "NA", "NA", "NA"]
 
     # retrieve GenBank file for accession number
     gb_file = input_dir_get_cazyme_annotations.get_genbank_file(
@@ -335,7 +339,7 @@ def get_genbank_protein_data(accession_number, args, logger):
     # for accession number
     if gb_file is None:
         # error logging performd in get_genbank_file()
-        return ["NA", "NA", "NA", "NA"]
+        return ["NA", "NA", "NA", "NA", "NA"]
 
     # create empty list to store protein data
     all_protein_data = []
@@ -361,12 +365,16 @@ def get_genbank_protein_data(accession_number, args, logger):
                     protein_data.append(get_record_feature(feature, "location", logger))
                     # extract annotated function of product
                     protein_data.append(get_record_feature(feature, "product", logger))
+                    # extract protein sequence
+                    protein_data.append(
+                        get_record_feature(feature, "translation", logger)
+                    )
 
                     # add protein data to total protein data list, only if data was retrieved
-                    if len(protein_data) == 4:
+                    if len(protein_data) == 5:
                         # if null value was returned for every feature attribute log error
                         # and don't add to all_protein_data list
-                        if protein_data == ["NA", "NA", "NA", "NA"]:
+                        if protein_data == ["NA", "NA", "NA", "NA", "NA"]:
                             logger.warning(
                                 f"No data retrieved from CDS type feature, index: {index}",
                                 exc_info=1,
@@ -375,7 +383,7 @@ def get_genbank_protein_data(accession_number, args, logger):
                         else:
                             all_protein_data.append(protein_data)
                         # if some data was retrieved all to all_protein_data list
-                        if protein_data != ["NA", "NA", "NA", "NA"]:
+                        if protein_data != ["NA", "NA", "NA", "NA", "NA"]:
                             all_protein_data.append(protein_data)
 
                     else:
@@ -478,9 +486,25 @@ def get_uniprotkb_data(df_row, logger):
             "Gene ontology (molecular function)": "NA",
             "Gene ontology (biological process)": "NA",
         }
-        return pd.DataFrame(data)
+        return pd.DataFrame(
+            data,
+            columns=[
+                "UniProtKB Entry ID",
+                "UniProtKB Entry Name",
+                "UniProtKB Protein Names",
+                "EC number",
+                "Length (Aa)",
+                "Mass (Da)",
+                "Domains",
+                "Domain count",
+                "UniProtKB Linked Protein Families",
+                "Gene ontology IDs",
+                "Gene ontology (molecular function)",
+                "Gene ontology (biological process)",
+            ],
+        )
 
-    except EmptyDataError:
+    except EmptyDataError():
         # No UniProt entries found for locus tag, return null data for
         logger.warning(
             (
@@ -502,7 +526,23 @@ def get_uniprotkb_data(df_row, logger):
             "Gene ontology (molecular function)": "NA",
             "Gene ontology (biological process)": "NA",
         }
-        return pd.DataFrame(data)
+        return pd.DataFrame(
+            data,
+            columns=[
+                "UniProtKB Entry ID",
+                "UniProtKB Entry Name",
+                "UniProtKB Protein Names",
+                "EC number",
+                "Length (Aa)",
+                "Mass (Da)",
+                "Domains",
+                "Domain count",
+                "UniProtKB Linked Protein Families",
+                "Gene ontology IDs",
+                "Gene ontology (molecular function)",
+                "Gene ontology (biological process)",
+            ],
+        )
 
     # check if multiple entries were returned
     if len(search_result_df) > 1:
@@ -512,7 +552,7 @@ def get_uniprotkb_data(df_row, logger):
                 "Returning null value 'NA' for all UniProt data"
             )
         )
-        null_data = {
+        data = {
             "UniProtKB Entry ID": "NA",
             "UniProtKB Entry Name": "NA",
             "UniProtKB Protein Names": "NA",
@@ -526,7 +566,23 @@ def get_uniprotkb_data(df_row, logger):
             "Gene ontology (molecular function)": "NA",
             "Gene ontology (biological process)": "NA",
         }
-        return pd.DataFrame(null_data)
+        return pd.DataFrame(
+            data,
+            columns=[
+                "UniProtKB Entry ID",
+                "UniProtKB Entry Name",
+                "UniProtKB Protein Names",
+                "EC number",
+                "Length (Aa)",
+                "Mass (Da)",
+                "Domains",
+                "Domain count",
+                "UniProtKB Linked Protein Families",
+                "Gene ontology IDs",
+                "Gene ontology (molecular function)",
+                "Gene ontology (biological process)",
+            ],
+        )
 
     # rename columns to match to indicate UniProtKB source of data
     search_result_df.rename(
