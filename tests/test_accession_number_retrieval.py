@@ -56,3 +56,10 @@ class Test_call_to_AssemblyDb(unittest.TestCase):
         get_ncbi_genomes.get_accession_numbers(
             self.row_data, self.logger, self.argsdict["args"]
         )
+
+    @pytest.mark.tun(order=14)
+    def test_compiling_url(self):
+        """Test generation of URL for downloading GenBank files."""
+        get_ncbi_genomes.compile_url(
+            "test_accession", "test_name", self.logger, "suffix"
+        )
