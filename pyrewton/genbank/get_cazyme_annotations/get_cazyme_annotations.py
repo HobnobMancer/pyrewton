@@ -90,7 +90,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Open input dataframe
     logger.info("Opening input dataframe %s", args.df_input)
     input_df = pd.read_csv(args.df_input, header=0, index_col=0)
-    sys.exit(0)
 
     # Build dataframe
     cazy_summary_df = create_dataframe(input_df, args, logger)
@@ -98,8 +97,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Create summary charts of CAZy annotation distribution
 
     # Write out dataframe
-
-    return
 
 
 def create_dataframe(input_df, args, logger):
