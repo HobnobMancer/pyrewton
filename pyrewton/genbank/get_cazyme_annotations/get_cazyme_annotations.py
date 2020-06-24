@@ -93,6 +93,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     logger.info("Opening input dataframe %s", args.df_input)
     input_df = pd.read_csv(args.df_input, header=0, index_col=0)
 
+    sys.exit(0)
+
     # Build dataframe
     cazy_summary_df = create_dataframe(input_df, args, logger)
 
