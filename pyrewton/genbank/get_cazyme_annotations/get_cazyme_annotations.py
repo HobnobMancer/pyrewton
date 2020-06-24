@@ -51,8 +51,7 @@ from pandas.errors import EmptyDataError
 from tqdm import tqdm
 from urllib.error import HTTPError
 
-from pyrewton.directory_handling import output_dir_handling_main
-from pyrewton.directory_handling import input_dir_get_cazyme_annotations
+from pyrewton.file_io import make_output_directory, input_dir_get_cazyme_annotations
 from pyrewton.loggers.logger_pyrewton_main import build_logger
 from pyrewton.parsers.parser_get_cazyme_annotations import build_parser
 
@@ -82,15 +81,17 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # If specified output directory, create output directory
     if args.output is not sys.stdout:
-        output_dir_handling_main.make_output_directory(
-            args.output, logger, args.force, args.nodelete
-        )
-
-    sys.exit(0)
+        try:
+            make_output_directory(args, logger)
+        except FileExistsError:
+            logger.error("Output directory %s already exists (exiting)" % args.output)
+            sys.exit(1)
 
     # Open input dataframe
     logger.info("Opening input dataframe")
     input_df = input_dir_get_cazyme_annotations.get_input_df(args.df_input, logger)
+
+    sys.exit(0)
 
     # Build dataframe
     cazy_summary_df = create_dataframe(input_df, args, logger)
