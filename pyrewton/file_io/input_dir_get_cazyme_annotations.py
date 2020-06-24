@@ -29,22 +29,6 @@ import pandas as pd
 from pathlib import Path
 
 
-def get_input_df(input_df, logger):
-    """Open input dataframe (df).
-
-    Input dataframe must contain at least columns titled:
-    'Genus', 'Species', 'NCBI Taxonomy ID', and 'NCBI Accession Numbers'.
-
-    Return dataframe.
-    """
-    input_df = pd.read_csv(
-        input_df,
-        header=0,
-        names=["Genus", "Species", "NCBI Taxonomy ID", "NCBI Accession Numbers"],
-    )
-    return input_df
-
-
 def get_genbank_file(accession, args, logger):
     """Retrieve GenBank file for accession number in local dir.
 
