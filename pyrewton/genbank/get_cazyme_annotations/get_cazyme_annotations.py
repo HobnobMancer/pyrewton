@@ -51,7 +51,7 @@ from pandas.errors import EmptyDataError
 from tqdm import tqdm
 from urllib.error import HTTPError
 
-from pyrewton.file_io import make_output_directory, input_dir_get_cazyme_annotations
+from pyrewton.file_io import make_output_directory
 from pyrewton.loggers.logger_pyrewton_main import build_logger
 from pyrewton.parsers.parser_get_cazyme_annotations import build_parser
 
@@ -88,9 +88,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
             sys.exit(1)
 
     # Open input dataframe
-    logger.info("Opening input dataframe")
-    input_df = input_dir_get_cazyme_annotations.get_input_df(args.df_input, logger)
-
+    logger.info("Opening input dataframe %s", args.df_input)
+    input_df = pd.read_csv(args.df_input, header=0, index_col=0)
     sys.exit(0)
 
     # Build dataframe
