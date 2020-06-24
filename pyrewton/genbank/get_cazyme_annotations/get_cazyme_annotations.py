@@ -80,15 +80,13 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         logger = build_logger("get_cazyme_annotations", args)
     logger.info("Run initated")
 
-    # Check inputs are valid
-    input_dir_get_cazyme_annotations.check_input(args, logger)
-    logger.info("Inputs accepted")
-
     # If specified output directory, create output directory
     if args.output is not sys.stdout:
         output_dir_handling_main.make_output_directory(
             args.output, logger, args.force, args.nodelete
         )
+
+    sys.exit(0)
 
     # Open input dataframe
     logger.info("Opening input dataframe")
@@ -455,14 +453,13 @@ def get_uniprotkb_data(df_row, logger):
 
     try:
         # open connection to UniProt(), search and convert result into pandas df
-        search_result_df = pd.read_table(
-            io.StringIO(
-                UniProt().search(
-                    f'{df_row[5]} AND organism:"{df_row[0]} {df_row[1]}"',
-                    columns=columnlist,
-                )
-            )
+        logger.info(df_row)
+        search_result = UniProt().search(
+            f'{df_row[5]} AND organism:"{df_row[0]} {df_row[1]}"', columns=columnlist,
         )
+        logger.info(search_result)
+        print(search_result)
+        search_result_df = pd.read_table(io.StringIO(search_result))
 
     except HTTPError:
         logger.warning(
@@ -503,7 +500,7 @@ def get_uniprotkb_data(df_row, logger):
             ],
         )
 
-    except EmptyDataError():
+    except EmptyDataError:
         # No UniProt entries found for locus tag, return null data for
         logger.warning(
             (
