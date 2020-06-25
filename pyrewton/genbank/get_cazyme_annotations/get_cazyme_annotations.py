@@ -51,7 +51,7 @@ from pandas.errors import EmptyDataError
 from tqdm import tqdm
 from urllib.error import HTTPError
 
-from pyrewton.file_io import make_output_directory
+from pyrewton.file_io import make_output_directory, input_dir_get_cazyme_annotations
 from pyrewton.loggers.logger_pyrewton_main import build_logger
 from pyrewton.parsers.parser_get_cazyme_annotations import build_parser
 
@@ -142,6 +142,9 @@ def create_dataframe(input_df, args, logger):
             "Protein Sequence",
         ]
     )
+
+    print(cazy_summary_df)
+    # sys.exit(0)
 
     # Retrieve data for dataframe foundation and add to empty dataframe
     df_index = 0
