@@ -145,6 +145,9 @@ def create_dataframe(input_df, args, logger):
         ]
     )
 
+    print(cazy_summary_df)
+    # sys.exit(0)
+
     # Retrieve data for dataframe foundation and add to empty dataframe
     df_index = 0
     for df_index in range(len(input_df["Genus"])):
