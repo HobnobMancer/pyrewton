@@ -154,9 +154,6 @@ def create_dataframe(input_df, args, logger):
         )
         df_index += 1
 
-    print(cazy_summary_df)
-    sys.exit(0)
-
     # these are debugging purposes and will not be included in final version
     print("=====Foundation dataframe======\n", cazy_summary_df, "\n")
     cazy_summary_df.to_csv("foundation_dataframe.csv")
