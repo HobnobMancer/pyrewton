@@ -47,7 +47,9 @@ class Test_parsing_input_file(unittest.TestCase):
     # Define tests
     # Tests pass by being able to access and read input objects without incurring errors
 
-    @pytest.mark.run(order=15)
+    @pytest.mark.skip(
+        reason="Test input data is inappropriate for function being tested."
+    )
     def test_genbank_protein_data_df(self):
         """Tests the function which builds dataframe from GenBank files protein data."""
         get_df_foundation_data(self.df_series_0, self.argsdict["args"], self.logger)
