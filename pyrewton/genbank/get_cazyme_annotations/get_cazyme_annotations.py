@@ -152,9 +152,6 @@ def create_dataframe(input_df, args, logger):
         )
         df_index += 1
 
-    print(cazy_summary_df)
-    sys.exit(0)
-
     # these are debugging purposes and will not be included in final version
     print("=====Foundation dataframe======\n", cazy_summary_df, "\n")
     cazy_summary_df.to_csv("foundation_dataframe.csv")
@@ -451,14 +448,32 @@ def get_uniprotkb_data(df_row, logger):
         "go-id,go(molecular function),go(biological process)"
     )
 
+    # This dictionary will be used to populate "blank"/"empty" databases when
+    # an error is thrown. Iterables are used as values to avoid problems with
+    # "ValueError: If using all scalar values, you must pass an index"
+    blank_data = {
+        "UniProtKB Entry ID": ["NA"],
+        "UniProtKB Entry Name": ["NA"],
+        "UniProtKB Protein Names": ["NA"],
+        "EC number": ["NA"],
+        "Length (Aa)": ["NA"],
+        "Mass (Da)": ["NA"],
+        "Domains": ["NA"],
+        "Domain count": ["NA"],
+        "UniProtKB Linked Protein Families": ["NA"],
+        "Gene ontology IDs": ["NA"],
+        "Gene ontology (molecular function)": ["NA"],
+        "Gene ontology (biological process)": ["NA"],
+    }
+
     try:
         # open connection to UniProt(), search and convert result into pandas df
         logger.info(df_row)
+        query = f'{df_row[5]} AND organism:"{df_row[0]} {df_row[1]}"'
         search_result = UniProt().search(
-            f'{df_row[5]} AND organism:"{df_row[0]} {df_row[1]}"', columns=columnlist,
-        )
+            query, columns=columnlist,
+        )  # returns empty string for no result
         logger.info(search_result)
-        print(search_result)
         search_result_df = pd.read_table(io.StringIO(search_result))
 
     except HTTPError:
@@ -468,37 +483,7 @@ def get_uniprotkb_data(df_row, logger):
                 "Returning null value 'NA' for all UniProt data"
             )
         )
-        data = {
-            "UniProtKB Entry ID": "NA",
-            "UniProtKB Entry Name": "NA",
-            "UniProtKB Protein Names": "NA",
-            "EC number": "NA",
-            "Length (Aa)": "NA",
-            "Mass (Da)": "NA",
-            "Domains": "NA",
-            "Domain count": "NA",
-            "UniProtKB Linked Protein Families": "NA",
-            "Gene ontology IDs": "NA",
-            "Gene ontology (molecular function)": "NA",
-            "Gene ontology (biological process)": "NA",
-        }
-        return pd.DataFrame(
-            data,
-            columns=[
-                "UniProtKB Entry ID",
-                "UniProtKB Entry Name",
-                "UniProtKB Protein Names",
-                "EC number",
-                "Length (Aa)",
-                "Mass (Da)",
-                "Domains",
-                "Domain count",
-                "UniProtKB Linked Protein Families",
-                "Gene ontology IDs",
-                "Gene ontology (molecular function)",
-                "Gene ontology (biological process)",
-            ],
-        )
+        return pd.DataFrame(blank_data)
 
     except EmptyDataError:
         # No UniProt entries found for locus tag, return null data for
@@ -508,37 +493,7 @@ def get_uniprotkb_data(df_row, logger):
                 "Returning null value 'NA' for all UniProt data"
             )
         )
-        data = {
-            "UniProtKB Entry ID": "NA",
-            "UniProtKB Entry Name": "NA",
-            "UniProtKB Protein Names": "NA",
-            "EC number": "NA",
-            "Length (Aa)": "NA",
-            "Mass (Da)": "NA",
-            "Domains": "NA",
-            "Domain count": "NA",
-            "UniProtKB Linked Protein Families": "NA",
-            "Gene ontology IDs": "NA",
-            "Gene ontology (molecular function)": "NA",
-            "Gene ontology (biological process)": "NA",
-        }
-        return pd.DataFrame(
-            data,
-            columns=[
-                "UniProtKB Entry ID",
-                "UniProtKB Entry Name",
-                "UniProtKB Protein Names",
-                "EC number",
-                "Length (Aa)",
-                "Mass (Da)",
-                "Domains",
-                "Domain count",
-                "UniProtKB Linked Protein Families",
-                "Gene ontology IDs",
-                "Gene ontology (molecular function)",
-                "Gene ontology (biological process)",
-            ],
-        )
+        return pd.DataFrame(blank_data)
 
     # check if multiple entries were returned
     if len(search_result_df) > 1:
@@ -548,37 +503,7 @@ def get_uniprotkb_data(df_row, logger):
                 "Returning null value 'NA' for all UniProt data"
             )
         )
-        data = {
-            "UniProtKB Entry ID": "NA",
-            "UniProtKB Entry Name": "NA",
-            "UniProtKB Protein Names": "NA",
-            "EC number": "NA",
-            "Length (Aa)": "NA",
-            "Mass (Da)": "NA",
-            "Domains": "NA",
-            "Domain count": "NA",
-            "UniProtKB Linked Protein Families": "NA",
-            "Gene ontology IDs": "NA",
-            "Gene ontology (molecular function)": "NA",
-            "Gene ontology (biological process)": "NA",
-        }
-        return pd.DataFrame(
-            data,
-            columns=[
-                "UniProtKB Entry ID",
-                "UniProtKB Entry Name",
-                "UniProtKB Protein Names",
-                "EC number",
-                "Length (Aa)",
-                "Mass (Da)",
-                "Domains",
-                "Domain count",
-                "UniProtKB Linked Protein Families",
-                "Gene ontology IDs",
-                "Gene ontology (molecular function)",
-                "Gene ontology (biological process)",
-            ],
-        )
+        return pd.DataFrame(blank_data)
 
     # rename columns to match to indicate UniProtKB source of data
     search_result_df.rename(
