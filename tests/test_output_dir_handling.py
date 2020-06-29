@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from pyrewton.directory_handling import output_dir_handling_main
+from pyrewton.file_io import make_output_directory, write_out_dataframe
 
 
 class Test_housekeeping_functions(unittest.TestCase):
@@ -39,13 +39,9 @@ class Test_housekeeping_functions(unittest.TestCase):
     @pytest.mark.run(order=9)
     def test_output_dir_creation(self):
         """Tests function for creating output dir"""
-        output_dir_handling_main.make_output_directory(
-            self.output_dir, self.logger, True, True
-        )
+        make_output_directory(self.output_dir, self.logger, True, True)
 
     @pytest.mark.run(order=10)
     def test_writing_df(self):
         """Tests function for writing out created dataframe"""
-        output_dir_handling_main.write_out_dataframe(
-            self.df, self.logger, self.df_output, True, False
-        )
+        write_out_dataframe(self.df, self.logger, self.df_output, True, False)
