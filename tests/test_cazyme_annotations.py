@@ -8,11 +8,7 @@ import unittest
 from argparse import Namespace
 from pathlib import Path
 
-from pyrewton.directory_handling.input_dir_get_cazyme_annotations import (
-    check_input,
-    get_input_df,
-    get_genbank_file,
-)
+from pyrewton.file_io.input_dir_get_cazyme_annotations import get_genbank_file
 
 
 class Test_parsing_input_file(unittest.TestCase):
@@ -46,17 +42,6 @@ class Test_parsing_input_file(unittest.TestCase):
         }
 
     # Define tests
-
-    @pytest.mark.run(order=6)
-    def test_input_validity_checking(self):
-        """Tests the function which checks both inputs are reachable/available."""
-        check_input(self.argsdict["args"], self.logger)
-
-    @pytest.mark.run(order=7)
-    def test_input_dataframe_retrieval(self):
-        """Test function which retrieves, reads and processes input dataframe(df)."""
-        get_input_df(self.input_df_path, self.logger)
-
     @pytest.mark.run(order=8)
     def test_genbank_reading(self):
         """Tests ability to read and process GenBank file."""
