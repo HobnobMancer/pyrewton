@@ -57,7 +57,7 @@ def get_genbank_file(accession, args, logger):
     if len(gb_file) == 0:
         logger.warning(
             (
-                f"Retrieved 0 files for {accession_number}.\n"
+                f"Retrieved 0 files for {accession}.\n"
                 "Returning null ('NA') value for all protein data"
             )
         )
@@ -66,7 +66,7 @@ def get_genbank_file(accession, args, logger):
     elif len(gb_file) > 1:
         logger.warning(
             (
-                f"Retrieved multiple files for {accession_number}.\n"
+                f"Retrieved multiple files for {accession}.\n"
                 "Returning null ('NA') value for all protein data"
             )
         )
@@ -76,7 +76,7 @@ def get_genbank_file(accession, args, logger):
     if gb_file[0].stat().st_size == 0:
         logger.warning(
             (
-                f"GenBank file retrieved for {accession_number} is empty.\n"
+                f"GenBank file retrieved for {accession} is empty.\n"
                 "Returning null ('NA' value for all protein data"
             )
         )
