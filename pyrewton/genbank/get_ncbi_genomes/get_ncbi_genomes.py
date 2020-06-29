@@ -64,7 +64,7 @@ import pandas as pd
 from Bio import Entrez
 from tqdm import tqdm
 
-from pyrewton.loggers.logger_pyrewton_main import build_logger
+from pyrewton.loggers import build_logger
 from pyrewton.parsers.parser_get_ncbi_genomes import build_parser
 from pyrewton.file_io import write_out_dataframe
 

@@ -4,6 +4,7 @@
 import logging
 import unittest
 
+from argparse import Namespace
 from pathlib import Path
 
 import pandas as pd
@@ -26,6 +27,8 @@ class Test_housekeeping_functions(unittest.TestCase):
         self.output_dir = self.test_dir / "test_targets" / "out_dir_hndng_test_targets"
         self.df_output = self.output_dir / "test_writing_df.csv"
 
+        self.args = Namespace(output=self.output_dir, nodelete=False, force=True)
+
         # Null logger instance
         self.logger = logging.getLogger("Test_logger_parser_output")
         self.logger.addHandler(logging.NullHandler())
@@ -39,7 +42,7 @@ class Test_housekeeping_functions(unittest.TestCase):
     @pytest.mark.run(order=9)
     def test_output_dir_creation(self):
         """Tests function for creating output dir"""
-        make_output_directory(self.output_dir, self.logger, True, True)
+        make_output_directory(self.args, self.logger)
 
     @pytest.mark.run(order=10)
     def test_writing_df(self):
