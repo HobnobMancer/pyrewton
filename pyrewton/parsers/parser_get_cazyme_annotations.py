@@ -40,7 +40,7 @@ def build_parser(argv: Optional[List] = None):
         "-d",
         "--df_input",
         type=Path,
-        metavar="input datafram name",
+        metavar="input dataframe name",
         default=sys.stdin,
         help="input dataframe path",
     )
