@@ -51,9 +51,8 @@ from pandas.errors import EmptyDataError
 from tqdm import tqdm
 from urllib.error import HTTPError
 
-from pyrewton.directory_handling import output_dir_handling_main
-from pyrewton.directory_handling import input_dir_get_cazyme_annotations
-from pyrewton.loggers.logger_pyrewton_main import build_logger
+from pyrewton.file_io import make_output_directory, input_dir_get_cazyme_annotations
+from pyrewton.loggers import build_logger
 from pyrewton.parsers.parser_get_cazyme_annotations import build_parser
 
 
@@ -80,19 +79,17 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         logger = build_logger("get_cazyme_annotations", args)
     logger.info("Run initated")
 
-    # Check inputs are valid
-    input_dir_get_cazyme_annotations.check_input(args, logger)
-    logger.info("Inputs accepted")
-
     # If specified output directory, create output directory
     if args.output is not sys.stdout:
-        output_dir_handling_main.make_output_directory(
-            args.output, logger, args.force, args.nodelete
-        )
+        try:
+            make_output_directory(args, logger)
+        except FileExistsError:
+            logger.error("Output directory %s already exists (exiting)" % args.output)
+            sys.exit(1)
 
     # Open input dataframe
-    logger.info("Opening input dataframe")
-    input_df = input_dir_get_cazyme_annotations.get_input_df(args.df_input, logger)
+    logger.info("Opening input dataframe %s", args.df_input)
+    input_df = pd.read_csv(args.df_input, header=0, index_col=0)
 
     # Build dataframe
     cazy_summary_df = create_dataframe(input_df, args, logger)
@@ -100,8 +97,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Create summary charts of CAZy annotation distribution
 
     # Write out dataframe
-
-    return
 
 
 def create_dataframe(input_df, args, logger):
@@ -453,16 +448,33 @@ def get_uniprotkb_data(df_row, logger):
         "go-id,go(molecular function),go(biological process)"
     )
 
+    # This dictionary will be used to populate "blank"/"empty" databases when
+    # an error is thrown. Iterables are used as values to avoid problems with
+    # "ValueError: If using all scalar values, you must pass an index"
+    blank_data = {
+        "UniProtKB Entry ID": ["NA"],
+        "UniProtKB Entry Name": ["NA"],
+        "UniProtKB Protein Names": ["NA"],
+        "EC number": ["NA"],
+        "Length (Aa)": ["NA"],
+        "Mass (Da)": ["NA"],
+        "Domains": ["NA"],
+        "Domain count": ["NA"],
+        "UniProtKB Linked Protein Families": ["NA"],
+        "Gene ontology IDs": ["NA"],
+        "Gene ontology (molecular function)": ["NA"],
+        "Gene ontology (biological process)": ["NA"],
+    }
+
     try:
         # open connection to UniProt(), search and convert result into pandas df
-        search_result_df = pd.read_table(
-            io.StringIO(
-                UniProt().search(
-                    f'{df_row[5]} AND organism:"{df_row[0]} {df_row[1]}"',
-                    columns=columnlist,
-                )
-            )
-        )
+        logger.info(df_row)
+        query = f'{df_row[5]} AND organism:"{df_row[0]} {df_row[1]}"'
+        search_result = UniProt().search(
+            query, columns=columnlist,
+        )  # returns empty string for no result
+        logger.info(search_result)
+        search_result_df = pd.read_table(io.StringIO(search_result))
 
     except HTTPError:
         logger.warning(
@@ -471,39 +483,9 @@ def get_uniprotkb_data(df_row, logger):
                 "Returning null value 'NA' for all UniProt data"
             )
         )
-        data = {
-            "UniProtKB Entry ID": "NA",
-            "UniProtKB Entry Name": "NA",
-            "UniProtKB Protein Names": "NA",
-            "EC number": "NA",
-            "Length (Aa)": "NA",
-            "Mass (Da)": "NA",
-            "Domains": "NA",
-            "Domain count": "NA",
-            "UniProtKB Linked Protein Families": "NA",
-            "Gene ontology IDs": "NA",
-            "Gene ontology (molecular function)": "NA",
-            "Gene ontology (biological process)": "NA",
-        }
-        return pd.DataFrame(
-            data,
-            columns=[
-                "UniProtKB Entry ID",
-                "UniProtKB Entry Name",
-                "UniProtKB Protein Names",
-                "EC number",
-                "Length (Aa)",
-                "Mass (Da)",
-                "Domains",
-                "Domain count",
-                "UniProtKB Linked Protein Families",
-                "Gene ontology IDs",
-                "Gene ontology (molecular function)",
-                "Gene ontology (biological process)",
-            ],
-        )
+        return pd.DataFrame(blank_data)
 
-    except EmptyDataError():
+    except EmptyDataError:
         # No UniProt entries found for locus tag, return null data for
         logger.warning(
             (
@@ -511,37 +493,7 @@ def get_uniprotkb_data(df_row, logger):
                 "Returning null value 'NA' for all UniProt data"
             )
         )
-        data = {
-            "UniProtKB Entry ID": "NA",
-            "UniProtKB Entry Name": "NA",
-            "UniProtKB Protein Names": "NA",
-            "EC number": "NA",
-            "Length (Aa)": "NA",
-            "Mass (Da)": "NA",
-            "Domains": "NA",
-            "Domain count": "NA",
-            "UniProtKB Linked Protein Families": "NA",
-            "Gene ontology IDs": "NA",
-            "Gene ontology (molecular function)": "NA",
-            "Gene ontology (biological process)": "NA",
-        }
-        return pd.DataFrame(
-            data,
-            columns=[
-                "UniProtKB Entry ID",
-                "UniProtKB Entry Name",
-                "UniProtKB Protein Names",
-                "EC number",
-                "Length (Aa)",
-                "Mass (Da)",
-                "Domains",
-                "Domain count",
-                "UniProtKB Linked Protein Families",
-                "Gene ontology IDs",
-                "Gene ontology (molecular function)",
-                "Gene ontology (biological process)",
-            ],
-        )
+        return pd.DataFrame(blank_data)
 
     # check if multiple entries were returned
     if len(search_result_df) > 1:
@@ -551,37 +503,7 @@ def get_uniprotkb_data(df_row, logger):
                 "Returning null value 'NA' for all UniProt data"
             )
         )
-        data = {
-            "UniProtKB Entry ID": "NA",
-            "UniProtKB Entry Name": "NA",
-            "UniProtKB Protein Names": "NA",
-            "EC number": "NA",
-            "Length (Aa)": "NA",
-            "Mass (Da)": "NA",
-            "Domains": "NA",
-            "Domain count": "NA",
-            "UniProtKB Linked Protein Families": "NA",
-            "Gene ontology IDs": "NA",
-            "Gene ontology (molecular function)": "NA",
-            "Gene ontology (biological process)": "NA",
-        }
-        return pd.DataFrame(
-            data,
-            columns=[
-                "UniProtKB Entry ID",
-                "UniProtKB Entry Name",
-                "UniProtKB Protein Names",
-                "EC number",
-                "Length (Aa)",
-                "Mass (Da)",
-                "Domains",
-                "Domain count",
-                "UniProtKB Linked Protein Families",
-                "Gene ontology IDs",
-                "Gene ontology (molecular function)",
-                "Gene ontology (biological process)",
-            ],
-        )
+        return pd.DataFrame(blank_data)
 
     # rename columns to match to indicate UniProtKB source of data
     search_result_df.rename(
