@@ -11,7 +11,6 @@
 Version v0.1.1 2020/06/04
 
 This repository contains all scripts associated with the EastBio PhD project ‘Identifying Engineering Candidates for Advanced Biocatalysis in Biofuel Production'.
-More detailed documentation, including helping with troubleshooting is availabel at [ReadTheDocs](https://phd-project-scripts.readthedocs.io/en/latest/?).
 
 ## Contents
 
@@ -84,18 +83,18 @@ Directory contains functions for handling directories and files in `pyrewton` Py
 
 Directory containing all submodules that are involved in handling GenBank files.
 
-##### pyrewton: Genbank submodule: get_ncbi_genomes
+##### Genbank submodule: get_ncbi_genomes
 
-&emsp;&emsp;Directory containing the submodule that takes a list of species and downloads all directly linked GenBank (.gbff) files in the NCBI Assembly database.
+Directory containing the submodule that takes a list of species and downloads all directly linked GenBank (.gbff) files in the NCBI Assembly database.
 
-##### pyrewton: Genbank submodule: get_cazyme_annotations
+##### Genbank submodule: get_cazyme_annotations
 
-&emsp;&emsp;Directory containing the submodule to retrieve cazyme annotations from GenBank files.
+Directory containing the submodule to retrieve cazyme annotations from GenBank files.
 
 ##### pyrewton module: annotations
 
 Directory containing all submodules that are involved in handling cazyme genomic annotations.
 
-##### pyrewton: Genbank submodule: get_uniprot_proteins
+##### Genbank submodule: get_uniprot_proteins
 
-&emsp;&emsp;Directory containing the submodule that retrieves all cazyme entries in UniProt in the species passed to the submodule.
+Directory containing the submodule that retrieves all cazyme entries in UniProt in the species passed to the submodule.
