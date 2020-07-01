@@ -139,18 +139,18 @@ Directory contains functions for handling directories and files in `pyrewton` Py
 
 Directory containing all submodules that are involved in handling GenBank files.
 
-&emsp;##### Genbank submodule: get_ncbi_genomes
+##### pyrewton: Genbank submodule: get_ncbi_genomes
 
-&emsp;Directory containing the submodule that takes a list of species and downloads all directly linked GenBank (.gbff) files in the NCBI Assembly database.
+&emsp;&emsp;Directory containing the submodule that takes a list of species and downloads all directly linked GenBank (.gbff) files in the NCBI Assembly database.
 
-&emsp;##### Genbank submodule: get_cazyme_annotations
+##### pyrewton: Genbank submodule: get_cazyme_annotations
 
-&emsp;Directory containing the submodule to retrieve cazyme annotations from GenBank files.
+&emsp;&emsp;Directory containing the submodule to retrieve cazyme annotations from GenBank files.
 
 ##### pyrewton module: annotations
 
 Directory containing all submodules that are involved in handling cazyme genomic annotations.
 
-&emsp;##### Genbank submodule: get_uniprot_proteins
+##### pyrewton: Genbank submodule: get_uniprot_proteins
 
-&emsp;Directory containing the submodule that retrieves all cazyme entries in UniProt in the species passed to the submodule.
+&emsp;&emsp;Directory containing the submodule that retrieves all cazyme entries in UniProt in the species passed to the submodule.
