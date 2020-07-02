@@ -1,4 +1,4 @@
-# EastBIO PhD Project Scripts, packaged into `pyrewton`
+# EastBIO PhD Project Scripts, packaged into pyrewton
 
 [![DOI](https://zenodo.org/badge/243783792.svg)](https://zenodo.org/badge/latestdoi/243783792)
 [![Funding](https://img.shields.io/badge/Funding-EASTBio-blue)](http://www.eastscotbiodtp.ac.uk/)
