@@ -1,10 +1,28 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Author:
+# Emma E. M. Hobbs
 
-import json
-import logging
-import unittest
-from pathlib import Path
+# Contact
+# eemh1@st-andrews.ac.uk
+
+# Emma E. M. Hobbs,
+# Biomolecular Sciences Building,
+# University of St Andrews,
+# North Haugh Campus,
+# St Andrews,
+# KY16 9ST
+# Scotland,
+# UK
+
+# The MIT License
+
+"""Tests for pyrewton genbank:get_ncbi_genomes submodule's
+retrieval of scientific name and taxonomy ID from NCBI.
+
+These tests are inteded to be run from the root repository using:
+pytest -v
+"""
 
 from Bio import Entrez
 import pytest
@@ -15,70 +33,45 @@ from pyrewton.genbank.get_ncbi_genomes import get_ncbi_genomes
 Entrez.email = "my.email@my.domain"
 
 
-class TestName_and_IDRetrieval(unittest.TestCase):
+@pytest.mark.run(order=11)
+def test_scientific_name_retrieval(
+    gt_ncbi_gnms_test_inputs, gt_ncbi_gnms_targets, null_logger, monkeypatch
+):
+    """Tests Entrez call to NCBI to retrieve scientific name from taxonomy ID.
 
-    """Class defining tests of Extract_genomes_NCBI.py name
-  and taxonomy ID retrieval. """
+    Tests that correct output is returned from from get_genus_species_name()
+    function in Extract_genomes_NCBI.py.
+    """
 
-    # Establish inputs for tests and expected outputs
+    def mock_entrez_sci_call(*args, **kwargs):
+        """Mocks call to Entrez."""
+        return [{"ScientificName": "Aspergillus niger"}]
 
-    def setUp(self):
-        """"Set attributes for tests."""
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_sci_call)
 
-        # Define test directories
-        self.test_dir = Path("tests")
-        self.input_dir = self.test_dir / "test_inputs" / "gt_ncbi_gnms_test_inputs"
-        self.target_dir = self.test_dir / "test_targets" / "gt_ncbi_gnms_test_targets"
+    assert gt_ncbi_gnms_targets[0] == get_ncbi_genomes.get_genus_species_name(
+        gt_ncbi_gnms_test_inputs[1],
+        null_logger,
+        gt_ncbi_gnms_test_inputs[3],
+        gt_ncbi_gnms_test_inputs[0],
+    )
 
-        # Null logger instance
-        self.logger = logging.getLogger("Test_name_and_ID_Retrieval logger")
-        self.logger.addHandler(logging.NullHandler())
 
-        # Parse file containing test inputs
-        with (self.input_dir / "gt_ncbi_gnms_test_inputs.json").open("r") as ifh:
-            test_inputs = json.load(ifh)
+@pytest.mark.run(order=12)
+def test_taxonomy_id_retrieval(
+    gt_ncbi_gnms_test_inputs, gt_ncbi_gnms_targets, null_logger, monkeypatch
+):
+    """Tests Entrez call to NCBI to retrieve taxonomy ID from scientific name."""
 
-        # Define test inputs
-        self.retries = test_inputs["retries"]
-        self.input_tax_id = test_inputs["taxonomy_id"]
-        self.input_genus_species_name = test_inputs["genus_species_name"]
-        self.input_line_number = test_inputs["line_number"]
+    def mock_entrez_txid_call(*args, **kwargs):
+        """Mocks call to Entrez."""
+        return {"IdList": ["162425"]}
 
-        # Parse file containing test targets
-        with (self.target_dir / "gt_ncbi_gnms_test_targets.json").open("r") as ifh:
-            test_targets = json.load(ifh)
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_txid_call)
 
-        # Degine test targets
-        self.target_genus_species_name = test_targets["target_genus_species_name"]
-        self.target_tax_id = test_targets["target_taxonomy_id"]
-
-    # Define tests
-
-    @pytest.mark.run(order=11)
-    def test_scientific_name_retrieval(self):
-        """Tests Entrez call to NCBI to retrieve scientific name from taxonomy ID.
-
-        Tests that correct output is returned from from get_genus_species_name()
-        function in Extract_genomes_NCBI.py.
-        """
-
-        self.assertEqual(
-            self.target_genus_species_name,
-            get_ncbi_genomes.get_genus_species_name(
-                self.input_tax_id, self.logger, self.input_line_number, self.retries
-            ),
-        )
-
-    @pytest.mark.run(order=12)
-    def test_taxonomy_id_retrieval(self):
-        """Tests Entrez call to NCBI to retrieve taxonomy ID from scientific name."""
-
-        self.assertEqual(
-            "NCBI:txid" + self.target_tax_id,
-            get_ncbi_genomes.get_tax_id(
-                self.input_genus_species_name,
-                self.logger,
-                self.input_line_number,
-                self.retries,
-            ),
-        )
+    assert gt_ncbi_gnms_targets[1] == get_ncbi_genomes.get_genus_species_name(
+        gt_ncbi_gnms_test_inputs[2],
+        null_logger,
+        gt_ncbi_gnms_test_inputs[3],
+        gt_ncbi_gnms_test_inputs[0],
+    )
