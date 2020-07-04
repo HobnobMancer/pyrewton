@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 # Author:
 # Emma E. M. Hobbs
-# 
+#
 # Contact
 # eemh1@st-andrews.ac.uk
-# 
+#
 # Emma E. M. Hobbs,
 # Biomolecular Sciences Building,
 # University of St Andrews,
@@ -14,11 +14,12 @@
 # KY16 9ST
 # Scotland,
 # UK
-# 
+#
 # The MIT License
-"""Retrieves all cazymes for each species in an input dataframe.
+"""Retrieves all proteins for each species in an input dataframe.
 
-:func:
+:func main: coordianate function of script
+:func 
 
 """
 
@@ -34,9 +35,9 @@ from bioservices import UniProt
 from tqdm import tqdm
 from urllib.error import HTTPError
 
-from pyrewton.directory_handling import input_dir_get_cazyme_annotations, output_dir_handling_main
-from pyrewton.loggers.logger_pyrewton_main import build_logger
-from # create parser for this script and import 
+from pyrewton import loggers
+from pyrewton.parsers.parser_get_uniprot_proteins import build_parser
+
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = None):
     """docstring summary.
@@ -50,11 +51,11 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = No
     # Check if namespace isn't passed, if not parser command-line
     if argv is None:
         # Parse command-line
-        parser =  # build parser
+        parser = build_parser()
         args = parser.parse_args()
     else:
         args = build_parser(argv).parse_args()
-    
+
     # Initate logger
     # Note: log file only created if specificied at cmdline
     if logger is None:
@@ -63,14 +64,18 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = No
 
     # If specified output directory, create output directory
     if args.output is not sys.stdout:
-        output_dir_handling_main.make_output_directory(args.output, logger, args.force, args.nodelete)
-    
+        output_dir_handling_main.make_output_directory(
+            args.output, logger, args.force, args.nodelete,
+        )
+
     # Open input dataframe
-    logger.info("Opening input dataframe")
-    input_df = input_dir_get_cazyme_annotations.get_input_df(args.df_input, logger)
+    # Open input dataframe
+    logger.info("Opening input dataframe %s", args.df_input)
+    input_df = pd.read_csv(args.df_input, header=0, index_col=0)
 
     # Build protein dataframe
-    protein_df = build_dataframe(input_df, args, logger)
+    uniprot_protein_df = build_dataframe(input_df, args, logger)
+
 
 def build_dataframe(input_df, args, logger):
     """Build dataframe containing all cazymes for each species.
@@ -106,9 +111,11 @@ def build_dataframe(input_df, args, logger):
     # parse input_df. retrieving call cazymes for each species from UniProtKB
     df_index = 0
     for df_index in tqdm(range(len(input_df["Genus"])), desc="Retrieving Uniprot data"):
-        cazyme_df = cazyme_df.append(get_uniprotkb_data(input_df.iloc[df_index], logger), ignore_index=True)
+        cazyme_df = cazyme_df.append(
+            get_uniprotkb_data(input_df.iloc[df_index], logger), ignore_index=True
+        )
         df_index += 1
-    
+
     # for development purposes and will be removed before release
     print("====\nUniProt protein data:\n", cazyme_df)
 
@@ -134,8 +141,7 @@ def get_uniprotkb_data(df_row, logger):
         search_result_df = pd.read_table(
             io.StringIO(
                 UniProt().search(
-                    f'organism:"{df_row[0]} {df_row[1]}"',
-                    columns=columnlist
+                    f'organism:"{df_row[0]} {df_row[1]}"', columns=columnlist
                 )
             )
         )
@@ -202,10 +208,12 @@ def get_uniprotkb_data(df_row, logger):
     )
     # Retrieve EC number from 'UniProtKB Protein Names'
     # or return 'NA' if not included
-    ec_numbers = []  # tuple containing all EC numbers, each list is for a unique protein
+    ec_numbers = (
+        []
+    )  # tuple containing all EC numbers, each list is for a unique protein
     # create tuples so correct left to add genus and species to dataframe
     genus = []  # tuple to store genus in
-    species = [] # tuple to store species
+    species = []  # tuple to store species
 
     # use for loop or .apply?
     ec_numbers = search_result_df.apply(get_ec_number, args=logger, axis=1)
@@ -216,7 +224,7 @@ def get_uniprotkb_data(df_row, logger):
         genus.append([df_row[0]])
         species.appned([df_row[1]])
         row_index += 1
-    
+
     # Add EC numbers column to dataframe
     search_result_df.insert(3, "EC Number", ec_number)
 
@@ -241,12 +249,10 @@ def get_ec_number(df_row, logger):
     Return list of all EC numbers.
     """
     # Search protein name cell for EC numbers
-    ec_search = re.findall(
-        r"\(EC [\d-]\d*\.[\d-]\d*\.[\d-]\d*\.[\d-]\d*\)", df_row[2]
-    )
+    ec_search = re.findall(r"\(EC [\d-]\d*\.[\d-]\d*\.[\d-]\d*\.[\d-]\d*\)", df_row[2])
     ec_numbers = []
     if ec_search is None:
-        ec_numbers.append('NA')
+        ec_numbers.append("NA")
     else:
         # compile EC numbers together if multiple were given
         for ec in ec_search:
@@ -286,7 +292,7 @@ def remove_non_cazyme(df, logger):
     )
 
     # Retrieve all rows with CAZyDB link
-    df.query('')
+    df.query("")
 
     # Retrieve all rows with EC number or GO function indicating cazyme
 
