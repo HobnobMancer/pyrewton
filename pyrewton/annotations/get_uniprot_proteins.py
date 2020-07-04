@@ -74,15 +74,15 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = No
     input_df = pd.read_csv(args.df_input, header=0, index_col=0)
 
     # Build protein dataframe
-    uniprot_protein_df = get_all_uniprot_proteins(input_df, args, logger)
+    uniprot_protein_df = build_uniprot_df(input_df, args, logger)
 
     # Write out Uniprot dataframe to csv file
-    file_io.input_dir_get_cazyme_annotations(
+    file_io.write_out_dataframe(
         uniprot_protein_df, logger, args.ouput, args.force, args.nodelete,
     )
 
 
-def get_all_uniprot_proteins(input_df, args, logger):
+def build_uniprot_df(input_df, args, logger):
     """Retrieve all proteins in UniProt for each species in an input dataframe.
 
     :param input_df: input dataframe containing genus and species of host organisms
@@ -126,9 +126,12 @@ def get_all_uniprot_proteins(input_df, args, logger):
 
 
 def get_uniprotkb_data(df_row, logger):
-    """Retrieve all cazyme entries from UniProtKB.
+    """Retrieve all cazyme entries from UniProtKB for species in dataframe series/row.
 
-    :param df_row: pandas sereies
+    :param df_row: pandas series from input df, where:
+        df_row[0] = Genus
+        df_row[1] = Species
+        df_row[2] = NCBI Taxonomy ID
     :param logger: logger object
 
     Return dataframe.
@@ -141,165 +144,88 @@ def get_uniprotkb_data(df_row, logger):
         "sequence"
     )
 
+    # This dictionary will be used to populate "blank"/"empty" databases when
+    # an error is thrown. Iterables are used as values to avoid problems with
+    # "ValueError: If using all scalar values, you must pass an index"
+    blank_data = {
+        "UniProtKB Entry ID": ["NA"],
+        "UniProtKB Entry Name": ["NA"],
+        "UniProtKB Protein Names": ["NA"],
+        "EC number": ["NA"],
+        "Length (Aa)": ["NA"],
+        "Mass (Da)": ["NA"],
+        "Domains": ["NA"],
+        "Domain count": ["NA"],
+        "UniProtKB Linked Protein Families": ["NA"],
+        "Gene ontology IDs": ["NA"],
+        "Gene ontology (molecular function)": ["NA"],
+        "Gene ontology (biological process)": ["NA"],
+    }
+
     try:
-        # open connection to UniProt(), search and convert results to panndas df
-        search_result_df = pd.read_table(
-            io.StringIO(
-                UniProt().search(
-                    f'organism:"{df_row[0]} {df_row[1]}"', columns=columnlist
-                )
-            )
-        )
+        # open connection to UniProt(), search and convert result into pandas df
+        logger.info(df_row)
+        query = f'{df_row[5]} AND organism:"{df_row[0]} {df_row[1]}"'
+        search_result = UniProt().search(
+            query, columns=columnlist,
+        )  # returns empty string for no result
+        logger.info(search_result)
+        search_result_df = pd.read_table(io.StringIO(search_result))
 
     except HTTPError:
         logger.warning(
             (
-                f"Network error occured when searching UniProt for locus tag:{df_row[2]}.\n"
+                f"Network error occured when searching UniProt for locus tag:{df_row[5]}.\n"
                 "Returning null value 'NA' for all UniProt data"
             )
         )
-        data = {
-            "Genus": df_row[0],
-            "Species": df_row[1],
-            "NCBI Taxonomy ID": df_row[2],
-            "UniProt entry ID": "NA",
-            "UniProt entry name": "NA",
-            "UniProt assigned protein names": "NA",
-            "EC Numbers": "NA",
-            "Length (Aa)": "NA",
-            "Mass (Da)": "NA",
-            "Domains": "NA",
-            "Domain count": "NA",
-            "UniProt linked protein families": "NA",
-            "GO IDs": "NA",
-            "GO molecular function": "NA",
-            "G0 biological process": "NA",
-            "Sequence": "NA",
-        }
-        return pd.DataFrame(
-            data,
-            columns=[
-                "Genus",
-                "Species",
-                "NCBI Taxonomy ID",
-                "UniProt entry ID",
-                "UniProt entry name",
-                "UniProt assigned protein names",
-                "Length (Aa)",
-                "Mass (Da)",
-                "Domains",
-                "Domain count",
-                "UniProt linked protein families",
-                "GO IDs",
-                "GO molecular function",
-                "G0 biological process",
-                "Sequence",
-            ],
+        return pd.DataFrame(blank_data)
+
+    except EmptyDataError:
+        # No UniProt entries found for locus tag, return null data for
+        logger.warning(
+            (
+                f"No data returned from UniProt for locus tag:{df_row[5]}.\n"
+                "Returning null value 'NA' for all UniProt data"
+            )
         )
+        return pd.DataFrame(blank_data)
 
-    # Once fixed in get_cazyme_annotations add error exception
-    # for returning empty dataframe
-
-    # Rename columns to match dataframe design and indicate UniProt source
+    # rename columns to match to indicate UniProtKB source of data
     search_result_df.rename(
         columns={
             "Entry": "UniProtKB Entry ID",
-            "Entry name": "UniProtKB Entry Names",
+            "Entry name": "UniProtKB Entry Name",
             "Protein names": "UniProtKB Protein Names",
             "Length": "Length (Aa)",
             "Mass": "Mass (Da)",
             "Protein families": "UniProtKB Linked Protein Families",
         }
     )
+
     # Retrieve EC number from 'UniProtKB Protein Names'
     # or return 'NA' if not included
-    ec_numbers = (
-        []
-    )  # tuple containing all EC numbers, each list is for a unique protein
-    # create tuples so correct left to add genus and species to dataframe
-    genus = []  # tuple to store genus in
-    species = []  # tuple to store species
+    EC_search = re.findall(
+        r"\(EC [\d-]\d*\.[\d-]\d*\.[\d-]\d*\.[\d-]\d*\)", search_result_df[2]
+    )
+    if EC_search is None:
+        EC_number = "NA"
+    else:
+        # compiall EC together incase multiple are given
+        # and remove EC numbers from protein name
+        EC_number = ""
+        for EC in EC_search:
+            search_result_df[2] = search_result_df[2].replace(EC, "")
+            EC = EC.replace("(", "")
+            EC = EC.replace(")", "")
+            EC_number += EC
+            # Do I want to remove the EC number becuase if multiple are given,
+            # maybe helpful to see in the protein name section which EC number
+            # corresponds to which function
+    # Add EC number to dataframe0
+    search_result_df.insert(3, "EC number", EC_number)
 
-    # use for loop or .apply?
-    ec_numbers = search_result_df.apply(get_ec_number, args=logger, axis=1)
-
-    row_index = 0
-    for row_index in range(len(search_result_df["UniProtKB Entry ID"])):
-        ec_numbers.append(get_ec_number(search_result_df.iloc[row_index], logger))
-        genus.append([df_row[0]])
-        species.appned([df_row[1]])
-        row_index += 1
-
-    # Add EC numbers column to dataframe
-    search_result_df.insert(3, "EC Number", ec_number)
-
-    # Add Genus and Species column to dataframe
-    search_result_df.insert(0, "Genus", genus)
-    search_result_df.insert(1, "Species", species)
-
-    # Remove those with no indication they are cazymes
-    search_result_df = remove_non_cazyme(search_result_df, logger)
-
-    # Add genus and species columns
+    # Add Genus, Species and Taxonomy ID column to the front (i.e. columns 0-2)
+    # of the dataframe so can identify the host species
 
     return search_result_df
-
-
-def get_ec_number(df_row, logger):
-    """Retrieve EC Number from UniProt search results.
-
-    :param df_row: Pandas series
-    :param logger: logger object
-
-    Return list of all EC numbers.
-    """
-    # Search protein name cell for EC numbers
-    ec_search = re.findall(r"\(EC [\d-]\d*\.[\d-]\d*\.[\d-]\d*\.[\d-]\d*\)", df_row[2])
-    ec_numbers = []
-    if ec_search is None:
-        ec_numbers.append("NA")
-    else:
-        # compile EC numbers together if multiple were given
-        for ec in ec_search:
-            ec_numbers.append(ec)
-
-    return ec_numbers
-
-
-def remove_non_cazyme(df, logger):
-    """Remove proteins with no indication of being CAZymes.
-
-    :param df: Pandas dataframe
-    :param logger: logger object
-
-    Return dataframe.
-    """
-    # Create empty dataframe to add potential cazyme entries too
-    filtered_df = pd.DataFrame(
-        columns=[
-            "Genus",
-            "Species",
-            "NCBI Taxonomy ID",
-            "UniProt entry ID",
-            "UniProt entry name",
-            "UniProt assigned protein names",
-            "EC Numbers",
-            "Length (Aa)",
-            "Mass (Da)",
-            "Domains",
-            "Domain count",
-            "UniProt linked protein families",
-            "GO IDs",
-            "GO molecular function",
-            "G0 biological process",
-            "Sequence",
-        ]
-    )
-
-    # Retrieve all rows with CAZyDB link
-    df.query("")
-
-    # Retrieve all rows with EC number or GO function indicating cazyme
-
-    return filtered_df
-
