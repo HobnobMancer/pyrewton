@@ -24,6 +24,7 @@
 """
 
 import io
+import logging
 import re
 import sys
 
@@ -35,7 +36,8 @@ from bioservices import UniProt
 from tqdm import tqdm
 from urllib.error import HTTPError
 
-from pyrewton import loggers
+from pyrewton import file_io
+from pyrewton.loggers import build_logger
 from pyrewton.parsers.parser_get_uniprot_proteins import build_parser
 
 
@@ -64,9 +66,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = No
 
     # If specified output directory, create output directory
     if args.output is not sys.stdout:
-        output_dir_handling_main.make_output_directory(
-            args.output, logger, args.force, args.nodelete,
-        )
+        file_io.make_output_directory(args, logger)
 
     # Open input dataframe
     # Open input dataframe
@@ -74,11 +74,16 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = No
     input_df = pd.read_csv(args.df_input, header=0, index_col=0)
 
     # Build protein dataframe
-    uniprot_protein_df = build_dataframe(input_df, args, logger)
+    uniprot_protein_df = get_all_uniprot_proteins(input_df, args, logger)
+
+    # Write out Uniprot dataframe to csv file
+    file_io.input_dir_get_cazyme_annotations(
+        uniprot_protein_df, logger, args.ouput, args.force, args.nodelete,
+    )
 
 
-def build_dataframe(input_df, args, logger):
-    """Build dataframe containing all cazymes for each species.
+def get_all_uniprot_proteins(input_df, args, logger):
+    """Retrieve all proteins in UniProt for each species in an input dataframe.
 
     :param input_df: input dataframe containing genus and species of host organisms
     :param args: parser object
