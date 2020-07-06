@@ -73,3 +73,30 @@ def write_out_dataframe(dataframe, logger, outdir, force, nodelete):
     logger.info("Writing out species dataframe to directory")
 
     dataframe.to_csv(outdir)
+
+def write_out_pre_named_dataframe(dataframe, df_name, logger, outdir, force, nodelete):
+    """Write out dataframe to output directory.
+
+    :param dataframe: pandas dataframe
+    :param df_name: str, name of dataframe
+    :param logger: logger object
+    :param outdir: cmd-args, Path, output directory
+    :param force: booleon, cmd-line argument to enable/disable over writing of existing files
+    :param nodelete: boolean, cmd-line args to enable/disable deleting of existing files in outdir
+    """
+    # Check if overwrite of existing directory will occur
+    logger.info("Checking if output directory for dataframe already exists")
+    output_path = outdir / f"{df_name}.csv"
+    if output_path.exists():
+        if force is False:
+            logger.warning(
+                "Specified directory for dataframe already exists.\nExiting writing out dataframe."
+            )
+            return ()
+        else:
+            logger.warning(
+                "Specified directory for dataframe already exists.\nForced overwritting enabled."
+            )
+    logger.info("Writing out species dataframe to directory")
+
+    dataframe.to_csv(output_path)
