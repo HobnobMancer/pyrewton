@@ -121,6 +121,7 @@ def get_ec_cazymes(input_df, logger):
 
     Return pandas dataframe.
     """
+    logger.info("Retrieving rows whose EC number indicates cazyme functionality")
     ec_series = [] # store indexed pandas series results of EC search results
     ec_series.append(input_df["EC number"].str.contains(
         r"3.2.1.4 ", flags=re.IGNORECASE, regex=True, na=False
