@@ -23,7 +23,12 @@ Potential cazymes identifed by EC number indicating cazyme functionality,
 and by GO annotated function inferring cazyme functionality.
 
 :func main: coordianate searching for cazymes in local UniProt dataframe.
-
+:func get_cazy_proteins: retrieve entries from input dataframe with link to CAZy DB
+:func get_ec_cazymes: retrieve entries from input datafame with EC
+    number(s) indicated cazyme functionality
+:func get_go_cazymes: retrieve entries from input datafame with GO annotated function(s)
+    numbers indicated cazyme functionality
+:func retrieve_df_subset: coordinate retrieval of rows from input dataframe
 """
 
 import io
@@ -73,172 +78,195 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = No
         file_io.make_output_directory(args, logger)
 
     # Open input dataframe
-    # Open input dataframe
     logger.info("Opening input dataframe %s", args.df_input)
     input_df = pd.read_csv(args.df_input, header=0, index_col=0)
 
+    # Retrieve subsets of input dataframe whose entries indicate cazyme functionality
+    cazyme_dfs = get_cazyme_subset_df(input_df, logger) # CAZy, EC number and GO function indicated functionality
+
+    # Compare dataframes (CAZy, EC number and GO function) to retrieve dataframes of
+    # (1) only EC number, (2) only GO function and (3) GO+EC inferred cazyme functionality
+    compare_cazyme_dfs(cazyme_dfs, logger)
+    
+    logger.info("Program finished.")
+
+
+def get_cazyme_subset_df(input_df, logger):
+    """Coordinate retrieval of entries with indicated cazyme functionality.
+    
+    :param input_df: pandas dataframe
+    :param logger: logger object
+    
+    Return 3 pandas dataframes.
+    """
     # Retrieve UniProt entries with link to CAZy database
     cazy_linked_df = get_cazy_proteins(input_df, logger)
-    # write out df to csv file
-
-    # Retrieve UniProt entries whose EC number infers cazyme functionality
-    ec_inferred_df =
-    # write out df to csv file
-
-    # Retrieve UniProt entries whose GO annotated function infers cazyme funcitonality
-    go_inferred_df =
-    # write out df to csv file
-
-
-    # Build protein dataframe
-    uniprot_protein_df = build_uniprot_df(input_df, args, logger)
-
-    # Write out Uniprot dataframe to csv file
+    # write out df of CAZy linked entries to csv file
     file_io.write_out_dataframe(
-        uniprot_protein_df, logger, args.ouput, args.force, args.nodelete,
+        cazy_linked_df[0], logger, args.ouput, args.force, args.nodelete,
     )
+
+    # Search non-CAZy linked entries to retrieve UniProt entries whose EC
+    # number inferred cazyme functionality
+    ec_inferred_df = get_ec_cazymes(cazy_linked_df[1], logger)
+
+    # Search non-CAZy linked entries to retrieve UniProt entries whose GO
+    # function annotated inferred cazyme functionality
+    go_inferred_df = get_go_cazymes(cazy_linked_df[1], logger)
+
+    # Return entries with CAZy link, and those with EC number or GO function
+    # inferred cazyme functionality
+    return cazy_linked_df[0], ec_inferred_df, go_inferred_df
 
 
 def get_cazy_cazymes(input_df, logger):
-    """Retrieve subset of entries with link to CAZy database.
+    """Separate entries into those with and without a link to the CAZy database.
 
     :func input_df: pandas dataframe
     :func logger: logger, object
 
-    Return pandas dataframe.
+    Return 2 pandas dataframes: with link and without links to CAZy database.
     """
     # retrieve indexes of entries with link to CAZy database
     logger.info("Retrieving entries with link to CAZy database")
     cazy_link_indexes = input_df["UniProt linked protein families"].str.contains(
         r"cazy", flags=re.IGNORECASE, regex=True, na=False
     )
-    return input_df[cazy_link_indexes]
+    return input_df[cazy_link_indexes], input_df[~cazy_link_indexes]
 
 
-def get_ec_cazymes(input_df, logger):
+def get_ec_cazymes(non_cazy_input_df, logger):
     """Retrieve subset of entries with indicated cazyme functionality
-    from EC number(s).
-
+    from EC number(s), and no CAZy database link.
+    
+    :param non_cazy_input_df: pandas dataframe of entries from input df with
+        no link to CAZy database
+    :param logger: logger object
+    
     Return pandas dataframe.
     """
     logger.info("Retrieving rows whose EC number indicates cazyme functionality")
     ec_series = [] # store indexed pandas series results of EC search results
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.1.1.11", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.1.1.72", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.1.1.73", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.2.1.4", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.2.1.6", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.2.1.7", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.2.1.8", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.2.1.15", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.2.1.21", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.2.1.25", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.2.1.37", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.2.1.40", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.2.1.55", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.2.1.67", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.2.1.91", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.2.1.131", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.appendnon_cazy_(input_df["EC number"].str.contains(
         r"3.2.1.139", flags=re.IGNORECASE, regex=True, na=False
     ))
-    ec_series.append(input_df["EC number"].str.contains(
+    ec_series.append(non_cazy_input_df["EC number"].str.contains(
         r"3.2.1.156", flags=re.IGNORECASE, regex=True, na=False
     ))
     # Retrieve search corresponding rows from input dataframe using search results
-    return retrieve_df_subset(input_df, go_series, logger)
+    return retrieve_df_subset(non_cazy_input_df, go_series, logger)
 
 
-def get_go_cazymes(input_df, logger):
+def get_go_cazymes(non_cazy_input_df, logger):
     """Retrieve subset of entries with indicated cazyme functionality
     from GO annotated function(s).
+
+    :param non_cazy_input_df: pandas dataframe of entries from input df with
+        no link to CAZy database
+    :param logger: logger object
 
     Return pandas dataframe.
     """
     logger.info("Retrieving rows whose EC number indicates cazyme functionality")
     go_series = [] # store indexed pandas series results of EC search results
-    go_series.append(input_df["EC number"].str.contains(
+    go_series.append(non_cazy_input_df["EC number"].str.contains(
         r"glucanase", flags=re.IGNORECASE, regex=True, na=False
     ))
-    go_series.append(input_df["EC number"].str.contains(
+    go_series.append(non_cazy_input_df["EC number"].str.contains(
         r"glucosidase", flags=re.IGNORECASE, regex=True, na=False
     ))
-    go_series.append(input_df["EC number"].str.contains(
+    go_series.append(non_cazy_input_df["EC number"].str.contains(
         r"mannan", flags=re.IGNORECASE, regex=True, na=False
     ))
-    go_series.append(input_df["EC number"].str.contains(
+    go_series.append(non_cazy_input_df["EC number"].str.contains(
         r"mannosidase", flags=re.IGNORECASE, regex=True, na=False
     ))
-    go_series.append(input_df["EC number"].str.contains(
+    go_series.append(non_cazy_input_df["EC number"].str.contains(
         r"xylan", flags=re.IGNORECASE, regex=True, na=False
     ))
-    go_series.append(input_df["EC number"].str.contains(
+    go_series.append(non_cazy_input_df["EC number"].str.contains(
         r"xylosidase", flags=re.IGNORECASE, regex=True, na=False
     ))
-    go_series.append(input_df["EC number"].str.contains(
+    go_series.append(non_cazy_input_df["EC number"].str.contains(
         r"lichenase", flags=re.IGNORECASE, regex=True, na=False
     ))
-    go_series.append(input_df["EC number"].str.contains(
+    go_series.append(non_cazy_input_df["EC number"].str.contains(
         r"cellulase", flags=re.IGNORECASE, regex=True, na=False
     ))
-    go_series.append(input_df["EC number"].str.contains(
+    go_series.append(non_cazy_input_df["EC number"].str.contains(
         r"xylo", flags=re.IGNORECASE, regex=True, na=False
     ))
-    go_series.append(input_df["EC number"].str.contains(
+    go_series.append(non_cazy_input_df["EC number"].str.contains(
         r"arabinofuranosidase", flags=re.IGNORECASE, regex=True, na=False
     ))
-    go_series.append(input_df["EC number"].str.contains(
+    go_series.append(non_cazy_input_df["EC number"].str.contains(
         r"glucuronisdases", flags=re.IGNORECASE, regex=True, na=False
     ))
-    go_series.append(input_df["EC number"].str.contains(
+    go_series.append(non_cazy_input_df["EC number"].str.contains(
         r"feruloyl", flags=re.IGNORECASE, regex=True, na=False
     ))
-    go_series.append(input_df["EC number"].str.contains(
+    go_series.append(non_cazy_input_df["EC number"].str.contains(
         r"glucuronoyl", flags=re.IGNORECASE, regex=True, na=False
     ))
-    go_series.append(input_df["EC number"].str.contains(
+    go_series.append(non_cazy_input_df["EC number"].str.contains(
         r"pectin", flags=re.IGNORECASE, regex=True, na=False
     ))
-    go_series.append(input_df["EC number"].str.contains(
+    go_series.append(non_cazy_input_df["EC number"].str.contains(
         r"arabino", flags=re.IGNORECASE, regex=True, na=False
     ))
     # Retrieve search corresponding rows from input dataframe using search results
-    return retrieve_df_subset(input_df, go_series, logger)
+    return retrieve_df_subset(non_cazy_input_df, go_series, logger)
 
 
-def retrieve_df_subset(input_df, df_index_list, logger):
+def retrieve_df_subset(non_cazy_input_df, df_index_list, logger):
     """Retrieve subset of input dataframe, as a single dataframe.
     
     :param input_df: pandas df, original input dataframe
@@ -272,6 +300,46 @@ def retrieve_df_subset(input_df, df_index_list, logger):
     # and combine into single dataframe, and remove duplicates
     logger.info("Using search results to retrieve rows from input dataframe.")
     for pandas_series in df_index_list:
-        cazyme_subset_df = cazyme_subset_df.append(input_df[pandas_series])
-    cazyme_subset_df = cazyme_subset_df[cazyme_subset_df.duplicated(subset="UniProt entry ID", keep='first')
+        cazyme_subset_df = cazyme_subset_df.append(non_cazy_input_df[pandas_series])
+    cazyme_subset_df = cazyme_subset_df[cazyme_subset_df.duplicated(subset="UniProt entry ID", keep='first')]
     return cazyme_subset_df
+
+                
+def compare_cazyme_dfs(cazyme_dfs, logger):
+    """"Identify common entries across EC number and GO function inferred cazymes dfs.
+    
+    :param cazyme_dfs: 3 pandas dataframes (CAZy, EC number and GO inferred cazymes)
+    :param logger: logger object
+    
+    Return 3 pandas dataframes of entries with GO only, EC only and GO+EC inferred cazyme functionality.
+    """
+    # create single dataframe of all EC number and GO inferred cazyme functionality.
+    non_cazy_cazyme_df = cazyme_dfs[1].append(cazyme_dfs[2])
+    non_cazy_cazyme_df = non_cazy_cazyme_df[non_cazy_cazyme_df.duplicated(subset="UniProt entry ID", keep='first')]
+
+    # Retrieve entries with GO only inferred cazyme function
+    ec_indexes = non_cazy_cazyme_df["EC Number"].isna()
+    go_only_cazymes = non_cazy_cazyme_df[~ec_indexes] # removes entries with no EC number
+    # Retrieve entries with GO function inferred cazyme function
+    go_indexes = non_cazy_cazyme_df["GO molecular function"].isna()
+    ec_only_cazymes = non_cazy_cazyme_df[~go_indexes] # removes entries with no GO number
+    
+    # Retreve entries with GO function AND EC number inferred cazyme function and no CAZy database link
+    ec_go_cazymes = non_cazy_cazyme_df.append(ec_only_cazymes)
+    ec_go_cazymes = ec_go_cazymes.append(go_only_cazymes)
+    ec_go_cazymes = ec_go_cazymes[ec_go_cazymes.duplicated(subset="UniProt entry ID", keep='first')]
+    
+    # Write out the three dataframes to csv files
+    file_io.write_out_dataframe(
+        ec_only_cazymes, logger, args.ouput, args.force, args.nodelete,
+    )
+    file_io.write_out_dataframe(
+        go_only_cazymes, logger, args.ouput, args.force, args.nodelete,
+    )
+    file_io.write_out_dataframe(
+        ec_go_cazymes, logger, args.ouput, args.force, args.nodelete,
+    )
+
+    return
+
+                                        
