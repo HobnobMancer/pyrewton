@@ -20,7 +20,7 @@
 
 Cazymes identified by UniProt entry being linekd to a CAZyDB entry.
 Potential cazymes identifed by EC number indicating cazyme functionality,
-and by GO annotated function inferring cazyme functionality.
+and by GO (Gene Ontology) annotated function inferring cazyme functionality.
 
 :func main: coordianate searching for cazymes in local UniProt dataframe.
 :func get_cazy_proteins: retrieve entries from input dataframe with link to CAZy DB
@@ -148,97 +148,33 @@ def get_ec_cazymes(non_cazy_input_df, logger):
     Return pandas dataframe.
     """
     logger.info("Retrieving rows whose EC number indicates cazyme functionality")
-    ec_series = []  # store indexed pandas series results of EC search results
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.1.1.11", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.1.1.72", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.1.1.73", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.2.1.4", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.2.1.6", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.2.1.7", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.2.1.8", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.2.1.15", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.2.1.21", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.2.1.25", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.2.1.37", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.2.1.40", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.2.1.55", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.2.1.67", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.2.1.91", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.2.1.131", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.appendnon_cazy_(
-        input_df["EC number"].str.contains(
-            r"3.2.1.139", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    ec_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"3.2.1.156", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
+    ec_series = [] # store indexed pandas series results of EC search results
+    search_terms = [
+        "3.1.1.11",
+        "3.1.1.72",
+        "3.1.1.73",
+        "3.2.1.4",
+        "3.2.1.6",
+        "3.2.1.7",
+        "3.2.1.8",
+        "3.2.1.15",
+        "3.2.1.21",
+        "3.2.1.25",
+        "3.2.1.37",
+        "3.2.1.40",
+        "3.2.1.55",
+        "3.2.1.67",
+        "3.2.1.91",
+        "3.2.1.131",
+        "3.2.1.139",
+        "3.2.1.156",
+    ]
+
+    for term in tqdm(search_terms), desc="Searching EC numbers"):
+        ec_series.append(non_cazy_input_df["EC number"].str.contains(
+            rf"{term}", flags=re.IGNORECASE, regex=True, na=False
+        ))
+
     # Retrieve search corresponding rows from input dataframe using search results
     return retrieve_df_subset(non_cazy_input_df, go_series, logger)
 
@@ -254,82 +190,30 @@ def get_go_cazymes(non_cazy_input_df, logger):
     Return pandas dataframe.
     """
     logger.info("Retrieving rows whose EC number indicates cazyme functionality")
-    go_series = []  # store indexed pandas series results of EC search results
-    go_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"glucanase", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    go_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"glucosidase", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    go_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"mannan", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    go_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"mannosidase", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    go_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"xylan", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    go_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"xylosidase", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    go_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"lichenase", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    go_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"cellulase", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    go_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"xylo", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    go_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"arabinofuranosidase", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    go_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"glucuronisdases", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    go_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"feruloyl", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    go_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"glucuronoyl", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    go_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"pectin", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
-    go_series.append(
-        non_cazy_input_df["EC number"].str.contains(
-            r"arabino", flags=re.IGNORECASE, regex=True, na=False
-        )
-    )
+    go_series = [] # store indexed pandas series results of EC search results
+    search_terms = [
+        "arabino",
+        "arabinofuranosidase",
+        "cellulase",
+        "feruloyl",
+        "galacturonan",
+        "glucanase",
+        "glucosidase",
+        "glucuronisdase",
+        "glucuronoyl",
+        "lichenase",
+        "mannan",
+        "pectin",
+        "xylan",
+        "xylo",
+        "xylosidase"
+    ]
+
+    for term in tqdm(search_terms), desc="Searching GO (Gene Ontology) functions"):
+        go_series.append(non_cazy_input_df["EC number"].str.contains(
+            rf"{term}", flags=re.IGNORECASE, regex=True, na=False
+        ))
+
     # Retrieve search corresponding rows from input dataframe using search results
     return retrieve_df_subset(non_cazy_input_df, go_series, logger)
 
@@ -419,4 +303,3 @@ def compare_cazyme_dfs(cazyme_dfs, logger):
     )
 
     return
-
