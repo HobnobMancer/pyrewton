@@ -119,17 +119,21 @@ def get_ec_cazymes(input_df, logger):
     """Retrieve subset of entries with indicated cazyme functionality
     from EC number(s).
 
+    The EC numbers are searched for in number order.
+
     Return pandas dataframe.
     """
-    cazyme_ec_indexes = 
     cazyme_ec_indexes = input_df["EC number"].str.contains(
-        r"3.2.1.4 ", flags=re.IGNORECASE, regex=True, na=False
+        r"3.1.1.11 ", flags=re.IGNORECASE, regex=True, na=False
     )
     cazyme_ec_indexes.append(input_df["EC number"].str.contains(
-        r"3.2.1.91", flags=re.IGNORECASE, regex=True, na=False
+        r"3.1.1.72", flags=re.IGNORECASE, regex=True, na=False
     ))
     cazyme_ec_indexes.append(input_df["EC number"].str.contains(
-        r"3.2.1.21", flags=re.IGNORECASE, regex=True, na=False
+        r"3.1.1.73", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    cazyme_ec_indexes.append(input_df["EC number"].str.contains(
+        r"3.2.1.4", flags=re.IGNORECASE, regex=True, na=False
     ))
     cazyme_ec_indexes.append(input_df["EC number"].str.contains(
         r"3.2.1.6", flags=re.IGNORECASE, regex=True, na=False
@@ -138,31 +142,50 @@ def get_ec_cazymes(input_df, logger):
         r"3.2.1.7", flags=re.IGNORECASE, regex=True, na=False
     ))
     cazyme_ec_indexes.append(input_df["EC number"].str.contains(
-        r"3.2.1.25", flags=re.IGNORECASE, regex=True, na=False
-    ))
-    cazyme_ec_indexes.append(input_df["EC number"].str.contains(
-        r"3.2.1.4", flags=re.IGNORECASE, regex=True, na=False
-    ))
-    cazyme_ec_indexes.append(input_df["EC number"].str.contains(
         r"3.2.1.8", flags=re.IGNORECASE, regex=True, na=False
-    ))
-    cazyme_ec_indexes.append(input_df["EC number"].str.contains(
-        r"3.2.1.37", flags=re.IGNORECASE, regex=True, na=False
-    ))
-    cazyme_ec_indexes.append(input_df["EC number"].str.contains(
-        r"3.2.1.156", flags=re.IGNORECASE, regex=True, na=False
     ))
     cazyme_ec_indexes.append(input_df["EC number"].str.contains(
         r"3.2.1.15", flags=re.IGNORECASE, regex=True, na=False
     ))
     cazyme_ec_indexes.append(input_df["EC number"].str.contains(
+        r"3.2.1.21", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    cazyme_ec_indexes.append(input_df["EC number"].str.contains(
+        r"3.2.1.25", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    cazyme_ec_indexes.append(input_df["EC number"].str.contains(
+        r"3.2.1.37", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    cazyme_ec_indexes.append(input_df["EC number"].str.contains(
+        r"3.2.1.40", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    cazyme_ec_indexes.append(input_df["EC number"].str.contains(
+        r"3.2.1.55", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    cazyme_ec_indexes.append(input_df["EC number"].str.contains(
         r"3.2.1.67", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    cazyme_ec_indexes.append(input_df["EC number"].str.contains(
+        r"3.2.1.91", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    cazyme_ec_indexes.append(input_df["EC number"].str.contains(
+        r"3.2.1.131", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    cazyme_ec_indexes.append(input_df["EC number"].str.contains(
+        r"3.2.1.139", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    cazyme_ec_indexes.append(input_df["EC number"].str.contains(
+        r"3.2.1.156", flags=re.IGNORECASE, regex=True, na=False
     ))
     # order index numbers list and remove duplicates
     cazyme_ec_indexes.sort()
     cazyme_ec_indexes = list(dict.fromkeys(cazyme_ec_indexes))
+    # Return dataframe with only entries whose EC numbers indicate cazyme functionality
     return input_df[cazyme_ec_indexes]
 
 
 def get_go_cazymes(input_df, logger):
     return go_cazyme_df
+
+# "Gene ontology (molecular function)": ["NA"],
+# "Gene ontology (biological process)": ["NA"],
