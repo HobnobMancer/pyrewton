@@ -98,3 +98,18 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = No
         uniprot_protein_df, logger, args.ouput, args.force, args.nodelete,
     )
 
+
+def get_cazy_cazymes(input_df, logger):
+    # retrieve indexes of entries with link to CAZy database
+    cazy_cazyme_df = input_df["UniProt linked protein families"].str.contains(
+        r"cazy", flags=re.IGNORECASE, regex=True, na=False
+    )
+    return cazy_cazyme_df
+
+
+def get_ec_cazymes(input_df, logger):
+    return ec_cazyme_df
+
+
+def get_go_cazymes(input_df, logger):
+    return go_cazyme_df
