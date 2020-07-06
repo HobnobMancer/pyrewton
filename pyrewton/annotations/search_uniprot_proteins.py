@@ -124,16 +124,16 @@ def get_ec_cazymes(input_df, logger):
     logger.info("Retrieving rows whose EC number indicates cazyme functionality")
     ec_series = [] # store indexed pandas series results of EC search results
     ec_series.append(input_df["EC number"].str.contains(
-        r"3.2.1.4 ", flags=re.IGNORECASE, regex=True, na=False
+        r"3.1.1.11", flags=re.IGNORECASE, regex=True, na=False
     ))
     ec_series.append(input_df["EC number"].str.contains(
-        r"3.2.1.4 ", flags=re.IGNORECASE, regex=True, na=False
+        r"3.1.1.72", flags=re.IGNORECASE, regex=True, na=False
     ))
     ec_series.append(input_df["EC number"].str.contains(
-        r"3.2.1.91", flags=re.IGNORECASE, regex=True, na=False
+        r"3.1.1.73", flags=re.IGNORECASE, regex=True, na=False
     ))
     ec_series.append(input_df["EC number"].str.contains(
-        r"3.2.1.21", flags=re.IGNORECASE, regex=True, na=False
+        r"3.2.1.4", flags=re.IGNORECASE, regex=True, na=False
     ))
     ec_series.append(input_df["EC number"].str.contains(
         r"3.2.1.6", flags=re.IGNORECASE, regex=True, na=False
@@ -142,29 +142,113 @@ def get_ec_cazymes(input_df, logger):
         r"3.2.1.7", flags=re.IGNORECASE, regex=True, na=False
     ))
     ec_series.append(input_df["EC number"].str.contains(
-        r"3.2.1.25", flags=re.IGNORECASE, regex=True, na=False
-    ))
-    ec_series.append(input_df["EC number"].str.contains(
-        r"3.2.1.4", flags=re.IGNORECASE, regex=True, na=False
-    ))
-    ec_series.append(input_df["EC number"].str.contains(
         r"3.2.1.8", flags=re.IGNORECASE, regex=True, na=False
-    ))
-    ec_series.append(input_df["EC number"].str.contains(
-        r"3.2.1.37", flags=re.IGNORECASE, regex=True, na=False
-    ))
-    ec_series.append(input_df["EC number"].str.contains(
-        r"3.2.1.156", flags=re.IGNORECASE, regex=True, na=False
     ))
     ec_series.append(input_df["EC number"].str.contains(
         r"3.2.1.15", flags=re.IGNORECASE, regex=True, na=False
     ))
     ec_series.append(input_df["EC number"].str.contains(
+        r"3.2.1.21", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    ec_series.append(input_df["EC number"].str.contains(
+        r"3.2.1.25", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    ec_series.append(input_df["EC number"].str.contains(
+        r"3.2.1.37", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    ec_series.append(input_df["EC number"].str.contains(
+        r"3.2.1.40", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    ec_series.append(input_df["EC number"].str.contains(
+        r"3.2.1.55", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    ec_series.append(input_df["EC number"].str.contains(
         r"3.2.1.67", flags=re.IGNORECASE, regex=True, na=False
     ))
+    ec_series.append(input_df["EC number"].str.contains(
+        r"3.2.1.91", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    ec_series.append(input_df["EC number"].str.contains(
+        r"3.2.1.131", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    ec_series.append(input_df["EC number"].str.contains(
+        r"3.2.1.139", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    ec_series.append(input_df["EC number"].str.contains(
+        r"3.2.1.156", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    # Retrieve search corresponding rows from input dataframe using search results
+    return retrieve_df_subset(input_df, go_series, logger)
+
+
+def get_go_cazymes(input_df, logger):
+    """Retrieve subset of entries with indicated cazyme functionality
+    from GO annotated function(s).
+
+    Return pandas dataframe.
+    """
+    logger.info("Retrieving rows whose EC number indicates cazyme functionality")
+    go_series = [] # store indexed pandas series results of EC search results
+    go_series.append(input_df["EC number"].str.contains(
+        r"glucanase", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    go_series.append(input_df["EC number"].str.contains(
+        r"glucosidase", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    go_series.append(input_df["EC number"].str.contains(
+        r"mannan", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    go_series.append(input_df["EC number"].str.contains(
+        r"mannosidase", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    go_series.append(input_df["EC number"].str.contains(
+        r"xylan", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    go_series.append(input_df["EC number"].str.contains(
+        r"xylosidase", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    go_series.append(input_df["EC number"].str.contains(
+        r"lichenase", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    go_series.append(input_df["EC number"].str.contains(
+        r"cellulase", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    go_series.append(input_df["EC number"].str.contains(
+        r"xylo", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    go_series.append(input_df["EC number"].str.contains(
+        r"arabinofuranosidase", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    go_series.append(input_df["EC number"].str.contains(
+        r"glucuronisdases", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    go_series.append(input_df["EC number"].str.contains(
+        r"feruloyl", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    go_series.append(input_df["EC number"].str.contains(
+        r"glucuronoyl", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    go_series.append(input_df["EC number"].str.contains(
+        r"pectin", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    go_series.append(input_df["EC number"].str.contains(
+        r"arabino", flags=re.IGNORECASE, regex=True, na=False
+    ))
+    # Retrieve search corresponding rows from input dataframe using search results
+    return retrieve_df_subset(input_df, go_series, logger)
+
+
+def retrieve_df_subset(input_df, df_index_list, logger):
+    """Retrieve subset of input dataframe, as a single dataframe.
     
-    # Create empty dataframe to append search results to
-    ec_result_df = pd.DataFrame(
+    :param input_df: pandas df, original input dataframe
+    :param df_index_list: list, results from searching input df using .str.contains.
+    :param logger: logger object
+    
+    Return pandas dataframe.
+    """
+    # Create empty dataframe to add subset of dataframes to
+    cazyme_subset_df = pd.DataFrame(
         columns=[
             "Genus",
             "Species",
@@ -184,14 +268,10 @@ def get_ec_cazymes(input_df, logger):
             "Sequence",
         ]
     )
-    
     # Retrieve rows from input dataframe whose EC numbers infer cazyme functionality
     # and combine into single dataframe, and remove duplicates
-    for pandas_series in ec_series:
-        ec_result_df = ec_result_df.append(input_df[pandas_series])
-    ec_result_df = ec_result_df[ec_result_df.duplicated(subset="UniProt entry ID", keep='first')
-    return ec_result_df
-
-
-def get_go_cazymes(input_df, logger):
-    return go_cazyme_df
+    logger.info("Using search results to retrieve rows from input dataframe.")
+    for pandas_series in df_index_list:
+        cazyme_subset_df = cazyme_subset_df.append(input_df[pandas_series])
+    cazyme_subset_df = cazyme_subset_df[cazyme_subset_df.duplicated(subset="UniProt entry ID", keep='first')
+    return cazyme_subset_df
