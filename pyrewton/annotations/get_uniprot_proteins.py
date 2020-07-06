@@ -19,8 +19,8 @@
 """Retrieves all proteins for each species in an input dataframe.
 
 :func main: coordianate function of script
-:func 
-
+:func build_uniprot_df: coordinates retrieval of UniProt entries per species
+:func get_uniprotkb_data: retreives entries from UniProt
 """
 
 import io
@@ -43,11 +43,11 @@ from pyrewton.parsers.parser_get_uniprot_proteins import build_parser
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = None):
-    """docstring summary.
+    """Coordinate retrieval of entries from UniProtKB database.
 
     Extra.
 
-    Return.
+    Store entries in pandase dataframe; write out dataframe to csv file.
     """
     # Programme preparation:
     # Parser arguments
@@ -93,7 +93,7 @@ def build_uniprot_df(input_df, args, logger):
     Return dataframe.
     """
     # Create empty dataframe to add data to
-    cazyme_df = pd.DataFrame(
+    uniprot_df = pd.DataFrame(
         columns=[
             "Genus",
             "Species",
@@ -101,7 +101,7 @@ def build_uniprot_df(input_df, args, logger):
             "UniProt entry ID",
             "UniProt entry name",
             "UniProt assigned protein names",
-            "EC Numbers",
+            "EC Number",
             "Length (Aa)",
             "Mass (Da)",
             "Domains",
@@ -117,13 +117,15 @@ def build_uniprot_df(input_df, args, logger):
     # parse input_df. retrieving call cazymes for each species from UniProtKB
     df_index = 0
     for df_index in tqdm(range(len(input_df["Genus"])), desc="Retrieving Uniprot data"):
-        cazyme_df = cazyme_df.append(
+        uniprot_df = uniprot_df.append(
             get_uniprotkb_data(input_df.iloc[df_index], logger), ignore_index=True
         )
         df_index += 1
 
     # for development purposes and will be removed before release
-    print("====\nUniProt protein data:\n", cazyme_df)
+    print("====\nUniProt protein data:\n", uniprot_df)
+
+    return uniprot_df
 
 
 def get_uniprotkb_data(df_row, logger):
@@ -226,7 +228,14 @@ def get_uniprotkb_data(df_row, logger):
     # Add EC number to dataframe0
     search_result_df.insert(3, "EC number", EC_number)
 
-    # Add Genus, Species and Taxonomy ID column to the front (i.e. columns 0-2)
-    # of the dataframe so can identify the host species
+    # Add genus, species and NCBI taxonomy ID column, so the host organism is identifable
+    # for each protein
+    genus_column_data = [df_row[0]] * range(len("UniProtKB Entry ID"))
+    species_column_data = [df_row[1]] * range(len("UniProtKB Entry ID"))
+    tax_id_column_data = [df_row[2]] * range(len("UniProtKB Entry ID"))
+
+    search_result_df.insert(0, "Host Genus", genus_column_data)
+    search_result_df.insert(1, "Host Species", species_column_data)
+    search_result_df.insert(2, "Host NCBI Taxonomy ID", tax_id_column_data)
 
     return search_result_df
