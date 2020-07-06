@@ -29,6 +29,12 @@ and by GO (Gene Ontology) annotated function inferring cazyme functionality.
 :func get_go_cazymes: retrieve entries from input datafame with GO annotated function(s)
     numbers indicated cazyme functionality
 :func retrieve_df_subset: coordinate retrieval of rows from input dataframe
+
+Writes out 4 dataframes to csv files:
+[1] cazy_linked_cazymes_df
+[2] ec_num_only_cazymes
+[3] go_fun_only_cazymes
+[4] ec_go_cazymes
 """
 
 import io
@@ -104,8 +110,8 @@ def get_cazyme_subset_df(input_df, logger):
     # Retrieve UniProt entries with link to CAZy database
     cazy_linked_df = get_cazy_proteins(input_df, logger)
     # write out df of CAZy linked entries to csv file
-    file_io.write_out_dataframe(
-        cazy_linked_df[0], logger, args.ouput, args.force, args.nodelete,
+    file_io.write_out_pre_named_dataframe(
+        cazy_linked_df[0], 'cazy_linked_cazymes_df', logger, args.ouput, args.force, args.nodelete,
     )
 
     # Search non-CAZy linked entries to retrieve UniProt entries whose EC
@@ -292,14 +298,14 @@ def compare_cazyme_dfs(cazyme_dfs, logger):
     ]
 
     # Write out the three dataframes to csv files
-    file_io.write_out_dataframe(
-        ec_only_cazymes, logger, args.ouput, args.force, args.nodelete,
+    file_io.write_out_pre_named_dataframe(
+        ec_only_cazymes, 'ec_num_only_cazymes', logger, args.ouput, args.force, args.nodelete,
     )
-    file_io.write_out_dataframe(
-        go_only_cazymes, logger, args.ouput, args.force, args.nodelete,
+    file_io.write_out_pre_named_dataframe(
+        go_only_cazymes, 'go_fun_only_cazymes',logger, args.ouput, args.force, args.nodelete,
     )
-    file_io.write_out_dataframe(
-        ec_go_cazymes, logger, args.ouput, args.force, args.nodelete,
+    file_io.write_out_pre_named_dataframe(
+        ec_go_cazymes, 'ec_go_cazymes',logger, args.ouput, args.force, args.nodelete,
     )
 
     return
