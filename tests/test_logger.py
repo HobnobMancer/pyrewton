@@ -28,7 +28,7 @@ import pytest
 from pyrewton.loggers import build_logger
 
 
-@pytest.mark.skip(reason="Target files do not exist in repository")
+@pytest.mark.run(order=4)
 def test_build_logger(null_logger, logger_args):
     """Tests building of logger"""
     build_logger(null_logger, logger_args["args"])
