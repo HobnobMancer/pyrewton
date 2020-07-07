@@ -1,50 +1,48 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Author:
+# Emma E. M. Hobbs
 
-import logging
-import unittest
+# Contact
+# eemh1@st-andrews.ac.uk
 
-from argparse import Namespace
-from pathlib import Path
+# Emma E. M. Hobbs,
+# Biomolecular Sciences Building,
+# University of St Andrews,
+# North Haugh Campus,
+# St Andrews,
+# KY16 9ST
+# Scotland,
+# UK
 
-import pandas as pd
+# The MIT License
+
+"""Tests for pyrewton file_io module.
+
+These tests are inteded to be run from the root repository using:
+pytest -v
+"""
+
 import pytest
 
-from pyrewton.file_io import make_output_directory, write_out_dataframe
+from pyrewton import file_io
 
 
-class Test_housekeeping_functions(unittest.TestCase):
+@pytest.mark.run(order=5)
+def test_output_dir_creation(file_io_args, null_logger):
+    """Tests function for creating output dir"""
+    file_io.make_output_directory(file_io_args["args"], null_logger)
 
-    """Class defining tests of output_dir_handling_main.py."""
 
-    # Establish inputs for tests and expected outputs
+@pytest.mark.run(order=6)
+def test_writing_df(testing_df, null_logger, testing_df_output):
+    """Tests function for writing out created dataframe"""
+    file_io.write_out_dataframe(testing_df, null_logger, testing_df_output, True, False)
 
-    def setUp(self):
-        """"Retrieve inputs and targets for tests."""
 
-        # Define test directories
-        self.test_dir = Path("tests")
-        self.output_dir = self.test_dir / "test_targets" / "out_dir_hndng_test_targets"
-        self.df_output = self.output_dir / "test_writing_df.csv"
-
-        self.args = Namespace(output=self.output_dir, nodelete=False, force=True)
-
-        # Null logger instance
-        self.logger = logging.getLogger("Test_logger_parser_output")
-        self.logger.addHandler(logging.NullHandler())
-
-        # Create dataframe (df)
-        self.df_data = [["A", "B", "C"]]
-        self.df = pd.DataFrame(self.df_data, columns=["C1", "C2", "C3"])
-
-    # Define function to test
-
-    @pytest.mark.run(order=9)
-    def test_output_dir_creation(self):
-        """Tests function for creating output dir"""
-        make_output_directory(self.args, self.logger)
-
-    @pytest.mark.run(order=10)
-    def test_writing_df(self):
-        """Tests function for writing out created dataframe"""
-        write_out_dataframe(self.df, self.logger, self.df_output, True, False)
+@pytest.mark.run(order=8)
+def test_writing_named_df(testing_df, null_logger, testing_df_output):
+    """Tests function for writing out a prenamed dataframe"""
+    file_io.write_out_pre_named_dataframe(
+        testing_df, "unitesting", null_logger, testing_df_output, True, False
+    )

@@ -27,6 +27,8 @@ import logging
 from argparse import Namespace
 from pathlib import Path
 
+import pandas as pd
+
 import pytest
 
 
@@ -55,6 +57,26 @@ def logger_output():
 @pytest.fixture
 def logger_args(logger_output):
     argsdict = {"args": Namespace(verbose=False, log=logger_output)}
+    return argsdict
+
+
+@pytest.fixture
+def testing_df():
+    df_data = [["A", "B", "C"]]
+    df = pd.DataFrame(df_data, columns=["C1", "C2", "C3"])
+    return df
+
+
+@pytest.fixture
+def testing_df_output():
+    output = Path("tests/")
+    df_output = output / "test_targets" / "file_io_test_targets" / "test_writing_df.csv"
+    return df_output
+
+
+@pytest.fixture
+def file_io_args(testing_df_output):
+    argsdict = {"args": Namespace(output=testing_df_output, nodelete=False, force=True)}
     return argsdict
 
 
