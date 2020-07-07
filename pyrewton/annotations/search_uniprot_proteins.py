@@ -37,7 +37,6 @@ Writes out 4 dataframes to csv files:
 [4] ec_go_cazymes
 """
 
-import io
 import logging
 import re
 import sys
@@ -239,11 +238,11 @@ def get_go_cazymes(non_cazy_input_df, logger):
 
 def retrieve_df_subset(non_cazy_input_df, df_index_list, logger):
     """Retrieve subset of input dataframe, as a single dataframe.
-    
+
     :param input_df: pandas df, original input dataframe
     :param df_index_list: list, results from searching input df using .str.contains.
     :param logger: logger object
-    
+
     Return pandas dataframe.
     """
     # Create empty dataframe to add subset of dataframes to
@@ -280,11 +279,12 @@ def retrieve_df_subset(non_cazy_input_df, df_index_list, logger):
 
 def compare_cazyme_dfs(cazyme_dfs, logger):
     """"Identify common entries across EC number and GO function inferred cazymes dfs.
-    
+
     :param cazyme_dfs: 3 pandas dataframes (CAZy, EC number and GO inferred cazymes)
     :param logger: logger object
-    
-    Return 3 pandas dataframes of entries with GO only, EC only and GO+EC inferred cazyme functionality.
+
+    Return 3 pandas dataframes of entries with GO only, EC only and GO+EC inferred
+    cazyme functionality.
     """
     # create single dataframe of all EC number and GO inferred cazyme functionality.
     non_cazy_cazyme_df = cazyme_dfs[1].append(cazyme_dfs[2])
@@ -303,7 +303,8 @@ def compare_cazyme_dfs(cazyme_dfs, logger):
         ~go_indexes
     ]  # removes entries with no GO number
 
-    # Retreve entries with GO function AND EC number inferred cazyme function and no CAZy database link
+    # Retreve entries with GO function AND EC number inferred cazyme
+    # function and no CAZy database link
     ec_go_cazymes = non_cazy_cazyme_df.append(ec_only_cazymes)
     ec_go_cazymes = ec_go_cazymes.append(go_only_cazymes)
     ec_go_cazymes = ec_go_cazymes[
