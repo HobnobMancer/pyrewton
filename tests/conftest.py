@@ -110,6 +110,28 @@ def gt_ncbi_gnms_test_inputs(gt_ncbi_gnms_input_dir):
     return inputs
 
 
+# Define fixtures local to these tests
+@pytest.fixture
+def test_ncbi_species_file(gt_ncbi_gnms_input_dir):
+    input_reading_path = gt_ncbi_gnms_input_dir / "gt_ncbi_gnms_reading_test_input.txt"
+    return input_reading_path
+
+
+@pytest.fixture
+def input_ncbi_df(gt_ncbi_gnms_test_inputs):
+    row_data = []
+    row_data.append(gt_ncbi_gnms_test_inputs[4])
+    row_data.append(gt_ncbi_gnms_test_inputs[5])
+    row_data.append(gt_ncbi_gnms_test_inputs[1])
+    return row_data
+
+
+@pytest.fixture
+def ncbi_args():
+    argsdict = {"args": Namespace(genbank=False, retries=10, timeout=10)}
+    return argsdict
+
+
 @pytest.fixture
 def gt_ncbi_gnms_targets():
     test_dir = Path("tests")
