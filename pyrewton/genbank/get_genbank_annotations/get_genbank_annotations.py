@@ -36,20 +36,16 @@ files directly linked to a given species.
 """
 
 import gzip
-import io
 import logging
-import re
 import sys
 
+from pathlib import Path
 from typing import List, Optional
 
 import pandas as pd
 
 from Bio import SeqIO
-from bioservices import UniProt
-from pandas.errors import EmptyDataError
 from tqdm import tqdm
-from urllib.error import HTTPError
 
 from pyrewton import file_io
 from pyrewton.loggers import build_logger
@@ -82,7 +78,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # If specified output directory, create output directory
     if args.output is not sys.stdout:
         try:
-            make_output_directory(args, logger)
+            file_io.make_output_directory(args, logger)
         except FileExistsError:
             logger.error("Output directory %s already exists (exiting)" % args.output)
             sys.exit(1)
@@ -141,7 +137,7 @@ def create_dataframe(input_df, args, logger):
     # Retrieve data for dataframe foundation and add to empty dataframe
     df_index = 0
     for df_index in range(len(input_df["Genus"])):
-        cazy_summary_df = cazy_summary_df.append(
+        protein_annotation_df = protein_annotation_df.append(
             get_genbank_annotations(input_df.iloc[df_index], args, logger),
             ignore_index=True,
         )
@@ -150,7 +146,7 @@ def create_dataframe(input_df, args, logger):
     # these are debugging purposes and will not be included in final version
     print("=====Foundation dataframe======\n", protein_annotation_df, "\n")
 
-    return cazy_summary_df
+    return protein_annotation_df
 
 
 def get_genbank_annotations(df_row, args, logger):
