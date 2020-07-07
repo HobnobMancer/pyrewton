@@ -1,4 +1,3 @@
-  
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author:
@@ -26,6 +25,8 @@ pytest -v
 
 import pytest
 
+from argparse import Namespace
+
 from Bio import Entrez
 
 from pyrewton.genbank.get_ncbi_genomes import get_ncbi_genomes
@@ -34,13 +35,29 @@ from pyrewton.genbank.get_ncbi_genomes import get_ncbi_genomes
 Entrez.email = "my.email@my.domain"
 
 
+# Define fixtures local to these tests
 @pytest.fixture
 def test_input_file(gt_ncbi_gnms_input_dir):
     input_reading_path = gt_ncbi_gnms_input_dir / "gt_ncbi_gnms_reading_test_input.txt"
     return input_reading_path
 
 
-@pytest.mark.run(order=4)
+@pytest.fixture
+def input_df(gt_ncbi_gnms_test_inputs):
+    row_data = []
+    row_data.append(gt_ncbi_gnms_test_inputs[4])
+    row_data.append(gt_ncbi_gnms_test_inputs[5])
+    row_data.append(gt_ncbi_gnms_test_inputs[1])
+    return row_data
+
+
+@pytest.fixture
+def genbank_args():
+    argsdict = {"args": Namespace(genbank=False, retries=10, timeout=10)}
+    return argsdict
+
+
+@pytest.mark.run(order=8)
 def test_reading_input_file(test_input_file, null_logger, gt_ncbi_gnms_test_inputs):
     """Tests script can open and read supplied input file."""
     get_ncbi_genomes.parse_input_file(
@@ -48,7 +65,8 @@ def test_reading_input_file(test_input_file, null_logger, gt_ncbi_gnms_test_inpu
     )
 
 
-@pytest.mark.run(order=11)
+# order = 9
+@pytest.mark.skip(reason="mocking database call still under development")
 def test_scientific_name_retrieval(
     gt_ncbi_gnms_test_inputs, gt_ncbi_gnms_targets, null_logger, monkeypatch
 ):
@@ -71,7 +89,8 @@ def test_scientific_name_retrieval(
     )
 
 
-@pytest.mark.run(order=12)
+# order 10
+@pytest.mark.skip(reason="mocking database call still under development")
 def test_taxonomy_id_retrieval(
     gt_ncbi_gnms_test_inputs, gt_ncbi_gnms_targets, null_logger, monkeypatch
 ):
@@ -91,39 +110,26 @@ def test_taxonomy_id_retrieval(
     )
 
 
-@pytest.fixture
-def input_df(gt_ncbi_gnms_test_inputs):
-    row_data = []
-    row_data.append(gt_ncbi_gnms_test_inputs[4])
-    row_data.append(gt_ncbi_gnms_test_inputs[5])
-    row_data.append(gt_ncbi_gnms_test_inputs[1])
-    return row_data
-
-
-@pytest.fixture
-def args():
-    argsdict = {"args": Namespace(genbank=False, retries=10, timeout=10)}
-    return argsdict
-
-
-@pytest.mark.run(order=13)
-def test_accession_number_retrieval(input_df, null_logger, args):
+# order = 11
+@pytest.mark.skip(reason="mocking database call still under development")
+def test_accession_number_retrieval(input_df, null_logger, genbank_args):
     """Tests multiplpe Entrez calls to NCBI to retrieve accession numbers."""
-    get_ncbi_genomes.get_accession_numbers(input_df, null_logger, args["args"])
+    get_ncbi_genomes.get_accession_numbers(input_df, null_logger, genbank_args["args"])
 
 
-@pytest.mark.run(order=14)
+@pytest.mark.run(order=12)
 def test_compiling_url(null_logger):
     """Test generation of URL for downloading GenBank files."""
     get_ncbi_genomes.compile_url("test_accession", "test_name", null_logger, "suffix")
 
 
-@pytest.mark.run(order=15)
-def test_genbank_download(args, gt_ncbi_gnms_targets, null_logger):
+# order = 13
+@pytest.mark.skip(reason="mocking database call still under development")
+def test_genbank_download(genbank_args, gt_ncbi_gnms_targets, null_logger):
     """Test downloading of GenBank file."""
     get_ncbi_genomes.download_file(
         "http://httpbin.org/get",
-        args["args"],
+        genbank_args["args"],
         gt_ncbi_gnms_targets[2],
         null_logger,
         "test_accession",
