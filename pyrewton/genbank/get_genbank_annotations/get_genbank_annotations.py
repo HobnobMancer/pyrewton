@@ -96,6 +96,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # Write out dataframe
     file_io.write_out_dataframe(protein_annotation_df, logger, args.output, args.force, args.nodelete)
+    
+    logger.info("Programme finsihed. Terminating.")
 
 
 def create_dataframe(input_df, args, logger):

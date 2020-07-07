@@ -16,4 +16,4 @@
 # UK
 # 
 # The MIT License
-"""Retrieve CDS annotations from GenBank files, and collect data from UniProt to assess which encode cazymes."""
+"""Retrieves all CDS annotations from GenBank files."""
