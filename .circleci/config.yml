@@ -45,11 +45,11 @@ jobs:
           path: tests/test_output
           destination: tests/test_output
       - store_artifacts:
-          path: .coverage.xml
-          destination: .coverage.xml
+          path: coverage.xml
+          destination: coverage.xml
 
       - codecov/upload:
-          file: .coverage.xml
+          file: coverage.xml
 
 workflows:
   main:
