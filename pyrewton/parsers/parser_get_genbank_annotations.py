@@ -16,7 +16,7 @@
 # UK
 
 # The MIT License
-"""Build parser for 'get_cazyme_annotations.py'"""
+"""Build parser for 'get_genbank_annotations.py'"""
 
 import argparse
 import sys
@@ -30,7 +30,7 @@ def build_parser(argv: Optional[List] = None):
     # Create parser object
     parser = argparse.ArgumentParser(
         prog="cazy_genbank_summary.py",
-        description="Generate summary of CAZy annotation in GenBank files",
+        description="Retrieve protein annotations from GenBank files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
