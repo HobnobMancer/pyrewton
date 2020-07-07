@@ -91,7 +91,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = No
     cazyme_dfs = get_cazyme_subset_df(
         input_df, logger
     )  # CAZy, EC number and GO function indicated functionality
-
     # Compare dataframes (CAZy, EC number and GO function) to retrieve dataframes of
     # (1) only EC number, (2) only GO function and (3) GO+EC inferred cazyme functionality
     compare_cazyme_dfs(cazyme_dfs, logger)
@@ -101,17 +100,22 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = No
 
 def get_cazyme_subset_df(input_df, logger):
     """Coordinate retrieval of entries with indicated cazyme functionality.
-    
+
     :param input_df: pandas dataframe
     :param logger: logger object
-    
+
     Return 3 pandas dataframes.
     """
     # Retrieve UniProt entries with link to CAZy database
     cazy_linked_df = get_cazy_proteins(input_df, logger)
     # write out df of CAZy linked entries to csv file
     file_io.write_out_pre_named_dataframe(
-        cazy_linked_df[0], 'cazy_linked_cazymes_df', logger, args.ouput, args.force, args.nodelete,
+        cazy_linked_df[0],
+        "cazy_linked_cazymes_df",
+        logger,
+        args.ouput,
+        args.force,
+        args.nodelete,
     )
 
     # Search non-CAZy linked entries to retrieve UniProt entries whose EC
@@ -146,15 +150,15 @@ def get_cazy_cazymes(input_df, logger):
 def get_ec_cazymes(non_cazy_input_df, logger):
     """Retrieve subset of entries with indicated cazyme functionality
     from EC number(s), and no CAZy database link.
-    
+
     :param non_cazy_input_df: pandas dataframe of entries from input df with
         no link to CAZy database
     :param logger: logger object
-    
+
     Return pandas dataframe.
     """
     logger.info("Retrieving rows whose EC number indicates cazyme functionality")
-    ec_series = [] # store indexed pandas series results of EC search results
+    ec_series = []  # store indexed pandas series results of EC search results
     search_terms = [
         "3.1.1.11",
         "3.1.1.72",
@@ -176,10 +180,12 @@ def get_ec_cazymes(non_cazy_input_df, logger):
         "3.2.1.156",
     ]
 
-    for term in tqdm(search_terms), desc="Searching EC numbers"):
-        ec_series.append(non_cazy_input_df["EC number"].str.contains(
-            rf"{term}", flags=re.IGNORECASE, regex=True, na=False
-        ))
+    for term in tqdm((search_terms), desc="Searching EC numbers"):
+        ec_series.append(
+            non_cazy_input_df["EC number"].str.contains(
+                rf"{term}", flags=re.IGNORECASE, regex=True, na=False
+            )
+        )
 
     # Retrieve search corresponding rows from input dataframe using search results
     return retrieve_df_subset(non_cazy_input_df, go_series, logger)
@@ -196,7 +202,7 @@ def get_go_cazymes(non_cazy_input_df, logger):
     Return pandas dataframe.
     """
     logger.info("Retrieving rows whose EC number indicates cazyme functionality")
-    go_series = [] # store indexed pandas series results of EC search results
+    go_series = []  # store indexed pandas series results of EC search results
     search_terms = [
         "arabino",
         "arabinofuranosidase",
@@ -212,13 +218,15 @@ def get_go_cazymes(non_cazy_input_df, logger):
         "pectin",
         "xylan",
         "xylo",
-        "xylosidase"
+        "xylosidase",
     ]
 
-    for term in tqdm(search_terms), desc="Searching GO (Gene Ontology) functions"):
-        go_series.append(non_cazy_input_df["EC number"].str.contains(
-            rf"{term}", flags=re.IGNORECASE, regex=True, na=False
-        ))
+    for term in tqdm((search_terms), desc="Searching GO (Gene Ontology) functions"):
+        go_series.append(
+            non_cazy_input_df["EC number"].str.contains(
+                rf"{term}", flags=re.IGNORECASE, regex=True, na=False
+            )
+        )
 
     # Retrieve search corresponding rows from input dataframe using search results
     return retrieve_df_subset(non_cazy_input_df, go_series, logger)
@@ -299,13 +307,23 @@ def compare_cazyme_dfs(cazyme_dfs, logger):
 
     # Write out the three dataframes to csv files
     file_io.write_out_pre_named_dataframe(
-        ec_only_cazymes, 'ec_num_only_cazymes', logger, args.ouput, args.force, args.nodelete,
+        ec_only_cazymes,
+        "ec_num_only_cazymes",
+        logger,
+        args.ouput,
+        args.force,
+        args.nodelete,
     )
     file_io.write_out_pre_named_dataframe(
-        go_only_cazymes, 'go_fun_only_cazymes',logger, args.ouput, args.force, args.nodelete,
+        go_only_cazymes,
+        "go_fun_only_cazymes",
+        logger,
+        args.ouput,
+        args.force,
+        args.nodelete,
     )
     file_io.write_out_pre_named_dataframe(
-        ec_go_cazymes, 'ec_go_cazymes',logger, args.ouput, args.force, args.nodelete,
+        ec_go_cazymes, "ec_go_cazymes", logger, args.ouput, args.force, args.nodelete,
     )
 
     return

@@ -195,6 +195,7 @@ def get_uniprotkb_data(df_row, logger):
         )
         return pd.DataFrame(blank_data)
 
+
 def get_ec_numbers(search_result_df, logger):
     """Retrieves EC numbers from UniProt record and writes them to a new column.
     

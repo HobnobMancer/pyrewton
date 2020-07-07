@@ -87,8 +87,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
             logger.error("Output directory %s already exists (exiting)" % args.output)
             sys.exit(1)
 
-    sys.exit(0)
-
     # Open input dataframe
     logger.info("Opening input dataframe %s", args.df_input)
     input_df = pd.read_csv(args.df_input, header=0, index_col=0)

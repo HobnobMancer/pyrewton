@@ -94,7 +94,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Initiate logger
     # Note: log file only created if specified at cmdline
     if logger is None:
-        logger = build_logger("get_ncbi_genomes", args)
+        logger = build_logger("Extract_genomes_NCBI", args)
+    # logger = logging.getLogger("Extract_genomes_NCBI")
     logger.info("Run initated")
 
     # Add users email address from parser
