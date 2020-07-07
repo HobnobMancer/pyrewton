@@ -46,7 +46,10 @@ def null_logger():
 @pytest.fixture
 def logger_output():
     output = Path("tests/")
-    return output
+    logger_output = (
+        output / "test_targets" / "bld_lggr_test_targets" / "test_bld_logger.log"
+    )
+    return logger_output
 
 
 @pytest.fixture
