@@ -68,15 +68,24 @@ def testing_df():
 
 
 @pytest.fixture
-def testing_df_output():
+def testing_df_output_file():
     output = Path("tests/")
-    df_output = output / "test_targets" / "file_io_test_targets" / "test_writing_df"
+    df_output = output / "test_targets" / "file_io_test_targets" / "test_writing_df.csv"
     return df_output
 
 
 @pytest.fixture
-def file_io_args(testing_df_output):
-    argsdict = {"args": Namespace(output=testing_df_output, nodelete=False, force=True)}
+def testing_df_output_dir():
+    output = Path("tests/")
+    df_output = output / "test_targets" / "file_io_test_targets"
+    return df_output
+
+
+@pytest.fixture
+def file_io_args(testing_df_output_dir):
+    argsdict = {
+        "args": Namespace(output=testing_df_output_dir, nodelete=False, force=True)
+    }
     return argsdict
 
 

@@ -25,22 +25,26 @@ pytest -v
 
 import pytest
 
-from pyrewton import parsers
+from pyrewton.parsers import (
+    parser_get_ncbi_genomes,
+    parser_get_genbank_annotations,
+    parser_get_uniprot_proteins,
+)
 
 
 @pytest.mark.run(order=1)
 def test_build_parser_gt_ncb_gnms():
     """Tests building of parser"""
-    parsers.parser_get_ncbi_genomes.build_parser()
+    parser_get_ncbi_genomes.build_parser()
 
 
 @pytest.mark.run(order=2)
 def test_build_parser_gt_unprt_prtns():
     """Tests building of parser"""
-    parsers.parser_get_uniprot_proteins.build_parser()
+    parser_get_uniprot_proteins.build_parser()
 
 
 @pytest.mark.run(order=3)
 def test_build_parser_gt_czym_anno():
     """Tests building of parser"""
-    parsers.parser_get_genbank_annotations.build_parser()
+    parser_get_genbank_annotations.build_parser()

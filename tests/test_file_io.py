@@ -35,14 +35,16 @@ def test_output_dir_creation(file_io_args, null_logger):
 
 
 @pytest.mark.run(order=6)
-def test_writing_df(testing_df, null_logger, testing_df_output):
+def test_writing_df(testing_df, null_logger, testing_df_output_file):
     """Tests function for writing out created dataframe"""
-    file_io.write_out_dataframe(testing_df, null_logger, testing_df_output, True, False)
+    file_io.write_out_dataframe(
+        testing_df, null_logger, testing_df_output_file, True, False
+    )
 
 
 @pytest.mark.run(order=7)
-def test_writing_named_df(testing_df, null_logger, testing_df_output):
+def test_writing_named_df(testing_df, null_logger, testing_df_output_dir):
     """Tests function for writing out a prenamed dataframe"""
     file_io.write_out_pre_named_dataframe(
-        testing_df, "unitesting", null_logger, testing_df_output, True, False
+        testing_df, "unitesting", null_logger, testing_df_output_dir, True, False
     )
