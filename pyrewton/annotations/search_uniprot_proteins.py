@@ -121,7 +121,7 @@ def get_cazyme_subset_df(input_df, logger):
     Return 3 pandas dataframes.
     """
     # Retrieve UniProt entries with link to CAZy database
-    cazy_linked_df = get_cazy_proteins(input_df, logger)
+    cazy_linked_df = get_cazy_cazymes(input_df, logger)
 
     # Search non-CAZy linked entries to retrieve UniProt entries whose EC
     # number inferred cazyme functionality
