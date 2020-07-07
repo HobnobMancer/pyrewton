@@ -46,51 +46,47 @@ Miniconda3 environment file is also available in the GitHub repository: 'environ
 
 Below is a directory plan of the pyrewton module structure, followed by a brief overview of each directories role in the repository, to facilitate navigation through the repository.
 
-#### assets
+### assets
 
 Directory containing all files needed for the GitHub page.
 
-#### docs
+### docs
 
 Directory containing files to build documentation hosted at ReadTheDocs.
 
-#### notebooks
+### notebooks
 
 Directory containing all jupyter notebooks, and html copies used for easier in-browser viewing via the GitHub pages.
 
-#### tests
+### tests
 
 Directory containing all `pytest` files for testing `pyrewton` during development, including subdirectories for test inputs and targets, with each module/submodule possessing its own specific test input and target subdirectory.
 
-#### pyrewton
+### pyrewton
 
 Directory containing all `pyrewton` program modules (including all submodules and Python scripts).
 
-##### pyrewton module: parsers
+### pyrewton module: parsers
 
 Directory containing all Python scripts for building command-line parsers.
 
-##### pyrewton module: loggers
+### pyrewton module: loggers
 
 Directory containing Python scripts for building loggers.
 
-##### pyrewton module: file_io
+### pyrewton module: file_io
 
 Directory contains functions for handling directories and files in `pyrewton` Python scripts, including retrieving program inputs and creating output directories.
 
-##### pyrewton module: genbank
+### pyrewton module: genbank
 
 Directory containing all submodules that are involved in handling GenBank files.
 
-##### pyrewton: Genbank submodule: get_ncbi_genomes
+**Genbank submodule: get_ncbi_genomes** - Takes a list of species and downloads all directly linked GenBank (.gbff) files in the NCBI Assembly database.
 
-&emsp;&emsp;Directory containing the submodule that takes a list of species and downloads all directly linked GenBank (.gbff) files in the NCBI Assembly database.
+**Genbank submodule: get_genbank_annotations** - Retrieve all protein annotations from GenBank files.
 
-##### pyrewton: Genbank submodule: get_genbank_annotations
-
-&emsp;&emsp;Directory containing the submodule to retrieve all protein annotations from GenBank files.
-
-##### pyrewton module: annotations
+### pyrewton module: annotations
 
 Directory containing all submodules that are involved in retrieving genomic annotations.
 
