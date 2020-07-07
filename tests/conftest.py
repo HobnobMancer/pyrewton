@@ -171,3 +171,35 @@ def gnbnk_anno_args(genbank_files_dir):
 def genbank_df(genbank_df_path):
     input_df = pd.read_csv(genbank_df_path, header=0, index_col=0)
     return input_df
+
+
+@pytest.fixture
+def formated_uniprot_results():
+    test_dir = Path("tests")
+    df_dir = (
+        test_dir
+        / "test_inputs"
+        / "gt_unprt_prtns_test_inputs"
+        / "mocked_formated_uniprot_results.csv"
+    )
+    df = pd.read_csv(df_dir, header=0, index_col=0)
+    return df
+
+
+@pytest.fixture
+def unformated_uniprot_results():
+    test_dir = Path("tests")
+    df_dir = (
+        test_dir
+        / "test_inputs"
+        / "gt_unprt_prtns_test_inputs"
+        / "mocked_unformated_uniprot_results.csv"
+    )
+    df = pd.read_csv(df_dir, header=0, index_col=0)
+    return df
+
+
+@pytest.fixture
+def uniprot_query_source(formated_uniprot_results):
+    """Return single row, a pandas series."""
+    return formated_uniprot_results.head(1)
