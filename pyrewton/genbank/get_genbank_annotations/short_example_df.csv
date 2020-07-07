@@ -1,0 +1,4 @@
+,Genus,Species,NCBI Taxonomy ID,NCBI Accession Numbers
+0,Aspergillus,fumigatus,NCBI:txid746128,"GCA_012656185.1, GCA_012656215.1, GCA_012656165.1, GCA_012656115.1"
+1,Aspergillus,nidulans,NCBI:txid162425,"GCA_011075025.1, GCA_011074995.1"
+2,Aspergillus,niger,NCBI:txid5061,"GCA_011316255.1, GCA_009812365.1, GCA_004634315.1"
