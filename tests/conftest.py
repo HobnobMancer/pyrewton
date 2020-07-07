@@ -70,7 +70,7 @@ def testing_df():
 @pytest.fixture
 def testing_df_output():
     output = Path("tests/")
-    df_output = output / "test_targets" / "file_io_test_targets" / "test_writing_df.csv"
+    df_output = output / "test_targets" / "file_io_test_targets" / "test_writing_df"
     return df_output
 
 
