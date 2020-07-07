@@ -86,14 +86,15 @@ Directory containing all submodules that are involved in handling GenBank files.
 
 &emsp;&emsp;Directory containing the submodule that takes a list of species and downloads all directly linked GenBank (.gbff) files in the NCBI Assembly database.
 
-##### pyrewton: Genbank submodule: get_cazyme_annotations
+##### pyrewton: Genbank submodule: get_genbank_annotations
 
-&emsp;&emsp;Directory containing the submodule to retrieve cazyme annotations from GenBank files.
+&emsp;&emsp;Directory containing the submodule to retrieve all protein annotations from GenBank files.
 
 ##### pyrewton module: annotations
 
-Directory containing all submodules that are involved in handling cazyme genomic annotations.
+Directory containing all submodules that are involved in retrieving genomic annotations.
 
-##### pyrewton: Genbank submodule: get_uniprot_proteins
+**get_uniprot_proteins.py** - retrieves all protein entries in UniProt in the species passed to the script.  
+**search_uniprot_proteins.py** - search proteins retrieved from UniProt to identify those with link to the CAZy database, and those with potential cazyme functionality inferred from their EC number and/or GO (Gene Ontology) annotated function.  
+**search_genbank_annotations.py** - search dataframe of cazymes retrieved from UniProt against dataframe of proteins retrieved from GenBank files to identify cazymes retrieved from the GenBank files. Then search GenBank proteins for those with inferred cazyme functionality and write these out to another dataframe.
 
-&emsp;&emsp;Directory containing the submodule that retrieves all cazyme entries in UniProt in the species passed to the submodule.
