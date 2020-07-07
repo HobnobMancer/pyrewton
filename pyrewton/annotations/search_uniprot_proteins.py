@@ -46,10 +46,7 @@ from typing import List, Optional
 
 import pandas as pd
 
-from bioservices import UniProt
-from pandas.errors import EmptyDataError
 from tqdm import tqdm
-from urllib.error import HTTPError
 
 from pyrewton import file_io
 from pyrewton.loggers import build_logger
