@@ -144,7 +144,8 @@ def build_uniprot_df(input_df, args, logger):
     df_index = 0
     for df_index in tqdm(range(len(input_df["Genus"])), desc="Retrieving Uniprot data"):
         uniprot_df = uniprot_df.append(
-            get_uniprotkb_data(input_df.iloc[df_index], column_list, blank_data, logger), ignore_index=True
+            get_uniprotkb_data(input_df.iloc[df_index], columnlist, blank_data, logger),
+            ignore_index=True,
         )
         df_index += 1
 
@@ -170,11 +171,11 @@ def get_uniprotkb_data(df_row, column_list, blank_data, logger):
         logger.info(df_row)
         query = f'{df_row[5]} AND organism:"{df_row[0]} {df_row[1]}"'
         search_result = UniProt().search(
-            query, columns=columnlist,
+            query, columns=column_list,
         )  # returns empty string for no result
         logger.info(search_result)
         search_result_df = pd.read_table(io.StringIO(search_result))
-        return get_ec_numbers(search_result_df, logger)
+        return format_search_results(search_result_df, df_row, logger)
 
     except HTTPError:
         logger.warning(
@@ -196,17 +197,17 @@ def get_uniprotkb_data(df_row, column_list, blank_data, logger):
         return pd.DataFrame(blank_data)
 
 
-def get_ec_numbers(search_result_df, logger):
-    """Retrieves EC numbers from UniProt record and writes them to a new column.
-    
-    :param search_result_df: pandas dataframe
+def format_search_results(search_result_df, df_row, logger):
+    """Formates dataframe, including adding EC numbers to new column and renaming columns
+
+    :param search_result_df: pandas dataframe of UniProt search results
+    :param df_row: pandas series from original input df
     :param logger: logger object
-    
+
     Return pandas dataframe.
     """
-    logger.info("Retrieving EC numbers")
-    # rename columns to match to indicate UniProtKB source of data
-    search_result_df.rename(
+    logger.info("Renaming column headers")
+    search_result_df = search_result_df.rename(
         columns={
             "Entry": "UniProtKB Entry ID",
             "Entry name": "UniProtKB Entry Name",
@@ -217,36 +218,54 @@ def get_ec_numbers(search_result_df, logger):
         }
     )
 
-    # Retrieve EC number from 'UniProtKB Protein Names'
-    # or return 'NA' if not included
-    EC_search = re.findall(
-        r"\(EC [\d-]\d*\.[\d-]\d*\.[\d-]\d*\.[\d-]\d*\)", search_result_df[2]
-    )
-    if EC_search is None:
-        EC_number = "NA"
-    else:
-        # compiall EC together incase multiple are given
-        # and remove EC numbers from protein name
-        EC_number = ""
-        for EC in EC_search:
-            search_result_df[2] = search_result_df[2].replace(EC, "")
-            EC = EC.replace("(", "")
-            EC = EC.replace(")", "")
-            EC_number += EC
-            # Do I want to remove the EC number becuase if multiple are given,
-            # maybe helpful to see in the protein name section which EC number
-            # corresponds to which function
-    # Add EC number to dataframe0
-    search_result_df.insert(3, "EC number", EC_number)
+    logger.info("Retrieving EC numbers")
+    index = 0
+    all_ec_numbers = []  # list, each item is a str of all EC numbers in a unique row
+    for index in range(len(search_result_df["UniProtKB Entry ID"])):
+        all_ec_numbers.append(get_ec_numbers(search_result_df.iloc[index], logger))
+        index += 1
+
+    # Add EC numbers to dataframe0
+    search_result_df.insert(3, "EC number", all_ec_numbers)
 
     # Add genus, species and NCBI taxonomy ID column, so the host organism is identifable
     # for each protein
-    genus_column_data = [df_row[0]] * range(len("UniProtKB Entry ID"))
-    species_column_data = [df_row[1]] * range(len("UniProtKB Entry ID"))
-    tax_id_column_data = [df_row[2]] * range(len("UniProtKB Entry ID"))
+    genus_column_data = [df_row[0]] * len(all_ec_numbers)
+    species_column_data = [df_row[1]] * len(all_ec_numbers)
+    tax_id_column_data = [df_row[2]] * len(all_ec_numbers)
 
-    search_result_df.insert(0, "Host Genus", genus_column_data)
-    search_result_df.insert(1, "Host Species", species_column_data)
-    search_result_df.insert(2, "Host NCBI Taxonomy ID", tax_id_column_data)
+    search_result_df.insert(0, "Genus", genus_column_data)
+    search_result_df.insert(1, "Species", species_column_data)
+    search_result_df.insert(2, "NCBI Taxonomy ID", tax_id_column_data)
 
     return search_result_df
+
+
+def get_ec_numbers(df_row, logger):
+    """Retrieve EC numbers in dataframe row.
+
+    :param df_row: pandas series
+    :param logger: logger object
+
+    Returns str of all EC numbers retrieved (human readible list).
+    """
+    ec_search = re.findall(r"\(EC [\d-]\d*\.[\d-]\d*\.[\d-]\d*\.[\d-]\d*\)", df_row[2])
+
+    if ec_search is None:
+        ec_numbers = "NA"
+
+    else:
+        # compiall EC numbers together incase multiple are given
+        # and remove EC numbers from protein name
+        ec_numbers = ""
+        for ec in ec_search:
+            df_row[2] = df_row[2].replace(ec, "")
+            ec = ec.replace("(", "")
+            ec = ec.replace(")", "")
+            ec_numbers += ec
+
+    return ec_numbers
+
+
+if __name__ == "__main__":
+    main()
