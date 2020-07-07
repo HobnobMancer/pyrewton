@@ -17,8 +17,7 @@ This repository contains all scripts associated with the EastBio PhD project ‘
 1. [Overview](#Overview)
 2. [Installation](#Installation)
     - [Requirements](#Requirements)
-3. [Directories, modules and files](#Directories,-modules-and-files)
-    - [pyrewton modules](#pyrewton-modules)
+3. [Directories, modules and files](#Directories)
 
 ## Overview
 
@@ -43,7 +42,7 @@ Python version 3.7+
 Miniconda3 managed microenvironment, incorporated code checkers are included in list form in 'requirements.txt'.
 Miniconda3 environment file is also available in the GitHub repository: 'environment.yml'.
 
-## Directories, modules and files
+## Directories
 
 Below is a directory plan of the pyrewton module structure, followed by a brief overview of each directories role in the repository, to facilitate navigation through the repository.
 
