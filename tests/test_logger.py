@@ -31,4 +31,4 @@ from pyrewton.loggers import build_logger
 @pytest.mark.run(order=4)
 def test_build_logger(null_logger, logger_args):
     """Tests building of logger"""
-    build_logger(null_logger, logger_args["args"])
+    build_logger("test_logger", logger_args["args"])
