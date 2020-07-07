@@ -1,8 +1,27 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Author:
+# Emma E. M. Hobbs
 
-import logging
-import unittest
+# Contact
+# eemh1@st-andrews.ac.uk
+
+# Emma E. M. Hobbs,
+# Biomolecular Sciences Building,
+# University of St Andrews,
+# North Haugh Campus,
+# St Andrews,
+# KY16 9ST
+# Scotland,
+# UK
+
+# The MIT License
+
+"""Tests build of loggers for pyrewton.
+
+These tests are inteded to be run from the root repository using:
+pytest -v
+"""
 
 from argparse import Namespace
 from pathlib import Path
@@ -12,36 +31,19 @@ import pytest
 from pyrewton.loggers import build_logger
 
 
-class Test_housekeeping_functions(unittest.TestCase):
+@pytest.fixture
+def logger_output():
+    output = Path("tests/")
+    return output
 
-    """Class defining tests of get_ncbi_genomes.py housekeeping functions.
 
-    These include creating the parser, the logger and output dir.
-    """
+@pytest.fixture
+def logger_args(logger_output):
+    argsdict = {"args": Namespace(verbose=False, log=logger_output)}
+    return argsdict
 
-    # Establish inputs for tests and expected outputs
 
-    def setUp(self):
-        """"Retrieve inputs and targets for tests."""
-
-        # Define test directories
-        self.test_dir = Path("tests")
-        self.output_dir = self.test_dir / "test_targets" / "bld_lggr_test_targets"
-        self.log_output = self.output_dir / "test_bld_logger.log"
-
-        # Null logger instance
-        self.logger = logging.getLogger("Test_logger_build")
-        self.logger.addHandler(logging.NullHandler())
-
-        # Define test inputs
-        self.test_logger = "test_logger"
-
-        # Define Namespace and disable genbank download
-        self.argsdict = {"args": Namespace(verbose=False, log=self.log_output)}
-
-    # Define function to test
-
-    @pytest.mark.skip(reason="Target files do not exist in repository")
-    def test_build_logger(self):
-        """Tests building of logger"""
-        build_logger(self.test_logger, self.argsdict["args"])
+@pytest.mark.skip(reason="Target files do not exist in repository")
+def test_build_logger(null_logger, logger_args):
+    """Tests building of logger"""
+    build_logger(null_logger, logger_args["args"])
