@@ -29,15 +29,15 @@ with Path("README.md").open("r") as long_description_handle:
 
 
 setuptools.setup(
-    name="Proteng",
-    version="0.1",
+    name="pyrewton",
+    version="0.1.1",
     # Metadata
     author="Emma E. M. Hobbs",
     author_email="eemh1@st-andrews.ac.uk",
     description="".join(
         [
             (
-                "Proteng provides the scripts for the EASTBio protein "
+                "pyrewton provides the scripts for the EASTBio protein "
                 "engineering PhD project, supporting the identification "
                 "of engineer candidates for catalysis in biofuel production"
             )
@@ -51,7 +51,7 @@ setuptools.setup(
     url="https://github.com/HobnobMancer/PhD_Project_Scripts",  # Github repository
     entry_points={
         "console_scripts": [
-            "Extract_genomes_NCBI = Section1_Extracting_Genomes.Extract_genomes_NCBI:main"
+            "get_ncbi_genomes = pyrewton.genbank.get_ncbi_genomes.get_ncbi_genomes:main"
         ]
     },
     # Ensure all additional requirements are installed
@@ -60,7 +60,7 @@ setuptools.setup(
     # and template input file for Extract_genomes_NCBI.py
     package_data={
         "Conda microenvironment": ["environment.yml"],
-        "Extract genomes input file": ["Extract_genomes_NCBI_input_file.txt"],
+        "Get NCBI genomes input file": ["get_ncbi_genomes_template_input_file.txt"],
     },
     include_package_data=True,
     classifiers=[

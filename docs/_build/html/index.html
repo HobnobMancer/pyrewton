@@ -1,0 +1,288 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Welcome to pyrewton’s documentation &mdash; pyrewton 0.1.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The genbank module" href="genbank.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="#" class="icon icon-home" alt="Documentation Home"> pyrewton
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="genbank.html">The genbank module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="annotations.html">The annotations module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="trouble-shooting.html">Trouble Shooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks.html">Notebooks</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">pyrewton</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Welcome to pyrewton’s documentation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="welcome-to-pyrewton-s-documentation">
+<h1>Welcome to pyrewton’s documentation<a class="headerlink" href="#welcome-to-pyrewton-s-documentation" title="Permalink to this headline">¶</a></h1>
+<a class="reference internal image-reference" href="_images/docu_cover.jpg"><img alt="Logos of EastBIO, BBSRC, University of St Andrews and James Huttton Institute" class="align-left" src="_images/docu_cover.jpg" style="width: 60%;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+<div class="line">Version v0.1.1 2020/06/04</div>
+<div class="line">DOI: 10.5281/zendo.3876218</div>
+<div class="line"><a class="reference external" href="https://github.com/HobnobMancer/PhD_Project_Scripts/tree/master">GitHub repository</a></div>
+<div class="line"><br /></div>
+</div>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>pyrewton is a Python3 programme, run at the command line and free to use under the MIT License.
+The programme can be used to identifying carbohydrate processing enzyme engineering candidates
+for advanced biocatalysis. Specifically, pyrewton supports:</p>
+<p>Downloading of all genomic assemblies (as GenBank files .gbff) from the
+<a class="reference external" href="https://www.ncbi.nlm.nih.gov/assembly">NCBI Assembly database</a> associated with each species passed to the programme</p>
+<p>Summarising the cazyme annotations within GenBank files</p>
+<p>Retrieving all cazymes from <a class="reference external" href="https://www.uniprot.org/">UniProtKB</a> for each species
+passed to the script</p>
+<p><em>More detailed documentation for each module is linked to in the contents table below, including links to documentation to help with trouble shooting.</em></p>
+<div class="section" id="contents">
+<h3>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h3>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="genbank.html">The genbank module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="genbank.html#get-ncbi-genomes">get_ncbi_genomes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="genbank.html#get-cazyme-annotations">get_cazyme_annotations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="annotations.html">The annotations module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="annotations.html#get-uniprot-proteins">get_uniprot_proteins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="trouble-shooting.html">Trouble Shooting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="trouble-shooting.html#genbank-get-nbci-genomes">genbank: get_nbci_genomes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trouble-shooting.html#get-cazyme-annotations">get_cazyme_annotations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks.html">Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks.html#accessing-the-notebooks">Accessing the notebooks</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">The easiest way to install pyrewton is to use <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</div>
+<div class="line"><code class="docutils literal notranslate"><span class="pre">pip3</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">&lt;path</span> <span class="pre">to</span> <span class="pre">pyrewton</span> <span class="pre">setup.py</span> <span class="pre">file&gt;</span></code>.</div>
+<div class="line">This will install all required Python packages and dependencies.</div>
+</div>
+<div class="section" id="requirements">
+<h3>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h3>
+<p>Python version 3.7+
+Miniconda3 managed microenvironment, incorporated code checkers are included in list form in ‘requirements.txt’.
+Miniconda3 environment file is also available in the GitHub repository: ‘environment.yml’.</p>
+</div>
+</div>
+<div class="section" id="notebooks">
+<h2>Notebooks<a class="headerlink" href="#notebooks" title="Permalink to this headline">¶</a></h2>
+<p>Jupyter notebook environments were crated, documenting how pyrewton was used during the EastBIO 2019-2023 PhD Project,
+the GitHub pages for which are <a class="reference external" href="https://hobnobmancer.github.io/PhD_Project_Scripts/">available here</a>. These can be used as examples for how to use pyrewton in research.</p>
+</div>
+<div class="section" id="contribute-and-support">
+<h2>Contribute and Support<a class="headerlink" href="#contribute-and-support" title="Permalink to this headline">¶</a></h2>
+<p>Many of the common errors expected to arise during the operation of the scripts provided in this repository are
+covered in this documentation, including the probable causes of these issues.</p>
+<p>Please raise any issues with any of the programmers at the GitHub repository issues pages, by
+following the <a class="reference external" href="https://github.com/HobnobMancer/PhD_Project_Scripts/issues">link</a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>pyrewton is still in development, and further functionalities are being added.
+Please see the <a class="reference external" href="https://github.com/HobnobMancer/PhD_Project_Scripts/tree/master">GitHub repository</a> for the latest developments.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="genbank.html" class="btn btn-neutral float-right" title="The genbank module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Emma E. M. Hobbs
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

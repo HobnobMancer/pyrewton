@@ -1,0 +1,21 @@
+# This is a template input file for get_ncbi_genomes.py
+#
+# An input file for get_ncbi_genomes.py must adhere to
+# these rules:
+# 1. The file must contain NO blank lines
+# 2. Comments are distinguished by starting the line with
+#    the first character of '#'
+# 3. The first character of any line must NOT be a space
+# 4. NCBI taxonomy IDs must be written in their proper
+#    referencing format, e.g. 'NCBI:txid5016
+# 5. To include line spaces, use '#' as the first character
+#    and leave the rest of the line blank
+# 6. Each line must contain a unique species, additionally,
+#    the scientific name OR taxonomy ID must be given
+#
+# A working example is shown below
+#
+# Fungal species:
+Aspergillus fumigatus
+Aspergillus nidulans
+NCBI:txid5061

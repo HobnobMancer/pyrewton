@@ -1,6 +1,0 @@
-# Total three species
-# This is a working list to help with drafting Extract_genomes_NCBI.py
-# The taxanomic id provided is for Aspergillus niger (2020-03-20)
-Aspergillus fumigatus
-Aspergillus nidulans
-NCBI:txid5061

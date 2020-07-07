@@ -1,235 +1,101 @@
-# EASTBIO PhD Project Scripts
+# EastBIO PhD Project Scripts, packaged into pyrewton
 
+[![DOI](https://zenodo.org/badge/243783792.svg)](https://zenodo.org/badge/latestdoi/243783792)
 [![Funding](https://img.shields.io/badge/Funding-EASTBio-blue)](http://www.eastscotbiodtp.ac.uk/)
-[![PhD licence](https://img.shields.io/badge/Licence-MIT-green)](https://opensource.org/licenses/MIT)
+[![PhD licence](https://img.shields.io/badge/Licence-MIT-green)](https://github.com/HobnobMancer/PhD_Project_Scripts/blob/master/LICENSE)
 [![CircleCI](https://img.shields.io/badge/CircleCI-Passing-brightgreen)](https://circleci.com/product/)
 [![codecov](https://codecov.io/gh/HobnobMancer/PhD_Project_Scripts/branch/master/graph/badge.svg)](https://codecov.io/gh/HobnobMancer/PhD_Project_Scripts)
 [![Python](https://img.shields.io/badge/Python-v3.7.---orange)](https://www.python.org/about/)
 [![Research](https://img.shields.io/badge/Bioinformatics-Protein%20Engineering-ff69b4)](http://www.eastscotbiodtp.ac.uk/eastbio-student-cohort-2019)
+
+Version v0.1.1 2020/06/04
+
+This repository contains all scripts associated with the EastBio PhD project ‘Identifying Engineering Candidates for Advanced Biocatalysis in Biofuel Production'.
+More detailed documentation, including helping with troubleshooting is availabel at [ReadTheDocs](https://phd-project-scripts.readthedocs.io/en/latest/?).
 
 ## Contents
 
 1. [Overview](#Overview)
 2. [Installation](#Installation)
     - [Requirements](#Requirements)
-3. [Scripts](#Scripts)
-    - [Extract_genomes_NCBI](#Extract_genomes_NCBI)
-4. [Troubleshooting and common errors](#Troubleshooting-and-common-errors)
-    - [Extract_genomes_NCBI](#Extract_genomes_NCBI)
-5. [Testing](#Testing)
-    - [Extract_genomes_NCBI](#Extract_genomes_NCBI)
+3. [Directories, modules and files](#Directories,-modules-and-files)
+    - [pyrewton modules](#pyrewton-modules)
 
 ## Overview
 
-PhD_Project_Scripts contains all scripts associated with the EASTBio Proteng project.
+Scripts are packaged into `pyrewton`, which is a Python3 script package run at the command line, and free to use under the MIT license. All modules, submodules and associated Python scripts are located within the `pyrewton` directory in this repository. Specifically, `pyrewton` supports:
 
-Completed scripts are packaged into `Proteng`.
+- Downloading of all genomic assemblies (as GenBank files .gbff) from the [NCBI Assembly database](https://www.ncbi.nlm.nih.gov/assembly)
+associated with each species passed to the programme
+- Retrieving cazyme annotations (and associated data from UniProtKB) from GenBank files
+- Retrieve all cazyme entries in UniProt for a given species
 
-`Proteng` is a Python3 script package that supports the pull down of genomic assemblies from the [NCBI Assembly database](https://www.ncbi.nlm.nih.gov/assembly).
-
-[In GitHub](https://github.com/HobnobMancer/PhD_Project_Scripts) each section of the project is given its own directory and subdirectories within.
+Inital plans and devleopment plans are stored within the [Wiki](https://github.com/HobnobMancer/PhD_Project_Scripts/wiki).
 
 ## Installation
 
-The easiest way to install `proteng` is to use `pip`:\
-`pip3 install Proteng`.\
-This will install all required Python packages dependencies.
+The easiest way to install `pyrewton` is to use `pip`:
+`pip3 install -e <path to directory containing pyrewton setup.py>`.
+This will install all required Python package dependencies.
 
 ## Requirements
 
-Scripts are written using:\
-Python = 3.7\
-Miniconda3 managed microenvironment, incorporated code checkers are included in list form in 'requirements.txt'\
+Python version 3.7+
+Miniconda3 managed microenvironment, incorporated code checkers are included in list form in 'requirements.txt'.
 Miniconda3 environment file is also available in the GitHub repository: 'environment.yml'.
 
-## Scripts
+## Directories, modules and files
 
-A brief overview of each script.
+Below is a directory plan of the pyrewton module structure, followed by a brief overview of each directories role in the repository, to facilitate navigation through the repository.
 
-### Extract_genomes_NCBI
+#### assets
 
-Extract_genomes_NCBI takes a plain text file containing species scientific names or NCBI taxonomy as input. The script will find the corresponding taxonomy ID or scientific name, as appropriate, as well as retrieve all directly linked accession numbers, generating a dataframe of 'Genus', 'Species', 'NCBI Taxonomy ID' and 'NCBI Accession number'.
+Directory containing all files needed for the GitHub page.
 
-**Invoking the script from the command line:**\
-**Compulsory arguments:**\
-`-u, --user`\
-&emsp;&emsp;Although indicated as optional, Entez requires an email address must be provided. If not provided the programme will log this as an error and terminate.
+#### docs
 
-**Optional arguments:**\
-`-d, --`dataframe`\
-&emsp;&emsp;Specify output path for dataframe, which will be saved as a .csv file (inclusion of file extensions is optional). If not provided dataframe will be written out to STDOUT.
+Directory containing files to build documentation hosted at ReadTheDocs.
 
-`-f, --force`\
-&emsp;&emsp;Enable writting in specificed output directory if output directory already exists.
+#### notebooks
 
-`-g, --genbank`\
-&emsp;&emsp;Enable or disable downloading of GenBank files.
+Directory containing all jupyter notebooks, and html copies used for easier in-browser viewing via the GitHub pages.
 
-`-h, --help`\
-&emsp;&emsp;Display help messages and exit
+#### tests
 
-`-i, --input`\
-&emsp;&emsp;Specify input filename (with extension) input file.
-If only the filename is supplied Extract_genomes_NCBI.py
-will only look in the curent working directory, otherwise
-provide path to input file.
-If no option is given the default input file
-"Extract_genomes_NCBI_input_file.txt", located in the
-same directory as Extract_genomes_NCBI.py, will be used.
+Directory containing all `pytest` files for testing `pyrewton` during development, including subdirectories for test inputs and targets, with each module/submodule possessing its own specific test input and target subdirectory.
 
-`-l, --log`\
-&emsp;&emsp;Specify name of log file (With extension).
-If only filename is given, log file will be written out
-to the current working directory, otherwise provide path
-including filename.
-If not option is given no log file will be written out,
-however, logs will still be printed to the terminal.
+#### pyrewton
 
-`-n, --nodelete`\
-&emsp;&emsp;Enable not deleting files in existing output directory. If not enabled, output directory exists and writing in output directory is 'forced' then files in output directory will not be deleted, and new files will be written to the output directory.
+Directory containing all `pyrewton` program modules (including all submodules and Python scripts).
 
-`-o, --output`\
-&emsp;&emsp;Specify filename (with extension) of output file.
-If only the filename is given, Extract_genomes_NCBI.py
-the output file will be written to the current working
-directory, otherwise provide path to desired directory,
-including filename.
-If not option is given an output file will be written to
-the current directory with the standard name:
-"Extract_genomes_NCBI_Date_Time", where _Date_ and _Time_
-are the date and time script was invoked, respectively.
+##### pyrewton module: parsers
 
-`-r, --retries`\
-&emsp;&emsp;Specifiy maximum number of retries before cancelling call to NCBI
-if a network error is encountered. The default is a maximum of 10 retries. When
-maximum is reached, a value of 'NA' is returned.
+Directory containing all Python scripts for building command-line parsers.
 
-`-t, --timeout`\
-&emsp;&emsp;Specify timeout limit of URL connection when downloading GenBank files. Default is 10 seconds.
+##### pyrewton module: loggers
 
-`-v, --verbose`\
-&emsp;&emsp;Enable verbose logging - changes logger level from WARNING to INFO.
+Directory containing Python scripts for building loggers.
 
-## Troubleshooting and common errors
+##### pyrewton module: file_io
 
-This section covers common errors expected to arise when invoking\
-each script, and the probably causes of each error.
+Directory contains functions for handling directories and files in `pyrewton` Python scripts, including retrieving program inputs and creating output directories.
 
-### Extract_genomes_NCBI
+##### pyrewton module: genbank
 
-The majoirty of issues will arise due to errors in the input file.
-Always ensure the input file does not contain any errors or blank
-lines. Additionally, always ensure the correct path to the input
-file is provided.
+Directory containing all submodules that are involved in handling GenBank files.
 
-**IOError**\
-This error will occur if there is a network issue when using Entrez
-to call to NCBI. The script will automatically retry the call the set
-maximum number of times.
+##### pyrewton: Genbank submodule: get_ncbi_genomes
 
-If the maximum number of retries is met before connecting to NCBI
-without encountering a network error, 'NA' is returned and stored
-in the dataframe.
+&emsp;&emsp;Directory containing the submodule that takes a list of species and downloads all directly linked GenBank (.gbff) files in the NCBI Assembly database.
 
-**FileNotFoundError**\
-This error will occur is the incorrect path is provided as the
-input argument at the command line, or no input argument is
-provided and STDIN contains no data. Ensure the path includes
-the file name, with extension.
+##### pyrewton: Genbank submodule: get_cazyme_annotations
 
-If this error occurs the program will terminate.
+&emsp;&emsp;Directory containing the submodule to retrieve cazyme annotations from GenBank files.
 
-**IndexError during scientific name retrieval**\
-This occurs when Entrez fails to retrieve a sceintific name for
-the given taxonomy ID.
+##### pyrewton module: annotations
 
-This is potentially caused by a typo in the taxonomy id provided
-in the input file.
+Directory containing all submodules that are involved in handling cazyme genomic annotations.
 
-If this error occurs the string 'NA' will be returned.
+##### pyrewton: Genbank submodule: get_uniprot_proteins
 
-**IndexError during taxonomy ID retrieval**\
-This occurs when Entrez fails to retrieve a taxonomy ID for
-the given scientific name. Returns 'NA'.
-
-This is potentially caused by a typo in the species name in the
-input file, or a typo in a taxonomy ID 'NCBI:txid' prefix,
-causing the program to misinturpret the ID as a species name
-and use it to try and retrieve a scientific name.
-
-If this error occurs the string 'NA' will be returned.
-If no taxonomy ID is available for the retrieval of accession numbers,
-the retrieval of accession numbers is cancelled and a value of 'NA' is
-returned.
-
-**IndexError during assembly ID retrieval**\
-This occurs when Entrez fails to retrieve assembly IDs from
-NCBI.
-
-This may be becuase there are no directly linked assemblies
-for the given taxonomy ID. Check the NCBI Taxonomy database
-to ensure there are 'directly' linked assemblies and not
-only 'subtree' assemblies.
-
-If this error occurs the program with exit the retrieve of
-the assembly IDs and not retrieve the NCBI accession numbers,
-and return the string 'NA'.
-This allows for troubleshooting using on the specie(s)
-for which it is required, to reduce demand on NCBI.
-
-**RuntimeError during posting of assembly IDs to NCBI**\
-This error occurs when Entrez fails to post the retrieved
-assembly IDs, causing it to fail to retrieve the document
-summary.
-
-This is potentially caused by incorrect formating of the
-the assembly IDs or the request is too large for Entrez/
-NCBI. If this is the case, repeat the procedure in batches.
-
-If this error occurs the program with exit the posting of
-the assembly IDs and not retrieve the NCBI accession numbers,
-and return the string 'NA'.
-This allows for troubleshooting using on the specie(s)
-for which it is required, to reduce demand on NCBI.
-
-**RuntimeError or IndexError during retrieval of accession numbers**\
-This error occurs when Entrez fails to retrieve the document
-summary from NCBI.
-
-This is potentially caused by incorrect formating of the
-the assembly IDs or the request is too large for Entrez/
-NCBI. If this is the case, repeat the procedure in batches.
-
-If this error occurs the program with exit the retrieval of
-the NCBI accession numbers, and return the string 'NA'.
-This allows for troubleshooting using on the specie(s)
-for which it is required, to reduce demand on NCBI.
-
-## Testing
-
-This section describes the tests that are included with the
-program to ensure each of the scripts is operating as
-expected.
-
-Inputs and targets for tests are stored in the respective `test_inputs`
-and `test_targets` directories. Each script is provided its own subdirectory
-containing its associated tests input and target files. These subdirectories
-are named using the contracted version of the scripts name, such that
-`Extract_genomes_NCBI.py` respective test subdirectories are called `test_ext_gnm_ncbi`.
-
-### Extract_genomes_NCBI
-
-**test_housekeeping.py**\
-This tests the building of the parser, logger and output directory via their respecitive functions, which must all operate correctly in order for the programme to be functional.
-
-**test_input_reading.py**\
-This tests the ability of the `parse_inputfile()` function's
-ability to open and read a given input file, defined using
-the `pathlib` `Path` module.
-
-**test_name_and_id_retrieval.py**\
-This test tests the functions `get_genus_species_name()` and `get_tax_id()`, using provided inputs. The result of the Entrez calls to the NCBI database are compared against
-expected results.
-
-**test_accession_number_retrieval.py**\
-This test test the function `get_accession_numbers()` to ensure that Entrez can call to the NCBI database. Owing to the frequent updating of the NCBI Assembly database it is not possible to compare the results from the NCBI call against expected results.
+&emsp;&emsp;Directory containing the submodule that retrieves all cazyme entries in UniProt in the species passed to the submodule.
