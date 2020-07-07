@@ -53,7 +53,7 @@ from urllib.error import HTTPError
 
 from pyrewton import file_io
 from pyrewton.loggers import build_logger
-from pyrewton.parsers.parser_get_cazyme_annotations import build_parser
+from pyrewton.parsers.parser_get_genbank_annotations import build_parser
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
@@ -95,8 +95,10 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     protein_annotation_df = create_dataframe(input_df, args, logger)
 
     # Write out dataframe
-    file_io.write_out_dataframe(protein_annotation_df, logger, args.output, args.force, args.nodelete)
-    
+    file_io.write_out_dataframe(
+        protein_annotation_df, logger, args.output, args.force, args.nodelete
+    )
+
     logger.info("Programme finsihed. Terminating.")
 
 
@@ -281,7 +283,9 @@ def get_annotations(accession_number, args, logger):
         return ["NA", "NA", "NA", "NA", "NA"]
 
     # retrieve GenBank file for accession number
-    gb_file = get_genbank_file(accession_number, args, logger)  # list with GenBank file with index [0]
+    gb_file = get_genbank_file(
+        accession_number, args, logger
+    )  # list with GenBank file with index [0]
     # If retrieving of GenBank file failed, return 'NA' for all protein data
     # for accession number
     if gb_file is None:
@@ -434,6 +438,7 @@ def get_record_feature(feature, qualifier, logger):
                 f"Failed to retrieve feature {qualifier}, returning 'NA'", exc_info=1
             )
             return "NA"
+
 
 if __name__ == "__main__":
     main()
