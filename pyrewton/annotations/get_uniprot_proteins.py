@@ -174,6 +174,7 @@ def get_uniprotkb_data(df_row, logger):
         )  # returns empty string for no result
         logger.info(search_result)
         search_result_df = pd.read_table(io.StringIO(search_result))
+        return get_ec_numbers(search_result_df, logger)
 
     except HTTPError:
         logger.warning(
@@ -194,6 +195,15 @@ def get_uniprotkb_data(df_row, logger):
         )
         return pd.DataFrame(blank_data)
 
+def get_ec_numbers(search_result_df, logger):
+    """Retrieves EC numbers from UniProt record and writes them to a new column.
+    
+    :param search_result_df: pandas dataframe
+    :param logger: logger object
+    
+    Return pandas dataframe.
+    """
+    logger.info("Retrieving EC numbers")
     # rename columns to match to indicate UniProtKB source of data
     search_result_df.rename(
         columns={
