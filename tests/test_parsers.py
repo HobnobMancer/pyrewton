@@ -23,9 +23,6 @@ These tests are inteded to be run from the root repository using:
 pytest -v
 """
 
-import logging
-import unittest
-
 import pytest
 
 from pyrewton import parsers
