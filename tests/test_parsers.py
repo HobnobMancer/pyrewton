@@ -36,6 +36,11 @@ class Test_housekeeping_functions(unittest.TestCase):
         parsers.parser_get_ncbi_genomes.build_parser()
 
     @pytest.mark.run(order=2)
+    def test_build_parser_gt_unprt_prtns(self):
+        """Tests building of parser"""
+        parsers.parser_get_uniprot_proteins.build_parser()
+
+    @pytest.mark.run(order=3)
     def test_build_parser_gt_czym_anno(self):
         """Tests building of parser"""
         parsers.parser_get_cazyme_annotations.build_parser()
