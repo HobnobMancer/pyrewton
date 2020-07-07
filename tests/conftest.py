@@ -122,7 +122,7 @@ def gt_ncbi_gnms_targets():
 
 
 @pytest.fixture
-def genbank_df():
+def genbank_df_path():
     test_dir = Path("tests")
     genbank_df = (
         test_dir / "test_inputs" / "gt_gnbnk_anntns_test_inputs" / "test_input_df.csv"
@@ -133,7 +133,19 @@ def genbank_df():
 @pytest.fixture
 def genbank_files_dir():
     test_dir = Path("tests")
-    genbank_df = (
+    genbank_dir = (
         test_dir / "test_inputs" / "gt_gnbnk_anntns_test_inputs" / "test_genbank_files"
     )
-    return genbank_df
+    return genbank_dir
+
+
+@pytest.fixture
+def gnbnk_anno_args(genbank_files_dir):
+    argsdict = {"args": Namespace(genbank=genbank_files_dir)}
+    return argsdict
+
+
+@pytest.fixture
+def genbank_df(genbank_df_path):
+    input_df = pd.read_csv(genbank_df_path, header=0, index_col=0)
+    return input_df
