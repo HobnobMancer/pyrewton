@@ -42,10 +42,8 @@ from pyrewton.loggers import build_logger
 from pyrewton.parsers.parser_get_uniprot_proteins import build_parser
 
 
-def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = None):
+def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
     """Coordinate retrieval of entries from UniProtKB database.
-
-    Extra.
 
     Store entries in pandase dataframe; write out dataframe to csv file.
     """
@@ -75,7 +73,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = No
     input_df = pd.read_csv(args.df_input, header=0, index_col=0)
 
     # Build protein dataframe
-    uniprot_protein_df = build_uniprot_df(input_df, args, logger)
+    uniprot_protein_df = build_uniprot_df(input_df, logger)
 
     # Write out Uniprot dataframe to csv file
     file_io.write_out_dataframe(
@@ -83,11 +81,10 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = No
     )
 
 
-def build_uniprot_df(input_df, args, logger):
+def build_uniprot_df(input_df, logger):
     """Retrieve all proteins in UniProt for each species in an input dataframe.
 
     :param input_df: input dataframe containing genus and species of host organisms
-    :param args: parser object
     :param logger: logger object
 
     Return dataframe.
@@ -148,9 +145,6 @@ def build_uniprot_df(input_df, args, logger):
             ignore_index=True,
         )
         df_index += 1
-
-    # for development purposes and will be removed before release
-    print("====\nUniProt protein data:\n", uniprot_df)
 
     return uniprot_df
 
