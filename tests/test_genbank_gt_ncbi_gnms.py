@@ -25,8 +25,6 @@ pytest -v
 
 import pytest
 
-from argparse import Namespace
-
 from Bio import Entrez
 
 from pyrewton.genbank.get_ncbi_genomes import get_ncbi_genomes
