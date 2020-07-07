@@ -115,30 +115,6 @@ def build_uniprot_df(input_df, args, logger):
     )
 
     # parse input_df. retrieving call cazymes for each species from UniProtKB
-    df_index = 0
-    for df_index in tqdm(range(len(input_df["Genus"])), desc="Retrieving Uniprot data"):
-        uniprot_df = uniprot_df.append(
-            get_uniprotkb_data(input_df.iloc[df_index], logger), ignore_index=True
-        )
-        df_index += 1
-
-    # for development purposes and will be removed before release
-    print("====\nUniProt protein data:\n", uniprot_df)
-
-    return uniprot_df
-
-
-def get_uniprotkb_data(df_row, logger):
-    """Retrieve all cazyme entries from UniProtKB for species in dataframe series/row.
-
-    :param df_row: pandas series from input df, where:
-        df_row[0] = Genus
-        df_row[1] = Species
-        df_row[2] = NCBI Taxonomy ID
-    :param logger: logger object
-
-    Return dataframe.
-    """
     # Establish data to be retrieved from UniProt
     columnlist = (
         "id,entry name, protein names,length,mass,domains,domain,"
@@ -165,6 +141,30 @@ def get_uniprotkb_data(df_row, logger):
         "Gene ontology (biological process)": ["NA"],
     }
 
+    df_index = 0
+    for df_index in tqdm(range(len(input_df["Genus"])), desc="Retrieving Uniprot data"):
+        uniprot_df = uniprot_df.append(
+            get_uniprotkb_data(input_df.iloc[df_index], column_list, blank_data, logger), ignore_index=True
+        )
+        df_index += 1
+
+    # for development purposes and will be removed before release
+    print("====\nUniProt protein data:\n", uniprot_df)
+
+    return uniprot_df
+
+
+def get_uniprotkb_data(df_row, column_list, blank_data, logger):
+    """Retrieve all cazyme entries from UniProtKB for species in dataframe series/row.
+
+    :param df_row: pandas series from input df, where:
+        df_row[0] = Genus
+        df_row[1] = Species
+        df_row[2] = NCBI Taxonomy ID
+    :param logger: logger object
+
+    Return dataframe.
+    """
     try:
         # open connection to UniProt(), search and convert result into pandas df
         logger.info(df_row)
