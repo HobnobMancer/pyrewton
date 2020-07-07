@@ -327,3 +327,6 @@ def compare_cazyme_dfs(cazyme_dfs, logger):
     )
 
     return
+
+if __name__ = "__main__":
+    main()
