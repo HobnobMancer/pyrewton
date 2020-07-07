@@ -56,7 +56,7 @@ from pyrewton.loggers import build_logger
 from pyrewton.parsers.parser_get_uniprot_proteins import build_parser
 
 
-def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = None):
+def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
     """Coordinate retrieval of entries from UniProtKB database.
 
     Extra.
@@ -87,21 +87,30 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = No
     logger.info("Opening input dataframe %s", args.df_input)
     input_df = pd.read_csv(args.df_input, header=0, index_col=0)
 
-    # Retrieve subsets of input dataframe whose entries indicate cazyme functionality
-    cazyme_dfs = get_cazyme_subset_df(
-        input_df, logger
-    )  # CAZy, EC number and GO function indicated functionality
+    # Separate entries with and without CAZy links
+    cazyme_dfs = get_cazyme_subset_df(input_df, logger)
+    # Write out cazy_linked df
+    file_io.write_out_pre_named_dataframe(
+        cazyme_dfs[0],
+        "cazy_linked_cazymes_df",
+        logger,
+        args.ouput,
+        args.force,
+        args.nodelete,
+    )
+
     # Compare dataframes (CAZy, EC number and GO function) to retrieve dataframes of
     # (1) only EC number, (2) only GO function and (3) GO+EC inferred cazyme functionality
     ec_go_cazyme_dfs = compare_cazyme_dfs(cazyme_dfs, logger)
+
     # Write out dfs to .csv files
     file_names = ["go_fun_only_cazymes", "ec_num_only_cazymes", "ec_go_cazymes"]
     fname_index = 0
     for df in ec_go_cazyme_dfs:
         file_io.write_out_pre_named_dataframe(
-            df, file_name[fname_index], logger, args.output, args.force, args.nodelete
+            df, file_names[fname_index], logger, args.output, args.force, args.nodelete
         )
-        index += 1
+        fname_index += 1
 
     logger.info("Program finished.")
 
@@ -116,15 +125,6 @@ def get_cazyme_subset_df(input_df, logger):
     """
     # Retrieve UniProt entries with link to CAZy database
     cazy_linked_df = get_cazy_proteins(input_df, logger)
-    # write out df of CAZy linked entries to csv file
-    file_io.write_out_pre_named_dataframe(
-        cazy_linked_df[0],
-        "cazy_linked_cazymes_df",
-        logger,
-        args.ouput,
-        args.force,
-        args.nodelete,
-    )
 
     # Search non-CAZy linked entries to retrieve UniProt entries whose EC
     # number inferred cazyme functionality
@@ -196,7 +196,7 @@ def get_ec_cazymes(non_cazy_input_df, logger):
         )
 
     # Retrieve search corresponding rows from input dataframe using search results
-    return retrieve_df_subset(non_cazy_input_df, go_series, logger)
+    return retrieve_df_subset(non_cazy_input_df, ec_series, logger)
 
 
 def get_go_cazymes(non_cazy_input_df, logger):
