@@ -119,3 +119,21 @@ def gt_ncbi_gnms_targets():
         target_sci_name = test_targets["target_genus_species_name"]
         target_tax_id = test_targets["target_taxonomy_id"]
     return target_sci_name, target_tax_id, target_dir
+
+
+@pytest.fixture
+def genbank_df():
+    test_dir = Path("tests")
+    genbank_df = (
+        test_dir / "test_inputs" / "gt_gnbnk_anntns_test_inputs" / "test_input_df.csv"
+    )
+    return genbank_df
+
+
+@pytest.fixture
+def genbank_files_dir():
+    test_dir = Path("tests")
+    genbank_df = (
+        test_dir / "test_inputs" / "gt_gnbnk_anntns_test_inputs" / "test_genbank_files"
+    )
+    return genbank_df
