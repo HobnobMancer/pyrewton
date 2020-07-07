@@ -24,6 +24,7 @@ Contains fixtures used by multiple test files.
 import json
 import logging
 
+from argparse import Namespace
 from pathlib import Path
 
 import pytest
@@ -40,6 +41,18 @@ def null_logger():
     logger = logging.getLogger("Test_ac_number_retrieval logger")
     logger.addHandler(logging.NullHandler())
     return logger
+
+
+@pytest.fixture
+def logger_output():
+    output = Path("tests/")
+    return output
+
+
+@pytest.fixture
+def logger_args(logger_output):
+    argsdict = {"args": Namespace(verbose=False, log=logger_output)}
+    return argsdict
 
 
 @pytest.fixture

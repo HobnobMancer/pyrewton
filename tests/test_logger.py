@@ -23,24 +23,9 @@ These tests are inteded to be run from the root repository using:
 pytest -v
 """
 
-from argparse import Namespace
-from pathlib import Path
-
 import pytest
 
 from pyrewton.loggers import build_logger
-
-
-@pytest.fixture
-def logger_output():
-    output = Path("tests/")
-    return output
-
-
-@pytest.fixture
-def logger_args(logger_output):
-    argsdict = {"args": Namespace(verbose=False, log=logger_output)}
-    return argsdict
 
 
 @pytest.mark.skip(reason="Target files do not exist in repository")
