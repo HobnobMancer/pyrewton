@@ -83,11 +83,10 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = No
     )
 
 
-def build_uniprot_df(input_df, args, logger):
+def build_uniprot_df(input_df, logger):
     """Retrieve all proteins in UniProt for each species in an input dataframe.
 
     :param input_df: input dataframe containing genus and species of host organisms
-    :param args: parser object
     :param logger: logger object
 
     Return dataframe.
