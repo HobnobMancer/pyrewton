@@ -93,7 +93,15 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.logger] = No
     )  # CAZy, EC number and GO function indicated functionality
     # Compare dataframes (CAZy, EC number and GO function) to retrieve dataframes of
     # (1) only EC number, (2) only GO function and (3) GO+EC inferred cazyme functionality
-    compare_cazyme_dfs(cazyme_dfs, logger)
+    ec_go_cazyme_dfs = compare_cazyme_dfs(cazyme_dfs, logger)
+    # Write out dfs to .csv files
+    file_names = ["go_fun_only_cazymes", "ec_num_only_cazymes", "ec_go_cazymes"]
+    fname_index = 0
+    for df in ec_go_cazyme_dfs:
+        file_io.write_out_pre_named_dataframe(
+            df, file_name[fname_index], logger, args.output, args.force, args.nodelete
+        )
+        index += 1 
 
     logger.info("Program finished.")
 
@@ -305,25 +313,4 @@ def compare_cazyme_dfs(cazyme_dfs, logger):
         ec_go_cazymes.duplicated(subset="UniProt entry ID", keep="first")
     ]
 
-    # Write out the three dataframes to csv files
-    file_io.write_out_pre_named_dataframe(
-        ec_only_cazymes,
-        "ec_num_only_cazymes",
-        logger,
-        args.ouput,
-        args.force,
-        args.nodelete,
-    )
-    file_io.write_out_pre_named_dataframe(
-        go_only_cazymes,
-        "go_fun_only_cazymes",
-        logger,
-        args.ouput,
-        args.force,
-        args.nodelete,
-    )
-    file_io.write_out_pre_named_dataframe(
-        ec_go_cazymes, "ec_go_cazymes", logger, args.ouput, args.force, args.nodelete,
-    )
-
-    return
+    return go_only_cazymes, ec_only_cazymes, ec_go_cazymes
