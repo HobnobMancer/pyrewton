@@ -40,7 +40,7 @@ def test_writing_df(testing_df, null_logger, testing_df_output):
     file_io.write_out_dataframe(testing_df, null_logger, testing_df_output, True, False)
 
 
-@pytest.mark.run(order=8)
+@pytest.mark.run(order=7)
 def test_writing_named_df(testing_df, null_logger, testing_df_output):
     """Tests function for writing out a prenamed dataframe"""
     file_io.write_out_pre_named_dataframe(
