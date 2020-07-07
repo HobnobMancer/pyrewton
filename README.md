@@ -86,7 +86,7 @@ Directory containing all submodules that are involved in handling GenBank files.
 
 **Genbank submodule: get_genbank_annotations** - Retrieve all protein annotations from GenBank files.
 
-##### pyrewton module: annotations
+### pyrewton module: annotations
 
 Directory containing all submodules that are involved in retrieving genomic annotations.
 
