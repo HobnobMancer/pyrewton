@@ -43,4 +43,4 @@ def test_build_parser_gt_unprt_prtns():
 @pytest.mark.run(order=3)
 def test_build_parser_gt_czym_anno():
     """Tests building of parser"""
-    parsers.parser_get_cazyme_annotations.build_parser()
+    parsers.parser_get_genbank_annotations.build_parser()
