@@ -51,7 +51,12 @@ setuptools.setup(
     url="https://github.com/HobnobMancer/PhD_Project_Scripts",  # Github repository
     entry_points={
         "console_scripts": [
-            "get_ncbi_genomes = pyrewton.genbank.get_ncbi_genomes.get_ncbi_genomes:main"
+            "get_ncbi_genomes.py = pyrewton.genbank.get_ncbi_genomes.get_ncbi_genomes:main",
+            "get_genbank_annotations.py = pyrewton.genbank.get_genbank_annotations."
+            "get_genbank_annotations:main",
+            "get_uniprot_proteins.py = pyrewton.annotations.get_uniprot_proteins:main",
+            "search_uniprot_proteins.py = pyrewton.annotations.search_uniprot_proteins:main",
+            "search_genbank_annotations.py = pyrewton.annotations.search_genbank_annotations:main",
         ]
     },
     # Ensure all additional requirements are installed
