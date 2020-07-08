@@ -32,9 +32,10 @@ Inital plans and devleopment plans are stored within the [Wiki](https://github.c
 
 ## Installation
 
-The easiest way to install `pyrewton` is to use `pip`:
-`pip3 install -e <path to directory containing pyrewton setup.py>`.
-This will install all required Python package dependencies.
+The easiest way to install `pyrewton` is to use `pip`:  
+`pip3 install -e <path to directory containing pyrewton setup.py>`.  
+Pass a path to the **directory** containing the setup.py file, **not** the path to the setup.py file.  
+Using this method of installation will install all required Python package dependencies.
 
 ## Requirements
 
