@@ -48,6 +48,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     Store entries in pandase dataframe; write out dataframe to csv file.
     """
     # Programme preparation:
+
     # Parser arguments
     # Check if namespace isn't passed, if not parser command-line
     if argv is None:
@@ -71,6 +72,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Open input dataframe
     logger.info("Opening input dataframe %s", args.df_input)
     input_df = pd.read_csv(args.df_input, header=0, index_col=0)
+
+    # Programme operation
 
     # Build protein dataframe
     uniprot_protein_df = build_uniprot_df(input_df, logger)
@@ -111,7 +114,27 @@ def build_uniprot_df(input_df, logger):
         ]
     )
 
-    # parse input_df. retrieving call cazymes for each species from UniProtKB
+    df_index = 0
+    for df_index in tqdm(range(len(input_df["Genus"])), desc="Retrieving Uniprot data"):
+        uniprot_df = uniprot_df.append(
+            get_uniprotkb_data(input_df.iloc[df_index], logger), ignore_index=True,
+        )
+        df_index += 1
+
+    return uniprot_df
+
+
+def get_uniprotkb_data(df_row, logger):
+    """Retrieve all cazyme entries from UniProtKB for species in dataframe series/row.
+
+    :param df_row: pandas series from input df, where:
+        df_row[0] = Genus
+        df_row[1] = Species
+        df_row[2] = NCBI Taxonomy ID
+    :param logger: logger object
+
+    Return dataframe.
+    """
     # Establish data to be retrieved from UniProt
     columnlist = (
         "id,entry name, protein names,length,mass,domains,domain,"
@@ -138,34 +161,12 @@ def build_uniprot_df(input_df, logger):
         "Gene ontology (biological process)": ["NA"],
     }
 
-    df_index = 0
-    for df_index in tqdm(range(len(input_df["Genus"])), desc="Retrieving Uniprot data"):
-        uniprot_df = uniprot_df.append(
-            get_uniprotkb_data(input_df.iloc[df_index], columnlist, blank_data, logger),
-            ignore_index=True,
-        )
-        df_index += 1
-
-    return uniprot_df
-
-
-def get_uniprotkb_data(df_row, column_list, blank_data, logger):
-    """Retrieve all cazyme entries from UniProtKB for species in dataframe series/row.
-
-    :param df_row: pandas series from input df, where:
-        df_row[0] = Genus
-        df_row[1] = Species
-        df_row[2] = NCBI Taxonomy ID
-    :param logger: logger object
-
-    Return dataframe.
-    """
     try:
         # open connection to UniProt(), search and convert result into pandas df
         logger.info(df_row)
-        query = f'{df_row[5]} AND organism:"{df_row[0]} {df_row[1]}"'
+        query = f'organism:"{df_row[0]} {df_row[1]}"'
         search_result = UniProt().search(
-            query, columns=column_list,
+            query, columns=columnlist,
         )  # returns empty string for no result
         logger.info(search_result)
         search_result_df = pd.read_table(io.StringIO(search_result))
