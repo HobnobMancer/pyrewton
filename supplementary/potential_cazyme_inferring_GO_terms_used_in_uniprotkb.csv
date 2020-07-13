@@ -1,0 +1,530 @@
+GO term,Annotation frequency
+GO:0000016    lactase activity,27 annotations
+GO:0005360    insulin-responsive glucose:proton symporter activity,1 annotations
+GO:0015486    glycoside-pentoside-hexuronide:cation symporter activity,1 annotations
+GO:0015518    arabinose:proton symporter activity,1 annotations
+"GO:0033928    mannan 1,4-mannobiosidase activity",1 annotations
+GO:0033935    oligoxyloglucan beta-glycosidase activity,1 annotations
+GO:0033994    glucuronan lyase activity,1 annotations
+GO:0043763    UTP:glucose-1-phosphate uridylyltransferase regulator activity,1 annotations
+GO:0043877    galactosamine-6-phosphate isomerase activity,1 annotations
+GO:0047169    galactarate O-hydroxycinnamoyltransferase activity,1 annotations
+GO:0047170    glucarate O-hydroxycinnamoyltransferase activity,1 annotations
+"GO:0047253    alpha-1,6-mannosylglycoprotein 4-beta-N-acetylglucosaminyltransferase activity",1 annotations
+GO:0047264    heteroglycan alpha-mannosyltransferase activity,1 annotations
+GO:0047468    phosphoglucomutase (glucose-cofactor) activity,1 annotations
+GO:0048028    galacturonan binding,1 annotations
+GO:0051566    anthocyanidin-3-glucoside rhamnosyltransferase activity,1 annotations
+GO:0102105    demethoxycurcumin synthase activity from feruloylacetyl-CoA,1 annotations
+GO:0140108    high-affinity glucose transmembrane transporter activity,1 annotations
+GO:2001062    xylan binding,1 annotations
+GO:0050090    mannuronate reductase activity,"1,037 annotations"
+GO:0047849    dextransucrase activity,"1,047 annotations"
+GO:0047265    poly(glycerol-phosphate) alpha-glucosyltransferase activity,"1,124 annotations"
+GO:0004578    chitobiosyldiphosphodolichol beta-mannosyltransferase activity,"1,163 annotations"
+GO:0102202    soladodine glucosyltransferase activity,"1,184 annotations"
+GO:0102203    brassicasterol glucosyltransferase activity,"1,184 annotations"
+GO:0043750    phosphatidylinositol alpha-mannosyltransferase activity,"1,204 annotations"
+"GO:0047470    (1,4)-alpha-D-glucan 1-alpha-D-glucosylmutase activity","1,244 annotations"
+"GO:0047657    alpha-1,3-glucan synthase activity","1,262 annotations"
+GO:0042972    licheninase activity,"1,309 annotations"
+GO:0051753    mannan synthase activity,"1,313 annotations"
+GO:0017083    4-galactosyl-N-acetylglucosaminide 3-alpha-L-fucosyltransferase activity,"1,335 annotations"
+"GO:0047228    1,2-diacylglycerol 3-glucosyltransferase activity","1,338 annotations"
+GO:0008919    lipopolysaccharide glucosyltransferase I activity,"1,374 annotations"
+GO:0015291    secondary active transmembrane transporter activity,"1,383,385 annotations"
+GO:0047267    undecaprenyl-phosphate mannosyltransferase activity,"1,391 annotations"
+GO:0050401    xylonate dehydratase activity,"1,467 annotations"
+GO:0033958    DNA-deoxyinosine glycosylase activity,"1,544 annotations"
+GO:0000224    peptide-N4-(N-acetyl-beta-glucosaminyl)asparagine amidase activity,"1,557 annotations"
+"GO:0052925    dol-P-Man:Man(5)GlcNAc(2)-PP-Dol alpha-1,3-mannosyltransferase activity","1,675 annotations"
+GO:0047061    glucose-fructose oxidoreductase activity,"1,805 annotations"
+"GO:0033939    xylan alpha-1,2-glucuronosidase activity","1,834 annotations"
+GO:0016906    sterol 3-beta-glucosyltransferase activity,"1,845 annotations"
+GO:0047216    inositol 3-alpha-galactosyltransferase activity,"1,860 annotations"
+GO:0033717    gluconate 2-dehydrogenase (acceptor) activity,"1,874 annotations"
+GO:0102726    DIMBOA glucoside beta-D-glucosidase activity,"1,890 annotations"
+GO:0008866    fructuronate reductase activity,"1,892 annotations"
+GO:0009018    sucrose phosphorylase activity,"1,921 annotations"
+GO:0050508    glucuronosyl-N-acetylglucosaminyl-proteoglycan 4-alpha-N-acetylglucosaminyltransferase activity,"1,921 annotations"
+GO:0050509    N-acetylglucosaminyl-proteoglycan 4-beta-glucuronosyltransferase activity,"1,922 annotations"
+"GO:0004574    oligo-1,6-glucosidase activity","1,926 annotations"
+GO:0008877    glucose-1-phosphatase activity,"1,975 annotations"
+GO:0019191    cellobiose transmembrane transporter activity,10 annotations
+GO:0033872    [heparan sulfate]-glucosamine 3-sulfotransferase 3 activity,10 annotations
+GO:0050645    limonoid glucosyltransferase activity,10 annotations
+GO:0052639    salicylic acid glucosyltransferase (ester-forming) activity,10 annotations
+GO:0080103    4-methylthiopropyl glucosinolate S-oxygenase activity,10 annotations
+GO:0008869    galactonate dehydratase activity,"10,067 annotations"
+GO:0019146    arabinose-5-phosphate isomerase activity,"10,223 annotations"
+"GO:0042973    glucan endo-1,3-beta-D-glucosidase activity","10,498 annotations"
+GO:0004565    beta-galactosidase activity,"100,269 annotations"
+GO:0004345    glucose-6-phosphate dehydrogenase activity,"102,285 annotations"
+GO:0044653    dextrin alpha-glucosidase activity,106 annotations
+GO:0004557    alpha-galactosidase activity,"107,363 annotations"
+GO:0044654    starch alpha-glucosidase activity,108 annotations
+GO:0047738    cellobiose phosphorylase activity,109 annotations
+GO:1990538    xylan O-acetyltransferase activity,109 annotations
+GO:0000031    mannosylphosphate transferase activity,11 annotations
+GO:0003851    2-hydroxyacylsphingosine 1-beta-galactosyltransferase activity,11 annotations
+"GO:0046987    N-acetyllactosamine beta-1,3-glucuronosyltransferase activity",11 annotations
+"GO:0046989    galactosyl beta-1,3 N-acetylgalactosamine beta-1,3-glucuronosyltransferase activity",11 annotations
+GO:0047251    thiohydroximate beta-D-glucosyltransferase activity,11 annotations
+GO:0047272    phosphopolyprenol glucosyltransferase activity,11 annotations
+GO:0047347    aldose-1-phosphate nucleotidyltransferase activity,11 annotations
+GO:0050422    strictosidine beta-glucosidase activity,11 annotations
+"GO:0003843    1,3-beta-D-glucan synthase activity","11,155 annotations"
+GO:0052716    hydroquinone:oxygen oxidoreductase activity,"11,536 annotations"
+GO:0030596    alpha-L-rhamnosidase activity,"11,629 annotations"
+GO:0046525    xylosylprotein 4-beta-galactosyltransferase activity,118 annotations
+GO:0047263    N-acylsphingosine galactosyltransferase activity,12 annotations
+"GO:0008496    mannan endo-1,6-alpha-mannosidase activity","12,209 annotations"
+GO:0004573    mannosyl-oligosaccharide glucosidase activity,"12,490 annotations"
+GO:0008740    L-rhamnose isomerase activity,"12,624 annotations"
+GO:0005355    glucose transmembrane transporter activity,"12,967 annotations"
+"GO:0102983    xylogalacturonan beta-1,3-xylosyltransferase activity",120 annotations
+"GO:0102252    cellulose 1,4-beta-cellobiosidase activity (reducing end)",121 annotations
+GO:0004360    glutamine-fructose-6-phosphate transaminase (isomerizing) activity,"122,773 annotations"
+GO:0003978    UDP-glucose 4-epimerase activity,"123,325 annotations"
+GO:0047714    galactolipase activity,125 annotations
+GO:0047237    glucuronylgalactosylproteoglycan 4-beta-N-acetylgalactosaminyltransferase activity,126 annotations
+GO:0004347    glucose-6-phosphate isomerase activity,"126,406 annotations"
+GO:0005358    high-affinity glucose:proton symporter activity,13 annotations
+GO:0016690    diarylpropane peroxidase activity,13 annotations
+"GO:0003825    alpha,alpha-trehalose-phosphate synthase (UDP-forming) activity","13,287 annotations"
+GO:0016762    xyloglucan:xyloglucosyl transferase activity,"13,876 annotations"
+"GO:0047933    glucose-1,6-bisphosphate synthase activity",130 annotations
+GO:0019203    carbohydrate phosphatase activity,"131,251 annotations"
+GO:0015926    glucosidase activity,"131,881 annotations"
+"GO:0047517    1,4-beta-D-xylan synthase activity",132 annotations
+"GO:0004645    1,4-alpha-oligoglucan phosphorylase activity","133,422 annotations"
+GO:0045480    galactose oxidase activity,135 annotations
+GO:0052641    benzoic acid glucosyltransferase activity,14 annotations
+GO:0080107    8-methylthiopropyl glucosinolate S-oxygenase activity,14 annotations
+GO:0004730    pseudouridylate synthase activity,"14,481 annotations"
+GO:0030248    cellulose binding,"14,614 annotations"
+"GO:0016985    mannan endo-1,4-beta-mannosidase activity","14,661 annotations"
+GO:0047939    L-glucuronate reductase activity,142 annotations
+GO:0016621    cinnamoyl-CoA reductase activity,143 annotations
+GO:0003945    N-acetyllactosamine synthase activity,146 annotations
+GO:0047259    glucomannan 4-beta-mannosyltransferase activity,147 annotations
+GO:0015528    lactose:proton symporter activity,15 annotations
+GO:0046576    rhamnogalacturonan alpha-L-rhamnopyranosyl-(1->4)-alpha-D-galactopyranosyluronide lyase activity,15 annotations
+GO:0080002    UDP-glucose:4-aminobenzoate acylglucosyltransferase activity,15 annotations
+GO:0008378    galactosyltransferase activity,"15,283 annotations"
+GO:0047941    glucuronolactone reductase activity,150 annotations
+GO:0000030    mannosyltransferase activity,"150,996 annotations"
+GO:0033843    xyloglucan 6-xylosyltransferase activity,155 annotations
+"GO:0051752    phosphoglucan, water dikinase activity",155 annotations
+GO:0033823    procollagen glucosyltransferase activity,158 annotations
+GO:0050102    cellodextrin phosphorylase activity,16 annotations
+GO:0050366    tyramine N-feruloyltransferase activity,16 annotations
+GO:0047936    glucose 1-dehydrogenase [NAD(P)] activity,"16,165 annotations"
+"GO:0004558    alpha-1,4-glucosidase activity","16,221 annotations"
+GO:0004348    glucosylceramidase activity,"16,610 annotations"
+GO:0019143    3-deoxy-manno-octulosonate-8-phosphatase activity,"16,792 annotations"
+GO:0033906    hyaluronoglucuronidase activity,165 annotations
+GO:0033931    endogalactosaminidase activity,17 annotations
+GO:0004512    inositol-3-phosphate synthase activity,"17,099 annotations"
+GO:0004567    beta-mannosidase activity,"17,528 annotations"
+GO:0004615    phosphomannomutase activity,"17,793 annotations"
+GO:0047489    pectate disaccharide-lyase activity,171 annotations
+"GO:0033940    glucuronoarabinoxylan endo-1,4-beta-xylanase activity",178 annotations
+GO:0061513    glucose 6-phosphate:inorganic phosphate antiporter activity,178 annotations
+GO:0005356    glucose:proton symporter activity,18 annotations
+"GO:0047513    1,2-alpha-L-fucosidase activity",18 annotations
+GO:0052640    salicylic acid glucosyltransferase (glucoside-forming) activity,18 annotations
+GO:0030570    pectate lyase activity,"18,612 annotations"
+GO:0004344    glucose dehydrogenase activity,"18,896 annotations"
+GO:0047490    pectin lyase activity,184 annotations
+GO:0046527    glucosyltransferase activity,"189,882 annotations"
+GO:0033296    rhamnose binding,19 annotations
+"GO:0033910    glucan 1,4-alpha-maltotetraohydrolase activity",19 annotations
+GO:0015608    carbohydrate-importing ATPase activity,"19,348 annotations"
+"GO:0050521    alpha-glucan, water dikinase activity",192 annotations
+"GO:0046557    glucan endo-1,6-beta-glucosidase activity",196 annotations
+GO:0032216    glucosaminyl-phosphatidylinositol O-acyltransferase activity,197 annotations
+GO:0005362    low-affinity glucose:sodium symporter activity,2 annotations
+GO:0015517    galactose:proton symporter activity,2 annotations
+"GO:0032001    1,4-alpha-glucan 6-alpha-glucosyltransferase activity",2 annotations
+GO:0033844    galactose-6-sulfurylase activity,2 annotations
+"GO:0033924    dextran 1,6-alpha-isomaltotriosidase activity",2 annotations
+"GO:0033932    1,3-alpha-L-fucosidase activity",2 annotations
+GO:0046480    galactolipid galactosyltransferase activity,2 annotations
+"GO:0047515    1,3-beta-oligoglucan phosphorylase activity",2 annotations
+GO:0047932    glucosamine N-acetyltransferase activity,2 annotations
+GO:0048032    galacturonate binding,2 annotations
+"GO:0050033    L-rhamnono-1,4-lactonase activity",2 annotations
+GO:0050057    linamarin synthase activity,2 annotations
+GO:0050171    phenol beta-glucosyltransferase activity,2 annotations
+GO:0050275    scopoletin glucosyltransferase activity,2 annotations
+GO:0050506    vomilenine glucosyltransferase activity,2 annotations
+GO:0052748    baicalin beta-D-glucuronidase activity,2 annotations
+GO:0062131    3-butenylglucosinolate 2-hydroxylase activity,2 annotations
+GO:0102514    cyanidin 3-O-glucoside 7-O-glucosyltransferase (feruloyl-glucose dependent) activity,2 annotations
+GO:0102921    mannosylglycerate synthase activity,2 annotations
+"GO:0102996    beta,beta digalactosyldiacylglycerol galactosyltransferase activity",2 annotations
+GO:0110068    glucosylglycerate phosphorylase activity,2 annotations
+GO:0047360    undecaprenyl-phosphate galactose phosphotransferase activity,"2,047 annotations"
+GO:0046524    sucrose-phosphate synthase activity,"2,048 annotations"
+GO:0052749    glucose-6-phosphate dehydrogenase (coenzyme F420) activity,"2,146 annotations"
+GO:0016207    4-coumarate-CoA ligase activity,"2,166 annotations"
+GO:0004346    glucose-6-phosphatase activity,"2,268 annotations"
+GO:0004566    beta-glucuronidase activity,"2,308 annotations"
+GO:0102769    dihydroceramide glucosyltransferase activity,"2,382 annotations"
+GO:0001733    galactosylceramide sulfotransferase activity,"2,417 annotations"
+"GO:0052917    dol-P-Man:Man(7)GlcNAc(2)-PP-Dol alpha-1,6-mannosyltransferase activity","2,447 annotations"
+"GO:0052926    dol-P-Man:Man(6)GlcNAc(2)-PP-Dol alpha-1,2-mannosyltransferase activity","2,504 annotations"
+"GO:0052862    glucan endo-1,4-beta-glucanase activity, C-3 substituted reducing group","2,609 annotations"
+GO:0050694    galactose 3-O-sulfotransferase activity,"2,658 annotations"
+GO:0004581    dolichyl-phosphate beta-glucosyltransferase activity,"2,692 annotations"
+GO:0047464    heparosan-N-sulfate-glucuronate 5-epimerase activity,"2,692 annotations"
+GO:0008120    ceramide glucosyltransferase activity,"2,707 annotations"
+GO:0008876    quinoprotein glucose dehydrogenase activity,"2,710 annotations"
+GO:0004341    gluconolactonase activity,"2,880 annotations"
+GO:0047919    GDP-mannose 6-dehydrogenase activity,"2,964 annotations"
+GO:0008790    arabinose isomerase activity,20 annotations
+GO:0047668    amygdalin beta-glucosidase activity,20 annotations
+GO:0050224    prunasin beta-glucosidase activity,20 annotations
+GO:0050284    sinapate 1-glucosyltransferase activity,20 annotations
+GO:0046316    gluconokinase activity,"20,009 annotations"
+"GO:0033201    alpha-1,4-glucan synthase activity","20,257 annotations"
+"GO:0033927    glucan 1,4-alpha-maltohexaosidase activity",207 annotations
+GO:0050144    nucleoside deoxyribosyltransferase activity,208 annotations
+"GO:0004572    mannosyl-oligosaccharide 1,3-1,6-alpha-mannosidase activity",21 annotations
+"GO:0033914    xylan 1,3-beta-xylosidase activity",21 annotations
+GO:0047270    lipopolysaccharide glucosyltransferase II activity,21 annotations
+"GO:0050402    xylono-1,4-lactonase activity",21 annotations
+GO:0047938    glucose-6-phosphate 1-epimerase activity,"21,017 annotations"
+GO:0004879    nuclear receptor activity,"21,426 annotations"
+GO:0043842    Kdo transferase activity,"21,963 annotations"
+GO:0050378    UDP-glucuronate 4-epimerase activity,210 annotations
+GO:0103074    glucose-6-phosphate 3-dehydrogenase activity,210 annotations
+GO:1901505    carbohydrate derivative transmembrane transporter activity,"211,439 annotations"
+GO:0019151    galactose 1-dehydrogenase activity,215 annotations
+GO:0047929    gluconate dehydratase activity,215 annotations
+GO:0015925    galactosidase activity,"217,404 annotations"
+"GO:0033923    glucan 1,6-alpha-isomaltosidase activity",22 annotations
+GO:0033959    deoxyribodipyrimidine endonucleosidase activity,22 annotations
+"GO:0004571    mannosyl-oligosaccharide 1,2-alpha-mannosidase activity","22,236 annotations"
+GO:0015924    mannosyl-oligosaccharide mannosidase activity,"22,266 annotations"
+GO:0004614    phosphoglucomutase activity,"22,661 annotations"
+GO:0016760    cellulose synthase (UDP-forming) activity,"22,691 annotations"
+"GO:0031176    endo-1,4-beta-xylanase activity","22,947 annotations"
+GO:0051267    CP2 mannose-ethanolamine phosphotransferase activity,220 annotations
+GO:0043895    cyclomaltodextrin glucanotransferase activity,225 annotations
+GO:0043843    ADP-specific glucokinase activity,226 annotations
+GO:0102502    ADP-glucose-starch glucosyltransferase activity,23 annotations
+GO:0008712    ADP-glyceromanno-heptose 6-epimerase activity,"23,073 annotations"
+GO:0004564    beta-fructofuranosidase activity,"23,416 annotations"
+GO:0004475    mannose-1-phosphate guanylyltransferase activity,"23,667 annotations"
+GO:0033828    glucosylglycerol-phosphate synthase activity,235 annotations
+GO:0050211    procollagen galactosyltransferase activity,237 annotations
+GO:0042947    glucoside transmembrane transporter activity,239 annotations
+GO:0008905    mannose-phosphate guanylyltransferase activity,"24,266 annotations"
+GO:0015152    glucose-6-phosphate transmembrane transporter activity,25 annotations
+GO:0102318    2-deoxystreptamine glucosyltransferase activity,251 annotations
+GO:0120146    sulfatide binding,253 annotations
+"GO:0033919    glucan 1,3-alpha-glucosidase activity",257 annotations
+"GO:0090600    alpha-1,3-glucosidase activity",257 annotations
+GO:0017103    UTP:galactose-1-phosphate uridylyltransferase activity,258 annotations
+GO:0016936    galactoside binding,259 annotations
+GO:0033821    DNA beta-glucosyltransferase activity,26 annotations
+GO:0004169    dolichyl-phosphate-mannose-protein mannosyltransferase activity,"26,166 annotations"
+GO:0097599    xylanase activity,"26,274 annotations"
+GO:0050247    raucaffricine beta-glucosidase activity,27 annotations
+GO:0102240    soyasapogenol B glucuronide galactosyltransferase activity,27 annotations
+GO:0005536    glucose binding,"27,240 annotations"
+GO:0015020    glucuronosyltransferase activity,"27,708 annotations"
+GO:0004582    dolichyl-phosphate beta-D-mannosyltransferase activity,"27,990 annotations"
+GO:0047931    glucosamine kinase activity,270 annotations
+"GO:0003831    beta-N-acetylglucosaminylglycopeptide beta-1,4-galactosyltransferase activity",271 annotations
+"GO:0047911    galacturan 1,4-alpha-galacturonidase activity",271 annotations
+"GO:0008489    UDP-galactose:glucosylceramide beta-1,4-galactosyltransferase activity",274 annotations
+"GO:0004569    glycoprotein endo-alpha-1,2-mannosidase activity",28 annotations
+GO:0047701    beta-L-arabinosidase activity,28 annotations
+GO:0004376    glycolipid mannosyltransferase activity,"28,023 annotations"
+"GO:0102752    1,4-alpha-glucan branching enzyme activity (using a glucosylated glycogenin as primer for glycogen synthesis)","28,814 annotations"
+GO:0050233    pyranose oxidase activity,281 annotations
+GO:0008466    glycogenin glucosyltransferase activity,284 annotations
+"GO:0033934    glucan 1,4-alpha-maltotriohydrolase activity",29 annotations
+GO:0016759    cellulose synthase activity,"29,374 annotations"
+"GO:0004555    alpha,alpha-trehalase activity","29,935 annotations"
+GO:0050510    N-acetylgalactosaminyl-proteoglycan 3-beta-glucuronosyltransferase activity,292 annotations
+GO:0047238    glucuronosyl-N-acetylgalactosaminyl-proteoglycan 4-beta-N-acetylgalactosaminyltransferase activity,299 annotations
+GO:0010474    glucose-1-phosphate guanylyltransferase (GDP) activity,3 annotations
+GO:0015024    glucuronate-2-sulfatase activity,3 annotations
+GO:0015436    ATPase-coupled capsular-polysaccharide transporter activity,3 annotations
+GO:0022870    protein-N(PI)-phosphohistidine-mannose phosphotransferase system transporter activity,3 annotations
+GO:0032867    L-arabinose:NADP reductase activity,3 annotations
+GO:0033824    alternansucrase activity,3 annotations
+GO:0033871    [heparan sulfate]-glucosamine 3-sulfotransferase 2 activity,3 annotations
+GO:0033911    mycodextranase activity,3 annotations
+"GO:0033913    glucan endo-1,2-beta-glucosidase activity",3 annotations
+GO:0035538    carbohydrate response element binding,3 annotations
+GO:0047358    UDP-glucose-glycoprotein glucose phosphotransferase activity,3 annotations
+"GO:0047514    1,3-beta-D-glucan phosphorylase activity",3 annotations
+GO:0047913    gallate 1-beta-glucosyltransferase activity,3 annotations
+GO:0050103    dextrin dextranase activity,3 annotations
+GO:0050139    nicotinate-N-glucosyltransferase activity,3 annotations
+GO:0050404    zeatin O-beta-D-xylosyltransferase activity,3 annotations
+GO:0061675    RBL family protein binding,3 annotations
+GO:0080105    6-methylthiopropyl glucosinolate S-oxygenase activity,3 annotations
+GO:0102458    cyanidin 3-O-glucoside 5-O glucosyltransferase (vanilloyl-glucose dependent) activity,3 annotations
+"GO:0009044    xylan 1,4-beta-xylosidase activity","3,071 annotations"
+GO:0061634    alpha-D-xyloside xylohydrolase,"3,079 annotations"
+GO:0103118    UDP-3-O-(R-3-hydroxymyristoyl)-glucosamine N-acyltransferase activity,"3,114 annotations"
+GO:0046910    pectinesterase inhibitor activity,"3,151 annotations"
+GO:0004336    galactosylceramidase activity,"3,157 annotations"
+GO:0008449    N-acetylglucosamine-6-sulfatase activity,"3,335 annotations"
+GO:0008727    GDP-mannose mannosyl hydrolase activity,"3,366 annotations"
+GO:0052636    arabinosyltransferase activity,"3,406 annotations"
+GO:0004575    sucrose alpha-glucosidase activity,"3,548 annotations"
+GO:0005537    mannose binding,"3,586 annotations"
+GO:0030600    feruloyl esterase activity,"3,754 annotations"
+GO:0102210    rhamnogalacturonan endolyase activity,"3,838 annotations"
+GO:0015160    beta-glucan transmembrane transporter activity,"3,855 annotations"
+GO:0015441    ATPase-coupled beta-glucan transporter activity,"3,855 annotations"
+GO:0033920    6-phospho-beta-galactosidase activity,"3,904 annotations"
+GO:0047209    coniferyl-alcohol glucosyltransferase activity,30 annotations
+GO:0047257    diglucosyl diacylglycerol synthase activity,30 annotations
+GO:0004456    phosphogluconate dehydratase activity,"30,404 annotations"
+GO:0047669    amylosucrase activity,300 annotations
+GO:0102499    SHG alpha-glucan phosphorylase activity,"31,093 annotations"
+GO:0004373    glycogen (starch) synthase activity,"31,370 annotations"
+GO:0102483    scopolin beta-glucosidase activity,"31,983 annotations"
+GO:0050530    glucosylglycerol 3-phosphatase activity,316 annotations
+GO:0050089    mannose isomerase activity,32 annotations
+GO:0047910    galactose 1-dehydrogenase (NADP+) activity,33 annotations
+GO:1990482    sphingolipid alpha-glucuronosyltransferase activity,33 annotations
+GO:0097367    carbohydrate derivative binding,"33,189,200 annotations"
+GO:0046556    alpha-L-arabinofuranosidase activity,"33,543 annotations"
+GO:0046481    digalactosyldiacylglycerol synthase activity,34 annotations
+GO:0047234    raffinose-raffinose alpha-galactotransferase activity,34 annotations
+GO:0047275    glucosaminylgalactosylglucosylceramide beta-galactosyltransferase activity,34 annotations
+GO:0008927    mannonate dehydratase activity,"34,805 annotations"
+GO:0050373    UDP-arabinose 4-epimerase activity,35 annotations
+GO:0015128    gluconate transmembrane transporter activity,"35,103 annotations"
+GO:0004461    lactose synthase activity,355 annotations
+"GO:0004338    glucan exo-1,3-beta-glucosidase activity",357 annotations
+GO:0047220    galactosylxylosylprotein 3-beta-galactosyltransferase activity,36 annotations
+GO:0047937    glucose-1-phosphate phosphodismutase activity,36 annotations
+GO:0070456    galactose-1-phosphate phosphatase activity,36 annotations
+GO:0004650    polygalacturonase activity,"36,244 annotations"
+GO:0015928    fucosidase activity,"36,551 annotations"
+GO:0046562    glucose oxidase activity,37 annotations
+GO:0047164    isoflavone-7-O-beta-glucoside 6''-O-malonyltransferase activity,37 annotations
+GO:0090599    alpha-glucosidase activity,"37,622 annotations"
+GO:0009011    starch synthase activity,"37,626 annotations"
+GO:0004137    deoxycytidine kinase activity,377 annotations
+GO:0003944    N-acetylglucosamine-1-phosphodiester alpha-N-acetylglucosaminidase activity,38 annotations
+GO:0017042    glycosylceramidase activity,38 annotations
+GO:0047215    indole-3-acetate beta-glucosyltransferase activity,38 annotations
+GO:0047930    glucosaminate ammonia-lyase activity,38 annotations
+GO:0004568    chitinase activity,"38,400 annotations"
+GO:0050409    indolylacetylinositol arabinosyltransferase activity,39 annotations
+"GO:0016837    carbon-oxygen lyase activity, acting on polysaccharides","39,527 annotations"
+GO:0008880    glucuronate isomerase activity,"39,695 annotations"
+GO:0050548    trans-feruloyl-CoA hydratase activity,392 annotations
+GO:0008467    [heparan sulfate]-glucosamine 3-sulfotransferase 1 activity,397 annotations
+GO:0015592    methylgalactoside transmembrane transporter activity,4 annotations
+GO:0033838    flavonol-3-O-glucoside glucosyltransferase activity,4 annotations
+GO:0046575    rhamnogalacturonan acetylesterase activity,4 annotations
+GO:0047675    arabinonate dehydratase activity,4 annotations
+GO:0050392    vicianin beta-glucosidase activity,4 annotations
+GO:0050412    cinnamate beta-D-glucosyltransferase activity,4 annotations
+GO:0052638    indole-3-butyrate beta-glucosyltransferase activity,4 annotations
+"GO:0061547    glycogen synthase activity, transferring glucose-1-phosphate",4 annotations
+GO:0080081    4-methylumbelliferyl-beta-D-glucopyranoside beta-glucosidase activity,4 annotations
+GO:0080082    esculin beta-glucosidase activity,4 annotations
+GO:0080102    3-methylthiopropyl glucosinolate S-oxygenase activity,4 annotations
+GO:0080104    5-methylthiopropyl glucosinolate S-oxygenase activity,4 annotations
+GO:0080106    7-methylthiopropyl glucosinolate S-oxygenase activity,4 annotations
+"GO:0080176    xyloglucan 1,6-alpha-xylosidase activity",4 annotations
+GO:0003980    UDP-glucose:glycoprotein glucosyltransferase activity,"4,263 annotations"
+GO:0015016    [heparan sulfate]-glucosamine N-sulfotransferase activity,"4,392 annotations"
+GO:0015153    rhamnose transmembrane transporter activity,"4,696 annotations"
+"GO:0042283    dolichyl pyrophosphate Glc1Man9GlcNAc2 alpha-1,3-glucosyltransferase activity","4,868 annotations"
+"GO:0016798    hydrolase activity, acting on glycosyl bonds","4,919,274 annotations"
+GO:0008874    gluconate 5-dehydrogenase activity,"4,937 annotations"
+"GO:0042281    dolichyl pyrophosphate Man9GlcNAc2 alpha-1,3-glucosyltransferase activity","4,977 annotations"
+GO:0005534    galactose binding,"4,992 annotations"
+GO:0008810    cellulase activity,"40,291 annotations"
+GO:0004556    alpha-amylase activity,"40,476 annotations"
+GO:0005351    carbohydrate:proton symporter activity,"40,515 annotations"
+GO:0030340    hyaluronate lyase activity,405 annotations
+GO:0009045    xylose isomerase activity,"41,276 annotations"
+GO:0008725    DNA-3-methyladenine glycosylase activity,"41,409 annotations"
+GO:0050504    mannosyl-3-phosphoglycerate synthase activity,412 annotations
+GO:0016519    gastric inhibitory peptide receptor activity,414 annotations
+GO:0047792    cyanohydrin beta-glucosyltransferase activity,42 annotations
+GO:0005402    carbohydrate:cation symporter activity,"42,221 annotations"
+GO:0015578    mannose transmembrane transporter activity,43 annotations
+GO:0080083    beta-gentiobiose beta-glucosidase activity,43 annotations
+GO:0004335    galactokinase activity,"43,674 annotations"
+GO:0008108    UDP-glucose:hexose-1-phosphate uridylyltransferase activity,"43,707 annotations"
+GO:0015159    polysaccharide transmembrane transporter activity,"43,732 annotations"
+GO:0016633    galactonolactone dehydrogenase activity,434 annotations
+GO:0047205    quinate O-hydroxycinnamoyltransferase activity,44 annotations
+GO:0051669    fructan beta-fructosidase activity,448 annotations
+GO:0008873    gluconate 2-dehydrogenase activity,449 annotations
+GO:0004343    glucosamine 6-phosphate N-acetyltransferase activity,"45,270 annotations"
+GO:0033947    mannosylglycoprotein endo-beta-mannosidase activity,455 annotations
+GO:0033840    NDP-glucose-starch glucosyltransferase activity,46 annotations
+GO:0030599    pectinesterase activity,"46,664 annotations"
+GO:0080079    cellobiose glucosidase activity,47 annotations
+GO:0015144    carbohydrate transmembrane transporter activity,"479,046 annotations"
+GO:0032866    D-xylose:NADP reductase activity,48 annotations
+GO:0047268    galactinol-raffinose galactosyltransferase activity,48 annotations
+GO:0047276    N-acetyllactosaminide 3-alpha-galactosyltransferase activity,48 annotations
+GO:0102241    soyasaponin III rhamnosyltransferase activity,48 annotations
+GO:0052692    raffinose alpha-galactosidase activity,"49,884 annotations"
+GO:0033222    xylose binding,5 annotations
+GO:0047218    hydroxycinnamate 4-beta-glucosyltransferase activity,5 annotations
+GO:0047230    flavonol-3-O-glucoside L-rhamnosyltransferase activity,5 annotations
+"GO:0047260    alpha,alpha-trehalose-phosphate synthase (GDP-forming) activity",5 annotations
+GO:0051993    abscisic acid glucose ester beta-glucosidase activity,5 annotations
+GO:1902417    (+)-abscisic acid D-glucopyranosyl ester transmembrane transporter activity,5 annotations
+GO:0047736    cellobiose epimerase activity,"5,008 annotations"
+"GO:0004378    GDP-Man:Man1GlcNAc2-PP-Dol alpha-1,3-mannosyltransferase activity","5,118 annotations"
+GO:0050044    galactose-6-phosphate isomerase activity,"5,215 annotations"
+GO:0050531    mannosyl-3-phosphoglycerate phosphatase activity,"5,215 annotations"
+GO:0047262    polygalacturonate 4-alpha-galacturonosyltransferase activity,"5,227 annotations"
+GO:0046559    alpha-glucuronidase activity,"5,270 annotations"
+GO:0030158    protein xylosyltransferase activity,"5,315 annotations"
+GO:0030598    rRNA N-glycosylase activity,"5,325 annotations"
+GO:0008918    lipopolysaccharide 3-alpha-galactosyltransferase activity,"5,397 annotations"
+"GO:0052761    exo-1,4-beta-D-glucosaminidase activity","5,584 annotations"
+"GO:0031218    arabinogalactan endo-1,4-beta-galactosidase activity","5,823 annotations"
+GO:0042900    arabinose transmembrane transporter activity,"5,968 annotations"
+GO:0005412    glucose:sodium symporter activity,503 annotations
+"GO:0016857    racemase and epimerase activity, acting on carbohydrates and derivatives","509,366 annotations"
+"GO:0031217    glucan 1,4-beta-glucosidase activity",51 annotations
+GO:0047338    UTP:xylose-1-phosphate uridylyltransferase activity,52 annotations
+GO:0047350    glucuronate-1-phosphate uridylyltransferase activity,52 annotations
+GO:0004476    mannose-6-phosphate isomerase activity,"53,231 annotations"
+GO:0047735    cellobiose dehydrogenase (acceptor) activity,54 annotations
+GO:0004340    glucokinase activity,"54,229 annotations"
+GO:0004134    4-alpha-glucanotransferase activity,"54,544 annotations"
+GO:0004342    glucosamine-6-phosphate deaminase activity,"54,788 annotations"
+GO:0008690    3-deoxy-manno-octulosonate cytidylyltransferase activity,"55,484 annotations"
+GO:0001872    (1->3)-beta-D-glucan binding,551 annotations
+"GO:0043896    glucan 1,6-alpha-glucosidase activity",555 annotations
+GO:0019200    carbohydrate kinase activity,"555,917 annotations"
+"GO:0033905    xylan endo-1,3-beta-xylosidase activity",56 annotations
+GO:0008676    3-deoxy-8-phosphooctulonate synthase activity,"56,669 annotations"
+GO:0033825    oligosaccharide 4-alpha-D-glucosyltransferase activity,57 annotations
+GO:0003948    N4-(beta-N-acetylglucosaminyl)-L-asparaginase activity,572 annotations
+GO:0052793    pectin acetylesterase activity,574 annotations
+GO:0120153    calcium-dependent carbohydrate binding,58 annotations
+GO:0008928    mannose-1-phosphate guanylyltransferase (GDP) activity,596 annotations
+GO:0015161    capsular polysaccharide transmembrane transporter activity,6 annotations
+GO:0033945    oligoxyloglucan reducing-end-specific cellobiohydrolase activity,6 annotations
+GO:0047375    N-acetylgalactosaminoglycan deacetylase activity,6 annotations
+GO:0047782    coniferin beta-glucosidase activity,6 annotations
+GO:0050088    mannose-6-phosphate 6-reductase activity,6 annotations
+GO:0090448    glucosinolate:proton symporter activity,6 annotations
+GO:0051060    pullulanase activity,"6,070 annotations"
+GO:0052822    DNA-3-methylguanine glycosylase activity,"6,186 annotations"
+"GO:0004339    glucan 1,4-alpha-glucosidase activity","6,265 annotations"
+GO:0005354    galactose transmembrane transporter activity,"6,445 annotations"
+"GO:0052861    glucan endo-1,3-beta-glucanase activity, C-3 substituted reducing group","6,724 annotations"
+GO:0032450    maltose alpha-glucosidase activity,"6,986 annotations"
+GO:0035259    glucocorticoid receptor binding,600 annotations
+GO:0047274    galactinol-sucrose galactosyltransferase activity,605 annotations
+"GO:0050500    1,3-beta-galactosyl-N-acetylhexosamine phosphorylase activity",606 annotations
+GO:0047330    polyphosphate-glucose phosphotransferase activity,607 annotations
+GO:0017041    galactosylgalactosylglucosylceramidase activity,61 annotations
+GO:0050563    trans-feruloyl-CoA synthase activity,61 annotations
+GO:0008878    glucose-1-phosphate adenylyltransferase activity,"61,591 annotations"
+GO:0043890    N-acetylgalactosamine-6-sulfatase activity,616 annotations
+GO:0042123    glucanosyltransferase activity,619 annotations
+GO:0047912    galacturonokinase activity,62 annotations
+GO:0004559    alpha-mannosidase activity,"62,218 annotations"
+GO:0008879    glucose-1-phosphate thymidylyltransferase activity,"62,228 annotations"
+GO:0047917    GDP-glucosidase activity,63 annotations
+GO:0043211    ATPase-coupled carbohydrate transmembrane transporter activity,"63,221 annotations"
+"GO:0043897    glucan 1,4-alpha-maltohydrolase activity",64 annotations
+GO:0017060    3-galactosyl-N-acetylglucosaminide 4-alpha-L-fucosyltransferase activity,67 an+A137:C236notations
+GO:0102799    glucosinolate glucohydrolase activity,672 annotations
+GO:0052714    mannosyl-inositol phosphorylceramide phospholipase activity,68 annotations
+GO:0008422    beta-glucosidase activity,"68,010 annotations"
+GO:0019137    thioglucosidase activity,688 annotations
+GO:0047940    glucuronokinase activity,69 annotations
+"GO:0046509    1,2-diacylglycerol 3-beta-galactosyltransferase activity",698 annotations
+GO:0010294    abscisic acid glucosyltransferase activity,7 annotations
+GO:0010475    galactose-1-phosphate guanylyltransferase (GDP) activity,7 annotations
+GO:0033956    beta-apiosyl-beta-glucosidase activity,7 annotations
+GO:0047273    galactosylgalactosylglucosylceramide beta-D-acetylgalactosaminyltransferase activity,7 annotations
+GO:0090633    keto-deoxynonulosonic acid (KDN) cytidylyltransferase activity,7 annotations
+GO:0102402    2-phenylethyl 6-O-beta-D-xylopyranosyl-beta-D-glucopyranoside glucosidase (Yabukita) activity,7 annotations
+GO:0102404    linalyl 6-O-alpha-L-arabinopyranosyl-beta-D-glucopyranoside glucosidase (Yabukita) activity,7 annotations
+GO:0008875    gluconate dehydrogenase activity,"7,260 annotations"
+GO:0047471    maltose alpha-D-glucosyltransferase activity,"7,370 annotations"
+GO:0008107    galactoside 2-alpha-L-fucosyltransferase activity,"7,435 annotations"
+GO:0016161    beta-amylase activity,"7,474 annotations"
+GO:0042285    xylosyltransferase activity,"7,750 annotations"
+"GO:0051118    glucan endo-1,3-alpha-glucosidase activity",70 annotations
+GO:0070694    deoxyribonucleoside 5'-monophosphate N-glycosidase activity,703 annotations
+GO:0004967    glucagon receptor activity,709 annotations
+GO:0044508    glucagon-like peptide 1 receptor activity,71 annotations
+GO:0030246    carbohydrate binding,"738,438 annotations"
+GO:0010303    limit dextrinase activity,74 annotations
+GO:0031769    glucagon receptor binding,74 annotations
+GO:0050505    hydroquinone glucosyltransferase activity,74 annotations
+"GO:0016682    oxidoreductase activity, acting on diphenols and related substances as donors, oxygen as acceptor","76,398 annotations"
+GO:0003796    lysozyme activity,"76,555 annotations"
+GO:0050081    maltose-6'-phosphate glucosidase activity,767 annotations
+GO:0102211    unsaturated rhamnogalacturonyl hydrolase activity,776 annotations
+GO:0003983    UTP:glucose-1-phosphate uridylyltransferase activity,"78,627 annotations"
+GO:0008534    oxidized purine nucleobase lesion DNA N-glycosylase activity,"78,744 annotations"
+GO:0033757    glucoside 3-dehydrogenase activity,8 annotations
+"GO:0033950    xyloglucan-specific exo-beta-1,4-glucanase activity",8 annotations
+"GO:0047457    exo-(1,4)-alpha-D-glucan lyase activity",8 annotations
+GO:0047816    D-arabinose 1-dehydrogenase (NAD+) activity,8 annotations
+GO:0047915    ganglioside galactosyltransferase activity,8 annotations
+GO:0050006    isomaltulose synthase activity,8 annotations
+GO:0102970    7-deoxyloganetic acid glucosyltransferase activity,8 annotations
+GO:1990576    G protein-coupled glucose receptor activity,8 annotations
+GO:0033925    mannosyl-glycoprotein endo-beta-N-acetylglucosaminidase activity,"8,193 annotations"
+GO:0051377    mannose-ethanolamine phosphotransferase activity,"8,480 annotations"
+"GO:0004135    amylo-alpha-1,6-glucosidase activity","8,559 annotations"
+GO:0008872    glucarate dehydratase activity,"8,832 annotations"
+GO:0015018    galactosylgalactosylxylosylprotein 3-beta-glucuronosyltransferase activity,"8,991 annotations"
+GO:0019134    glucosamine-1-phosphate N-acetyltransferase activity,"80,280 annotations"
+GO:0030775    glucuronoxylan 4-O-methyltransferase activity,81 annotations
+GO:0047402    protein-glucosylgalactosylhydroxylysine glucosidase activity,81 annotations
+GO:0015923    mannosidase activity,"83,211 annotations"
+"GO:0003844    1,4-alpha-glucan branching enzyme activity","83,989 annotations"
+GO:0103011    mannosylfructose-phosphate synthase activity,830 annotations
+GO:0019158    mannokinase activity,834 annotations
+"GO:0033946    xyloglucan-specific endo-beta-1,4-glucanase activity",84 annotations
+GO:0004883    glucocorticoid receptor activity,844 annotations
+GO:0003905    alkylbase DNA N-glycosylase activity,"85,330 annotations"
+"GO:0016162    cellulose 1,4-beta-cellobiosidase activity",863 annotations
+GO:0080116    glucuronoxylan glucuronosyltransferase activity,87 annotations
+GO:0004396    hexokinase activity,"87,044 annotations"
+GO:0050295    steryl-beta-glucosidase activity,877 annotations
+GO:0008870    galactoside O-acetyltransferase activity,884 annotations
+GO:0046702    galactoside 6-L-fucosyltransferase activity,9 annotations
+GO:0047266    poly(ribitol-phosphate) beta-glucosyltransferase activity,9 annotations
+"GO:0052767    mannosyl-oligosaccharide 1,6-alpha-mannosidase activity",9 annotations
+GO:0072532    tri-(feruloyl or hydroxyferuloyl) spermidine meta-hydroxylase activity,9 annotations
+GO:0089702    undecaprenyl-phosphate glucose phosphotransferase activity,9 annotations
+"GO:0004377    GDP-Man:Man3GlcNAc2-PP-Dol alpha-1,2-mannosyltransferase activity","9,231 annotations"
+GO:0103047    methyl beta-D-glucoside 6-phosphate glucohydrolase activity,"9,263 annotations"
+GO:0008706    6-phospho-beta-glucosidase activity,"9,268 annotations"
+GO:0016157    sucrose synthase activity,"9,517 annotations"
+GO:0033942    4-alpha-D-(1->4)-alpha-D-glucanotrehalose trehalohydrolase activity,"9,609 annotations"
+GO:0047343    glucose-1-phosphate cytidylyltransferase activity,"9,764 annotations"
+GO:0033904    dextranase activity,90 annotations
+GO:0033951    oligosaccharide reducing-end xylanase activity,90 annotations
+GO:0030247    polysaccharide binding,"90,769 annotations"
+GO:0003849    3-deoxy-7-phosphoheptulonate synthase activity,"91,067 annotations"
+GO:0001888    glucuronyl-galactosyl-proteoglycan 4-alpha-N-acetylglucosaminyltransferase activity,92 annotations
+GO:0047935    glucose 1-dehydrogenase (NADP+) activity,93 annotations
+GO:0102096    decaprenyl-N-acetyl-alpha-D-glucosaminyl-pyrophosphate:dTDP-alpha-L-rhamnose rhamnosyltransferase activity,937 annotations
+GO:0004381    fucosylgalactoside 3-alpha-galactosyltransferase activity,95 annotations
+GO:2001065    mannan binding,96 annotations
+GO:0047407    ADP-ribosyl-[dinitrogen reductase] hydrolase activity,971 annotations
+GO:0008114    phosphogluconate 2-dehydrogenase activity,99 annotations
