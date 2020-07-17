@@ -23,7 +23,10 @@ These tests are inteded to be run from the root repository using:
 pytest -v
 """
 
+import json
 import pytest
+
+from argparse import Namespace
 
 from Bio import Entrez
 
