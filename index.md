@@ -11,9 +11,11 @@
 [![Python](https://img.shields.io/badge/Python-v3.7.---orange)](https://www.python.org/about/)
 [![Research](https://img.shields.io/badge/Bioinformatics-Protein%20Engineering-ff69b4)](http://www.eastscotbiodtp.ac.uk/eastbio-student-cohort-2019)
 
-This repository contains files used during the EastBIO PhD Project, for the identification of engineering candidates to enhance biocatalysis for biofuel production.
+These pages are published from the repository containing files used during the EastBIO PhD Project, for the identification of engineering candidates to enhance biocatalysis for biofuel production.
 
 The `Jupyter` notebook environments have been used to facilitate explanation of the function and operation of the command-line python programmes used. These notebooks include explanatory text and snippets of code extract to illustrate code function, and thus not all code snippets are runnable in the `Jupyter` environment.
+
+Please find more detailed information for operation and troubleshooting pyrewton (the Python 3 program written to perform the compuational work during the PhD project) at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/).
 
 ## Table of Contents
 
