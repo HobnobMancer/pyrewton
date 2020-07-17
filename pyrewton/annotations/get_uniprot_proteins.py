@@ -254,7 +254,6 @@ def get_ec_numbers(df_row, logger):
         # and remove EC numbers from protein name
         ec_numbers = ""
         for ec in ec_search:
-            df_row[2] = df_row[2].replace(ec, "")
             ec = ec.replace("(", "")
             ec = ec.replace(")", "")
             ec_numbers += ec
