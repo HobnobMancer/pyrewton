@@ -56,11 +56,25 @@ def gt_ncbi_gnms_test_inputs(gt_ncbi_gnms_input_dir):
     return inputs
 
 
-# Define fixtures local to these tests
 @pytest.fixture
 def test_ncbi_species_file(gt_ncbi_gnms_input_dir):
     input_reading_path = gt_ncbi_gnms_input_dir / "gt_ncbi_gnms_reading_test_input.txt"
     return input_reading_path
+
+
+@pytest.fixture
+def tax_id_line():
+    """Example line from input file."""
+    return "NCBI:txid5061"
+
+
+@pytest.fixture
+def species_line():
+    """Example line from onput file containing scientific name."""
+    return "Aspergillus niger"
+
+
+# define entrez mocking here!!!!
 
 
 @pytest.fixture
@@ -70,6 +84,13 @@ def input_ncbi_df(gt_ncbi_gnms_test_inputs):
     row_data.append(gt_ncbi_gnms_test_inputs[5])
     row_data.append(gt_ncbi_gnms_test_inputs[1])
     return row_data
+
+
+@pytest.fixture
+def na_df_row():
+    """Create list to present pandas series containing only 'NA'."""
+    mock_df_row = ["NA", "NA", "NA"]
+    return mock_df_row
 
 
 @pytest.fixture
@@ -98,8 +119,30 @@ def test_reading_input_file(
     )
 
 
-# order = 9
-@pytest.mark.skip(reason="mocking database call still under development")
+@pytest.mark.run(order=9)
+def test_input_file_check(test_dir, null_logger, gt_ncbi_gnms_test_inputs):
+    """Test get_ncbi_genomes ability to detect when no input file available."""
+    get_ncbi_genomes.parse_input_file(test_dir, null_logger, gt_ncbi_gnms_test_inputs)
+
+
+@pytest.mark.run(order=10)
+def test_line_parsing(tax_id_line, species_line, null_logger, monkeypatch):
+    """Test function parse_line ability to parse lines of input file."""
+
+    def mock_ncbi_data_retrieval(*args, **kwargs):
+        """Mock results from functions with retrieve data from ncbi."""
+        return "mock line"
+
+    monkeypatch.setattr(
+        get_ncbi_genomes, "get_genus_species_name", mock_ncbi_data_retrieval
+    )
+    monkeypatch.setattr(get_ncbi_genomes, "get_tax_id", mock_ncbi_data_retrieval)
+
+    get_ncbi_genomes.parse_line(tax_id_line, null_logger, 1, 1)
+    get_ncbi_genomes.parse_line(species_line, null_logger, 1, 1)
+
+
+@pytest.mark.run(order=11)
 def test_scientific_name_retrieval(
     gt_ncbi_gnms_test_inputs, gt_ncbi_gnms_targets, null_logger, monkeypatch
 ):
@@ -112,7 +155,7 @@ def test_scientific_name_retrieval(
         """Mocks call to Entrez to retrieve scientific name."""
         return [{"ScientificName": "Aspergillus niger"}]
 
-    monkeypatch.setattr(get_ncbi_genomes, "entrez_func", mock_entrez_sci_call)
+    monkeypatch.setattr(get_ncbi_genomes, "Entrez.efetch", mock_entrez_sci_call)
 
     assert gt_ncbi_gnms_targets[0] == get_ncbi_genomes.get_genus_species_name(
         gt_ncbi_gnms_test_inputs[1],
@@ -122,8 +165,27 @@ def test_scientific_name_retrieval(
     )
 
 
-# order 10
-@pytest.mark.skip(reason="mocking database call still under development")
+@pytest.mark.run(order=12)
+def test_scientific_name_retrieval_indexerror_catch(
+    gt_ncbi_gnms_test_inputs, null_logger, monkeypatch
+):
+    """Tests get_scientific name retrieval handling indexError catching."""
+        def mock_entrez_sci_call(*args, **kwargs):
+        """Mocks call to Entrez to retrieve scientific name."""
+        empty_list = []
+        return empty_list
+
+    monkeypatch.setattr(get_ncbi_genomes, "Entrez.efetch", mock_entrez_sci_call)
+
+    get_ncbi_genomes.get_genus_species_name(
+        gt_ncbi_gnms_test_inputs[1],
+        null_logger,
+        gt_ncbi_gnms_test_inputs[3],
+        gt_ncbi_gnms_test_inputs[0],
+    )
+
+
+@pytest.mark.run(order=13)
 def test_taxonomy_id_retrieval(
     gt_ncbi_gnms_test_inputs, gt_ncbi_gnms_targets, null_logger, monkeypatch
 ):
@@ -133,7 +195,7 @@ def test_taxonomy_id_retrieval(
         """Mocks call to Entrez to retrieve taxonomy ID."""
         return {"IdList": ["162425"]}
 
-    monkeypatch.setattr(get_ncbi_genomes, "entrez_func", mock_entrez_txid_call)
+    monkeypatch.setattr(get_ncbi_genomes, "Entrez.esearch", mock_entrez_txid_call)
 
     assert gt_ncbi_gnms_targets[1] == get_ncbi_genomes.get_genus_species_name(
         gt_ncbi_gnms_test_inputs[2],
@@ -141,6 +203,45 @@ def test_taxonomy_id_retrieval(
         gt_ncbi_gnms_test_inputs[3],
         gt_ncbi_gnms_test_inputs[0],
     )
+
+
+@pytest.mark.run(order=14)
+def test_tax_id_check(null_logger):
+    """Tests searching of input scientific name for digits"""
+    get_ncbi_genomes.get_tax_id("5061", null_logger, 1, 1)
+
+
+@pytest.mark.run(order=15)
+def test_tax_id_retrieval_indexerror_catch(
+    gt_ncbi_gnms_test_inputs, gt_ncbi_gnms_targets, null_logger, monkeypatch
+):
+    """Tests handling index Error when retrieving tax ID"""
+
+    def mock_entrez_txid_call(*args, **kwargs):
+        """Mocks call to Entrez to retrieve taxonomy ID."""
+        return {"IdList": []}
+
+    monkeypatch.setattr(get_ncbi_genomes, "Entrez.esearch", mock_entrez_txid_call)
+
+    get_ncbi_genomes.get_genus_species_name(
+        gt_ncbi_gnms_test_inputs[2],
+        null_logger,
+        gt_ncbi_gnms_test_inputs[3],
+        gt_ncbi_gnms_test_inputs[0],
+    )
+
+
+@pytest.mark.run(order=16)
+def test_df_cell_content_check(na_df_row, null_logger):
+    """Test get_accession_numbers checking of dataframe cell content."""
+    get_ncbi_genomes.get_accession_numbers(na_df_row, null_logger, "args")
+
+
+
+
+
+
+
 
 
 # order = 11
