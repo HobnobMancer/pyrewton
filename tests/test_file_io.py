@@ -23,9 +23,42 @@ These tests are inteded to be run from the root repository using:
 pytest -v
 """
 
+from argparse import Namespace
+
 import pytest
 
+import pandas as pd
+
 from pyrewton import file_io
+
+
+@pytest.fixture
+def testing_df():
+    df_data = [["A", "B", "C"]]
+    df = pd.DataFrame(df_data, columns=["C1", "C2", "C3"])
+    return df
+
+
+@pytest.fixture
+def testing_df_output_file(test_dir):
+    df_output = (
+        test_dir / "test_targets" / "file_io_test_targets" / "test_writing_df.csv"
+    )
+    return df_output
+
+
+@pytest.fixture
+def testing_df_output_dir(test_dir):
+    df_output = test_dir / "test_targets" / "file_io_test_targets"
+    return df_output
+
+
+@pytest.fixture
+def file_io_args(testing_df_output_dir):
+    argsdict = {
+        "args": Namespace(output=testing_df_output_dir, nodelete=False, force=True)
+    }
+    return argsdict
 
 
 @pytest.mark.run(order=5)
