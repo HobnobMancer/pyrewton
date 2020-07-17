@@ -38,13 +38,27 @@ def logger_output(test_dir):
     return logger_output
 
 
+# create fixture to test when args.verbose is false
 @pytest.fixture
-def logger_args(logger_output):
+def logger_args_false(logger_output):
     argsdict = {"args": Namespace(verbose=False, log=logger_output)}
     return argsdict
 
 
+# create fixture to test when args.verbose is true
+@pytest.fixture
+def logger_args_true(logger_output):
+    argsdict = {"args": Namespace(verbose=True, log=logger_output)}
+    return argsdict
+
+
 @pytest.mark.run(order=4)
-def test_build_logger(null_logger, logger_args):
+def test_build_logger_v_false(null_logger, logger_args_false):
     """Tests building of logger"""
-    build_logger("test_logger", logger_args["args"])
+    build_logger("test_logger", logger_args_false["args"])
+
+
+@pytest.mark.run(order=5)
+def test_build_logger_v_true(null_logger, logger_args_true):
+    """Tests building of logger"""
+    build_logger("test_logger", logger_args_true["args"])
