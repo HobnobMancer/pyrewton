@@ -98,7 +98,15 @@ def test_writing_df_f_true(testing_df, null_logger, testing_df_output_file):
 
 
 @pytest.mark.run(order=10)
-def test_writing_named_df(testing_df, null_logger, testing_df_output_dir):
+def test_writing_named_df_f_false(testing_df, null_logger, testing_df_output_dir):
+    """Tests function for writing out a prenamed dataframe"""
+    file_io.write_out_pre_named_dataframe(
+        testing_df, "unitesting", null_logger, testing_df_output_dir, False, False
+    )
+
+
+@pytest.mark.run(order=11)
+def test_writing_named_df_f_true(testing_df, null_logger, testing_df_output_dir):
     """Tests function for writing out a prenamed dataframe"""
     file_io.write_out_pre_named_dataframe(
         testing_df, "unitesting", null_logger, testing_df_output_dir, True, False
