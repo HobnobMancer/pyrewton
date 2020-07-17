@@ -13,6 +13,8 @@ Version v0.1.1 2020/06/04
 
 This repository contains all scripts associated with the EastBio PhD project ‘Identifying Engineering Candidates for Advanced Biocatalysis in Biofuel Production'.
 
+Please find more detailed documentation at for operation and troubleshooting at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/)
+
 ## Contents
 
 1. [Overview](#Overview)
