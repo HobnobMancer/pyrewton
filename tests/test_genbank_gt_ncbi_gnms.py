@@ -33,6 +33,58 @@ from pyrewton.genbank.get_ncbi_genomes import get_ncbi_genomes
 Entrez.email = "my.email@my.domain"
 
 
+@pytest.fixture
+def gt_ncbi_gnms_input_dir(test_dir):
+    input_dir = test_dir / "test_inputs" / "gt_ncbi_gnms_test_inputs"
+    return input_dir
+
+
+@pytest.fixture
+def gt_ncbi_gnms_test_inputs(gt_ncbi_gnms_input_dir):
+    with (gt_ncbi_gnms_input_dir / "gt_ncbi_gnms_test_inputs.json").open("r") as ifh:
+        test_inputs = json.load(ifh)
+        inputs = []
+        inputs.append(test_inputs["retries"])
+        inputs.append(test_inputs["taxonomy_id"])
+        inputs.append(test_inputs["genus_species_name"])
+        inputs.append(test_inputs["line_number"])
+        inputs.append(test_inputs["df_row_genus"])
+        inputs.append(test_inputs["df_row_species"])
+    return inputs
+
+
+# Define fixtures local to these tests
+@pytest.fixture
+def test_ncbi_species_file(gt_ncbi_gnms_input_dir):
+    input_reading_path = gt_ncbi_gnms_input_dir / "gt_ncbi_gnms_reading_test_input.txt"
+    return input_reading_path
+
+
+@pytest.fixture
+def input_ncbi_df(gt_ncbi_gnms_test_inputs):
+    row_data = []
+    row_data.append(gt_ncbi_gnms_test_inputs[4])
+    row_data.append(gt_ncbi_gnms_test_inputs[5])
+    row_data.append(gt_ncbi_gnms_test_inputs[1])
+    return row_data
+
+
+@pytest.fixture
+def ncbi_args():
+    argsdict = {"args": Namespace(genbank=False, retries=10, timeout=10)}
+    return argsdict
+
+
+@pytest.fixture
+def gt_ncbi_gnms_targets(test_dir):
+    target_dir = test_dir / "test_targets" / "gt_ncbi_gnms_test_targets"
+    with (target_dir / "gt_ncbi_gnms_test_targets.json").open("r") as ifht:
+        test_targets = json.load(ifht)
+        target_sci_name = test_targets["target_genus_species_name"]
+        target_tax_id = test_targets["target_taxonomy_id"]
+    return target_sci_name, target_tax_id, target_dir
+
+
 @pytest.mark.run(order=8)
 def test_reading_input_file(
     test_ncbi_species_file, null_logger, gt_ncbi_gnms_test_inputs
@@ -54,10 +106,10 @@ def test_scientific_name_retrieval(
     """
 
     def mock_entrez_sci_call(*args, **kwargs):
-        """Mocks call to Entrez."""
+        """Mocks call to Entrez to retrieve scientific name."""
         return [{"ScientificName": "Aspergillus niger"}]
 
-    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_sci_call)
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_func", mock_entrez_sci_call)
 
     assert gt_ncbi_gnms_targets[0] == get_ncbi_genomes.get_genus_species_name(
         gt_ncbi_gnms_test_inputs[1],
@@ -75,10 +127,10 @@ def test_taxonomy_id_retrieval(
     """Tests Entrez call to NCBI to retrieve taxonomy ID from scientific name."""
 
     def mock_entrez_txid_call(*args, **kwargs):
-        """Mocks call to Entrez."""
+        """Mocks call to Entrez to retrieve taxonomy ID."""
         return {"IdList": ["162425"]}
 
-    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_txid_call)
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_func", mock_entrez_txid_call)
 
     assert gt_ncbi_gnms_targets[1] == get_ncbi_genomes.get_genus_species_name(
         gt_ncbi_gnms_test_inputs[2],
