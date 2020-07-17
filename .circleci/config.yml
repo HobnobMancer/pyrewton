@@ -40,16 +40,17 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            pytest -v --cov=Section1_Extracting_Genomes --cov-report xml:.coverage.xml
+            pytest -v --cov=pyrewton --cov-report xml:.coverage.xml
+            
       - store_artifacts:
           path: tests/test_output
           destination: tests/test_output
       - store_artifacts:
-          path: coverage.xml
-          destination: coverage.xml
+          path: .coverage.xml
+          destination: .coverage.xml
 
       - codecov/upload:
-          file: coverage.xml
+          file: .coverage.xml
 
 workflows:
   main:
