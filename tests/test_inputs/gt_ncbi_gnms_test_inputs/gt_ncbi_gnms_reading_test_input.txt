@@ -1,3 +1,4 @@
 # this is the test file
 # used to test that the input file parser function
 # in get_ncbi_genomes.py works
+NCBI:txid5061
