@@ -66,7 +66,7 @@ from tqdm import tqdm
 
 from pyrewton.loggers import build_logger
 from pyrewton.parsers.parser_get_ncbi_genomes import build_parser
-from pyrewton.file_io import write_out_dataframe
+from pyrewton.file_io import make_output_directory, write_out_dataframe
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
@@ -109,9 +109,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # If specified output directory for genomic files, create output directory
     if args.output is not sys.stdout:
-        output_dir_handling_main.make_output_directory(
-            args.output, logger, args.force, args.nodelete
-        )
+        make_output_directory(args, logger)
 
     # Invoke main usage of programme
     # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
