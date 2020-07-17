@@ -54,20 +54,34 @@ def testing_df_output_dir(test_dir):
 
 
 @pytest.fixture
-def file_io_args(testing_df_output_dir):
+def file_io_args_n_false(testing_df_output_dir):
     argsdict = {
         "args": Namespace(output=testing_df_output_dir, nodelete=False, force=True)
     }
     return argsdict
 
 
-@pytest.mark.run(order=5)
-def test_output_dir_creation(file_io_args, null_logger):
-    """Tests function for creating output dir"""
-    file_io.make_output_directory(file_io_args["args"], null_logger)
+@pytest.fixture
+def file_io_args_n_true(testing_df_output_dir):
+    argsdict = {
+        "args": Namespace(output=testing_df_output_dir, nodelete=True, force=True)
+    }
+    return argsdict
 
 
 @pytest.mark.run(order=6)
+def test_output_dir_creation_n_false(file_io_args_n_false, null_logger):
+    """Test creation of output dir when args.nodelete is false"""
+    file_io.make_output_directory(file_io_args_n_false["args"], null_logger)
+
+
+@pytest.mark.run(order=7)
+def test_output_dir_creation_n_true(file_io_args_n_true, null_logger):
+    """Test creation of output dir when args.nodelete is true"""
+    file_io.make_output_directory(file_io_args_n_true["args"], null_logger)
+
+
+@pytest.mark.run(order=8)
 def test_writing_df(testing_df, null_logger, testing_df_output_file):
     """Tests function for writing out created dataframe"""
     file_io.write_out_dataframe(
@@ -75,7 +89,7 @@ def test_writing_df(testing_df, null_logger, testing_df_output_file):
     )
 
 
-@pytest.mark.run(order=7)
+@pytest.mark.run(order=9)
 def test_writing_named_df(testing_df, null_logger, testing_df_output_dir):
     """Tests function for writing out a prenamed dataframe"""
     file_io.write_out_pre_named_dataframe(
