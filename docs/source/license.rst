@@ -27,5 +27,5 @@ SOFTWARE.
 Questions?
 ==========
 
-Please raise and issue at the GitHub repository issues pages, by
+Please raise an issue at the GitHub repository issues pages, by
 following the `link <https://github.com/HobnobMancer/PhD_Project_Scripts/issues>`_.
