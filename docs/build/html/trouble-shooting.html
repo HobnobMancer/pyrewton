@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trouble Shooting &#8212; pyrewton 0.1.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="trouble-shooting">
+<h1>Trouble Shooting<a class="headerlink" href="#trouble-shooting" title="Permalink to this headline">¶</a></h1>
+<p>This section covers common errors expected to arise when invoking each module/submodule, and the probable causes.
+If any other issues arise, please raise any issues with any of the programmers at the GitHub repository issues pages, by
+following <a class="reference external" href="https://github.com/HobnobMancer/PhD_Project_Scripts/issues">the link</a>.</p>
+<div class="line-block">
+<div class="line">- <span class="xref std std-ref">genbank-mod-get-ncbi-genomes</span></div>
+<div class="line">- <a class="reference internal" href="#genbank-mod-get-cazyme-annotations"><span class="std std-ref">get_cazyme_annotations</span></a></div>
+</div>
+<div class="section" id="genbank-get-nbci-genomes">
+<h2>genbank: get_nbci_genomes<a class="headerlink" href="#genbank-get-nbci-genomes" title="Permalink to this headline">¶</a></h2>
+<p id="genbank-mod-get-ncbi-genomes">This section deals with troubleshooting the genbank module’s submodule get_ncbi_genomes,
+for the retrieval of GenBank files from the NCBI Assembly database.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The majority of issues will arise due to errors in the input file. Always ensure the input file does not contain any
+error or blank lines. Additionally, always ensure the correct path to the input file is provided.</p>
+</div>
+<p><strong>IOError</strong>
+This error will occur if there is a network issue when using Entrez to call to NCBI. The script will automatically
+retry the call the set maximum number of times. If the maximum number of retries is met before connecting to NCBI without
+encountering a network error, ‘NA’ is returned and stored in the dataframe.</p>
+<p><strong>FileNotFoundError</strong>
+This error will occur is the incorrect path is provided as the input argument at the command line, or no input argument
+is provided and STDIN contains no data. Ensure the path includes the file name, with extension. If this error occurs the
+program will terminate.</p>
+<p><strong>IndexError during scientific name retrieval</strong>
+This occurs when Entrez fails to retrieve a scientific name for the given taxonomy ID. This is potentially caused by a typo
+in the taxonomy id provided in the input file. If this error occurs the string ‘NA’ will be returned.</p>
+<p><strong>IndexError during taxonomy ID retrieval</strong>
+This occurs when Entrez fails to retrieve a taxonomy ID for the given scientific name. Returns ‘NA’. This is potentially
+caused by a typo in the species name in the input file, or a typo in a taxonomy ID ‘NCBI:txid’ prefix, causing the program
+to misinterpret the ID as a species name and use it to try and retrieve a scientific name. If this error occurs the string
+‘NA’ will be returned. If no taxonomy ID is available for the retrieval of accession numbers, the retrieval of accession
+numbers is cancelled, and a value of ‘NA’ is returned.</p>
+<p><strong>IndexError during assembly ID retrieval</strong>
+This occurs when Entrez fails to retrieve assembly IDs from NCBI. This may be because there are no directly linked assemblies
+for the given taxonomy ID. Check the NCBI Taxonomy database to ensure there are ‘directly’ linked assemblies and not only
+‘subtree’ assemblies. If this error occurs the program with exit the retrieve of the assembly IDs and not retrieve the
+NCBI accession numbers, and return the string ‘NA’. This allows for troubleshooting using on the specie(s) for which it is
+required, to reduce demand on NCBI.</p>
+<p><strong>RuntimeError during posting of assembly IDs to NCBI</strong>
+This error occurs when Entrez fails to post the retrieved assembly IDs, causing it to fail to retrieve the document summary.
+This is potentially caused by incorrect formatting of the assembly IDs or the request is too large for Entrez/ NCBI.
+If this is the case, repeat the procedure in batches. If this error occurs the program with exit the posting of the assembly
+IDs and not retrieve the NCBI accession numbers, and return the string ‘NA’. This allows for troubleshooting using on the
+specie(s) for which it is required, to reduce demand on NCBI.</p>
+<p><strong>RuntimeError or IndexError during retrieval of accession numbers</strong>
+This error occurs when Entrez fails to retrieve the document summary from NCBI. This is potentially caused by incorrect
+formatting of the assembly IDs or the request is too large for Entrez/ NCBI. If this is the case, repeat the procedure
+in batches. If this error occurs the program with exit the retrieval of the NCBI accession numbers, and return the
+string ‘NA’. This allows for troubleshooting using on the specie(s) for which it is required, to reduce demand on NCBI.</p>
+</div>
+<div class="section" id="get-cazyme-annotations">
+<span id="genbank-mod-get-cazyme-annotations"></span><h2>get_cazyme_annotations<a class="headerlink" href="#get-cazyme-annotations" title="Permalink to this headline">¶</a></h2>
+<p>This section deals with troubleshooting the genbank module’s submodule get_cazyme_annotations,
+for retrieving cazyme annotations from GenBank files.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">pyrewton</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Emma E. M. Hobbs.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/trouble-shooting.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

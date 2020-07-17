@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The annotations module &#8212; pyrewton 0.1.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="the-annotations-module">
+<h1>The annotations module<a class="headerlink" href="#the-annotations-module" title="Permalink to this headline">¶</a></h1>
+<p>The module <code class="docutils literal notranslate"><span class="pre">annotations</span></code> contains submodules that handle cazyme annotations, including summarising the cazyme calls
+distribution in a dataframe of cazymes and the retrieval of cazymes from UniProtKB for a given species.</p>
+<div class="line-block">
+<div class="line">- <a class="reference internal" href="#annotations-mod-get-uniprot-proteins"><span class="std std-ref">get_uniprot_proteins</span></a></div>
+</div>
+<div class="section" id="get-uniprot-proteins">
+<span id="annotations-mod-get-uniprot-proteins"></span><h2>get_uniprot_proteins<a class="headerlink" href="#get-uniprot-proteins" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">get_uniprot_proteins</span></code> is a submodule of the <code class="docutils literal notranslate"><span class="pre">annotations</span></code>, and retrieves all cazyme entries from UniProtKB
+for each species passed to the submodule in a dataframe. The collected data is returned in a dataframe containing:</p>
+<ul class="simple">
+<li><p>‘Genus’</p></li>
+<li><p>‘Species’</p></li>
+<li><p>‘NCBI Taxonomy ID’</p></li>
+<li><p>‘UniProt entry ID’</p></li>
+<li><p>‘UniProt entry name’</p></li>
+<li><p>‘UniProt assigned protein names’</p></li>
+<li><p>‘EC Numbers’</p></li>
+<li><p>‘Length (Aa)’</p></li>
+<li><p>‘Mass (Da)’</p></li>
+<li><p>‘Domains’</p></li>
+<li><p>‘Domain count’</p></li>
+<li><p>‘UniProt linked protein families’</p></li>
+<li><p>‘GO IDs’</p></li>
+<li><p>‘GO molecular function’</p></li>
+<li><p>‘G0 biological process’</p></li>
+<li><p>‘Sequence’</p></li>
+</ul>
+<div class="section" id="invoking-the-script-from-the-command-line">
+<h3>Invoking the script from the command line<a class="headerlink" href="#invoking-the-script-from-the-command-line" title="Permalink to this headline">¶</a></h3>
+<p><strong>Compulsary arguments</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">-d,</span> <span class="pre">--df_input</span></code> - Path to input dataframe.</p>
+<p><code class="docutils literal notranslate"><span class="pre">-f,</span> <span class="pre">--force</span></code> - Enable writting in specificed output directory if output directory already exists.</p>
+<p><code class="docutils literal notranslate"><span class="pre">-g,</span> <span class="pre">--genbank</span></code> - Path to director containing GenBank files.</p>
+<p><code class="docutils literal notranslate"><span class="pre">-l,</span> <span class="pre">--log</span></code> - Specify name of log file (With extension). If only filename is given, log file will
+be written out to the current working directory, otherwise provide path including filename. If not
+option is given no log file will be written out, however, logs will still be printed to the terminal.</p>
+<p><code class="docutils literal notranslate"><span class="pre">-n,</span> <span class="pre">--nodelete</span></code> - Enable not deleting files in existing output directory. If not enabled, output
+directory exists and writing in output directory is ‘forced’ then files in output directory will not
+be deleted, and new files will be written to the output directory.</p>
+<p><code class="docutils literal notranslate"><span class="pre">-o,</span> <span class="pre">--output</span></code> - Specify filename (with extension) of output file. If not option is given output
+will be written to STDOUT.</p>
+<p><code class="docutils literal notranslate"><span class="pre">-v,</span> <span class="pre">--verbose</span></code> - Enable verbose logging - changes logger level from WARNING to INFO.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>get_uniprot_proteins is still under development.
+Please see the <a class="reference external" href="https://github.com/HobnobMancer/PhD_Project_Scripts/tree/master">GitHub repository</a> for the latest developments.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">pyrewton</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Emma E. M. Hobbs.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/annotations.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
