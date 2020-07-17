@@ -23,9 +23,25 @@ These tests are inteded to be run from the root repository using:
 pytest -v
 """
 
+from argparse import Namespace
+
 import pytest
 
 from pyrewton.loggers import build_logger
+
+
+@pytest.fixture
+def logger_output(test_dir):
+    logger_output = (
+        test_dir / "test_targets" / "bld_lggr_test_targets" / "test_bld_logger.log"
+    )
+    return logger_output
+
+
+@pytest.fixture
+def logger_args(logger_output):
+    argsdict = {"args": Namespace(verbose=False, log=logger_output)}
+    return argsdict
 
 
 @pytest.mark.run(order=4)
