@@ -161,7 +161,7 @@ def test_reading_input_file(
     )
 
 
-# Perform tests
+# Test parsing of input file
 
 
 @pytest.mark.run(order=9)
@@ -185,6 +185,9 @@ def test_line_parsing(tax_id_line, species_line, null_logger, monkeypatch):
 
     get_ncbi_genomes.parse_line(tax_id_line, null_logger, 1, 1)
     get_ncbi_genomes.parse_line(species_line, null_logger, 1, 1)
+
+
+# Test called to Entrez to retrieve scientific name
 
 
 @pytest.mark.run(order=11)
@@ -239,6 +242,29 @@ def test_scientific_name_retrieval_indexerror_catch(
 
 
 @pytest.mark.run(order=13)
+def test_scientific_name_retrieval_none_record(
+    gt_ncbi_gnms_test_inputs, null_logger, monkeypatch,
+):
+    """Test catching failure to return Entrez record."""
+
+    def mock_entrez_sci_call(*args, **kwargs):
+        """Mocks call to Entrez to retrieve scientific name."""
+        return
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_sci_call)
+
+    get_ncbi_genomes.get_genus_species_name(
+        gt_ncbi_gnms_test_inputs[1],
+        null_logger,
+        gt_ncbi_gnms_test_inputs[3],
+        gt_ncbi_gnms_test_inputs[0],
+    )
+
+
+# Test retrieval of taxonomy ID
+
+
+@pytest.mark.run(order=14)
 def test_taxonomy_id_retrieval(
     gt_ncbi_gnms_test_inputs,
     gt_ncbi_gnms_targets,
@@ -264,19 +290,15 @@ def test_taxonomy_id_retrieval(
     )
 
 
-@pytest.mark.run(order=14)
+@pytest.mark.run(order=15)
 def test_tax_id_check(null_logger):
     """Tests searching of input scientific name for digits"""
     get_ncbi_genomes.get_tax_id("5061", null_logger, 1, 1)
 
 
-@pytest.mark.run(order=15)
+@pytest.mark.run(order=16)
 def test_tax_id_retrieval_indexerror_catch(
-    gt_ncbi_gnms_test_inputs,
-    gt_ncbi_gnms_targets,
-    null_logger,
-    monkeypatch,
-    esearch_result_empty,
+    gt_ncbi_gnms_test_inputs, null_logger, monkeypatch, esearch_result_empty,
 ):
     """Tests handling index Error when retrieving tax ID"""
 
@@ -296,6 +318,29 @@ def test_tax_id_retrieval_indexerror_catch(
     )
 
 
+@pytest.mark.run(order=17)
+def test_tax_id_none_record(
+    gt_ncbi_gnms_test_inputs, null_logger, monkeypatch,
+):
+    """Tests get_tax_id ability to catch Error when no record returned from NCBI."""
+
+    def mock_entrez_txid_call(*args, **kwargs):
+        """Mocks call to Entrez to retrieve taxonomy ID."""
+        return
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_txid_call)
+
+    get_ncbi_genomes.get_genus_species_name(
+        gt_ncbi_gnms_test_inputs[2],
+        null_logger,
+        gt_ncbi_gnms_test_inputs[3],
+        gt_ncbi_gnms_test_inputs[0],
+    )
+
+
+# Test retrieval of accession numbers from NCBI
+
+# order from 18 onwards
 @pytest.mark.run(order=16)
 def test_df_cell_content_check(na_df_row, null_logger):
     """Test get_accession_numbers ability to catch "NA" content of cell."""
