@@ -536,16 +536,16 @@ def test_successful_elink(
     input_ncbi_df, null_logger, ncbi_args, elink_result, monkeypatch
 ):
     """Test processing of succesful elink retrieval of accession numbers."""
+    with open(elink_result) as fh:
+        result = fh
 
-    def mock_elink(*args, **kwargs):
-        """mock Entrez.elink"""
-        with open(elink_result) as fh:
-            result = fh
-        return result
+        def mock_elink(*args, **kwargs):
+            """mock Entrez.elink"""
+            return result
 
-    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_elink)
+        monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_elink)
 
-    get_ncbi_genomes.get_assembly_ids(input_ncbi_df, null_logger, ncbi_args)
+        get_ncbi_genomes.get_assembly_ids(input_ncbi_df, null_logger, ncbi_args)
 
 
 # Test posting of assembly IDs using Enrez.epost
