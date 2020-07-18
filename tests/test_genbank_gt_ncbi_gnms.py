@@ -21,6 +21,19 @@
 
 These tests are inteded to be run from the root repository using:
 pytest -v
+
+To create new xml files to mock Entrez call:
+
+For esearch and efectch go to the desired NCBI database, perform
+    the search. Click 'send to' >> 'file' >> xml
+
+For elink and epost modify the eutils URL to perform the search,
+then save the resulting webpage (this will automatically save it
+as a xml file)
+https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?
+dbfrom=Taxonomy&id=5061&db=Assembly&linkname=taxonomy_assembly
+In the above URL separate out the search criteria used for elink/
+epost by '&'.
 """
 
 import json
@@ -56,6 +69,9 @@ def gt_ncbi_gnms_test_inputs(gt_ncbi_gnms_input_dir):
     return inputs
 
 
+# create fixtures for testing parsing of input file
+
+
 @pytest.fixture
 def test_ncbi_species_file(gt_ncbi_gnms_input_dir):
     input_reading_path = gt_ncbi_gnms_input_dir / "gt_ncbi_gnms_reading_test_input.txt"
@@ -74,49 +90,45 @@ def species_line():
     return "Aspergillus niger"
 
 
+# create fixtures for testing scientific name and tax ID retrieval
+
+
 @pytest.fixture
-def efetch_result(test_dir):
+def efetch_result(gt_ncbi_gnms_input_dir):
     """Result when retrieving scientific name from NCBI."""
-    results_file = (
-        test_dir / "test_inputs" / "gt_ncbi_gnms_test_inputs" / "efetch_result.xml"
-    )
+    results_file = gt_ncbi_gnms_input_dir / "efetch_result.xml"
     return results_file
 
 
 @pytest.fixture
-def efetch_result_empty(test_dir):
+def efetch_result_empty(gt_ncbi_gnms_input_dir):
     """Result when retrieving scientific name and no name returned from NCBI."""
-    results_file = (
-        test_dir
-        / "test_inputs"
-        / "gt_ncbi_gnms_test_inputs"
-        / "efetch_result_empty.xml"
-    )
+    results_file = gt_ncbi_gnms_input_dir / "efetch_result_empty.xml"
     return results_file
 
 
 @pytest.fixture
-def esearch_result(test_dir):
+def esearch_result(gt_ncbi_gnms_input_dir):
     """Result when searching for tax ID from NCBI."""
-    results_file = (
-        test_dir / "test_inputs" / "gt_ncbi_gnms_test_inputs" / "esearch_result.xml"
-    )
+    results_file = gt_ncbi_gnms_input_dir / "esearch_result.xml"
     return results_file
 
 
 @pytest.fixture
-def esearch_result_empty(test_dir):
+def esearch_result_empty(gt_ncbi_gnms_input_dir):
     """Result when no tax ID returned when call NCBI."""
-    results_file = (
-        test_dir
-        / "test_inputs"
-        / "gt_ncbi_gnms_test_inputs"
-        / "esearch_result_empty.xml"
-    )
+    results_file = gt_ncbi_gnms_input_dir / "esearch_result_empty.xml"
     return results_file
 
 
-# define entrez mocking here!!!!
+# create fixtures for testing retrieval of accession numbers
+
+
+@pytest.fixture
+def na_df_row():
+    """Create list to present pandas series containing only 'NA'."""
+    mock_df_row = ["NA", "NA", "NA"]
+    return mock_df_row
 
 
 @pytest.fixture
@@ -129,16 +141,48 @@ def input_ncbi_df(gt_ncbi_gnms_test_inputs):
 
 
 @pytest.fixture
-def na_df_row():
-    """Create list to present pandas series containing only 'NA'."""
-    mock_df_row = ["NA", "NA", "NA"]
-    return mock_df_row
+def ncbi_args():
+    argsdict = {"args": Namespace(genbank=True, retries=10, timeout=10)}
+    return argsdict
 
 
 @pytest.fixture
-def ncbi_args():
-    argsdict = {"args": Namespace(genbank=False, retries=10, timeout=10)}
-    return argsdict
+def elink_result(gt_ncbi_gnms_input_dir):
+    results_file = gt_ncbi_gnms_input_dir / "elink_result.xml"
+    return results_file
+
+
+@pytest.fixture
+def elink_result_empty(gt_ncbi_gnms_input_dir):
+    results_file = gt_ncbi_gnms_input_dir / "elink_result_empty.xml"
+    return results_file
+
+
+@pytest.fixture
+def epost_result(gt_ncbi_gnms_input_dir):
+    results_file = gt_ncbi_gnms_input_dir / "epost_result.xml"
+    return results_file
+
+
+@pytest.fixture
+def efetch_accession_result(gt_ncbi_gnms_input_dir):
+    results_file = gt_ncbi_gnms_input_dir / "efetch_accession_result.xml"
+    return results_file
+
+
+@pytest.fixture
+def efetch_accession_result_empty(gt_ncbi_gnms_input_dir):
+    results_file = gt_ncbi_gnms_input_dir / "efetch_accession_result_empty.xml"
+    return results_file
+
+
+@pytest.fixture
+def mocked_webenv():
+    webenv = ["123", "456"]
+    return webenv
+
+
+# create fixture to store test targets
 
 
 @pytest.fixture
@@ -151,6 +195,9 @@ def gt_ncbi_gnms_targets(test_dir):
     return target_sci_name, target_tax_id, target_dir
 
 
+# Test parsing of input file
+
+
 @pytest.mark.run(order=8)
 def test_reading_input_file(
     test_ncbi_species_file, null_logger, gt_ncbi_gnms_test_inputs
@@ -159,9 +206,6 @@ def test_reading_input_file(
     get_ncbi_genomes.parse_input_file(
         test_ncbi_species_file, null_logger, gt_ncbi_gnms_test_inputs[1]
     )
-
-
-# Test parsing of input file
 
 
 @pytest.mark.run(order=9)
@@ -340,20 +384,263 @@ def test_tax_id_none_record(
 
 # Test retrieval of accession numbers from NCBI
 
-# order from 18 onwards
-@pytest.mark.run(order=16)
+
+@pytest.mark.run(order=18)
 def test_df_cell_content_check(na_df_row, null_logger):
     """Test get_accession_numbers ability to catch "NA" content of cell."""
     get_ncbi_genomes.get_accession_numbers(na_df_row, null_logger, "args")
 
 
-# order = 11
-@pytest.mark.skip(reason="mocking database call still under development")
-def test_accession_number_retrieval(input_ncbi_df, null_logger, ncbi_args):
-    """Tests multiplpe Entrez calls to NCBI to retrieve accession numbers."""
-    get_ncbi_genomes.get_accession_numbers(
-        input_ncbi_df, null_logger, ncbi_args["args"]
+@pytest.mark.run(order=19)
+def test_catch_failed_assembly_id(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
+    """Test catching failed retrieval of assembly IDs."""
+
+    def mock_assembly_ids():
+        return "NA"
+
+    monkeypatch.setattr(get_ncbi_genomes, "get_assembly_ids", mock_assembly_ids)
+
+    assert "NA" == get_ncbi_genomes.get_accession_numbers(
+        input_ncbi_df, null_logger, ncbi_args
     )
+
+
+@pytest.mark.run(order=20)
+def test_catch_failed_posting(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
+    """Test catching failed retrieval of posting assembly IDs."""
+
+    def mock_assembly_ids():
+        ids = ["123", "456"]
+        return ids
+
+    def mock_posting_result():
+        return "NA"
+
+    monkeypatch.setattr(get_ncbi_genomes, "get_assembly_ids", mock_assembly_ids)
+    monkeypatch.setattr(get_ncbi_genomes, "post_assembly_ids", mock_posting_result)
+
+    assert "NA" == get_ncbi_genomes.get_accession_numbers(
+        input_ncbi_df, null_logger, ncbi_args
+    )
+
+
+@pytest.mark.run(order=21)
+def test_catch_failed_accession_retrieval(
+    input_ncbi_df, null_logger, ncbi_args, monkeypatch
+):
+    """Test catching failed retrieval of accession numbers."""
+
+    def mock_assembly_ids():
+        ids = ["123", "456"]
+        return ids
+
+    def mock_posting_result():
+        webenv = "webenv"
+        query_key = "QK"
+        return webenv, query_key
+
+    def mock_accession_retrieval():
+        return "NA"
+
+    monkeypatch.setattr(get_ncbi_genomes, "get_assembly_ids", mock_assembly_ids)
+    monkeypatch.setattr(get_ncbi_genomes, "post_assembly_ids", mock_posting_result)
+    monkeypatch.setattr(
+        get_ncbi_genomes, "retrieve_accession_numbers", mock_accession_retrieval
+    )
+
+    assert "NA" == get_ncbi_genomes.get_accession_numbers(
+        input_ncbi_df, null_logger, ncbi_args
+    )
+
+
+@pytest.mark.run(order=22)
+def test_successful_accession_retrieval(
+    input_ncbi_df, null_logger, ncbi_args, monkeypatch
+):
+    """Test successful retrieval of accession numbers."""
+
+    def mock_assembly_ids():
+        ids = ["123", "456"]
+        return ids
+
+    def mock_posting_result():
+        webenv = "webenv"
+        query_key = "QK"
+        return webenv, query_key
+
+    def mock_accession_retrieval():
+        accessions = ["abc", "def"]
+        return accessions
+
+    monkeypatch.setattr(get_ncbi_genomes, "get_assembly_ids", mock_assembly_ids)
+    monkeypatch.setattr(get_ncbi_genomes, "post_assembly_ids", mock_posting_result)
+    monkeypatch.setattr(
+        get_ncbi_genomes, "retrieve_accession_numbers", mock_accession_retrieval
+    )
+
+    assert "abc, def" == get_ncbi_genomes.get_accession_numbers(
+        input_ncbi_df, null_logger, ncbi_args
+    )
+
+
+# Test retrieval of assembly IDs using Entrez.elink
+
+
+@pytest.mark.run(orde=23)
+def test_failed_elink_none(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
+    """Test catching of when nothing returned from Entrez.elink"""
+
+    def mock_elink():
+        """mock Entre.elink when no result is returned"""
+        return
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_elink)
+
+    get_ncbi_genomes.get_assembly_ids(input_ncbi_df, null_logger, ncbi_args)
+
+
+@pytest.mark.run(orde=23)
+def test_failed_elink(
+    input_ncbi_df, null_logger, ncbi_args, monkeypatch, elink_result_empty
+):
+    """Test catching of when no aseembly IDs retrieved from Entrez.elink"""
+
+    def mock_elink():
+        """mock Entre.elink when no result is returned"""
+        with open(elink_result_empty) as fh:
+            result = fh
+        return result
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_elink)
+
+    get_ncbi_genomes.get_assembly_ids(input_ncbi_df, null_logger, ncbi_args)
+
+
+@pytest.mark.run(order=24)
+def test_successful_elink(
+    input_ncbi_df, null_logger, ncbi_args, elink_result, monkeypatch
+):
+    """Test processing of succesful elink retrieval of accession numbers."""
+
+    def mock_elink(elink_result):
+        """mock Entrez.elink"""
+        with open(elink_result) as fh:
+            result = fh
+        return result
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_elink)
+
+    get_ncbi_genomes.get_assembly_ids(input_ncbi_df, null_logger, ncbi_args)
+
+
+# Test posting of assembly IDs using Enrez.epost
+
+
+@pytest.mark.run(order=25)
+def test_failed_epost(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
+    """Test catching when nothing returned from Entrez.epost."""
+
+    def mock_epost():
+        return
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_epost)
+
+    assert "NA" == get_ncbi_genomes.post_assemlby_ids(
+        ["123", "456"], input_ncbi_df, null_logger, ncbi_args
+    )
+
+
+@pytest.mark.run(order=26)
+def test_successful_epost(
+    input_ncbi_df, null_logger, ncbi_args, monkeypatch, epost_result
+):
+    """Test successful posting of assembly IDs using Entrez.epost."""
+
+    def mock_epost(epost_result):
+        with open(epost_result) as fh:
+            result = fh
+        return result
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_epost)
+
+    get_ncbi_genomes.post_assemlby_ids(
+        ["123", "456"], input_ncbi_df, null_logger, ncbi_args
+    )
+
+
+# Test retrieval of accession numbers using WebEnv data
+
+
+@pytest.mark.run(order=27)
+def test_failed_accession_retrieval_none(
+    input_ncbi_df, null_logger, ncbi_args, monkeypatch, mocked_webenv
+):
+    """Test handling accession number retrieval when nothing returned from Entrez.efetch."""
+
+    def mock_efetch():
+        return
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_efetch)
+
+    assert "NA" == get_ncbi_genomes.retrieve_accession_numbers(
+        mocked_webenv, input_ncbi_df, null_logger, ncbi_args
+    )
+
+
+@pytest.mark.run(order=28)
+def test_failed_accession_retrieval(
+    input_ncbi_df,
+    null_logger,
+    ncbi_args,
+    monkeypatch,
+    efetch_accession_result_empty,
+    mocked_webenv,
+):
+    """Test handling data when no accession number contained in result from Entrez.efetch."""
+
+    def mock_efetch(efetch_accession_result_empty):
+        with open(efetch_accession_result_empty) as fh:
+            result = fh
+        return result
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_efetch)
+
+    assert "NA" == get_ncbi_genomes.retrieve_accession_numbers(
+        mocked_webenv, input_ncbi_df, null_logger, ncbi_args
+    )
+
+
+@pytest.mark.run(order=29)
+def test_successful_accession_number_retrieval(
+    input_ncbi_df,
+    null_logger,
+    ncbi_args,
+    monkeypatch,
+    efetch_accession_result,
+    mocked_webenv,
+):
+    """Test processing of successful retrieval of accession numbers from Entrez.efetch."""
+
+    def mock_efetch(efetch_accession_result):
+        with open(efetch_accession_result) as fh:
+            result = fh
+        return result
+
+    def mock_genbank_download():
+        return
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_efetch)
+    monkeypatch.setattr(get_ncbi_genomes, "get_genbank_files", mock_genbank_download)
+
+    get_ncbi_genomes.retrieve_accession_numbers(
+        mocked_webenv, input_ncbi_df, null_logger, ncbi_args
+    )
+
+
+# Test coordination of downloading GenBank files
+
+
+# Test creaction of URL for GenBank download
 
 
 @pytest.mark.run(order=12)
@@ -361,6 +648,8 @@ def test_compiling_url(null_logger):
     """Test generation of URL for downloading GenBank files."""
     get_ncbi_genomes.compile_url("test_accession", "test_name", null_logger, "suffix")
 
+
+# Test downloading of a GenBank file
 
 # order = 13
 @pytest.mark.skip(reason="mocking database call still under development")
@@ -374,3 +663,7 @@ def test_genbank_download(ncbi_args, gt_ncbi_gnms_targets, null_logger):
         "test_accession",
         "test_file",
     )
+
+
+# Test coordination of retrieving all data from NCBI
+
