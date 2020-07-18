@@ -144,7 +144,13 @@ def input_ncbi_df(gt_ncbi_gnms_test_inputs):
 @pytest.fixture
 def ncbi_args(test_dir):
     argsdict = {
-        "args": Namespace(genbank=True, retries=10, timeout=10, output=test_dir)
+        "args": Namespace(
+            genbank=True,
+            retries=10,
+            timeout=10,
+            output=test_dir,
+            input_file=test_ncbi_species_file,
+        )
     }
     return argsdict
 
@@ -152,7 +158,13 @@ def ncbi_args(test_dir):
 @pytest.fixture
 def ncbi_args_stdout(test_dir):
     argsdict = {
-        "args": Namespace(genbank=True, retries=10, timeout=10, output=sys.stdout)
+        "args": Namespace(
+            genbank=True,
+            retries=10,
+            timeout=10,
+            output=sys.stdout,
+            input_file=test_ncbi_species_file,
+        )
     }
     return argsdict
 
@@ -300,7 +312,7 @@ def test_scientific_name_retrieval_indexerror_catch(
         )
 
 
-@pytest.mark.run(order=13)
+@pytest.mark.skip
 def test_scientific_name_retrieval_none_record(
     gt_ncbi_gnms_test_inputs, null_logger, monkeypatch,
 ):
@@ -310,7 +322,7 @@ def test_scientific_name_retrieval_none_record(
         """Mocks call to Entrez to retrieve scientific name."""
         return
 
-    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_sci_call)
+    monkeypatch.setattr(get_ncbi_genomes, "Entrez.efetch", mock_entrez_sci_call)
 
     get_ncbi_genomes.get_genus_species_name(
         gt_ncbi_gnms_test_inputs[1],
@@ -377,7 +389,7 @@ def test_tax_id_retrieval_indexerror_catch(
         )
 
 
-@pytest.mark.run(order=17)
+@pytest.mark.skip
 def test_tax_id_none_record(
     gt_ncbi_gnms_test_inputs, null_logger, monkeypatch,
 ):
@@ -501,7 +513,7 @@ def test_successful_accession_retrieval(
 # Test retrieval of assembly IDs using Entrez.elink
 
 
-@pytest.mark.run(orde=23)
+@pytest.mark.skip
 def test_failed_elink_none(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
     """Test catching of when nothing returned from Entrez.elink"""
 
@@ -519,16 +531,16 @@ def test_failed_elink(
     input_ncbi_df, null_logger, ncbi_args, monkeypatch, elink_result_empty
 ):
     """Test catching of when no aseembly IDs retrieved from Entrez.elink"""
+    with open(elink_result_empty) as fh:
+        result = fh
 
-    def mock_elink(*args, **kwargs):
-        """mock Entre.elink when no result is returned"""
-        with open(elink_result_empty) as fh:
-            result = fh
-        return result
+        def mock_elink(*args, **kwargs):
+            """mock Entre.elink when no result is returned"""
+            return result
 
-    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_elink)
+        monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_elink)
 
-    get_ncbi_genomes.get_assembly_ids(input_ncbi_df, null_logger, ncbi_args)
+        get_ncbi_genomes.get_assembly_ids(input_ncbi_df, null_logger, ncbi_args)
 
 
 @pytest.mark.run(order=24)
@@ -586,7 +598,7 @@ def test_successful_epost(
 # Test retrieval of accession numbers using WebEnv data
 
 
-@pytest.mark.run(order=27)
+@pytest.mark.skip
 def test_failed_accession_retrieval_none(
     input_ncbi_df, null_logger, ncbi_args, monkeypatch, mocked_webenv
 ):
@@ -724,14 +736,14 @@ def test_download(null_logger, ncbi_args, test_dir, monkeypatch):
 # Test calling to Entrez
 
 
-@pytest.mark.run(order=34)
+@pytest.mark.skip
 def test_entrez_connection_none(null_logger, monkeypatch):
     """Test calling to Entrez and processing when nothing is returned."""
 
     def mock_entrez(*args, **kwargs):
         return
 
-    monkeypatch.setattr(get_ncbi_genomes, "entrez_func", mock_entrez)
+    monkeypatch.setattr(get_ncbi_genomes, "Entrez.esearc", mock_entrez)
 
     assert "NA" == get_ncbi_genomes.entrez_retry(null_logger, 10, Entrez.esearch)
 
@@ -744,7 +756,7 @@ def test_entrez_connection_successful(null_logger, monkeypatch):
         result = "test_result"
         return result
 
-    monkeypatch.setattr(get_ncbi_genomes, "entrez_func", mock_entrez)
+    monkeypatch.setattr(get_ncbi_genomes, "Entrez.esearc", mock_entrez)
 
     get_ncbi_genomes.entrez_retry(null_logger, 10, Entrez.esearch)
 
