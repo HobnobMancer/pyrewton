@@ -244,7 +244,18 @@ def get_genus_species_name(taxonomy_id, logger, line_number, retries):
     with entrez_retry(
         logger, retries, Entrez.efetch, db="Taxonomy", id=taxonomy_id, retmode="xml"
     ) as handle:
-        record = Entrez.read(handle)
+        try:
+            record = Entrez.read(handle)
+        # if no record is returned from call to Entrez
+        except TypeError:
+            logger.error(
+                (
+                    f"Entrez failed to retrieve scientific name, for NCBI:txid{taxonomy_id}.\n"
+                    "Potential typo in taxonomy ID, check input. Returned null value 'NA'."
+                ),
+                exc_info=1,
+            )
+            return "NA"
 
     # extract scientific name from record
     try:
@@ -291,7 +302,18 @@ def get_tax_id(genus_species, logger, line_number, retries):
         with entrez_retry(
             logger, retries, Entrez.esearch, db="Taxonomy", term=genus_species
         ) as handle:
-            record = Entrez.read(handle)
+            try:
+                record = Entrez.read(handle)
+            # if no record is returned from call to Entrez
+            except TypeError:
+                logger.error(
+                    (
+                        f"Entrez failed to retrieve scientific name, for NCBI:txid{taxonomy_id}.\n"
+                        "Potential typo in taxonomy ID, check input. Returned null value 'NA'."
+                    ),
+                    exc_info=1,
+                )
+                return "NA"
 
     # extract taxonomy ID from record
     try:
@@ -662,7 +684,7 @@ def entrez_retry(logger, retries, entrez_func, *func_args, **func_kwargs):
         logger.error(
             "Network error encountered too many times. Exiting attempt to call to NCBI"
         )
-        return "NA"
+        return
 
     return record
 
