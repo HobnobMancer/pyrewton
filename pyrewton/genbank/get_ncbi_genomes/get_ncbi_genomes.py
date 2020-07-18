@@ -308,7 +308,7 @@ def get_tax_id(genus_species, logger, line_number, retries):
             except TypeError:
                 logger.error(
                     (
-                        f"Entrez failed to retrieve scientific name, for NCBI:txid{taxonomy_id}.\n"
+                        f"Entrez failed to retrieve scientific name, for {genus_species}.\n"
                         "Potential typo in taxonomy ID, check input. Returned null value 'NA'."
                     ),
                     exc_info=1,
@@ -376,7 +376,18 @@ def get_accession_numbers(df_row, logger, args):
         db="Assembly",
         linkname="taxonomy_assembly",
     ) as assembly_number_handle:
-        assembly_number_record = Entrez.read(assembly_number_handle)
+        try:
+            assembly_number_record = Entrez.read(assembly_number_handle)
+        # if no record is returned from call to Entrez
+        except TypeError:
+            logger.error(
+                (
+                    f"Entrez failed to retrieve accession numbers for NCBI:txid{df_row[2]}.\n"
+                    "Returned null value 'NA'."
+                ),
+                exc_info=1,
+            )
+            return "NA"
 
     # test record was returned, if failed to return exit retrieval of assembly IDs
     if assembly_number_record == "NA":
@@ -410,12 +421,14 @@ def get_accession_numbers(df_row, logger, args):
     # compile list of ids in suitable format for epost
     id_post_list = str(",".join(assembly_id_list))
     # Post all assembly IDs to Entrez-NCBI for downstream pulldown of accession numbers
-    epost_search_results = Entrez.read(
-        entrez_retry(logger, args.retries, Entrez.epost, "Assembly", id=id_post_list)
-    )
-
-    # test record was returned, if failed to return exit retrieval of assembly IDs
-    if epost_search_results == "NA":
+    try:
+        epost_search_results = Entrez.read(
+            entrez_retry(
+                logger, args.retries, Entrez.epost, "Assembly", id=id_post_list
+            )
+        )
+    # if no record is returned from call to Entrez
+    except TypeError:
         logger.error(
             (
                 f"Entrez failed to post assembly IDs, for {df_row[2]}.\n"
@@ -423,7 +436,7 @@ def get_accession_numbers(df_row, logger, args):
             ),
             exc_info=1,
         )
-        return epost_search_results
+        return "NA"
 
     # Retrieve web environment and query key from Entrez epost
     epost_webenv = epost_search_results["WebEnv"]
@@ -444,17 +457,18 @@ def get_accession_numbers(df_row, logger, args):
         rettype="docsum",
         retmode="xml",
     ) as accession_handle:
-        accession_record = Entrez.read(accession_handle, validate=False)
-
-    if accession_record == "NA":
-        logger.error(
-            (
-                f"Entrez failed to retireve accession numbers, for {df_row[2]}."
-                "Exiting retrieval of accession numbers, and returning null value 'NA'"
-            ),
-            exc_info=1,
-        )
-        return "NA"
+        try:
+            accession_record = Entrez.read(accession_handle, validate=False)
+        # if no record is returned from call to Entrez
+        except TypeError:
+            logger.error(
+                (
+                    f"Entrez failed to retireve accession numbers, for {df_row[2]}."
+                    "Exiting retrieval of accession numbers, and returning null value 'NA'"
+                ),
+                exc_info=1,
+            )
+            return "NA"
 
     # Extract accession numbers from document summary
     for index_number in tqdm(
