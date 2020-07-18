@@ -366,6 +366,58 @@ def get_accession_numbers(df_row, logger, args):
     # Retrieve all IDs of genomic assemblies for taxonomy ID
 
     logger.info(f"Retrieving assembly IDs for {df_row[2]}")
+    assembly_id_list = get_assembly_ids(df_row, logger, args)
+
+    # Check if assembly ID retrieval was successful
+    if assembly_id_list == "NA":
+        logger.error(
+            (
+                f"Failed to retrieve accession numbers for {df_row[2]}.\n"
+                "Returning 'NA' for accession numbers."
+            )
+        )
+        return "NA"
+
+    logger.info(f"Posting assembly IDs for {df_row[2]} to retrieve accession numbers")
+    epost_webenv_data = post_assemlby_ids(assembly_id_list, df_row, logger, args)
+
+    # Check web environment data was retrieved from epost
+    if epost_webenv_data == "NA":
+        logger.error(
+            (
+                f"Failed to retrieve accession numbers for {df_row[2]}.\n"
+                "Returning 'NA' for accession numbers."
+            )
+        )
+        return "NA"
+
+    logger.info(f"Retrieving accession numbers for {df_row[2]}")
+    accession_numbers = retrieve_accession_numbers(
+        epost_webenv_data, df_row, logger, args
+    )
+
+    if accession_numbers == "NA":
+        logger.error(
+            (
+                f"Failed to retrieve accession numbers for {df_row[2]}.\n"
+                "Returning 'NA' for accession numbers."
+            )
+        )
+        return "NA"
+
+    logger.info(f"Finished processing retrieval accession numbers for {df_row[2]}")
+
+    return accession_numbers
+
+
+def get_assembly_ids(df_row, logger, args):
+    """Coordiante retrieval of assembly IDs from Entrez.
+
+    :df_rows: Pandas series, row from dataframe
+    :logger: logger object
+    :args: parser arguments
+
+    Return list of assembly IDs """
     # df_row[2][9:] removes 'NCBI:txid' prefix
     with entrez_retry(
         logger,
@@ -405,7 +457,18 @@ def get_accession_numbers(df_row, logger, args):
         )
         return "NA"
 
-    logger.info(f"Posting assembly IDs for {df_row[2]} to retrieve accession numbers")
+    return assembly_id_list
+
+
+def post_assemlby_ids(assembly_id_list, df_row, logger, args):
+    """Coordinate posting of assembly IDs to Entrez and retrieval of webenv and query key.
+
+    :param assembly_id_list: list, list of assmebly IDs
+    :param df_row: pd series, row from dataframe
+    :param logger: logger object
+    :param args: parser arguments
+
+    Return WebEnv and Query Key from Entrez.epost"""
 
     # compile list of ids in suitable format for epost
     id_post_list = str(",".join(assembly_id_list))
@@ -431,9 +494,12 @@ def get_accession_numbers(df_row, logger, args):
     epost_webenv = epost_search_results["WebEnv"]
     epost_query_key = epost_search_results["QueryKey"]
 
-    logger.info(f"Retrieving accession numbers for {df_row[2]}")
+    return epost_webenv, epost_query_key
 
-    # Pull down all accession numbers
+
+def retrieve_accession_numbers(webenv, df_row, logger, args):
+    """Retrieve accession numbers from epost web environment."""
+    # create empty list to store accession numbers
     ncbi_accession_numbers_list = []
 
     with entrez_retry(
@@ -441,8 +507,8 @@ def get_accession_numbers(df_row, logger, args):
         args.retries,
         Entrez.efetch,
         db="Assembly",
-        query_key=epost_query_key,
-        WebEnv=epost_webenv,
+        query_key=webenv[1],
+        WebEnv=webenv[0],
         rettype="docsum",
         retmode="xml",
     ) as accession_handle:
@@ -496,8 +562,6 @@ def get_accession_numbers(df_row, logger, args):
             )
 
         index_number += 1
-
-    logger.info(f"Finished processing retrieval accession numbers for {df_row[2]}")
 
     # Process accession numbers into human readable list for dataframe
     ncbi_accession_numbers = ", ".join(ncbi_accession_numbers_list)
@@ -649,7 +713,7 @@ def download_file(
             f"Finished downloading GenBank file for {accession_number}", exc_info=1
         )
 
-        return
+    return
 
 
 def entrez_retry(logger, retries, entrez_func, *func_args, **func_kwargs):
