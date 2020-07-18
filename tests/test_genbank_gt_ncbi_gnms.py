@@ -664,6 +664,9 @@ def test_coordinating_genbank_download_stdout(
     def mocK_download():
         return
 
+    monkeypatch.setattr(get_ncbi_genomes, "compile_url", mock_compile_url)
+    monkeypatch.setattr(get_ncbi_genomes, "download_file", mocK_download)
+
     get_ncbi_genomes.get_genbank_files(
         "accession", "name", null_logger, ncbi_args_stdout, suffix=".gbff"
     )
@@ -679,6 +682,9 @@ def test_coordinating_genbank_download(null_logger, ncbi_args, monkeypatch):
 
     def mocK_download():
         return
+
+    monkeypatch.setattr(get_ncbi_genomes, "compile_url", mock_compile_url)
+    monkeypatch.setattr(get_ncbi_genomes, "download_file", mocK_download)
 
     get_ncbi_genomes.get_genbank_files(
         "accession", "name", null_logger, ncbi_args, suffix=".gbff"
