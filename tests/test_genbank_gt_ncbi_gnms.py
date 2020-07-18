@@ -38,6 +38,7 @@ epost by '&'.
 
 import json
 import pytest
+import sys
 
 from argparse import Namespace
 
@@ -141,8 +142,18 @@ def input_ncbi_df(gt_ncbi_gnms_test_inputs):
 
 
 @pytest.fixture
-def ncbi_args():
-    argsdict = {"args": Namespace(genbank=True, retries=10, timeout=10)}
+def ncbi_args(test_dir):
+    argsdict = {
+        "args": Namespace(genbank=True, retries=10, timeout=10, output=test_dir)
+    }
+    return argsdict
+
+
+@pytest.fixture
+def ncbi_args_stdout(test_dir):
+    argsdict = {
+        "args": Namespace(genbank=True, retries=10, timeout=10, output=sys.stdout)
+    }
     return argsdict
 
 
@@ -640,10 +651,44 @@ def test_successful_accession_number_retrieval(
 # Test coordination of downloading GenBank files
 
 
+@pytest.mark.run(order=30)
+def test_coordinating_genbank_download_stdout(
+    null_logger, ncbi_args_stdout, monkeypatch
+):
+    """Test coordination of GenBank file download, when output is stdout"""
+
+    def mock_compile_url():
+        result = ["url", "filestem"]
+        return result
+
+    def mocK_download():
+        return
+
+    get_ncbi_genomes.get_genbank_files(
+        "accession", "name", null_logger, ncbi_args_stdout, suffix=".gbff"
+    )
+
+
+@pytest.mark.run(order=31)
+def test_coordinating_genbank_download(null_logger, ncbi_args, monkeypatch):
+    """Test coordination of GenBank file download, when output is not stdout"""
+
+    def mock_compile_url():
+        result = ["url", "filestem"]
+        return result
+
+    def mocK_download():
+        return
+
+    get_ncbi_genomes.get_genbank_files(
+        "accession", "name", null_logger, ncbi_args, suffix=".gbff"
+    )
+
+
 # Test creaction of URL for GenBank download
 
 
-@pytest.mark.run(order=12)
+@pytest.mark.run(order=32)
 def test_compiling_url(null_logger):
     """Test generation of URL for downloading GenBank files."""
     get_ncbi_genomes.compile_url("test_accession", "test_name", null_logger, "suffix")
@@ -651,19 +696,97 @@ def test_compiling_url(null_logger):
 
 # Test downloading of a GenBank file
 
-# order = 13
-@pytest.mark.skip(reason="mocking database call still under development")
-def test_genbank_download(ncbi_args, gt_ncbi_gnms_targets, null_logger):
-    """Test downloading of GenBank file."""
+
+@pytest.mark.run(order=33)
+def test_download(null_logger, ncbi_args, test_dir, monkeypatch):
+    """Tests downloading of GenBank file"""
+
+    def mock_url_open():
+        return "open URL"
+
+    monkeypatch.setattr(get_ncbi_genomes, "download_file", mock_url_open)
+
     get_ncbi_genomes.download_file(
-        "http://httpbin.org/get",
-        ncbi_args["args"],
-        gt_ncbi_gnms_targets[2],
-        null_logger,
-        "test_accession",
-        "test_file",
+        "URL", ncbi_args, test_dir, null_logger, "accession", "GenBank"
     )
+
+
+# Test calling to Entrez
+
+
+@pytest.mark.run(order=34)
+def test_entrez_connection_none(null_logger, monkeypatch):
+    """Test calling to Entrez and processing when nothing is returned."""
+
+    def mock_entrez():
+        return
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_func", mock_entrez)
+
+    assert "NA" == get_ncbi_genomes.entrez_retry(null_logger, 10, Entrez.esearch)
+
+
+@pytest.mark.run(order=35)
+def test_entrez_connection_successful(null_logger, monkeypatch):
+    """Test calling to Entrez and processing when something is returned."""
+
+    def mock_entrez():
+        result = "test_result"
+        return result
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_func", mock_entrez)
+
+    get_ncbi_genomes.entrez_retry(null_logger, 10, Entrez.esearch)
 
 
 # Test coordination of retrieving all data from NCBI
 
+
+@pytest.mark.run(order=36)
+def test_script_coordination_stdout(
+    input_ncbi_df, null_logger, ncbi_args_stdout, monkeypatch
+):
+    """Test coordination of NCBI data retrieval of when output is stdout"""
+
+    def mock_parse_input_file(input_ncbi_df):
+        df = input_ncbi_df
+        return df
+
+    def mock_accession_retrieval():
+        accessions = ["123456"]
+        return accessions
+
+    def mock_writing_out_df():
+        return
+
+    monkeypatch.setattr(get_ncbi_genomes, "parse_input_file", mock_parse_input_file)
+    monkeypatch.setattr(
+        get_ncbi_genomes, "get_accession_numbers", mock_accession_retrieval
+    )
+    monkeypatch.setattr(get_ncbi_genomes, "write_out_dataframe", mock_writing_out_df)
+
+    get_ncbi_genomes.get_ncbi_data(null_logger, ncbi_args_stdout)
+
+
+@pytest.mark.run(order=37)
+def test_script_coordination(null_logger, ncbi_args, monkeypatch):
+    """Test coordination of NCBI data retrieval of when output is not stdout"""
+
+    def mock_parse_input_file(input_ncbi_df):
+        df = input_ncbi_df
+        return df
+
+    def mock_accession_retrieval():
+        accessions = ["123456"]
+        return accessions
+
+    def mock_writing_out_df():
+        return
+
+    monkeypatch.setattr(get_ncbi_genomes, "parse_input_file", mock_parse_input_file)
+    monkeypatch.setattr(
+        get_ncbi_genomes, "get_accession_numbers", mock_accession_retrieval
+    )
+    monkeypatch.setattr(get_ncbi_genomes, "write_out_dataframe", mock_writing_out_df)
+
+    get_ncbi_genomes.get_ncbi_data(null_logger, ncbi_args)
