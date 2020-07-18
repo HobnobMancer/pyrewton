@@ -31,14 +31,18 @@
 :cmd_args --verbose: set logging level to 'INFO'
 
 :func build_parser: create parser object
-:func main: generate a dataframe of scientific names, taxonomy IDs and accession numbers
+:func main: coordinate script setup (args, logger)
+:func get_ncbi_data: generate a dataframe of scientific names, taxonomy IDs and accession numbers
 :func build_logger: creates logger object
 :func make_output_directory: create directory for genomic files to be written to
 :func parse_input_file: parse input file
 :func parse_line: coordinate retrieval of scientific names and taxonomy IDs
 :func get_genus_species_name: retrieve scientific name from taxonomy ID
 :func get_tax_id: retrieve NCBI taxonomy ID from scientific name
-:func get_accession_numbers: retrieves all accessions associated to given taxonomy ID
+:func get_accession_numbers: coordinate retrieavl of all accessions for a given taxonomy ID
+:func get_assembly_ids: retrieve ids of assemblies directly linked to species
+:func post_assembly_ids: Entrez.epost to post assembly IDs and retrieve WebEnv data
+:func retrieve_accession_numbers: use WebEnv data to retrieve accession numbers for post
 :func get_genbank_files: organise download of genbank files
 :func compile_URL: create URL for downloading file
 :func download_file: download file using provided URL
@@ -111,6 +115,9 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     if args.output is not sys.stdout:
         make_output_directory(args, logger)
 
+
+def get_ncbi_data(logger, args):
+    """Coordinate retrieval of data from NCBI."""
     # Invoke main usage of programme
     # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
     species_table = parse_input_file(args.input_file, logger, args.retries)
