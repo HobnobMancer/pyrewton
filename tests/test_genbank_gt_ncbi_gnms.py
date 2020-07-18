@@ -341,7 +341,7 @@ def test_taxonomy_id_retrieval(
 
         monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_txid_call)
 
-        assert gt_ncbi_gnms_targets[1] == get_ncbi_genomes.get_genus_species_name(
+        assert gt_ncbi_gnms_targets[1] == get_ncbi_genomes.get_tax_id(
             gt_ncbi_gnms_test_inputs[2],
             null_logger,
             gt_ncbi_gnms_test_inputs[3],
