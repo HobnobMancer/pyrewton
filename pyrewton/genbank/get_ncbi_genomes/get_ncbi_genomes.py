@@ -389,17 +389,6 @@ def get_accession_numbers(df_row, logger, args):
             )
             return "NA"
 
-    # test record was returned, if failed to return exit retrieval of assembly IDs
-    if assembly_number_record == "NA":
-        logger.error(
-            (
-                f"Entrez failed to retrieve assembly IDs, for {df_row[2]}.\n"
-                "Returning null value 'NA' for accession numbers."
-            ),
-            exc_info=1,
-        )
-        return assembly_number_record
-
     # extract assembly IDs from record
     try:
         assembly_id_list = [
