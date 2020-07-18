@@ -115,6 +115,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     if args.output is not sys.stdout:
         make_output_directory(args, logger)
 
+    get_ncbi_data(logger, args)
+
 
 def get_ncbi_data(logger, args):
     """Coordinate retrieval of data from NCBI."""
@@ -691,8 +693,10 @@ def download_file(
         )
         return
 
-    if out_file_path.exists():
-        logger.warning(f"Output file {out_file_path} exists, not downloading")
+    if args.output is not sys.stdout:
+        if out_file_path.exists():
+            logger.warning(f"Output file {out_file_path} exists, not downloading")
+            return
     else:
         # Download file
         logger.info("Opened URL and parsed metadata")
