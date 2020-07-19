@@ -37,7 +37,8 @@ def build_parser(argv: Optional[List] = None):
     # Add arguments to parser
     # Add user email address
     parser.add_argument(
-        "-u" "--user",
+        "-u",
+        "--user",
         type=str,
         metavar="user email address",
         default=None,
