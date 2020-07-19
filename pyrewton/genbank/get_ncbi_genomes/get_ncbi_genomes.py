@@ -256,7 +256,7 @@ def get_genus_species_name(taxonomy_id, logger, line_number, retries):
         try:
             record = Entrez.read(handle)
         # if no record is returned from call to Entrez
-        except TypeError:
+        except (TypeError, AttributeError) as error:
             logger.error(
                 (
                     f"Entrez failed to retrieve scientific name, for NCBI:txid{taxonomy_id}.\n"
@@ -314,7 +314,7 @@ def get_tax_id(genus_species, logger, line_number, retries):
             try:
                 record = Entrez.read(handle)
             # if no record is returned from call to Entrez
-            except TypeError:
+            except (TypeError, AttributeError) as error:
                 logger.error(
                     (
                         f"Entrez failed to retrieve scientific name, for {genus_species}.\n"
@@ -388,7 +388,7 @@ def get_accession_numbers(df_row, logger, args):
         return "NA"
 
     logger.info(f"Posting assembly IDs for {df_row[2]} to retrieve accession numbers")
-    epost_webenv_data = post_assemlby_ids(assembly_id_list, df_row, logger, args)
+    epost_webenv_data = post_assembly_ids(assembly_id_list, df_row, logger, args)
 
     # Check web environment data was retrieved from epost
     if epost_webenv_data == "NA":
@@ -440,7 +440,7 @@ def get_assembly_ids(df_row, logger, args):
         try:
             assembly_number_record = Entrez.read(assembly_number_handle)
         # if no record is returned from call to Entrez
-        except TypeError:
+        except (TypeError, AttributeError) as error:
             logger.error(
                 (
                     f"Entrez failed to retrieve accession numbers for NCBI:txid{df_row[2]}.\n"
@@ -469,7 +469,7 @@ def get_assembly_ids(df_row, logger, args):
     return assembly_id_list
 
 
-def post_assemlby_ids(assembly_id_list, df_row, logger, args):
+def post_assembly_ids(assembly_id_list, df_row, logger, args):
     """Coordinate posting of assembly IDs to Entrez and retrieval of webenv and query key.
 
     :param assembly_id_list: list, list of assmebly IDs
@@ -489,7 +489,7 @@ def post_assemlby_ids(assembly_id_list, df_row, logger, args):
             )
         )
     # if no record is returned from call to Entrez
-    except TypeError:
+    except (TypeError, AttributeError) as error:
         logger.error(
             (
                 f"Entrez failed to post assembly IDs, for {df_row[2]}.\n"
@@ -524,7 +524,7 @@ def retrieve_accession_numbers(webenv, df_row, logger, args):
         try:
             accession_record = Entrez.read(accession_handle, validate=False)
         # if no record is returned from call to Entrez
-        except TypeError:
+        except (TypeError, AttributeError) as error:
             logger.error(
                 (
                     f"Entrez failed to retireve accession numbers, for {df_row[2]}."
@@ -740,9 +740,7 @@ def entrez_retry(logger, retries, entrez_func, *func_args, **func_kwargs):
 
     Returns record.
     """
-    record = None
-    retries = 10
-    tries = 0
+    record, retries, tries = None, 10, 0
 
     while record is None and tries < retries:
         try:
