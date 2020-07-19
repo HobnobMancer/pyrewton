@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE eLinkResult PUBLIC "-//NLM//DTD elink 20101123//EN" "https://eutils.ncbi.nlm.nih.gov/eutils/dtd/20101123/elink.dtd">
+<eLinkResult>
+
+  <LinkSet>
+    <DbFrom>Taxonomy</DbFrom>
+    <IdList>
+      <Id>5061</Id>
+    </IdList>
+    <LinkSetDb>
+      <DbTo>assembly</DbTo>
+      <LinkName>taxonomy_assembly</LinkName>
+      
+        <Link>
+				<Id>6231181</Id>
+			</Link>
+        <Link>
+				<Id>5424531</Id>
+			</Link>
+      
+    </LinkSetDb>
+  </LinkSet>
+</eLinkResult>
