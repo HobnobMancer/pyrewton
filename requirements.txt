@@ -13,5 +13,6 @@ pylint
 pytest
 pytest-cov
 pytest-ordering
-sphinx_rtd_theme
+sphinx
+sphinx-rtd-theme
 tqdm

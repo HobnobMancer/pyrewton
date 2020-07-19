@@ -78,10 +78,3 @@ following the `link <https://github.com/HobnobMancer/PhD_Project_Scripts/issues>
 .. note::
    pyrewton is still in development, and further functionalities are being added.
    Please see the `GitHub repository <https://github.com/HobnobMancer/PhD_Project_Scripts/tree/master>`_ for the latest developments.
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
