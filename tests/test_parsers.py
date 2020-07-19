@@ -25,6 +25,8 @@ pytest -v
 
 import pytest
 
+from argparse import Namespace
+
 from pyrewton.parsers import (
     parser_get_ncbi_genomes,
     parser_get_genbank_annotations,
