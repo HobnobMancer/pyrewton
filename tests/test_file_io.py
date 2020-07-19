@@ -82,11 +82,9 @@ def test_output_dir_creation_n_true(file_io_args_n_true, null_logger):
 
 
 @pytest.mark.run(order=8)
-def test_writing_df_f_false(testing_df, null_logger, testing_df_output_file):
+def test_writing_df_f_false(testing_df, null_logger, test_dir):
     """Tests function for writing out created dataframe when force is false"""
-    file_io.write_out_dataframe(
-        testing_df, null_logger, testing_df_output_file, False, False
-    )
+    file_io.write_out_dataframe(testing_df, null_logger, test_dir, False, False)
 
 
 @pytest.mark.run(order=9)
@@ -98,10 +96,10 @@ def test_writing_df_f_true(testing_df, null_logger, testing_df_output_file):
 
 
 @pytest.mark.run(order=10)
-def test_writing_named_df_f_false(testing_df, null_logger, testing_df_output_dir):
+def test_writing_named_df_f_false(testing_df, null_logger, test_dir):
     """Tests function for writing out a prenamed dataframe"""
     file_io.write_out_pre_named_dataframe(
-        testing_df, "unitesting", null_logger, testing_df_output_dir, False, False
+        testing_df, "unitesting", null_logger, test_dir, False, False
     )
 
 
