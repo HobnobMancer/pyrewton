@@ -132,9 +132,7 @@ def get_ncbi_data(logger, args):
 
     # Write out dataframe
     if args.dataframe is not sys.stdout:
-        write_out_dataframe(
-            species_table, logger, args.dataframe, args.force, args.nodelete
-        )
+        write_out_dataframe(species_table, logger, args.dataframe, args.force)
     else:
         species_table.to_csv(args.dataframe)
 
