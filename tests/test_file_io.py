@@ -32,6 +32,39 @@ import pandas as pd
 from pyrewton import file_io
 
 
+# Create general fixtures for tests in this file
+
+
+@pytest.fixture
+def testing_output_dir(test_dir):
+    test_outputs = test_dir / "test_targets" / "file_io_test_targets"
+    return test_outputs
+
+
+# Create fixtures for testing make_output_directory
+
+
+@pytest.fixture
+def making_output_dir(testing_output_dir):
+    output_dir = testing_output_dir / "test_output_dir"
+    return output_dir
+
+
+@pytest.fixture
+def args_make_dir_nd_true(making_output_dir):
+    argsdict = {"args": Namespace(output=making_output_dir, nodelete=True, force=True)}
+    return argsdict
+
+
+@pytest.fixture
+def args_make_dir_nd_false(making_output_dir):
+    argsdict = {"args": Namespace(output=making_output_dir, nodelete=False, force=True)}
+    return argsdict
+
+
+# Create fixtures for testing writing out a dataframe
+
+
 @pytest.fixture
 def testing_df():
     df_data = [["A", "B", "C"]]
@@ -40,72 +73,57 @@ def testing_df():
 
 
 @pytest.fixture
-def testing_df_output_file(test_dir):
+def df_output_file(test_dir):
     df_output = (
         test_dir / "test_targets" / "file_io_test_targets" / "test_writing_df.csv"
     )
     return df_output
 
 
-@pytest.fixture
-def testing_df_output_dir(test_dir):
-    df_output = test_dir / "test_targets" / "file_io_test_targets"
-    return df_output
-
-
-@pytest.fixture
-def file_io_args_n_false(testing_df_output_dir):
-    argsdict = {
-        "args": Namespace(output=testing_df_output_dir, nodelete=False, force=True)
-    }
-    return argsdict
-
-
-@pytest.fixture
-def file_io_args_n_true(testing_df_output_dir):
-    argsdict = {
-        "args": Namespace(output=testing_df_output_dir, nodelete=True, force=True)
-    }
-    return argsdict
+# Test make_output_directory
 
 
 @pytest.mark.run(order=6)
-def test_output_dir_creation_n_false(file_io_args_n_false, null_logger):
+def test_output_dir_creation_nd_true(args_make_dir_nd_true, null_logger):
     """Test creation of output dir when args.nodelete is false"""
-    file_io.make_output_directory(file_io_args_n_false["args"], null_logger)
+    file_io.make_output_directory(args_make_dir_nd_true["args"], null_logger)
 
 
 @pytest.mark.run(order=7)
-def test_output_dir_creation_n_true(file_io_args_n_true, null_logger):
+def test_output_dir_creation_n_false(args_make_dir_nd_false, null_logger):
     """Test creation of output dir when args.nodelete is true"""
-    file_io.make_output_directory(file_io_args_n_true["args"], null_logger)
+    file_io.make_output_directory(args_make_dir_nd_false["args"], null_logger)
+
+
+# Test write_out_dataframe
 
 
 @pytest.mark.run(order=8)
-def test_writing_df_f_false(testing_df, null_logger, test_dir):
-    """Tests function for writing out created dataframe when force is false"""
-    file_io.write_out_dataframe(testing_df, null_logger, test_dir, False, False)
+def test_writing_df_f_true(testing_df, null_logger, df_output_file):
+    """Tests function for writing out created dataframe when force is true"""
+    file_io.write_out_dataframe(testing_df, null_logger, df_output_file, True)
 
 
 @pytest.mark.run(order=9)
-def test_writing_df_f_true(testing_df, null_logger, testing_df_output_file):
-    """Tests function for writing out created dataframe when force is true"""
-    file_io.write_out_dataframe(
-        testing_df, null_logger, testing_df_output_file, True, False
-    )
+def test_writing_df_f_false(testing_df, null_logger, df_output_file):
+    """Tests function for writing out created dataframe when force is false"""
+    file_io.write_out_dataframe(testing_df, null_logger, df_output_file, False)
+
+
+# Test write_out_pre_named_dataframe
 
 
 @pytest.mark.run(order=10)
-def test_writing_named_df_f_false(testing_df, null_logger, test_dir):
+def test_writing_named_df_f_true(testing_df, null_logger, making_output_dir):
     """Tests function for writing out a prenamed dataframe"""
     file_io.write_out_pre_named_dataframe(
-        testing_df, "unitesting", null_logger, test_dir, False, False
+        testing_df, "test_writing_df.csv", null_logger, making_output_dir, True
     )
 
 
 @pytest.mark.run(order=11)
-def test_writing_named_df_f_true(testing_df, null_logger, testing_df_output_dir):
+def test_writing_named_df_f_false(testing_df, null_logger, making_output_dir):
     """Tests function for writing out a prenamed dataframe"""
     file_io.write_out_pre_named_dataframe(
-        testing_df, "unitesting", null_logger, testing_df_output_dir, True, False
+        testing_df, "test_writing_df.csv", null_logger, making_output_dir, False
     )
