@@ -19,7 +19,6 @@
 """Manage input and output directory handling."""
 
 import shutil
-import sys
 
 
 def make_output_directory(args, logger):
@@ -49,14 +48,13 @@ def make_output_directory(args, logger):
     args.output.mkdir(exist_ok=args.force)
 
 
-def write_out_dataframe(dataframe, logger, outdir, force, nodelete):
+def write_out_dataframe(dataframe, logger, outdir, force):
     """Write out dataframe to output directory.
 
     :param species_table: pandas dataframe
     :param logger: logger object
     :param outdir: cmd-args, Path, output directory
     :param force: booleon, cmd-line argument to enable/disable over writing of existing files
-    :param nodelete: boolean, cmd-line args to enable/disable deleting of existing files in outdir
     """
     # Check if overwrite of existing directory will occur
     logger.info("Checking if output directory for dataframe already exists")
@@ -73,6 +71,7 @@ def write_out_dataframe(dataframe, logger, outdir, force, nodelete):
     logger.info("Writing out species dataframe to directory")
 
     dataframe.to_csv(outdir)
+
 
 def write_out_pre_named_dataframe(dataframe, df_name, logger, outdir, force, nodelete):
     """Write out dataframe to output directory.
