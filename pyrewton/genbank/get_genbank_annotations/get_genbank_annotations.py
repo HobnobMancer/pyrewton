@@ -47,7 +47,7 @@ import pandas as pd
 from Bio import SeqIO
 from tqdm import tqdm
 
-from pyrewton import file_io
+from pyrewton.file_io import make_output_directory, write_out_dataframe
 from pyrewton.loggers import build_logger
 from pyrewton.parsers.parser_get_genbank_annotations import build_parser
 
@@ -78,10 +78,16 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # If specified output directory, create output directory
     if args.output is not sys.stdout:
         try:
-            file_io.make_output_directory(args, logger)
+            make_output_directory(args, logger)
         except FileExistsError:
             logger.error("Output directory %s already exists (exiting)" % args.output)
             sys.exit(1)
+
+    retrieve_genbank_annotations(logger, args)
+
+
+def retrieve_genbank_annotations(logger, args):
+    """Coordinate the retrieval of protein annotations from GenBank (.gbff) files."""
 
     # Open input dataframe
     logger.info("Opening input dataframe %s", args.df_input)
@@ -91,9 +97,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     protein_annotation_df = create_dataframe(input_df, args, logger)
 
     # Write out dataframe
-    file_io.write_out_dataframe(
-        protein_annotation_df, logger, args.output, args.force, args.nodelete
-    )
+    write_out_dataframe(protein_annotation_df, logger, args.output, args.force)
 
     logger.info("Programme finsihed. Terminating.")
 
@@ -292,7 +296,7 @@ def get_annotations(accession_number, args, logger):
     all_protein_data = []
 
     # Retrieve protein data from GenBank file
-    with gzip.open(gb_file[0], "rt") as handle:
+    with gzip.open(gb_file, "rt") as handle:
         # create list to store all protein data retrieved from GenBank file, making it a tuple
         for gb_record in SeqIO.parse(handle, "genbank"):
             for (index, feature) in enumerate(gb_record.features):
@@ -400,7 +404,7 @@ def get_genbank_file(accession, args, logger):
         )
         return None
 
-    return gb_file
+    return gb_file[0]
 
 
 def get_record_feature(feature, qualifier, logger):
