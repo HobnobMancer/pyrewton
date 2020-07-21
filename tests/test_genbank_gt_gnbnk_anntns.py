@@ -85,10 +85,14 @@ def test_gb_file_no_translation(test_input_dir):
 
 
 @pytest.fixture
-def coordination_args(test_input_df, test_dir, gb_file_dir):
+def coordination_args(test_input_df, test_dir, gb_file_dir, test_input_df):
     argsdict = {
         "args": Namespace(
-            input_df=test_input_df, output=test_dir, force=False, genbank=gb_file_dir
+            input_df=test_input_df,
+            output=test_dir,
+            force=False,
+            genbank=gb_file_dir,
+            df_input=test_input_df,
         )
     }
     return argsdict
