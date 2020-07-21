@@ -76,13 +76,13 @@ def test_gb_file(gb_file_dir):
 
 
 @pytest.fixture
-def test_gb_file_no_location(test_input_dir):
+def test_gb_file_no_location(gb_file_dir):
     gb_file = gb_file_dir / "GCA_test####_no_location_genomic.gbff.gz"
     return gb_file
 
 
 @pytest.fixture
-def test_gb_file_no_translation(test_input_dir):
+def test_gb_file_no_translation(gb_file_dir):
     gb_file = gb_file_dir / "GCA_test####_no_translation_genomic.gbff.gz"
     return gb_file
 
