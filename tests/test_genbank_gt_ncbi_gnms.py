@@ -672,7 +672,7 @@ def test_failed_accession_retrieval(
 
         monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_efetch)
 
-        assert "" == get_ncbi_genomes.retrieve_accession_numbers(
+        ("NA" or "") == get_ncbi_genomes.retrieve_accession_numbers(
             mocked_webenv, input_ncbi_df, null_logger, ncbi_args["args"]
         )
 
