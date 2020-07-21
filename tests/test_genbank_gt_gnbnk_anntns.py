@@ -25,6 +25,8 @@ pytest -v
 
 import pytest
 
+import pandas as pd
+
 from argparse import Namespace
 
 from pyrewton.genbank.get_genbank_annotations import get_genbank_annotations
@@ -44,7 +46,8 @@ def test_input_df(test_input_dir):
 
 @pytest.fixture
 def annotation_df(test_input_dir):
-    input_df = test_input_dir / "test_annotation_df.csv"
+    input_path = test_input_dir / "test_annotation_df.csv"
+    input_df = pd.read_csv(input_path)
     return input_df
 
 
