@@ -7,7 +7,7 @@ The module ``genbank`` contains submodules that handle GenBank files. This inclu
 the NCBI Assembly database, and retrieval of cazyme annotations from GenBank files.
 
 | - :ref:`genbank-mod-get-ncbi-genomes-def`
-| - :ref:`genbank-mod-get-cazyme-annotations-def`
+| - :ref:`genbank-mod-get-genbank-annotations-def`
 
 .. _genbank-mod-get-ncbi-genomes-def:
 
@@ -62,12 +62,12 @@ Default is 10 seconds.
 
 ``-v, --verbose`` - Enable verbose logging - changes logger level from WARNING to INFO.
 
-.. _genbank-mod-get-cazyme-annotations-def:
+.. _genbank-mod-get-genbank-annotations-def:
 
-get_cazyme_annotations
+get_genbank_annotations
 ----------------------
 
-``get_cazyme_annotations`` is a submodule of the ``genbank``, which reads NCBI GenBank files and
+``get_genbank_annotations`` is a submodule of the ``genbank``, which reads NCBI GenBank files and
 retrieves annotations of encoded cazymes. Where applicable, protein data from UniProt for each
 cazyme is also retrieved. All cazyme data is written out to a dataframe, with a unique protein
 per row, containing:
@@ -117,5 +117,5 @@ will be written to STDOUT.
 ``-v, --verbose`` - Enable verbose logging - changes logger level from WARNING to INFO.
 
 .. note::
-    get_cazyme_annotations is still under development.
+    get_genbank_annotations is still under development.
     Please see the `GitHub repository <https://github.com/HobnobMancer/PhD_Project_Scripts/tree/master>`_ for the latest developments.
