@@ -88,7 +88,7 @@ def test_gb_file_no_translation(test_input_dir):
 
 
 @pytest.fixture
-def coordination_args(test_input_df, test_dir, gb_file_dir, test_input_df):
+def coordination_args(test_input_df, test_dir, gb_file_dir):
     argsdict = {
         "args": Namespace(
             input_df=test_input_df,
@@ -122,7 +122,7 @@ def test_genbank_anno_coordination(
 
     def mock_create_dataframe(*args, **kwargs):
         df = test_input_df
-        return test_input_df
+        return df
 
     def mock_write_out_dataframe(*args, **kwargs):
         return
@@ -366,4 +366,3 @@ def test_get_file_empty(coordination_args, null_logger):
     get_genbank_annotations.get_genbank_file(
         accession, coordination_args["args"], null_logger
     )
-
