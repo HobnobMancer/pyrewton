@@ -200,6 +200,7 @@ def get_genbank_annotations(df_row, args, logger):
     # open GenBank file for each accession number in the list and retrieve
     # all protein data in that GenBank file, stored as a tuple with each
     # list in the tuple containing data for a unique protein
+
     for accession in accession_list:
         protein_data = get_annotations(accession, args, logger)  # tuple
 
@@ -332,9 +333,6 @@ def get_annotations(accession_number, args, logger):
                             )
                         # if some data retrieved, add to all_protein_list
                         else:
-                            all_protein_data.append(protein_data)
-                        # if some data was retrieved all to all_protein_data list
-                        if protein_data != ["NA", "NA", "NA", "NA", "NA"]:
                             all_protein_data.append(protein_data)
 
                     else:
