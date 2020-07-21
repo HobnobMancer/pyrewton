@@ -307,19 +307,31 @@ def get_annotations(accession_number, args, logger):
                 if feature.type == "CDS":
                     # extract protein ID
                     protein_data.append(
-                        get_record_feature(feature, "protein_id", logger)
+                        get_record_feature(
+                            feature, "protein_id", logger, accession_number
+                        )
                     )
                     # extract locus tag
                     protein_data.append(
-                        get_record_feature(feature, "locus_tag", logger)
+                        get_record_feature(
+                            feature, "locus_tag", logger, accession_number
+                        )
                     )
                     # extract location
-                    protein_data.append(get_record_feature(feature, "location", logger))
+                    protein_data.append(
+                        get_record_feature(
+                            feature, "location", logger, accession_number
+                        )
+                    )
                     # extract annotated function of product
-                    protein_data.append(get_record_feature(feature, "product", logger))
+                    protein_data.append(
+                        get_record_feature(feature, "product", logger, accession_number)
+                    )
                     # extract protein sequence
                     protein_data.append(
-                        get_record_feature(feature, "translation", logger)
+                        get_record_feature(
+                            feature, "translation", logger, accession_number
+                        )
                     )
 
                     # add protein data to total protein data list, only if data was retrieved
@@ -328,7 +340,7 @@ def get_annotations(accession_number, args, logger):
                         # and don't add to all_protein_data list
                         if protein_data == ["NA", "NA", "NA", "NA", "NA"]:
                             logger.warning(
-                                f"No data retrieved from CDS type feature, index: {index}",
+                                f"No data retrieved from CDS type feature, index: {index}, accession: {accession_number}",
                                 exc_info=1,
                             )
                         # if some data retrieved, add to all_protein_list
@@ -405,7 +417,7 @@ def get_genbank_file(accession, args, logger):
     return gb_file[0]
 
 
-def get_record_feature(feature, qualifier, logger):
+def get_record_feature(feature, qualifier, logger, accession):
     """Retrieve data from GenBank record feature.
 
     :param feature: feature object, GenBank file record feature
@@ -424,7 +436,7 @@ def get_record_feature(feature, qualifier, logger):
             return compiled_location
         except AttributeError:
             logger.warning(
-                "Failed to retrieve feature location, returning 'NA'", exc_info=1
+                f"Failed to retrieve feature location, returning 'NA', accession: {accession}",
             )
             return "NA"
     else:
@@ -433,7 +445,7 @@ def get_record_feature(feature, qualifier, logger):
             return data
         except KeyError:
             logger.warning(
-                f"Failed to retrieve feature {qualifier}, returning 'NA'", exc_info=1
+                f"Failed to retrieve feature {qualifier}, returning 'NA', accession: {accession}",
             )
             return "NA"
 
