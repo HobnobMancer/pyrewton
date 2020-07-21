@@ -101,7 +101,7 @@ Invoking the script from the command line
 
 ``-f, --force`` - Enable writting in specificed output directory if output directory already exists.
 
-``-g, --genbank`` - Path to director containing GenBank files.
+``-g, --genbank`` - Path to directory containing GenBank files.
 
 ``-l, --log`` - Specify name of log file (With extension). If only filename is given, log file will 
 be written out to the current working directory, otherwise provide path including filename. If not 
