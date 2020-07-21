@@ -189,7 +189,7 @@ def test_get_annotations_data_returned(
     """Test coordination of annotation retrieval for a given protein."""
 
     def mock_get_anno(*args, **kwargs):
-        annotations = ["NA", "NA", "NA", "NA", "NA"]
+        annotations = [["NA", "NA", "NA", "NA", "NA"]]
         return annotations
 
     monkeypatch.setattr(get_genbank_annotations, "get_annotations", mock_get_anno)
