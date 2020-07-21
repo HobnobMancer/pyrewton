@@ -127,7 +127,9 @@ def test_genbank_anno_coordination(
         get_genbank_annotations, "write_out_dataframe", mock_write_out_dataframe
     )
 
-    get_genbank_annotations.retrieve_genbank_annotations(null_logger, coordination_args)
+    get_genbank_annotations.retrieve_genbank_annotations(
+        null_logger, coordination_args["args"]
+    )
 
 
 # Test the creation of the dataframe
@@ -148,7 +150,7 @@ def test_dataframe_creation(
     )
 
     get_genbank_annotations.create_dataframe(
-        test_input_df, coordination_args, null_logger
+        test_input_df, coordination_args["args"], null_logger
     )
 
 
@@ -168,7 +170,7 @@ def test_get_annotations_no_data(
     monkeypatch.setattr(get_genbank_annotations, "get_annotations", mock_get_anno)
 
     get_genbank_annotations.get_genbank_annotations(
-        pandas_series, coordination_args, null_logger
+        pandas_series, coordination_args["args"], null_logger
     )
 
 
@@ -185,7 +187,7 @@ def test_get_annotations_data_returned(
     monkeypatch.setattr(get_genbank_annotations, "get_annotations", mock_get_anno)
 
     get_genbank_annotations.get_genbank_annotations(
-        pandas_series, coordination_args, null_logger
+        pandas_series, coordination_args["args"], null_logger
     )
 
 
@@ -196,7 +198,9 @@ def test_get_annotations_data_returned(
 def test_get_annotations_na(null_logger, coordination_args):
     """Test get_annotations when accession number is 'NA'."""
     accession = "NA"
-    get_genbank_annotations.get_annotations(accession, coordination_args, null_logger)
+    get_genbank_annotations.get_annotations(
+        accession, coordination_args["args"], null_logger
+    )
 
 
 @pytest.mark.run(order=41)
@@ -211,7 +215,7 @@ def test_get_annotations_file_none(
     monkeypatch.setattr(get_genbank_annotations, "get_genbank_file", mock_get_gb_file)
 
     get_genbank_annotations.get_annotations(
-        test_accession, coordination_args, null_logger
+        test_accession, coordination_args["args"], null_logger
     )
 
 
@@ -233,7 +237,7 @@ def test_get_annotations_all_data_na(
     monkeypatch.setattr(get_genbank_annotations, "get_record_feature", mock_get_record)
 
     get_genbank_annotations.get_annotations(
-        test_accession, coordination_args, null_logger
+        test_accession, coordination_args["args"], null_logger
     )
 
 
@@ -250,7 +254,7 @@ def test_get_annotations_successful(
     monkeypatch.setattr(get_genbank_annotations, "get_genbank_file", mock_get_gb_file)
 
     get_genbank_annotations.get_annotations(
-        test_accession, coordination_args, null_logger
+        test_accession, coordination_args["args"], null_logger
     )
 
 
@@ -271,7 +275,7 @@ def test_get_annotations_not_5(
     monkeypatch.setattr(get_genbank_annotations, "get_record_feature", mock_get_record)
 
     get_genbank_annotations.get_annotations(
-        test_accession, coordination_args, null_logger
+        test_accession, coordination_args["args"], null_logger
     )
 
 
@@ -295,7 +299,7 @@ def test_anno_retrieval_no_location(
     monkeypatch.setattr(get_genbank_annotations, "get_genbank_file", mock_get_gb_file)
 
     get_genbank_annotations.get_annotations(
-        test_accession, coordination_args, null_logger
+        test_accession, coordination_args["args"], null_logger
     )
 
 
@@ -316,7 +320,7 @@ def test_anno_retrieval_no_qualifier(
     monkeypatch.setattr(get_genbank_annotations, "get_genbank_file", mock_get_gb_file)
 
     get_genbank_annotations.get_annotations(
-        test_accession, coordination_args, null_logger
+        test_accession, coordination_args["args"], null_logger
     )
 
 
@@ -327,21 +331,25 @@ def test_anno_retrieval_no_qualifier(
 def test_get_file_success(coordination_args, null_logger):
     """Test successful retrieval of single gb_file using get_gb_file."""
     accession = "GCA_test####"
-    get_genbank_annotations.get_genbank_file(accession, coordination_args, null_logger)
+    get_genbank_annotations.get_genbank_file(
+        accession, coordination_args["args"], null_logger
+    )
 
 
 @pytest.mark.run(order=48)
 def test_get_file_no_file(no_gb_args, null_logger):
     """Test get_gb_file when no files were retrieved."""
     accession = "GCA_test####"
-    get_genbank_annotations.get_genbank_file(accession, no_gb_args, null_logger)
+    get_genbank_annotations.get_genbank_file(accession, no_gb_args["args"], null_logger)
 
 
 @pytest.mark.run(order=49)
 def test_get_file_multiple(coordination_args, null_logger):
     """Test get_gb_file when multiple files are retrieved."""
     accession = "GCA_testmultiple"
-    get_genbank_annotations.get_genbank_file(accession, coordination_args, null_logger)
+    get_genbank_annotations.get_genbank_file(
+        accession, coordination_args["args"], null_logger
+    )
 
 
 @pytest.mark.run(order=50)
