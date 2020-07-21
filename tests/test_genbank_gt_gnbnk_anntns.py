@@ -363,4 +363,7 @@ def test_get_file_multiple(coordination_args, null_logger):
 def test_get_file_empty(coordination_args, null_logger):
     """Test get_gb_file when the returned file is empty."""
     accession = "GCA_testempty"
-    get_genbank_annotations.get_genbank_file(accession, coordination_args, null_logger)
+    get_genbank_annotations.get_genbank_file(
+        accession, coordination_args["args"], null_logger
+    )
+
