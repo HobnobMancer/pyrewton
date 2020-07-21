@@ -39,9 +39,15 @@ def test_input_dir(test_dir):
 
 
 @pytest.fixture
-def test_input_df(test_input_dir):
+def test_input_df_path(test_input_dir):
     input_df = test_input_dir / "test_input_df.csv"
     return input_df
+
+
+@pytest.fixture
+def test_input_df(test_input_df_path):
+    df = pd.read_csv(test_input_df_path)
+    return df
 
 
 @pytest.fixture
@@ -88,26 +94,21 @@ def test_gb_file_no_translation(gb_file_dir):
 
 
 @pytest.fixture
-def coordination_args(test_input_df, test_dir, gb_file_dir):
+def coordination_args(test_input_df_path, test_dir, gb_file_dir):
     argsdict = {
         "args": Namespace(
-            input_df=test_input_df,
             output=test_dir,
             force=False,
             genbank=gb_file_dir,
-            df_input=test_input_df,
+            df_input=test_input_df_path,
         )
     }
     return argsdict
 
 
 @pytest.fixture
-def no_gb_args(test_input_df, test_dir, gb_file_dir):
-    argsdict = {
-        "args": Namespace(
-            input_df=test_input_df, output=test_dir, force=False, genbank=test_dir
-        )
-    }
+def no_gb_args(test_dir, gb_file_dir):
+    argsdict = {"args": Namespace(output=test_dir, force=False, genbank=test_dir)}
     return argsdict
 
 
