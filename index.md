@@ -34,6 +34,7 @@ Inital plans and devleopment plans are stored within the [Wiki](https://github.c
 - `docs/`: directory containing all files used for build documentation.
 - `notebooks/`: directory containing all jupyter notebooks.
 - `tests/`: directory containing all unit-tests, and required test inputs and targets.
+- `supplementary/`: directory containing supplemenatry data, accompanying the PhD thesis.
 - `pyrewton/`: directory containing all `pyrewton` program modules (including all submodules and Python scripts).
   - `parsers/`: directory containing all Python scripts for building parsers used in `pyrewton`.
   - `loggers/`: directory containing all Python scripts for building loggers in `pyrewton`.
@@ -60,8 +61,8 @@ Jupyter notebooks are accessible here, but also via the terminal if the programm
 
 - [01_downloading_genbank_files](https://github.com/HobnobMancer/PhD_Project_Scripts/blob/master/notebooks/01_downloading_genbank_files.html)<br/>
 Notebook for `get_ncbi_genomes`, which explains the function and operation of the Python script for downloading GenBank files from the NCBI Assembly database.
-- [02_cazyme_genbank_annotation_summary](https://github.com/HobnobMancer/PhD_Project_Scripts/blob/master/notebooks/02_cazyme_genbank_annotation_summary.html)<br/>
-Notebook for the idenficiation of cazymes annotations from the GenBank files. 
+- [02_retrieving_genbank_annotation_summary](https://github.com/HobnobMancer/PhD_Project_Scripts/blob/master/notebooks/02_retrieving_genbank_annotations.html)<br/>
+Notebook for `get_genbank_annotations` for the retrieval of all protein annotations from the downloaded genomic assemblies.
 
 **Access the notebooks via the terminal:**<br/>
 From the top level of the repository directory on your system, start the `Jupyter` notebook server by issuing the command:
