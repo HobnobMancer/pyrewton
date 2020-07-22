@@ -17,10 +17,10 @@ The notebooks can be accessed via the GitHub pages created for the host `reposit
 Accessing the notebooks in browser
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-`01_downloading_genbank_files <https://github.com/HobnobMancer/PhD_Project_Scripts/blob/master/notebooks/01_downloading_genbank_files.html>`_
+`01_downloading_genbank_files <https://github.com/HobnobMancer/PhD_Project_Scripts/notebooks/01_downloading_genbank_files.html>`_
 This refers to invoking get_ncbi_genomes to download all directly linked GenBank files for each species passed to the program.
 
-`02_retrieving_genbank_annotations <https://github.com/HobnobMancer/PhD_Project_Scripts/blob/master/notebooks/02_retrieving_genbank_annotations.html>`_
+`02_retrieving_genbank_annotations <https://github.com/HobnobMancer/PhD_Project_Scripts/notebooks/02_retrieving_genbank_annotations.html>`_
 This refers to invoking get_genbank_annotations to retrieve all proteins annotations from the downloaded GenBank files.
 
 
