@@ -75,14 +75,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         logger = build_logger("get_cazyme_annotations", args)
     logger.info("Run initated")
 
-    # If specified output directory, create output directory
-    if args.output is not sys.stdout:
-        try:
-            make_output_directory(args, logger)
-        except FileExistsError:
-            logger.error("Output directory %s already exists (exiting)" % args.output)
-            sys.exit(1)
-
     retrieve_genbank_annotations(logger, args)
 
 
@@ -146,9 +138,6 @@ def create_dataframe(input_df, args, logger):
             ignore_index=True,
         )
         df_index += 1
-
-    # these are debugging purposes and will not be included in final version
-    print("=====Foundation dataframe======\n", protein_annotation_df, "\n")
 
     return protein_annotation_df
 
