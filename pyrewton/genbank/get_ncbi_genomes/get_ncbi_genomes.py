@@ -268,7 +268,7 @@ def get_genus_species_name(taxonomy_id, logger, line_number, retries):
     try:
         return record[0]["ScientificName"]
 
-    except IndexError:
+    except (IndexError, KeyError) as error:
         logger.error(
             (
                 f"Entrez failed to retrieve scientific name, for NCBI:txid{taxonomy_id}.\n"
@@ -326,7 +326,7 @@ def get_tax_id(genus_species, logger, line_number, retries):
     try:
         return "NCBI:txid" + record["IdList"][0]
 
-    except IndexError:
+    except (IndexError, KeyError) as error:
         logger.error(
             (
                 f"Entrez failed to retrieve taxonomy ID, for {genus_species}"
@@ -454,7 +454,7 @@ def get_assembly_ids(df_row, logger, args):
             dict["Id"] for dict in assembly_number_record[0]["LinkSetDb"][0]["Link"]
         ]
 
-    except IndexError:
+    except (IndexError, KeyError) as error:
         logger.error(
             (
                 f"Entrez failed to retrieve assembly IDs, for {df_row[2]}."
@@ -543,7 +543,7 @@ def retrieve_accession_numbers(webenv, df_row, logger, args):
             ][index_number]["AssemblyAccession"]
             ncbi_accession_numbers_list.append(new_accession_number)
 
-        except IndexError:
+        except (IndexError, KeyError) as error:
             total_assemblies = len(
                 accession_record["DocumentSummarySet"]["DocumentSummary"]
             )
