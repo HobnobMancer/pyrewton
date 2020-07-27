@@ -7,47 +7,6 @@
 
 <DocumentSummary uid="6231181">
 	<RsUid/>
-	<GbUid>17648048</GbUid>
-	<AssemblyAccession></AssemblyAccession>
-	<LastMajorReleaseAccession>GCA_011316255.1</LastMajorReleaseAccession>
-	<LatestAccession/>
-	<ChainId>11316255</ChainId>
-	<AssemblyName>ASM1131625v1</AssemblyName>
-	<UCSCName/>
-	<EnsemblName/>
-	<Taxid>5061</Taxid>
-	<Organism>Aspergillus niger (ascomycetes)</Organism>
-	<SpeciesTaxid>5061</SpeciesTaxid>
-	<SpeciesName>Aspergillus niger</SpeciesName>
-	<AssemblyType>haploid</AssemblyType>
-	<AssemblyClass>haploid</AssemblyClass>
-	<AssemblyStatus>Contig</AssemblyStatus>
-	<AssemblyStatusSort>5</AssemblyStatusSort>
-	<WGS>RIBO01</WGS>
-	<GB_BioProjects>
-		<Bioproj>
-			<BioprojectAccn>PRJNA503751</BioprojectAccn>
-			<BioprojectId>503751</BioprojectId>
-		</Bioproj>
-	</GB_BioProjects>
-	<GB_Projects>
-	</GB_Projects>
-	<RS_BioProjects>
-	</RS_BioProjects>
-	<RS_Projects>
-	</RS_Projects>
-	<BioSampleAccn>SAMN10373498</BioSampleAccn>
-	<BioSampleId>10373498</BioSampleId>
-	<Biosource>
-		<InfraspeciesList>
-			<Infraspecie>
-				<Sub_type>strain</Sub_type>
-				<Sub_value>RAF106</Sub_value>
-			</Infraspecie>
-		</InfraspeciesList>
-		<Sex/>
-		<Isolate/>
-	</Biosource>
 	<Coverage>295</Coverage>
 	<PartialGenomeRepresentation>false</PartialGenomeRepresentation>
 	<Primary>17648018</Primary>
