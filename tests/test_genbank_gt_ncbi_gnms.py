@@ -311,7 +311,7 @@ def test_scientific_name_retrieval(
     Tests that correct output is returned from from get_genus_species_name()
     function in Extract_genomes_NCBI.py.
     """
-    with open(efetch_result) as fh:
+    with open(efetch_result, "rb") as fh:
         result = fh
 
         def mock_entrez_sci_call(*args, **kwargs):
@@ -333,7 +333,7 @@ def test_scientific_name_retrieval_indexerror_catch(
     gt_ncbi_gnms_test_inputs, null_logger, efetch_result_empty, monkeypatch,
 ):
     """Tests get_scientific name retrieval handling indexError catching."""
-    with open(efetch_result_empty) as fh:
+    with open(efetch_result_empty, "rb") as fh:
         result = fh
 
         def mock_entrez_sci_call(*args, **kwargs):
@@ -383,7 +383,7 @@ def test_taxonomy_id_retrieval(
     esearch_result,
 ):
     """Tests Entrez call to NCBI to retrieve taxonomy ID from scientific name."""
-    with open(esearch_result) as fh:
+    with open(esearch_result, "rb") as fh:
         result = fh
 
         def mock_entrez_txid_call(*args, **kwargs):
@@ -408,7 +408,7 @@ def test_tax_id_retrieval_indexerror_catch(
     gt_ncbi_gnms_test_inputs, null_logger, monkeypatch, esearch_result_empty,
 ):
     """Tests handling index Error when retrieving tax ID"""
-    with open(esearch_result_empty) as fh:
+    with open(esearch_result_empty, "rb") as fh:
         result = fh
 
         def mock_entrez_txid_call(*args, **kwargs):
@@ -570,7 +570,7 @@ def test_failed_elink(
     input_ncbi_df, null_logger, ncbi_args, monkeypatch, elink_result_empty
 ):
     """Test catching of when no aseembly IDs retrieved from Entrez.elink"""
-    with open(elink_result_empty) as fh:
+    with open(elink_result_empty, "rb") as fh:
         result = fh
 
         def mock_elink(*args, **kwargs):
@@ -587,7 +587,7 @@ def test_successful_elink(
     input_ncbi_df, null_logger, ncbi_args, elink_result, monkeypatch
 ):
     """Test processing of succesful elink retrieval of accession numbers."""
-    with open(elink_result) as fh:
+    with open(elink_result, "rb") as fh:
         result = fh
 
         def mock_elink(*args, **kwargs):
@@ -621,7 +621,7 @@ def test_successful_epost(
     input_ncbi_df, null_logger, ncbi_args, monkeypatch, epost_result
 ):
     """Test successful posting of assembly IDs using Entrez.epost."""
-    with open(epost_result) as fh:
+    with open(epost_result, "rb") as fh:
         result = fh
 
         def mock_epost(*args, **kwargst):
@@ -664,7 +664,7 @@ def test_failed_accession_retrieval(
     mocked_webenv,
 ):
     """Test handling data when no accession number contained in result from Entrez.efetch."""
-    with open(efetch_accession_result_empty) as fh:
+    with open(efetch_accession_result_empty, "rb") as fh:
         result = fh
 
         def mock_efetch(*args, **kwargs):
@@ -687,7 +687,7 @@ def test_successful_accession_number_retrieval(
     mocked_webenv,
 ):
     """Test processing of successful retrieval of accession numbers from Entrez.efetch."""
-    with open(efetch_accession_result) as fh:
+    with open(efetch_accession_result, "rb") as fh:
         result = fh
 
         def mock_efetch(*args, **kwargs):
