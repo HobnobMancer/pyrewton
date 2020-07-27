@@ -366,30 +366,10 @@ def test_scientific_name_retrieval_indexerror_catch(
         )
 
 
-# @pytest.mark.run(order=13)
-# def test_scientific_name_retrieval_none_record(
-#     gt_ncbi_gnms_test_inputs, null_logger, monkeypatch,
-# ):
-#     """Test catching failure to return Entrez record."""
-
-#     def mock_entrez_sci_call(*args, **kwargs):
-#         """Mocks call to Entrez to retrieve scientific name."""
-#         return None
-
-#     monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_sci_call)
-
-#     get_ncbi_genomes.get_genus_species_name(
-#         gt_ncbi_gnms_test_inputs[1],
-#         null_logger,
-#         gt_ncbi_gnms_test_inputs[3],
-#         gt_ncbi_gnms_test_inputs[0],
-#     )
-
-
 # Test retrieval of taxonomy ID
 
 
-@pytest.mark.run(order=14)
+@pytest.mark.run(order=13)
 def test_taxonomy_id_retrieval(
     gt_ncbi_gnms_test_inputs,
     gt_ncbi_gnms_targets,
@@ -412,13 +392,13 @@ def test_taxonomy_id_retrieval(
         )
 
 
-@pytest.mark.run(order=15)
+@pytest.mark.run(order=14)
 def test_tax_id_check(null_logger):
     """Tests searching of input scientific name for digits"""
     get_ncbi_genomes.get_tax_id("5061", null_logger, 1, 1)
 
 
-@pytest.mark.run(order=16)
+@pytest.mark.run(order=15)
 def test_tax_id_retrieval_indexerror_catch(
     gt_ncbi_gnms_test_inputs, null_logger, monkeypatch, esearch_result_empty,
 ):
@@ -440,37 +420,16 @@ def test_tax_id_retrieval_indexerror_catch(
         )
 
 
-@pytest.mark.run(order=17)
-def test_tax_id_none_record(
-    gt_ncbi_gnms_test_inputs, null_logger, monkeypatch,
-):
-    """Tests get_tax_id ability to catch Error when no record returned from NCBI."""
-
-    def mock_entrez_txid_call(*args, **kwargs):
-        """Mocks call to Entrez to retrieve taxonomy ID."""
-        return
-
-    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_txid_call)
-
-    with pytest.raises(AttributeError):
-        get_ncbi_genomes.get_genus_species_name(
-            gt_ncbi_gnms_test_inputs[2],
-            null_logger,
-            gt_ncbi_gnms_test_inputs[3],
-            gt_ncbi_gnms_test_inputs[0],
-        )
-
-
 # Test retrieval of accession numbers from NCBI
 
 
-@pytest.mark.run(order=18)
+@pytest.mark.run(order=16)
 def test_df_cell_content_check(na_df_row, null_logger):
     """Test get_accession_numbers ability to catch "NA" content of cell."""
     get_ncbi_genomes.get_accession_numbers(na_df_row, null_logger, "args")
 
 
-@pytest.mark.run(order=19)
+@pytest.mark.run(order=17)
 def test_catch_failed_assembly_id(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
     """Test catching failed retrieval of assembly IDs."""
 
@@ -484,7 +443,7 @@ def test_catch_failed_assembly_id(input_ncbi_df, null_logger, ncbi_args, monkeyp
     )
 
 
-@pytest.mark.run(order=20)
+@pytest.mark.run(order=18)
 def test_catch_failed_posting(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
     """Test catching failed retrieval of posting assembly IDs."""
 
@@ -503,7 +462,7 @@ def test_catch_failed_posting(input_ncbi_df, null_logger, ncbi_args, monkeypatch
     )
 
 
-@pytest.mark.run(order=21)
+@pytest.mark.run(order=19)
 def test_catch_failed_accession_retrieval(
     input_ncbi_df, null_logger, ncbi_args, monkeypatch
 ):
@@ -533,7 +492,7 @@ def test_catch_failed_accession_retrieval(
     )
 
 
-@pytest.mark.run(order=22)
+@pytest.mark.run(order=20)
 def test_successful_accession_retrieval(
     input_ncbi_df, null_logger, ncbi_args, monkeypatch
 ):
@@ -567,20 +526,6 @@ def test_successful_accession_retrieval(
 
 
 @pytest.mark.run(order=21)
-def test_failed_elink_none(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
-    """Test catching of when nothing returned from Entrez.elink"""
-
-    def mock_elink(*args, **kwargs):
-        """mock Entre.elink when no result is returned"""
-        return
-
-    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_elink)
-
-    with pytest.raises(AttributeError):
-        get_ncbi_genomes.get_assembly_ids(input_ncbi_df, null_logger, ncbi_args["args"])
-
-
-@pytest.mark.run(order=23)
 def test_failed_elink(
     input_ncbi_df, null_logger, ncbi_args, monkeypatch, elink_result_empty
 ):
@@ -599,7 +544,7 @@ def test_failed_elink(
         )
 
 
-@pytest.mark.run(order=24)
+@pytest.mark.run(order=22)
 def test_successful_elink(
     input_ncbi_df, null_logger, ncbi_args, elink_result, monkeypatch
 ):
@@ -619,7 +564,7 @@ def test_successful_elink(
 # Test posting of assembly IDs using Enrez.epost
 
 
-@pytest.mark.run(order=25)
+@pytest.mark.run(order=23)
 def test_failed_epost(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
     """Test catching when nothing returned from Entrez.epost."""
 
@@ -633,7 +578,7 @@ def test_failed_epost(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
     )
 
 
-@pytest.mark.run(order=26)
+@pytest.mark.run(order=24)
 def test_successful_epost(
     input_ncbi_df, null_logger, ncbi_args, monkeypatch, epost_result, expected_web_env
 ):
@@ -654,24 +599,7 @@ def test_successful_epost(
 # Test retrieval of accession numbers using WebEnv data
 
 
-@pytest.mark.run(order=27)
-def test_failed_accession_retrieval_none(
-    input_ncbi_df, null_logger, ncbi_args, monkeypatch, mocked_webenv
-):
-    """Test handling accession number retrieval when nothing returned from Entrez.efetch."""
-
-    def mock_efetch(*args, **kwargs):
-        return
-
-    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_efetch)
-
-    with pytest.raises(AttributeError):
-        get_ncbi_genomes.retrieve_accession_numbers(
-            mocked_webenv, input_ncbi_df, null_logger, ncbi_args["args"]
-        )
-
-
-@pytest.mark.run(order=28)
+@pytest.mark.run(order=25)
 def test_failed_accession_retrieval(
     input_ncbi_df,
     null_logger,
@@ -694,7 +622,7 @@ def test_failed_accession_retrieval(
         )
 
 
-@pytest.mark.run(order=29)
+@pytest.mark.run(order=26)
 def test_successful_accession_number_retrieval(
     input_ncbi_df,
     null_logger,
@@ -727,7 +655,7 @@ def test_successful_accession_number_retrieval(
 # Test coordination of downloading GenBank files
 
 
-@pytest.mark.run(order=30)
+@pytest.mark.run(order=27)
 def test_coordinating_genbank_download_stdout(
     null_logger, ncbi_args_stdout, monkeypatch
 ):
@@ -748,7 +676,7 @@ def test_coordinating_genbank_download_stdout(
     )
 
 
-@pytest.mark.run(order=31)
+@pytest.mark.run(order=28)
 def test_coordinating_genbank_download(null_logger, ncbi_args, monkeypatch):
     """Test coordination of GenBank file download, when output is not stdout"""
 
@@ -770,7 +698,7 @@ def test_coordinating_genbank_download(null_logger, ncbi_args, monkeypatch):
 # Test creaction of URL for GenBank download
 
 
-@pytest.mark.run(order=32)
+@pytest.mark.run(order=29)
 def test_compiling_url(null_logger):
     """Test generation of URL for downloading GenBank files."""
     get_ncbi_genomes.compile_url("test_accession", "test_name", null_logger, "suffix")
@@ -779,7 +707,7 @@ def test_compiling_url(null_logger):
 # Test downloading of a GenBank file
 
 
-@pytest.mark.run(order=33)
+@pytest.mark.run(order=30)
 def test_download(null_logger, ncbi_args, test_dir, monkeypatch):
     """Tests downloading of GenBank file"""
 
@@ -796,7 +724,7 @@ def test_download(null_logger, ncbi_args, test_dir, monkeypatch):
 # Test coordination of retrieving all data from NCBI
 
 
-@pytest.mark.run(order=34)
+@pytest.mark.run(order=31)
 def test_script_coordination_stdout(
     accession_df, null_logger, coordination_args_stdout, monkeypatch
 ):
@@ -822,7 +750,7 @@ def test_script_coordination_stdout(
     get_ncbi_genomes.get_ncbi_data(null_logger, coordination_args_stdout["args"])
 
 
-@pytest.mark.run(order=35)
+@pytest.mark.run(order=32)
 def test_script_coordination(accession_df, null_logger, coordination_args, monkeypatch):
     """Test coordination of NCBI data retrieval of when output is not stdout"""
 
