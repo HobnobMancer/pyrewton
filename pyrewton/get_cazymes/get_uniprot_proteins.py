@@ -16,14 +16,16 @@
 # UK
 #
 # The MIT License
-"""Retrieves all proteins for each species in an input dataframe.
+"""Retrieves proteins from UniProt for given species,
+and create fasta file of protein sequence.
 
-:func main: coordianate function of script
-:func build_uniprot_df: coordinates retrieval of UniProt entries per species
-:func get_uniprotkb_data: retreives entries from UniProt
+:param ...
+
+:func main: set-up script
 """
 
 import io
+import json
 import logging
 import re
 import sys
@@ -64,31 +66,51 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         logger = build_logger("get_cazyme_annotations", args)
     logger.info("Run initated")
 
-    # If specified output directory, create output directory
+    # If specified output directory, create output directory to write FASTA files too
     if args.output is not sys.stdout:
         file_io.make_output_directory(args, logger)
 
-    # Open input dataframe
-    # Open input dataframe
+    # Initate scripts main function
+
+
+def get_uniprot_proteins(args, logger):
+    """Coordinate overall function of script to retrieve protein data.
+
+    :param args: parser arguments
+    :param logger: logger object
+    """
+    logger.info("Run initated")
+
+    # Open input dataframe, containing species dataframe
     logger.info("Opening input dataframe %s", args.df_input)
     input_df = pd.read_csv(args.df_input, header=0, index_col=0)
 
-    # Programme operation
+    # Open file containing query terms, saving dictionary with query field
+    # as the Key and query term as the value
+    with (args.query).open("r") as fh:
+        query_dict = json.load(fh)
 
-    # Build protein dataframe
-    uniprot_protein_df = build_uniprot_df(input_df, logger)
+    # Iterate over species in input dataframe, to search for potential CAZymes
+    df_index = 0
+    for df_index in tqdm(range(len(input_df["Genus"])), desc="Retrieving Uniprot data"):
+        # Iterate through query fields and query terms for each field
+        for key in query_dict:
+            query_list = query_dict[key]
+            for term in query_list:
+                # Call function which coordinates call to UniProt
+                build_uniprot_df(input_df, logger, key, term)
+        df_index += 1
 
-    # Write out Uniprot dataframe to csv file
-    file_io.write_out_dataframe(
-        uniprot_protein_df, logger, args.ouput, args.force, args.nodelete,
-    )
+    logger.info("Program finished")
 
 
-def build_uniprot_df(input_df, logger):
+def build_uniprot_df(input_df, logger, query_field, query_term):
     """Retrieve all proteins in UniProt for each species in an input dataframe.
 
     :param input_df: input dataframe containing genus and species of host organisms
     :param logger: logger object
+    :param query_field: field in UniProt to search using query term
+    :param query_term: term to search for in specified
 
     Return dataframe.
     """
