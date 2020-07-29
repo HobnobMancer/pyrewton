@@ -192,7 +192,7 @@ def call_uniprotkb(genus, species, tax_id, query_field, query_term, logger, args
     except HTTPError:
         logger.warning(
             (
-                f"Network error occured when searching UniProt for locus tag:{df_row[5]}.\n"
+                f"Network error occured when searching UniProt for locus tag:{tax_id}.\n"
                 "Returning null value 'NA' for all UniProt data"
             )
         )
@@ -202,7 +202,7 @@ def call_uniprotkb(genus, species, tax_id, query_field, query_term, logger, args
         # No UniProt entries found for locus tag, return null data for
         logger.warning(
             (
-                f"No data returned from UniProt for locus tag:{df_row[5]}.\n"
+                f"No data returned from UniProt for locus tag:{tax_id}.\n"
                 "Returning null value 'NA' for all UniProt data"
             )
         )
@@ -240,7 +240,7 @@ def format_search_results(search_result_df, genus, species, tax_id, logger, args
         df_row = search_result_df.iloc[index]
         all_ec_numbers.append(get_ec_numbers(df_row, logger))
         # Write out protein sequence to FASTA file if sequence was retrieved from UniProtKB
-        if df_row["Sequences"] is not "NA":
+        if df_row["Sequences"] != "NA":
             write_fasta(df_row, logger, args)
         index += 1
 
@@ -300,30 +300,3 @@ def write_fasta(df_row, logger, args):
 
 if __name__ == "__main__":
     main()
-
-    # Create empty dataframe to add data to
-    uniprot_df = pd.DataFrame(
-        columns=[
-            "Genus",
-            "Species",
-            "NCBI Taxonomy ID",
-            "UniProt entry ID",
-            "UniProt entry name",
-            "UniProt assigned protein names",
-            "EC Number",
-            "Length (Aa)",
-            "Mass (Da)",
-            "Domains",
-            "Domain count",
-            "UniProt linked protein families",
-            "GO IDs",
-            "GO molecular function",
-            "G0 biological process",
-            "Sequence",
-        ]
-    )
-
-    # Call to UniProt
-    call_uniprotkb
-
-    return uniprot_df
