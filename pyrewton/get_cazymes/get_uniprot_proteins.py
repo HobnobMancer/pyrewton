@@ -114,7 +114,7 @@ def get_uniprot_proteins(args, logger):
 
 
 def build_uniprot_df(genus, species, tax_id, query_field, query_term, logger, args):
-    """Retrieve all proteins in UniProt for given species, and query terms.
+    """Coordinates call to UniProt and formatting of results.
 
     :param genus: genus of host species
     :param species: species name
@@ -124,13 +124,17 @@ def build_uniprot_df(genus, species, tax_id, query_field, query_term, logger, ar
     :param logger: logger object
     :param args: parser arguments
 
-    Return dataframe and call function to write out FASTA file of protein sequence.
+    Returns nothing.
     """
     # Call UniProtKB and return results as dataframe
-    uniprot_df = call_uniprotkb(tax_id, query_field, query_term, logger, args)
+    uniprot_df = call_uniprotkb(
+        genus, species, tax_id, query_field, query_term, logger, args
+    )
 
     # Rename columns and create separate column to store EC numbers
-    uniprot_df = 
+    uniprot_df = format_search_results(uniprot_df, genus, species, tax_id, logger, args)
+
+    return
 
 
 def call_uniprotkb(genus, species, tax_id, query_field, query_term, logger, args):
@@ -183,9 +187,7 @@ def call_uniprotkb(genus, species, tax_id, query_field, query_term, logger, args
             query, columns=columnlist,
         )  # returns empty string for no result
 
-        search_result_df = pd.read_table(io.StringIO(search_result))
-
-        return format_search_results(search_result_df, df_row, logger)
+        return pd.read_table(io.StringIO(search_result))
 
     except HTTPError:
         logger.warning(
@@ -292,16 +294,12 @@ def write_fasta(df_row, logger, args):
 
     Returns nothing.
     """
-    
+
+    return
 
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
 
     # Create empty dataframe to add data to
     uniprot_df = pd.DataFrame(
