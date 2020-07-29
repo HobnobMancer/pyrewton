@@ -93,69 +93,60 @@ def get_uniprot_proteins(args, logger):
     # Iterate over species in input dataframe, to search for potential CAZymes
     df_index = 0
     for df_index in tqdm(range(len(input_df["Genus"])), desc="Retrieving Uniprot data"):
+        pd_series = input_df.iloc[df_index]
         # Iterate through query fields and query terms for each field
         for key in query_dict:
             query_list = query_dict[key]
             for term in query_list:
                 # Call function which coordinates call to UniProt
-                build_uniprot_df(input_df, logger, key, term)
+                build_uniprot_df(
+                    f"{pd_series[0]}",
+                    f"{pd_series[1]}",
+                    pd_series[2],
+                    key,
+                    term,
+                    logger,
+                    args,
+                )
         df_index += 1
 
     logger.info("Program finished")
 
 
-def build_uniprot_df(input_df, logger, query_field, query_term):
-    """Retrieve all proteins in UniProt for each species in an input dataframe.
+def build_uniprot_df(genus, species, tax_id, query_field, query_term, logger, args):
+    """Retrieve all proteins in UniProt for given species, and query terms.
 
-    :param input_df: input dataframe containing genus and species of host organisms
-    :param logger: logger object
+    :param genus: genus of host species
+    :param species: species name
+    :param tax_id: NCBI taxonomy ID of species
     :param query_field: field in UniProt to search using query term
     :param query_term: term to search for in specified
-
-    Return dataframe.
-    """
-    # Create empty dataframe to add data to
-    uniprot_df = pd.DataFrame(
-        columns=[
-            "Genus",
-            "Species",
-            "NCBI Taxonomy ID",
-            "UniProt entry ID",
-            "UniProt entry name",
-            "UniProt assigned protein names",
-            "EC Number",
-            "Length (Aa)",
-            "Mass (Da)",
-            "Domains",
-            "Domain count",
-            "UniProt linked protein families",
-            "GO IDs",
-            "GO molecular function",
-            "G0 biological process",
-            "Sequence",
-        ]
-    )
-
-    df_index = 0
-    for df_index in tqdm(range(len(input_df["Genus"])), desc="Retrieving Uniprot data"):
-        uniprot_df = uniprot_df.append(
-            get_uniprotkb_data(input_df.iloc[df_index], logger), ignore_index=True,
-        )
-        df_index += 1
-
-    return uniprot_df
-
-
-def get_uniprotkb_data(df_row, logger):
-    """Retrieve all cazyme entries from UniProtKB for species in dataframe series/row.
-
-    :param df_row: pandas series from input df, where:
-        df_row[0] = Genus
-        df_row[1] = Species
-        df_row[2] = NCBI Taxonomy ID
     :param logger: logger object
+    :param args: parser arguments
 
-    Return dataframe.
+    Return dataframe and call function to write out FASTA file of protein sequence.
+    """
+    # Call UniProtKB and return results as dataframe
+    uniprot_df = call_uniprotkb(tax_id, query_field, query_term, logger, args)
+
+    # Rename columns and create separate column to store EC numbers
+    uniprot_df = 
+
+
+def call_uniprotkb(genus, species, tax_id, query_field, query_term, logger, args):
+    """Call to UniProt.
+
+    If no data is retieved a default 'blank' dataframe is returned.
+
+    :param genus: genus of host species
+    :param species: species name
+    :param tax_id: NCBI taxonomy ID of species
+    :param query_field: field in UniProt to search using query term
+    :param query_term: term to search for in specified
+    :param logger: logger object
+    :param args: parser arguments
+
+    Returns dataframe of search results.
     """
     # Establish data to be retrieved from UniProt
     columnlist = (
@@ -181,17 +172,19 @@ def get_uniprotkb_data(df_row, logger):
         "Gene ontology IDs": ["NA"],
         "Gene ontology (molecular function)": ["NA"],
         "Gene ontology (biological process)": ["NA"],
+        "Sequences": ["NA"],
     }
 
     try:
+        # construct query
+        query = f'organism:"{genus} {species}" {query_field}:"{query_term}"'
         # open connection to UniProt(), search and convert result into pandas df
-        logger.info(df_row)
-        query = f'organism:"{df_row[0]} {df_row[1]}"'
         search_result = UniProt().search(
             query, columns=columnlist,
         )  # returns empty string for no result
-        logger.info(search_result)
+
         search_result_df = pd.read_table(io.StringIO(search_result))
+
         return format_search_results(search_result_df, df_row, logger)
 
     except HTTPError:
@@ -214,12 +207,15 @@ def get_uniprotkb_data(df_row, logger):
         return pd.DataFrame(blank_data)
 
 
-def format_search_results(search_result_df, df_row, logger):
-    """Formates dataframe, including adding EC numbers to new column and renaming columns
+def format_search_results(search_result_df, genus, species, tax_id, logger, args):
+    """Rename columns, add EC number, genus, species and tax ID columns.
 
     :param search_result_df: pandas dataframe of UniProt search results
-    :param df_row: pandas series from original input df
+    :param genus: genus of species
+    :param species: species name
+    :param tax_id: NCBI taxonomy ID of species
     :param logger: logger object
+    :param args: parser arguments
 
     Return pandas dataframe.
     """
@@ -239,7 +235,11 @@ def format_search_results(search_result_df, df_row, logger):
     index = 0
     all_ec_numbers = []  # list, each item is a str of all EC numbers in a unique row
     for index in range(len(search_result_df["UniProtKB Entry ID"])):
-        all_ec_numbers.append(get_ec_numbers(search_result_df.iloc[index], logger))
+        df_row = search_result_df.iloc[index]
+        all_ec_numbers.append(get_ec_numbers(df_row, logger))
+        # Write out protein sequence to FASTA file if sequence was retrieved from UniProtKB
+        if df_row["Sequences"] is not "NA":
+            write_fasta(df_row, logger, args)
         index += 1
 
     # Add EC numbers to dataframe0
@@ -247,9 +247,9 @@ def format_search_results(search_result_df, df_row, logger):
 
     # Add genus, species and NCBI taxonomy ID column, so the host organism is identifable
     # for each protein
-    genus_column_data = [df_row[0]] * len(all_ec_numbers)
-    species_column_data = [df_row[1]] * len(all_ec_numbers)
-    tax_id_column_data = [df_row[2]] * len(all_ec_numbers)
+    genus_column_data = genus * len(all_ec_numbers)
+    species_column_data = species * len(all_ec_numbers)
+    tax_id_column_data = tax_id * len(all_ec_numbers)
 
     search_result_df.insert(0, "Genus", genus_column_data)
     search_result_df.insert(1, "Species", species_column_data)
@@ -283,5 +283,49 @@ def get_ec_numbers(df_row, logger):
     return ec_numbers
 
 
+def write_fasta(df_row, logger, args):
+    """Write out FASTA file.
+
+    :param df_row: row from pandas df of UniProt search results
+    :param logger: logger object
+    :param args: parser arguments
+
+    Returns nothing.
+    """
+    
+
+
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+    # Create empty dataframe to add data to
+    uniprot_df = pd.DataFrame(
+        columns=[
+            "Genus",
+            "Species",
+            "NCBI Taxonomy ID",
+            "UniProt entry ID",
+            "UniProt entry name",
+            "UniProt assigned protein names",
+            "EC Number",
+            "Length (Aa)",
+            "Mass (Da)",
+            "Domains",
+            "Domain count",
+            "UniProt linked protein families",
+            "GO IDs",
+            "GO molecular function",
+            "G0 biological process",
+            "Sequence",
+        ]
+    )
+
+    # Call to UniProt
+    call_uniprotkb
+
+    return uniprot_df
