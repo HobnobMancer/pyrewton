@@ -32,7 +32,7 @@
 
 :func build_parser: create parser object
 :func main: coordinate script setup (args, logger)
-:func coordinate_data_retrieval: generate a dataframe of scientific names, taxonomy IDs and accession numbers
+:func coordinate_data_retrieval: generate a dataframe of species data
 :func build_logger: creates logger object
 :func make_output_directory: create directory for genomic files to be written to
 :func parse_input_file: parse input file
@@ -74,17 +74,7 @@ from pyrewton.file_io import make_output_directory, write_out_dataframe
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
-    """Generate dataframe containing scientific names, taxonomy IDs and accession numbers.
-
-    Parse input file to create dataframe ('species_table') of scientific name and taxonomy ID.
-
-    Pass the 'species_table' dataframe to collate_accession_numbers(), to retrieve all associated
-    NCBI accession numbers. Store accession numbers in new column.
-
-    If enabled, write out dataframe to .csv file.
-
-    Return 'species_table' dataframe.
-    """
+    """Set up loggers, parsers and directories for retrieval of genomes from NCBI."""
     # Programme preparation:
     # Parse arguments
     # Check if namepsace isn't passed, if not parse command-line
