@@ -120,21 +120,27 @@ def build_uniprot_df(tax_id, query, logger, args):
     uniprot_df = call_uniprotkb(tax_id, query, logger, args)
 
     # Rename columns and create separate column to store EC numbers
-    uniprot_df = format_search_results(uniprot_df, genus, species, tax_id, logger, args)
+    uniprot_df = format_search_results(uniprot_df, tax_id, logger, args)
+
+    # if enabled, write out FASTA files for each protein retrieved from UniProtKB
+    if args.fasta is True:
+        df_index = 0
+        for df_index in range(len(uniprot_df["Sequences"])):
+            df_row = uniprot_df.iloc[df_index]
+            if df_row["Sequences"] != "NA":
+                write_fasta(df_row, logger, args)
+            df_index += 1
 
     return
 
 
-def call_uniprotkb(genus, species, tax_id, query_field, query_term, logger, args):
-    """Call to UniProt.
+def call_uniprotkb(tax_id, query, logger, args):
+    """Calls to UniProt.
 
     If no data is retieved a default 'blank' dataframe is returned.
 
-    :param genus: genus of host species
-    :param species: species name
     :param tax_id: NCBI taxonomy ID of species
-    :param query_field: field in UniProt to search using query term
-    :param query_term: term to search for in specified
+    :param query: query for UniProt
     :param logger: logger object
     :param args: parser arguments
 
@@ -168,8 +174,6 @@ def call_uniprotkb(genus, species, tax_id, query_field, query_term, logger, args
     }
 
     try:
-        # construct query
-        query = f'organism:"{genus} {species}" {query_field}:"{query_term}"'
         # open connection to UniProt(), search and convert result into pandas df
         search_result = UniProt().search(
             query, columns=columnlist,
@@ -197,7 +201,7 @@ def call_uniprotkb(genus, species, tax_id, query_field, query_term, logger, args
         return pd.DataFrame(blank_data)
 
 
-def format_search_results(search_result_df, genus, species, tax_id, logger, args):
+def format_search_results(search_result_df, tax_id, logger, args):
     """Rename columns, add EC number, genus, species and tax ID columns.
 
     :param search_result_df: pandas dataframe of UniProt search results
@@ -237,13 +241,9 @@ def format_search_results(search_result_df, genus, species, tax_id, logger, args
 
     # Add genus, species and NCBI taxonomy ID column, so the host organism is identifable
     # for each protein
-    genus_column_data = genus * len(all_ec_numbers)
-    species_column_data = species * len(all_ec_numbers)
     tax_id_column_data = tax_id * len(all_ec_numbers)
 
-    search_result_df.insert(0, "Genus", genus_column_data)
-    search_result_df.insert(1, "Species", species_column_data)
-    search_result_df.insert(2, "NCBI Taxonomy ID", tax_id_column_data)
+    search_result_df.insert(0, "NCBI Taxonomy ID", tax_id_column_data)
 
     return search_result_df
 
