@@ -110,8 +110,8 @@ def get_config_data(logger, args):
 def build_uniprot_df(tax_id, query, logger, args):
     """Build dataframe to store data retrieved from UniProtKB.
 
-    :param tax_id: NCBI taxonomy ID of species
-    :param query: term to search for in specified
+    :param tax_id: str, NCBI taxonomy ID of species
+    :param query: str, term to search for in specified
     :param logger: logger object
     :param args: parser arguments
 
@@ -120,14 +120,17 @@ def build_uniprot_df(tax_id, query, logger, args):
     # Call UniProtKB and return results as dataframe
     uniprot_df = call_uniprotkb(tax_id, query, logger, args)
 
+    # write query title for dataframe and FASTA filestem names
+    invalid_file_name_characters = re.compile(r'[,;./ "*#<>?|\\:]')
+    filestem = f"UniProt_{tax_id}_{query_title}_{now.strftime("%Y-%m-%d_%H-%M-%S")}"
+    filestem = query_title = re.sub(invalid_file_characters, "_", filestem)
+
     # Rename columns and create separate column to store EC numbers, and write
     # out sequences to FASTA files if enabled
-    uniprot_df = format_search_results(uniprot_df, tax_id, logger, args)
+    uniprot_df = format_search_results(uniprot_df, tax_id, filestem, logger, args)
 
     # write out resulting dataframe for UniProtKB query
-    invalid_file_name_characters = re.compile(r'[,;./ "*#<>?|\\:]')
-    query_title = re.sub(invalid_file_characters, "_", query)
-    dataframe_name = f"UniProt_{tax_id}_{query_title}_{now.strftime("%Y-%m-%d_%H-%M-%S")}.csv"
+    dataframe_name = f"{filestem}.csv"
     write_out_pre_named_dataframe(uniprot_df, dataframe_name, logger, args.output, args.force)
 
     return
@@ -138,8 +141,8 @@ def call_uniprotkb(tax_id, query, logger, args):
 
     If no data is retieved a default 'blank' dataframe is returned.
 
-    :param tax_id: NCBI taxonomy ID of species
-    :param query: query for UniProt
+    :param tax_id: str, NCBI taxonomy ID of species
+    :param query: str, query for UniProt
     :param logger: logger object
     :param args: parser arguments
 
@@ -201,13 +204,12 @@ def call_uniprotkb(tax_id, query, logger, args):
         return pd.DataFrame(blank_data)
 
 
-def format_search_results(search_result_df, tax_id, logger, args):
+def format_search_results(search_result_df, tax_id, filestem, logger, args):
     """Rename columns, add EC number, genus, species and tax ID columns.
 
     :param search_result_df: pandas dataframe of UniProt search results
-    :param genus: genus of species
-    :param species: species name
-    :param tax_id: NCBI taxonomy ID of species
+    :param tax_id: str, NCBI taxonomy ID of species
+    :param filestem: str, FASTA file name
     :param logger: logger object
     :param args: parser arguments
 
@@ -228,12 +230,12 @@ def format_search_results(search_result_df, tax_id, logger, args):
     logger.info("Retrieving EC numbers")
     index = 0
     all_ec_numbers = []  # list, each item is a str of all EC numbers in a unique row
-    for index in tqdm(range(len(search_result_df["UniProtKB Entry ID"])), desc="Processing protein data")
+    for index in tqdm(range(len(search_result_df["UniProtKB Entry ID"])), desc="Processing protein data"):
         df_row = search_result_df.iloc[index]
         all_ec_numbers.append(get_ec_numbers(df_row, logger))
         # Write out protein sequence to FASTA file if sequence was retrieved from UniProtKB
         if (args.fasta) and (df_row["Sequence"] != "NA"):
-            write_fasta(df_row, logger, args)
+            write_fasta(df_row, filestem, logger, args)
         index += 1
 
     # Add EC numbers to dataframe0
@@ -273,16 +275,35 @@ def get_ec_numbers(df_row, logger):
     return ec_numbers
 
 
-def write_fasta(df_row, logger, args):
+def write_fasta(df_row, filestem, logger, args):
     """Write out FASTA file.
 
     :param df_row: row from pandas df of UniProt search results
+    :param filestem: str, FASTA file name
     :param logger: logger object
     :param args: parser arguments
 
     Returns nothing.
     """
-    file_content = f">{df_row["NCBI Taxonomy ID"]} {df_row[""]}"
+    # FASTA sequences have 60 characters per line, add line breakers into protein sequence
+    # to match FASTA format
+    sequence = df_row["Sequence"]
+    sequence = "\n".join([sequence[i:i + 60] for i in range(0, len(sequence), 60)])
+    file_content = f">{df_row[" NCBI Taxonomy ID "]} {df_row[" Organism "]} \n{sequence}"
+
+    # Remove invalid characters for filename from UniProt ID
+    protein_id = df_row["UniProtKB Entry ID"]
+
+    # Create output path
+    output_path =
+    if args.output is not sys.stdout:
+        output_path = args.output / "{filestem}_{protein_id}.fasta"
+    else:
+        output_path = args.output
+
+    # Write out data to Fasta file
+    with open("{filestem}_{protein_id}.fasta", "w+") as ofh:
+        ofh = file_content
 
     return
 
