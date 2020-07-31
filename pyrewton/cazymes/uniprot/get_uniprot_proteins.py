@@ -95,14 +95,32 @@ def get_config_data(logger, args):
     """
     logger.info("Retrieving queries from config file")
     with open(args.input) as ifh:
-        config_dict = yaml.safe_load(ifh)
+        config_dict = yaml.full_load(ifh)
 
     # Retrieve Taxonomy IDs from configuration data
-    tax_ids = config_dict["tax_ids"]
+    try:
+        tax_ids = config_dict["tax_ids"]
+    except KeyError:
+        logger.warning(
+            (
+                "No Taxonomy IDs retrieved from configuration file\n."
+                "If not restricting search by organism continue.\n"
+                "Else make sure Taxonomy IDs are under the heading 'tax_ids:'"
+            )
+        )
 
     # Retrieve other queries from configuration data
     query_list = []
-    query_list.append(config_dict["queries"])
+    try:
+        query_list.append(config_dict["queries"])
+    except KeyError:
+        logger.warning(
+            (
+                "No queries retrieved from configuration file\n."
+                "If no additional queriers wanted, continue.\n"
+                "Else make sure additional queries are under the 'queries:'"
+            )
+        )
 
     return tax_ids, query_list
 
@@ -230,7 +248,9 @@ def format_search_results(search_result_df, tax_id, filestem, logger, args):
     logger.info("Retrieving EC numbers")
     index = 0
     all_ec_numbers = []  # list, each item is a str of all EC numbers in a unique row
-    for index in tqdm(range(len(search_result_df["UniProtKB Entry ID"])), desc="Processing protein data"):
+    for index in tqdm(
+        range(len(search_result_df["UniProtKB Entry ID"])), desc="Processing protein data"
+    ):
         df_row = search_result_df.iloc[index]
         all_ec_numbers.append(get_ec_numbers(df_row, logger))
         # Write out protein sequence to FASTA file if sequence was retrieved from UniProtKB
