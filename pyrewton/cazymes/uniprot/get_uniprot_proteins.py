@@ -25,10 +25,10 @@ and create fasta file of protein sequence.
 """
 
 import io
-import json
 import logging
 import re
 import sys
+import yaml
 
 from typing import List, Optional
 
@@ -45,9 +45,9 @@ from pyrewton.parsers.parser_get_uniprot_proteins import build_parser
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
-    """Coordinate retrieval of entries from UniProtKB database.
+    """Set up parser, loggers, IO files and directories, then invoke scripts main function.
 
-    Store entries in pandase dataframe; write out dataframe to csv file.
+    Set up loggers, parsers and directories for retrieval of cazymes from UniProtKB.
     """
     # Programme preparation:
 
@@ -71,65 +71,53 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         file_io.make_output_directory(args, logger)
 
     # Initate scripts main function
-
-
-def get_uniprot_proteins(args, logger):
-    """Coordinate overall function of script to retrieve protein data.
-
-    :param args: parser arguments
-    :param logger: logger object
-    """
     logger.info("Run initated")
 
-    # Open input dataframe, containing species dataframe
-    logger.info("Opening input dataframe %s", args.df_input)
-    input_df = pd.read_csv(args.df_input, header=0, index_col=0)
+    # Retrieve data from configuration file
+    tax_ids, query_list = get_config_data(logger, args)
 
-    # Open file containing query terms, saving dictionary with query field
-    # as the Key and query term as the value
-    with (args.query).open("r") as fh:
-        query_dict = json.load(fh)
-
-    # Iterate over species in input dataframe, to search for potential CAZymes
-    df_index = 0
-    for df_index in tqdm(range(len(input_df["Genus"])), desc="Retrieving Uniprot data"):
-        pd_series = input_df.iloc[df_index]
-        # Iterate through query fields and query terms for each field
-        for key in query_dict:
-            query_list = query_dict[key]
-            for term in query_list:
-                # Call function which coordinates call to UniProt
-                build_uniprot_df(
-                    f"{pd_series[0]}",
-                    f"{pd_series[1]}",
-                    pd_series[2],
-                    key,
-                    term,
-                    logger,
-                    args,
-                )
-        df_index += 1
+    # Iterate over species to search using each query from config file
+    for tax_id in tax_ids:
+        for query in query_list:
+            build_uniprot_df(tax_id, query, logger, args)
 
     logger.info("Program finished")
 
 
-def build_uniprot_df(genus, species, tax_id, query_field, query_term, logger, args):
-    """Coordinates call to UniProt and formatting of results.
+def get_config_data(logger, args):
+    """Retrieve data from configration file.
 
-    :param genus: genus of host species
-    :param species: species name
+    :param logger: logger objects
+    :param args: parser arguments.
+
+    Returns list of taxonomy IDs and list of queries.
+    """
+    logger.info("Retrieving queries from config file")
+    with open(args.input) as ifh:
+        config_dict = yaml.safe_load(ifh)
+
+    # Retrieve Taxonomy IDs from configuration data
+    tax_ids = config_dict["tax_ids"]
+
+    # Retrieve other queries from configuration data
+    query_list = []
+    query_list.append(config_dict["queries"])
+
+    return tax_ids, query_list
+
+
+def build_uniprot_df(tax_id, query, logger, args):
+    """Build dataframe to store data retrieved from UniProtKB.
+
     :param tax_id: NCBI taxonomy ID of species
-    :param query_field: field in UniProt to search using query term
-    :param query_term: term to search for in specified
+    :param query: term to search for in specified
     :param logger: logger object
     :param args: parser arguments
 
     Returns nothing.
     """
     # Call UniProtKB and return results as dataframe
-    uniprot_df = call_uniprotkb(
-        genus, species, tax_id, query_field, query_term, logger, args
-    )
+    uniprot_df = call_uniprotkb(tax_id, query, logger, args)
 
     # Rename columns and create separate column to store EC numbers
     uniprot_df = format_search_results(uniprot_df, genus, species, tax_id, logger, args)
