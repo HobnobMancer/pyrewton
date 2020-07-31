@@ -31,6 +31,7 @@ import sys
 import yaml
 
 from typing import List, Optional
+from datetime import datetime
 
 import pandas as pd
 
@@ -39,7 +40,7 @@ from pandas.errors import EmptyDataError
 from tqdm import tqdm
 from urllib.error import HTTPError
 
-from pyrewton import file_io
+from pyrewton.file_io import write_out_pre_named_dataframe
 from pyrewton.loggers import build_logger
 from pyrewton.parsers.parser_get_uniprot_proteins import build_parser
 
@@ -119,17 +120,15 @@ def build_uniprot_df(tax_id, query, logger, args):
     # Call UniProtKB and return results as dataframe
     uniprot_df = call_uniprotkb(tax_id, query, logger, args)
 
-    # Rename columns and create separate column to store EC numbers
+    # Rename columns and create separate column to store EC numbers, and write
+    # out sequences to FASTA files if enabled
     uniprot_df = format_search_results(uniprot_df, tax_id, logger, args)
 
-    # if enabled, write out FASTA files for each protein retrieved from UniProtKB
-    if args.fasta is True:
-        df_index = 0
-        for df_index in range(len(uniprot_df["Sequences"])):
-            df_row = uniprot_df.iloc[df_index]
-            if df_row["Sequences"] != "NA":
-                write_fasta(df_row, logger, args)
-            df_index += 1
+    # write out resulting dataframe for UniProtKB query
+    invalid_file_name_characters = re.compile(r'[,;./ "*#<>?|\\:]')
+    query_title = re.sub(invalid_file_characters, "_", query)
+    dataframe_name = f"UniProt_{tax_id}_{query_title}_{now.strftime("%Y-%m-%d_%H-%M-%S")}.csv"
+    write_out_pre_named_dataframe(uniprot_df, dataframe_name, logger, args.output, args.force)
 
     return
 
@@ -148,7 +147,7 @@ def call_uniprotkb(tax_id, query, logger, args):
     """
     # Establish data to be retrieved from UniProt
     columnlist = (
-        "id,entry name, protein names,length,mass,domains,domain,"
+        "organism,id,entry name, protein names,length,mass,domains,domain,"
         "families,"
         "go-id,go(molecular function),go(biological process),"
         "sequence"
@@ -158,6 +157,7 @@ def call_uniprotkb(tax_id, query, logger, args):
     # an error is thrown. Iterables are used as values to avoid problems with
     # "ValueError: If using all scalar values, you must pass an index"
     blank_data = {
+        "Organism": ["NA"],
         "UniProtKB Entry ID": ["NA"],
         "UniProtKB Entry Name": ["NA"],
         "UniProtKB Protein Names": ["NA"],
@@ -170,7 +170,7 @@ def call_uniprotkb(tax_id, query, logger, args):
         "Gene ontology IDs": ["NA"],
         "Gene ontology (molecular function)": ["NA"],
         "Gene ontology (biological process)": ["NA"],
-        "Sequences": ["NA"],
+        "Sequence": ["NA"],
     }
 
     try:
@@ -228,11 +228,11 @@ def format_search_results(search_result_df, tax_id, logger, args):
     logger.info("Retrieving EC numbers")
     index = 0
     all_ec_numbers = []  # list, each item is a str of all EC numbers in a unique row
-    for index in range(len(search_result_df["UniProtKB Entry ID"])):
+    for index in tqdm(range(len(search_result_df["UniProtKB Entry ID"])), desc="Processing protein data")
         df_row = search_result_df.iloc[index]
         all_ec_numbers.append(get_ec_numbers(df_row, logger))
         # Write out protein sequence to FASTA file if sequence was retrieved from UniProtKB
-        if df_row["Sequences"] != "NA":
+        if (args.fasta) and (df_row["Sequence"] != "NA"):
             write_fasta(df_row, logger, args)
         index += 1
 
@@ -282,6 +282,7 @@ def write_fasta(df_row, logger, args):
 
     Returns nothing.
     """
+    file_content = f">{df_row["NCBI Taxonomy ID"]} {df_row[""]}"
 
     return
 
