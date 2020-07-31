@@ -40,7 +40,7 @@ from pandas.errors import EmptyDataError
 from tqdm import tqdm
 from urllib.error import HTTPError
 
-from pyrewton.file_io import write_out_pre_named_dataframe
+from pyrewton.file_io import write_out_pre_named_dataframe, make_output_directory
 from pyrewton.loggers import build_logger
 from pyrewton.parsers.parser_get_uniprot_proteins import build_parser
 
@@ -69,7 +69,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # If specified output directory, create output directory to write FASTA files too
     if args.output is not sys.stdout:
-        file_io.make_output_directory(args, logger)
+        make_output_directory(args, logger)
 
     # Initate scripts main function
     logger.info("Run initated")
@@ -77,10 +77,27 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Retrieve data from configuration file
     tax_ids, query_list = get_config_data(logger, args)
 
-    # Iterate over species to search using each query from config file
-    for tax_id in tax_ids:
-        for query in query_list:
-            build_uniprot_df(tax_id, query, logger, args)
+    # Mediate iteration of tax IDs and/or queries, as retrieved from config file
+    # Search on by user defined query
+    if tax_ids is None:
+        index = 0
+        for query in tqdm(range(len(query_list)), desc="Querying UniProtKB"):
+            build_uniprot_df(None, query_list[index], logger, args)
+            index += 1
+
+    # Search by user defined taxonomy ID only
+    elif query_list is None:
+        index = 0
+        for tax_id in tqdm(range(len(tax_ids))):
+            build_uniprot_df(tax_ids[index], None, logger, args)
+            index += 1
+
+    # Search every user defined query with ('AND') every user define taxonomy ID
+    else:
+        for tax_id in tax_ids:
+            index = 0
+            for query in tqdm(range(len(query_list))):
+                build_uniprot_df(tax_id, query_list[index], logger, args)
 
     logger.info("Program finished")
 
@@ -108,6 +125,10 @@ def get_config_data(logger, args):
                 "Else make sure Taxonomy IDs are under the heading 'tax_ids:'"
             )
         )
+        tax_ids = None
+    # If tax IDs key exists but no tax IDs are stored underneath return None
+    if len(tax_ids) == 0:
+        tax_ids = None
 
     # Retrieve other queries from configuration data
     query_list = []
@@ -122,6 +143,19 @@ def get_config_data(logger, args):
             )
         )
 
+    if (tax_ids is None) and (query_list == []):
+        logger.error(
+            (
+                "Nothing retrieved from configuration file.\n"
+                "Ensure correct file was passed to script, and file contains configuration data.\n"
+                "Terminating program."
+            ),
+            sys.exit(1),
+        )
+
+    if len(query_list) == 0:
+        query_list = None
+
     return tax_ids, query_list
 
 
@@ -135,26 +169,44 @@ def build_uniprot_df(tax_id, query, logger, args):
 
     Returns nothing.
     """
-    # Call UniProtKB and return results as dataframe
-    uniprot_df = call_uniprotkb(tax_id, query, logger, args)
+    # remove NCBI:txid prefix, otherwise UniProtKB will return no results
+    if tax_id is not None:
+        tax_id = tax_id.replace("NCBI:txid", "")
 
-    # write query title for dataframe and FASTA filestem names
+    # construct query and filestem for dataframes nad FASTA files
+    time_stamp = datetime.now().strftime("%H:%M:%S")
+    if tax_id is None:
+        uniprot_query = query
+        filestem = f"uniprot_{query}_{time_stamp}"
+    elif query is None:
+
+        uniprot_query = f'taxonomy:"{tax_id}"'
+        filestem = f"uniprot_{query}_{time_stamp}"
+    else:
+        uniprot_query = f'taxonomy:"{tax_id}" AND {query}'
+        f"uniprot_{tax_id}_{query}_{time_stamp}"
+
+    # Call UniProtKB and return results as dataframe
+    uniprot_df = call_uniprotkb(uniprot_query, logger, args)
+
+    # remove characters that could make file names invalid
     invalid_file_name_characters = re.compile(r'[,;./ "*#<>?|\\:]')
-    filestem = f"UniProt_{tax_id}_{query_title}_{now.strftime("%Y-%m-%d_%H-%M-%S")}"
-    filestem = query_title = re.sub(invalid_file_characters, "_", filestem)
+    filestem = re.sub(invalid_file_name_characters, "_", filestem)
 
     # Rename columns and create separate column to store EC numbers, and write
     # out sequences to FASTA files if enabled
-    uniprot_df = format_search_results(uniprot_df, tax_id, filestem, logger, args)
+    uniprot_df = format_search_results(uniprot_df, filestem, logger, args)
 
     # write out resulting dataframe for UniProtKB query
     dataframe_name = f"{filestem}.csv"
-    write_out_pre_named_dataframe(uniprot_df, dataframe_name, logger, args.output, args.force)
+    write_out_pre_named_dataframe(
+        uniprot_df, dataframe_name, logger, args.output, args.force
+    )
 
     return
 
 
-def call_uniprotkb(tax_id, query, logger, args):
+def call_uniprotkb(query, logger, args):
     """Calls to UniProt.
 
     If no data is retieved a default 'blank' dataframe is returned.
@@ -168,7 +220,7 @@ def call_uniprotkb(tax_id, query, logger, args):
     """
     # Establish data to be retrieved from UniProt
     columnlist = (
-        "organism,id,entry name, protein names,length,mass,domains,domain,"
+        "organism-id,organism,id,entry name, protein names,length,mass,domains,domain,"
         "families,"
         "go-id,go(molecular function),go(biological process),"
         "sequence"
@@ -178,6 +230,7 @@ def call_uniprotkb(tax_id, query, logger, args):
     # an error is thrown. Iterables are used as values to avoid problems with
     # "ValueError: If using all scalar values, you must pass an index"
     blank_data = {
+        "NCBI Taxonomy ID": ["NA"],
         "Organism": ["NA"],
         "UniProtKB Entry ID": ["NA"],
         "UniProtKB Entry Name": ["NA"],
@@ -205,7 +258,7 @@ def call_uniprotkb(tax_id, query, logger, args):
     except HTTPError:
         logger.warning(
             (
-                f"Network error occured when searching UniProt for locus tag:{tax_id}.\n"
+                f"Network error occured during query: {query}\n"
                 "Returning null value 'NA' for all UniProt data"
             )
         )
@@ -215,14 +268,14 @@ def call_uniprotkb(tax_id, query, logger, args):
         # No UniProt entries found for locus tag, return null data for
         logger.warning(
             (
-                f"No data returned from UniProt for locus tag:{tax_id}.\n"
+                f"No data returned from UniProt during query: {query}\n"
                 "Returning null value 'NA' for all UniProt data"
             )
         )
         return pd.DataFrame(blank_data)
 
 
-def format_search_results(search_result_df, tax_id, filestem, logger, args):
+def format_search_results(search_result_df, filestem, logger, args):
     """Rename columns, add EC number, genus, species and tax ID columns.
 
     :param search_result_df: pandas dataframe of UniProt search results
@@ -236,6 +289,7 @@ def format_search_results(search_result_df, tax_id, filestem, logger, args):
     logger.info("Renaming column headers")
     search_result_df = search_result_df.rename(
         columns={
+            "Organism ID": "NCBI Taxonomy ID",
             "Entry": "UniProtKB Entry ID",
             "Entry name": "UniProtKB Entry Name",
             "Protein names": "UniProtKB Protein Names",
@@ -249,7 +303,8 @@ def format_search_results(search_result_df, tax_id, filestem, logger, args):
     index = 0
     all_ec_numbers = []  # list, each item is a str of all EC numbers in a unique row
     for index in tqdm(
-        range(len(search_result_df["UniProtKB Entry ID"])), desc="Processing protein data"
+        range(len(search_result_df["UniProtKB Entry ID"])),
+        desc="Processing protein data",
     ):
         df_row = search_result_df.iloc[index]
         all_ec_numbers.append(get_ec_numbers(df_row, logger))
@@ -260,12 +315,6 @@ def format_search_results(search_result_df, tax_id, filestem, logger, args):
 
     # Add EC numbers to dataframe0
     search_result_df.insert(3, "EC number", all_ec_numbers)
-
-    # Add genus, species and NCBI taxonomy ID column, so the host organism is identifable
-    # for each protein
-    tax_id_column_data = tax_id * len(all_ec_numbers)
-
-    search_result_df.insert(0, "NCBI Taxonomy ID", tax_id_column_data)
 
     return search_result_df
 
@@ -308,22 +357,34 @@ def write_fasta(df_row, filestem, logger, args):
     # FASTA sequences have 60 characters per line, add line breakers into protein sequence
     # to match FASTA format
     sequence = df_row["Sequence"]
-    sequence = "\n".join([sequence[i:i + 60] for i in range(0, len(sequence), 60)])
-    file_content = f">{df_row[" NCBI Taxonomy ID "]} {df_row[" Organism "]} \n{sequence}"
+    sequence = "\n".join([sequence[i : i + 60] for i in range(0, len(sequence), 60)])
+
+    # Retrieve Taxonomy ID and ensure NCBI prefix is present
+    tax_id = df_row["NCBI Taxonomy ID"]
+    if tax_id.startswith("NCBI:txid") is False:
+        tax_id = "NCBI:txid" + tax_id
+    tax_id.replace(" ", "")
+
+    # Retrieve organism name
+    organism = df_row["Organism"]
+
+    file_content = f">{tax_id} {organism} \n{sequence}"
 
     # Remove invalid characters for filename from UniProt ID
     protein_id = df_row["UniProtKB Entry ID"]
+    # remove characters that could make file names invalid
+    invalid_file_name_characters = re.compile(r'[,;./ "*#<>?|\\:]')
+    protein_id = re.sub(invalid_file_name_characters, "_", protein_id)
 
     # Create output path
-    output_path =
     if args.output is not sys.stdout:
         output_path = args.output / "{filestem}_{protein_id}.fasta"
     else:
         output_path = args.output
 
     # Write out data to Fasta file
-    with open("{filestem}_{protein_id}.fasta", "w+") as ofh:
-        ofh = file_content
+    with open(output_path, "w+") as fh:
+        fh.write(file_content)
 
     return
 
