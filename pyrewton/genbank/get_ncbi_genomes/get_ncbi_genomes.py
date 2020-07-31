@@ -32,7 +32,7 @@
 
 :func build_parser: create parser object
 :func main: coordinate script setup (args, logger)
-:func get_ncbi_data: generate a dataframe of scientific names, taxonomy IDs and accession numbers
+:func coordinate_data_retrieval: generate a dataframe of scientific names, taxonomy IDs and accession numbers
 :func build_logger: creates logger object
 :func make_output_directory: create directory for genomic files to be written to
 :func parse_input_file: parse input file
@@ -115,10 +115,10 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     if args.output is not sys.stdout:
         make_output_directory(args, logger)
 
-    get_ncbi_data(logger, args)
+    coordinate_data_retrieval(logger, args)
 
 
-def get_ncbi_data(logger, args):
+def coordinate_data_retrieval(logger, args):
     """Coordinate retrieval of data from NCBI."""
     # Invoke main usage of programme
     # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'

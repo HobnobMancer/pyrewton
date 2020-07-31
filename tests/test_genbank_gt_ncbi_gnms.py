@@ -747,7 +747,9 @@ def test_script_coordination_stdout(
     )
     monkeypatch.setattr(get_ncbi_genomes, "write_out_dataframe", mock_writing_out_df)
 
-    get_ncbi_genomes.get_ncbi_data(null_logger, coordination_args_stdout["args"])
+    get_ncbi_genomes.coordinate_data_retrieval(
+        null_logger, coordination_args_stdout["args"]
+    )
 
 
 @pytest.mark.run(order=32)
@@ -771,4 +773,4 @@ def test_script_coordination(accession_df, null_logger, coordination_args, monke
     )
     monkeypatch.setattr(get_ncbi_genomes, "write_out_dataframe", mock_writing_out_df)
 
-    get_ncbi_genomes.get_ncbi_data(null_logger, coordination_args["args"])
+    get_ncbi_genomes.coordinate_data_retrieval(null_logger, coordination_args["args"])
