@@ -48,7 +48,7 @@ def build_parser(argv: Optional[List] = None):
     parser.add_argument(
         "-fa",
         "--fasta",
-        desc="fasta"
+        desc="fasta",
         action="store_true",
         default=False,
         help="Enable fasta file writing",
