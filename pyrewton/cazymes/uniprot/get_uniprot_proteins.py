@@ -16,8 +16,14 @@
 # UK
 #
 # The MIT License
-"""Retrieves proteins from UniProt for given species,
-and create fasta file of protein sequence.
+"""Retrieves proteins from UniProt and write fasta files.
+
+Queries and Taxonomy IDs are passed to this script via a YAML
+file.
+Taxonomy IDs must be stored as a list under 'tax_ids'.
+User defined queries must be written under 'queries' as a list,
+and written in the UniProtKB query syntax (see
+uniprot.ord/help/text-syntax).
 
 :param ...
 
@@ -78,21 +84,22 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     tax_ids, query_list = get_config_data(logger, args)
 
     # Mediate iteration of tax IDs and/or queries, as retrieved from config file
-    # Search on by user defined query
+
+    # Search by user defined query only
     if tax_ids is None:
         index = 0
         for query in tqdm(range(len(query_list)), desc="Querying UniProtKB"):
             build_uniprot_df(None, query_list[index], logger, args)
             index += 1
 
-    # Search by user defined taxonomy ID only
+    # Search by taxonomy ID only
     elif query_list is None:
         index = 0
         for tax_id in tqdm(range(len(tax_ids))):
             build_uniprot_df(tax_ids[index], None, logger, args)
             index += 1
 
-    # Search every user defined query with ('AND') every user define taxonomy ID
+    # Search every user defined query with ('AND') for each taxonomy ID
     else:
         for tax_id in tax_ids:
             index = 0
@@ -130,7 +137,7 @@ def get_config_data(logger, args):
     if len(tax_ids) == 0:
         tax_ids = None
 
-    # Retrieve other queries from configuration data
+    # Retrieve user defined queries from configuration data
     query_list = []
     try:
         query_list.append(config_dict["queries"])
@@ -173,21 +180,19 @@ def build_uniprot_df(tax_id, query, logger, args):
     if tax_id is not None:
         tax_id = tax_id.replace("NCBI:txid", "")
 
-    # construct query and filestem for dataframes nad FASTA files
+    # construct query and filestem for dataframes and FASTA files
     time_stamp = datetime.now().strftime("%H:%M:%S")
     if tax_id is None:
         uniprot_query = query
-        filestem = f"uniprot_{query}_{time_stamp}"
     elif query is None:
-
         uniprot_query = f'taxonomy:"{tax_id}"'
-        filestem = f"uniprot_{query}_{time_stamp}"
     else:
         uniprot_query = f'taxonomy:"{tax_id}" AND {query}'
-        f"uniprot_{tax_id}_{query}_{time_stamp}"
+
+    filestem = f"uniprot_{query}_{time_stamp}"
 
     # Call UniProtKB and return results as dataframe
-    uniprot_df = call_uniprotkb(uniprot_query, logger, args)
+    uniprot_df = call_uniprotkb(uniprot_query, logger)
 
     # remove characters that could make file names invalid
     invalid_file_name_characters = re.compile(r'[,;./ "*#<>?|\\:]')
@@ -198,23 +203,20 @@ def build_uniprot_df(tax_id, query, logger, args):
     uniprot_df = format_search_results(uniprot_df, filestem, logger, args)
 
     # write out resulting dataframe for UniProtKB query
-    dataframe_name = f"{filestem}.csv"
     write_out_pre_named_dataframe(
-        uniprot_df, dataframe_name, logger, args.output, args.force
+        uniprot_df, f"{filestem}.csv", logger, args.output, args.force
     )
 
     return
 
 
-def call_uniprotkb(query, logger, args):
+def call_uniprotkb(query, logger):
     """Calls to UniProt.
 
     If no data is retieved a default 'blank' dataframe is returned.
 
-    :param tax_id: str, NCBI taxonomy ID of species
     :param query: str, query for UniProt
     :param logger: logger object
-    :param args: parser arguments
 
     Returns dataframe of search results.
     """
@@ -247,6 +249,7 @@ def call_uniprotkb(query, logger, args):
         "Sequence": ["NA"],
     }
 
+    logger.info("querying uniprot, query: {query}")
     try:
         # open connection to UniProt(), search and convert result into pandas df
         search_result = UniProt().search(
@@ -301,7 +304,7 @@ def format_search_results(search_result_df, filestem, logger, args):
 
     logger.info("Retrieving EC numbers")
     index = 0
-    all_ec_numbers = []  # list, each item is a str of all EC numbers in a unique row
+    all_ec_numbers = []  # list, each item as a str of all EC numbers in a unique row
     for index in tqdm(
         range(len(search_result_df["UniProtKB Entry ID"])),
         desc="Processing protein data",
