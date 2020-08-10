@@ -1,0 +1,4 @@
+tax_ids:
+  - "5061"
+queries:
+  - "database:(type:cazy)"
