@@ -49,9 +49,9 @@ def build_parser(argv: Optional[List] = None):
         "-fa",
         "--fasta",
         desc="fasta"
-        action="store_true"
+        action="store_true",
         default=False,
-        help="Enable fasta file writing"
+        help="Enable fasta file writing",
     )
     # Add option to force file over writting
     parser.add_argument(
