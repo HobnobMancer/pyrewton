@@ -80,8 +80,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Check if namepsace isn't passed, if not parse command-line
     if argv is None:
         # Parse command-line
-        parser = build_parser()
-        args = parser.parse_args()
+        args = build_parser().parse_args()
     else:
         args = build_parser(argv).parse_args()
 
@@ -665,17 +664,7 @@ def download_file(
     # Try URL connection
     try:
         response = urlopen(genbank_url, timeout=args.timeout)
-    except HTTPError:
-        logger.error(
-            f"Failed to download {file_type} for {accession_number}", exc_info=1,
-        )
-        return
-    except URLError:
-        logger.error(
-            f"Failed to download {file_type} for {accession_number}", exc_info=1,
-        )
-        return
-    except timeout:
+    except (HTTPError, URLError, timeout) as e:
         logger.error(
             f"Failed to download {file_type} for {accession_number}", exc_info=1,
         )
