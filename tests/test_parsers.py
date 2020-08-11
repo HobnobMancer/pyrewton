@@ -35,18 +35,18 @@ from pyrewton.parsers import (
 
 
 @pytest.mark.run(order=1)
-def test_build_parser_gt_ncb_gnms():
+def test_parser_gt_ncb_gnms():
     """Tests building of parser"""
     parser_get_ncbi_genomes.build_parser()
 
 
 @pytest.mark.run(order=2)
-def test_build_parser_gt_unprt_prtns():
+def test_parser_gt_czym_anno():
     """Tests building of parser"""
-    parser_get_uniprot_proteins.build_parser()
+    parser_get_genbank_annotations.build_parser()
 
 
 @pytest.mark.run(order=3)
-def test_build_parser_gt_czym_anno():
+def test_parser_gt_unprt_prtns():
     """Tests building of parser"""
-    parser_get_genbank_annotations.build_parser()
+    parser_get_uniprot_proteins.build_parser()
