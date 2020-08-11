@@ -27,7 +27,7 @@ import pytest
 
 import pandas as pd
 
-from argparse import Namespace
+from argparse import Namespace, ArgumentParser
 from bioservices import UniProt
 
 from pyrewton.cazymes.uniprot import get_uniprot_proteins
@@ -403,3 +403,30 @@ def test_writing_out_fasta_file(df_series_for_writing, null_logger, args_fasta):
     get_uniprot_proteins.write_fasta(
         df_series_for_writing, "filestem", null_logger, args_fasta["args"]
     )
+
+
+# test function 'main'
+
+
+def test_main(output_dir, null_logger, monkeypatch):
+    """Test function 'main'."""
+
+    def mock_parser(*args, **kwargs):
+        parser = Namespace(output=output_dir)
+        return parser
+
+    def mock_build_logger(*args, **kwargs):
+        return null_logger
+
+    def mock_making_dir(*args, **kwargs):
+        return
+
+    def mock_configuration(*args, **kwargs):
+        return
+
+    monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
+    monkeypatch.setattr(get_uniprot_proteins, "build_logger", mock_build_logger)
+    monkeypatch.setattr(get_uniprot_proteins, "make_output_directory", mock_making_dir)
+    monkeypatch.setattr(get_uniprot_proteins, "configuration", mock_configuration)
+
+    get_uniprot_proteins.main()
