@@ -1,4 +1,5 @@
 tax_ids:
   - "5061"
+  - "51453"
 queries:
-  - "database:(type:cazy)"
+  - "database:(type:cazy) AND cellulase"
