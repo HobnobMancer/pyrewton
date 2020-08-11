@@ -188,7 +188,7 @@ def build_uniprot_df(tax_id, query, logger, args):
     else:
         uniprot_query = f'taxonomy:"{tax_id}" AND {query[0]}'
 
-    filestem = f"uniprot_{query[0]}_{time_stamp}"
+    filestem = f"uniprot_{uniprot_query}_{time_stamp}"
 
     # Call UniProtKB and return results as dataframe
     uniprot_df = call_uniprotkb(uniprot_query, logger)
