@@ -17,7 +17,6 @@
 #
 # The MIT License
 """Retrieves proteins from UniProt and write fasta files.
-
 Queries and Taxonomy IDs are passed to this script via a YAML
 file.
 Taxonomy IDs must be stored as a list under 'tax_ids'.
@@ -26,7 +25,6 @@ and written in the UniProtKB query syntax (see
 uniprot.ord/help/text-syntax).
 Write all tax IDs and queries within quotation marks,
 such as "database:(type:cazy)".
-
 :cmd_args input: optional, path to configuration file - required
 :cmd_args --fasta: optional, enable writing out of fasta files
 :cmd_args --force: optional, force overwrite if output already exists
@@ -34,7 +32,6 @@ such as "database:(type:cazy)".
 :cmd_args --nodelete: optional, enable no deletion of content in output dir
 :cmd_args --output: optional, path to output dir
 :cmd_args --verbose: optional, change logger level to 'info'
-
 :func main: set-up script, configure call to UniProtKB
 :func get_config_data: retrieve data from config file
 :func build_uniprot_df: build query, coordinate dataframe formating
@@ -42,15 +39,16 @@ such as "database:(type:cazy)".
 :func format_search_result: rename columns, add EC number column
 :func get_ec_numbers: retrieve EC numbers for UniProt dataframe
 :func write_fasta: write out data to fasta file
-
 """
 
 import io
 import logging
+import os
 import re
 import sys
 import yaml
 
+from collections import namedtuple
 from typing import List, Optional
 from datetime import datetime
 
@@ -71,7 +69,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Parser arguments
     # Check if namespace isn't passed, if not parser command-line
     if argv is None:
-        args = build_parser().parse_args()
+        parser = build_parser()
+        args = parser.parse_args()
     else:
         args = build_parser(argv).parse_args()
 
@@ -80,44 +79,48 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     if logger is None:
         logger = build_logger("get_cazyme_annotations", args)
 
+    # Check config is present
+    if (args.input is None) or (os.path.exists(args.input) is False):
+        logger.error("No configuration file found. Terminating.")
+        sys.exit(1)
+
     # If specified output directory, create output directory to write FASTA files too
-    if args.output is not sys.stdout:
-        make_output_directory(args, logger)
+    if args.outdir is not sys.stdout:
+        make_output_directory(args.outdir, logger, args.force, args.nodelete)
 
     # Initate scripts main function
-    configuration(args, logger)
-<<<<<<< HEAD
+    read_configuration(args, logger)
 
 
-=======
-
-
->>>>>>> improve catching no queries provided
-def configuration(args, logger):
-    """Coordinate calling to UniProtKB."""
+def read_configuration(args, logger):
+    """Coordinate calling to UniProtKB based on configuration file."""
     # Retrieve data from configuration file
     tax_ids, query_list = get_config_data(logger, args)
 
     # Mediate iteration of tax IDs and/or queries, as retrieved from config file
+    # below 'q' is short for query, and 't' for for tax_id
+    UniProtQuery = namedtuple("UniProtQuery", "query taxid")
 
     # Search by user defined query only
     if tax_ids is None:
-        for query in tqdm(range(len(query_list)), desc="Querying UniProtKB"):
-            build_uniprot_df(None, query, logger, args)
+        for q in tqdm(range(len(query_list[0])), desc="Querying UniProtKB"):
+            build_uniprot_df(UniProtQuery(q, None), logger, args)
 
     # Search by taxonomy ID only
     elif query_list is None:
-        for tax_id in tqdm(range(len(tax_ids)), desc="Querying UniProtKB"):
-            build_uniprot_df(tax_id, None, logger, args)
+        for t in tqdm(range(len(tax_ids)), desc="Querying UniProtKB"):
+            build_uniprot_df(UniProtQuery(None, t), logger, args)
 
     # Search every user defined query with ('AND') for each taxonomy ID
     else:
         id_index = 0
         for id_index in range(len(tax_ids)):
             query_index = 0
-            for query in tqdm(range(len(query_list)), desc="Querying UniProtKB"):
+            for q in tqdm(range(len(query_list[0])), desc="Querying UniProtKB"):
                 build_uniprot_df(
-                    tax_ids[id_index], query_list[query_index], logger, args
+                    (UniProtQuery(query_list[0][query_index], tax_ids[id_index])),
+                    logger,
+                    args,
                 )
                 query_index += 1
             id_index += 1
@@ -127,10 +130,8 @@ def configuration(args, logger):
 
 def get_config_data(logger, args):
     """Retrieve data from configration file.
-
     :param logger: logger objects
     :param args: parser arguments.
-
     Returns list of taxonomy IDs and list of queries.
     """
     logger.info("Retrieving queries from config file")
@@ -179,34 +180,30 @@ def get_config_data(logger, args):
                 "Ensure correct file was passed to script, and file contains configuration data.\n"
                 "Terminating program."
             ),
-            sys.exit(1),
         )
+        sys.exit(1)
 
     return tax_ids, query_list
 
 
-def build_uniprot_df(tax_id, query, logger, args):
+def build_uniprot_df(query, logger, args):
     """Build dataframe to store data retrieved from UniProtKB.
-
-    :param tax_id: str, NCBI taxonomy ID of species
-    :param query: str, term to search for in specified
+    :param query: tuple, contains query terms: query, tax id
     :param logger: logger object
     :param args: parser arguments
-
     Returns nothing.
     """
-    # remove NCBI:txid prefix, otherwise UniProtKB will return no results
-    if tax_id is not None:
-        tax_id = tax_id.replace("NCBI:txid", "")
+    query_elements = []  # empty list to store elements of query
+    if query.taxid:  # if there is a tax ID
+        tax_id = (query.taxid).replace("NCBI:txid", "")
+        query_elements.append(f'taxonomy:"{tax_id}"')
+
+    if query.query:  # if a query term was passed
+        query_elements.append(f"{query.query}")
+    uniprot_query = " AND ".join(query_elements)
 
     # construct query and filestem for dataframes and FASTA files
     time_stamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-    if tax_id is None:
-        uniprot_query = query
-    elif query is None:
-        uniprot_query = f'taxonomy:"{tax_id}"'
-    else:
-        uniprot_query = f'taxonomy:"{tax_id}" AND {query[0]}'
 
     filestem = f"uniprot_{uniprot_query}_{time_stamp}"
 
@@ -223,7 +220,7 @@ def build_uniprot_df(tax_id, query, logger, args):
 
     # write out resulting dataframe for UniProtKB query
     write_out_pre_named_dataframe(
-        uniprot_df, f"{filestem}", logger, args.output, args.force
+        uniprot_df, f"{filestem}", logger, args.outdir, args.force
     )
 
     return
@@ -231,12 +228,9 @@ def build_uniprot_df(tax_id, query, logger, args):
 
 def call_uniprotkb(query, logger):
     """Calls to UniProt.
-
     If no data is retieved a default 'blank' dataframe is returned.
-
     :param query: str, query for UniProt
     :param logger: logger object
-
     Returns dataframe of search results.
     """
     # Establish data to be retrieved from UniProt
@@ -299,13 +293,11 @@ def call_uniprotkb(query, logger):
 
 def format_search_results(search_result_df, filestem, logger, args):
     """Rename columns, and add EC number column.
-
     :param search_result_df: pandas dataframe of UniProt search results
     :param tax_id: str, NCBI taxonomy ID of species
     :param filestem: str, FASTA file name
     :param logger: logger object
     :param args: parser arguments
-
     Return pandas dataframe.
     """
     logger.info("Renaming column headers")
@@ -348,10 +340,8 @@ def format_search_results(search_result_df, filestem, logger, args):
 
 def get_ec_numbers(df_row, logger):
     """Retrieve EC numbers in dataframe row.
-
     :param df_row: pandas series
     :param logger: logger object
-
     Returns str of all EC numbers retrieved (human readible list).
     """
     ec_search = re.findall(r"\(EC [\d-]\d*\.[\d-]\d*\.[\d-]\d*\.[\d-]\d*\)", df_row[4])
@@ -374,12 +364,10 @@ def get_ec_numbers(df_row, logger):
 
 def write_fasta(df_row, filestem, logger, args):
     """Write out FASTA file.
-
     :param df_row: row from pandas df of UniProt search results
     :param filestem: str, FASTA file name
     :param logger: logger object
     :param args: parser arguments
-
     Returns nothing.
     """
     # FASTA sequences have 60 characters per line, add line breakers into protein sequence
@@ -393,25 +381,20 @@ def write_fasta(df_row, filestem, logger, args):
         uniprot_tax_id = "NCBI:txid" + uniprot_tax_id
     uniprot_tax_id.replace(" ", "")
 
-    # Retrieve organism name
+    # Retrieve organism name and protein id
     organism = df_row["Organism"]
-
-    file_content = f">{uniprot_tax_id} {organism} \n{sequence}"
-
-    # Remove invalid characters for filename from UniProt ID
     protein_id = df_row["UniProtKB Entry ID"]
-    # remove characters that could make file names invalid
-    invalid_file_name_characters = re.compile(r'[,;./ "*#<>?|\\:]')
-    protein_id = re.sub(invalid_file_name_characters, "_", protein_id)
+
+    file_content = f">{protein_id} {uniprot_tax_id} {organism} \n{sequence}\n"
 
     # Create output path
-    if args.output is not sys.stdout:
-        output_path = args.output / f"{filestem}_{protein_id}.fasta"
+    if args.outdir is not sys.stdout:
+        output_path = args.outdir / f"{filestem}.fasta"
     else:
-        output_path = args.output
+        output_path = args.outdir
 
     # Write out data to Fasta file
-    with open(output_path, "w+") as fh:
+    with open(output_path, "a") as fh:
         fh.write(file_content)
 
     return
