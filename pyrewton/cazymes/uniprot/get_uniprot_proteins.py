@@ -67,18 +67,11 @@ from pyrewton.parsers.parser_get_uniprot_proteins import build_parser
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
-    """Set up parser, loggers, IO files and directories, then invoke scripts main function.
-
-    Set up loggers, parsers and directories for retrieval of cazymes from UniProtKB.
-    """
-    # Programme preparation:
-
+    """Set up parser, loggers, and IO directories, then invoke scripts main function."""
     # Parser arguments
     # Check if namespace isn't passed, if not parser command-line
     if argv is None:
-        # Parse command-line
-        parser = build_parser()
-        args = parser.parse_args()
+        args = build_parser().parse_args()
     else:
         args = build_parser(argv).parse_args()
 
@@ -86,15 +79,17 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Note: log file only created if specificied at cmdline
     if logger is None:
         logger = build_logger("get_cazyme_annotations", args)
-    logger.info("Run initated")
 
     # If specified output directory, create output directory to write FASTA files too
     if args.output is not sys.stdout:
         make_output_directory(args, logger)
 
     # Initate scripts main function
-    logger.info("Run initated")
+    configuration(args, logger)
 
+
+def configuration(args, logger):
+    """Coordinate calling to UniProtKB."""
     # Retrieve data from configuration file
     tax_ids, query_list = get_config_data(logger, args)
 
@@ -140,7 +135,7 @@ def get_config_data(logger, args):
     # Retrieve Taxonomy IDs from configuration data
     try:
         tax_ids = config_dict["tax_ids"]
-    except KeyError:
+    except (KeyError, TypeError) as e:
         logger.warning(
             (
                 "No Taxonomy IDs retrieved from configuration file\n."
@@ -150,14 +145,15 @@ def get_config_data(logger, args):
         )
         tax_ids = None
     # If tax IDs key exists but no tax IDs are stored underneath return None
-    if len(tax_ids) == 0:
-        tax_ids = None
+    if tax_ids is not None:
+        if len(tax_ids) == 0:
+            tax_ids = None
 
     # Retrieve user defined queries from configuration data
     query_list = []
     try:
         query_list.append(config_dict["queries"])
-    except KeyError:
+    except (KeyError, TypeError) as e:
         logger.warning(
             (
                 "No queries retrieved from configuration file\n."
@@ -165,8 +161,13 @@ def get_config_data(logger, args):
                 "Else make sure additional queries are under the 'queries:'"
             )
         )
+        query_list = None
 
-    if (tax_ids is None) and (query_list == []):
+    if query_list is not None:
+        if len(query_list) == 0:
+            query_list = None
+
+    if (tax_ids is None) and (query_list is None):
         logger.error(
             (
                 "Nothing retrieved from configuration file.\n"
@@ -175,9 +176,6 @@ def get_config_data(logger, args):
             ),
             sys.exit(1),
         )
-
-    if len(query_list) == 0:
-        query_list = None
 
     return tax_ids, query_list
 
