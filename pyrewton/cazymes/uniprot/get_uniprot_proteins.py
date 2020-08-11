@@ -87,24 +87,25 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # Search by user defined query only
     if tax_ids is None:
-        index = 0
         for query in tqdm(range(len(query_list)), desc="Querying UniProtKB"):
-            build_uniprot_df(None, query_list[index], logger, args)
-            index += 1
+            build_uniprot_df(None, query, logger, args)
 
     # Search by taxonomy ID only
     elif query_list is None:
-        index = 0
-        for tax_id in tqdm(range(len(tax_ids))):
-            build_uniprot_df(tax_ids[index], None, logger, args)
-            index += 1
+        for tax_id in tqdm(range(len(tax_ids)), desc="Querying UniProtKB"):
+            build_uniprot_df(tax_id, None, logger, args)
 
     # Search every user defined query with ('AND') for each taxonomy ID
     else:
-        for tax_id in tax_ids:
-            index = 0
-            for query in tqdm(range(len(query_list))):
-                build_uniprot_df(tax_id, query_list[index], logger, args)
+        id_index = 0
+        for id_index in range(len(tax_ids)):
+            query_index = 0
+            for query in tqdm(range(len(query_list)), desc="Querying UniProtKB"):
+                build_uniprot_df(
+                    tax_ids[id_index], query_list[query_index], logger, args
+                )
+                query_index += 1
+            id_index += 1
 
     logger.info("Program finished")
 
@@ -181,15 +182,15 @@ def build_uniprot_df(tax_id, query, logger, args):
         tax_id = tax_id.replace("NCBI:txid", "")
 
     # construct query and filestem for dataframes and FASTA files
-    time_stamp = datetime.now().strftime("%H:%M:%S")
+    time_stamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
     if tax_id is None:
         uniprot_query = query
     elif query is None:
         uniprot_query = f'taxonomy:"{tax_id}"'
     else:
-        uniprot_query = f'taxonomy:"{tax_id}" AND {query}'
+        uniprot_query = f'taxonomy:"{tax_id}" AND {query[0]}'
 
-    filestem = f"uniprot_{query}_{time_stamp}"
+    filestem = f"uniprot_{query[0]}_{time_stamp}"
 
     # Call UniProtKB and return results as dataframe
     uniprot_df = call_uniprotkb(uniprot_query, logger)
@@ -204,7 +205,7 @@ def build_uniprot_df(tax_id, query, logger, args):
 
     # write out resulting dataframe for UniProtKB query
     write_out_pre_named_dataframe(
-        uniprot_df, f"{filestem}.csv", logger, args.output, args.force
+        uniprot_df, f"{filestem}", logger, args.output, args.force
     )
 
     return
@@ -317,7 +318,12 @@ def format_search_results(search_result_df, filestem, logger, args):
         index += 1
 
     # Add EC numbers to dataframe0
-    search_result_df.insert(3, "EC number", all_ec_numbers)
+    try:
+        search_result_df.insert(3, "EC number", all_ec_numbers)
+    except ValueError:
+        logger.warning(
+            ("Failed to insert EC numbers into dataframe,\n" "column already present")
+        )
 
     return search_result_df
 
@@ -330,7 +336,7 @@ def get_ec_numbers(df_row, logger):
 
     Returns str of all EC numbers retrieved (human readible list).
     """
-    ec_search = re.findall(r"\(EC [\d-]\d*\.[\d-]\d*\.[\d-]\d*\.[\d-]\d*\)", df_row[2])
+    ec_search = re.findall(r"\(EC [\d-]\d*\.[\d-]\d*\.[\d-]\d*\.[\d-]\d*\)", df_row[4])
 
     if ec_search is None:
         ec_numbers = "NA"
@@ -342,9 +348,10 @@ def get_ec_numbers(df_row, logger):
         for ec in ec_search:
             ec = ec.replace("(", "")
             ec = ec.replace(")", "")
-            ec_numbers += ec
+            ec_numbers += ec + ", "
 
-    return ec_numbers
+    # remove terminal ", "
+    return ec_numbers[:-2]
 
 
 def write_fasta(df_row, filestem, logger, args):
@@ -363,15 +370,15 @@ def write_fasta(df_row, filestem, logger, args):
     sequence = "\n".join([sequence[i : i + 60] for i in range(0, len(sequence), 60)])
 
     # Retrieve Taxonomy ID and ensure NCBI prefix is present
-    tax_id = df_row["NCBI Taxonomy ID"]
-    if tax_id.startswith("NCBI:txid") is False:
-        tax_id = "NCBI:txid" + tax_id
-    tax_id.replace(" ", "")
+    uniprot_tax_id = str(df_row["NCBI Taxonomy ID"])
+    if uniprot_tax_id.startswith("NCBI:txid") is False:
+        uniprot_tax_id = "NCBI:txid" + uniprot_tax_id
+    uniprot_tax_id.replace(" ", "")
 
     # Retrieve organism name
     organism = df_row["Organism"]
 
-    file_content = f">{tax_id} {organism} \n{sequence}"
+    file_content = f">{uniprot_tax_id} {organism} \n{sequence}"
 
     # Remove invalid characters for filename from UniProt ID
     protein_id = df_row["UniProtKB Entry ID"]
@@ -381,7 +388,7 @@ def write_fasta(df_row, filestem, logger, args):
 
     # Create output path
     if args.output is not sys.stdout:
-        output_path = args.output / "{filestem}_{protein_id}.fasta"
+        output_path = args.output / f"{filestem}_{protein_id}.fasta"
     else:
         output_path = args.output
 
