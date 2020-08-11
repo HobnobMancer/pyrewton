@@ -64,8 +64,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Check if namepsace isn't passed, if not parse command-line
     if argv is None:
         # Parse command-line
-        parser = build_parser()
-        args = parser.parse_args()
+        args = build_parser().parse_args()
     else:
         args = build_parser(argv).parse_args()
 
@@ -73,7 +72,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Note: log file only created if specified at cmdline
     if logger is None:
         logger = build_logger("get_cazyme_annotations", args)
-    logger.info("Run initated")
 
     retrieve_genbank_annotations(logger, args)
 
