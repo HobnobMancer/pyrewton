@@ -36,7 +36,7 @@ import sys
 
 import pandas as pd
 
-from argparse import Namespace
+from argparse import Namespace, ArgumentParser
 
 from Bio import Entrez
 
@@ -774,3 +774,33 @@ def test_script_coordination(accession_df, null_logger, coordination_args, monke
     monkeypatch.setattr(get_ncbi_genomes, "write_out_dataframe", mock_writing_out_df)
 
     get_ncbi_genomes.coordinate_data_retrieval(null_logger, coordination_args["args"])
+
+
+# test function 'main'
+
+
+def test_main(test_dir, null_logger, monkeypatch):
+    """Test function 'main'."""
+    target_path = test_dir / "test_targets" / "gt_ncbi_gnms_test_targets"
+
+    def mock_parser(*args, **kwargs):
+        parser = Namespace(user="dummy_email", output=target_path)
+        return parser
+
+    def mock_build_logger(*args, **kwargs):
+        return null_logger
+
+    def mock_making_dir(*args, **kwargs):
+        return
+
+    def mock_coordination(*args, **kwargs):
+        return
+
+    monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
+    monkeypatch.setattr(get_ncbi_genomes, "build_logger", mock_build_logger)
+    monkeypatch.setattr(get_ncbi_genomes, "make_output_directory", mock_making_dir)
+    monkeypatch.setattr(
+        get_ncbi_genomes, "coordinate_data_retrieval", mock_coordination
+    )
+
+    get_ncbi_genomes.main()
