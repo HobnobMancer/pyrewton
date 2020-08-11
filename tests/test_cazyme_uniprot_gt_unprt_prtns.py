@@ -100,9 +100,11 @@ def raw_uniprot_result():
         "Gene ontology (biological process) Sequence\n"
         "425011  Aspergillus niger (strain CBS 513.88 / FGSC A1513)      "
         "A2R5N0  EGLD_ASPNC      "
-        "Probable endo-beta-1,4-glucanase D (Endoglucanase D) (EC 3.2.1.4) (Carboxymethylcellulase D) (Cellulase D)  "
+        "Probable endo-beta-1,4-glucanase D (Endoglucanase D) (EC 3.2.1.4) "
+        "(Carboxymethylcellulase D) (Cellulase D)  "
         "412     41,981          0       Glycosyl hydrolase 61 family        "
-        "GO:0005576; GO:0008810; GO:0030245; GO:0030248  cellulase activity [GO:0008810]; cellulose binding [GO:0030248]     "
+        "GO:0005576; GO:0008810; GO:0030245; GO:0030248  cellulase activity "
+        "[GO:0008810]; cellulose binding [GO:0030248]     "
         "cellulose catabolic process [GO:0030245]        "
         "MKTTTYSLLALAAASKLASAHTTVQAVWINGEDQGLGNSADGYIRSPPSNSPVTDVTSTDMTCNVNGDQAASKTLSVKA"
         "GDVVTFEWHHSDRSDSDDIIASSHKGPVQVYMAPTAKGSNGNNWVKIAEDGYHKSSDEWATDILIANKGKHNITVPDVP"
@@ -401,4 +403,3 @@ def test_writing_out_fasta_file(df_series_for_writing, null_logger, args_fasta):
     get_uniprot_proteins.write_fasta(
         df_series_for_writing, "filestem", null_logger, args_fasta["args"]
     )
-
