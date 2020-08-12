@@ -1,3 +1,8 @@
+# This is the configuration file for get_uniprot_proteins.py
+# Store NCBI tax IDs under tax_ids, and write out queries to
+# to be searched along side the tax_ids (i.e. tax ID AND query)
+# under 'queries' using the UniProtKB syntax
+# https://www.uniprot.org/help/text-search)
 tax_ids:
   - "5061"
   - "51453"
