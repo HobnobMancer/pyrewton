@@ -388,25 +388,20 @@ def write_fasta(df_row, filestem, logger, args):
         uniprot_tax_id = "NCBI:txid" + uniprot_tax_id
     uniprot_tax_id.replace(" ", "")
 
-    # Retrieve organism name
+    # Retrieve organism name and protein id
     organism = df_row["Organism"]
-
-    file_content = f">{uniprot_tax_id} {organism} \n{sequence}"
-
-    # Remove invalid characters for filename from UniProt ID
     protein_id = df_row["UniProtKB Entry ID"]
-    # remove characters that could make file names invalid
-    invalid_file_name_characters = re.compile(r'[,;./ "*#<>?|\\:]')
-    protein_id = re.sub(invalid_file_name_characters, "_", protein_id)
+
+    file_content = f">{protein_id} {uniprot_tax_id} {organism} \n{sequence}\n"
 
     # Create output path
     if args.output is not sys.stdout:
-        output_path = args.output / f"{filestem}_{protein_id}.fasta"
+        output_path = args.output / f"{filestem}.fasta"
     else:
         output_path = args.output
 
     # Write out data to Fasta file
-    with open(output_path, "w+") as fh:
+    with open(output_path, "a") as fh:
         fh.write(file_content)
 
     return
