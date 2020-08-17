@@ -48,7 +48,9 @@ def make_output_directory(output, logger, force, nodelete):
     try:
         output.mkdir(exist_ok=force)
     except FileExistsError:
-        logger.warning("Out directory already exists. New directory not made.")
+        logger.warning(
+            "Out directory already exists. New directory not made, writing to existing directory"
+        )
 
 
 def write_out_dataframe(dataframe, logger, outdir, force):
