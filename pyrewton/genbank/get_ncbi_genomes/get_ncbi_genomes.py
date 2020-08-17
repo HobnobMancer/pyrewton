@@ -30,11 +30,7 @@
 :cmd_args --timeout: timeout limit of URL connection
 :cmd_args --verbose: set logging level to 'INFO'
 
-:func build_parser: create parser object
-:func main: coordinate script setup (args, logger)
-:func coordinate_data_retrieval: generate a dataframe of species data
-:func build_logger: creates logger object
-:func make_output_directory: create directory for genomic files to be written to
+:func main: coordinate script setup (args, logger) and taxonomy df creation
 :func parse_input_file: parse input file
 :func parse_line: coordinate retrieval of scientific names and taxonomy IDs
 :func get_genus_species_name: retrieve scientific name from taxonomy ID
@@ -74,25 +70,32 @@ from pyrewton.file_io import make_output_directory, write_out_dataframe
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
-    """Set up loggers, parsers and directories for retrieval of genomes from NCBI."""
+    """Set up loggers, parsers and directories for retrieval of genomes from NCBI.
+
+    Then retrieve taxonomy data and GenBank files from NCBI.
+
+    Return GenBank (.gbff) files and dataframe of taxonomy data.
+    """
     # Programme preparation:
     # Parse arguments
     # Check if namepsace isn't passed, if not parse command-line
     if argv is None:
         # Parse command-line
-        args = build_parser().parse_args()
+        parser = build_parser()
+        args = parser.parse_args()
     else:
         args = build_parser(argv).parse_args()
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
     if logger is None:
-        logger = build_logger("Extract_genomes_NCBI", args)
+        logger = build_logger("get_ncbi_genomes", args)
+    logger.info("Run initated")
 
     # Add users email address from parser
     if args.user is None:
         logger.error(
-            "No user email provided. Email MUST be providd. Terminating programme"
+            "No user email provided. Email MUST be provided. Terminating programme"
         )
         sys.exit(1)
     else:
@@ -102,11 +105,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     if args.output is not sys.stdout:
         make_output_directory(args, logger)
 
-    coordinate_data_retrieval(logger, args)
-
-
-def coordinate_data_retrieval(logger, args):
-    """Coordinate retrieval of data from NCBI."""
     # Invoke main usage of programme
     # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
     species_table = parse_input_file(args.input_file, logger, args.retries)
@@ -125,6 +123,7 @@ def coordinate_data_retrieval(logger, args):
 
     # Program finished
     logger.info("Program finished and exiting")
+
 
 
 def parse_input_file(input_filename, logger, retries):
