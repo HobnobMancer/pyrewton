@@ -398,29 +398,3 @@ def test_get_file_empty(coordination_args, null_logger):
         accession, coordination_args["args"], null_logger
     )
 
-
-# test function 'main'
-
-
-def test_main(null_logger, monkeypatch):
-    """Test function 'main'."""
-
-    def mock_parser(*args, **kwargs):
-        parser = Namespace(user="dummy_email")
-        return parser
-
-    def mock_build_logger(*args, **kwargs):
-        return null_logger
-
-    def mock_retrieving_annotations(*args, **kwargs):
-        return
-
-    monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
-    monkeypatch.setattr(get_genbank_annotations, "build_logger", mock_build_logger)
-    monkeypatch.setattr(
-        get_genbank_annotations,
-        "retrieve_genbank_annotations",
-        mock_retrieving_annotations,
-    )
-
-    get_genbank_annotations.main()
