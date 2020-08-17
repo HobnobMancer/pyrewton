@@ -59,9 +59,9 @@ Jupyter notebooks are accessible here, but also via the terminal if the programm
 
 **Access the notebooks in browser:**
 
-- [01_downloading_genbank_files](https://github.com/HobnobMancer/PhD_Project_Scripts/notebooks/01_downloading_genbank_files.html)<br/>
-Notebook for `get_ncbi_genomes`, which explains the function and operation of the Python script for downloading GenBank files from the NCBI Assembly database.
-- [02_retrieving_genbank_annotation_summary](https://github.com/HobnobMancer/PhD_Project_Scripts/notebooks/02_retrieving_genbank_annotations.html)<br/>
+- [01_downloading_genbank_files](https://hobnobmancer.github.io/PhD_Project_Scripts/notebooks/01_downloading_genbank_files.html)<br/>
+Notebook for invoking `get_ncbi_genomes.py`, which explains the function and operation of the Python script for downloading GenBank files from the NCBI Assembly database.
+- [02_retrieving_genbank_annotation_summary](https://hobnobmancer.github.io/PhD_Project_Scripts/notebooks/02_retrieving_genbank_annotations.html)<br/>
 Notebook for `get_genbank_annotations` for the retrieval of all protein annotations from the downloaded genomic assemblies.
 
 **Access the notebooks via the terminal:**<br/>
