@@ -71,7 +71,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Parser arguments
     # Check if namespace isn't passed, if not parser command-line
     if argv is None:
-        args = build_parser().parse_args()
+        parser = build_parser()
+        args = parser.parse_args()
     else:
         args = build_parser(argv).parse_args()
 
