@@ -411,6 +411,16 @@ def test_writing_out_fasta_file(df_series_for_writing, null_logger, args_fasta):
 def test_main(output_dir, null_logger, monkeypatch):
     """Test function 'main'."""
 
+    def mock_built_parser(*args, **kwargs):
+        parser_args = ArgumentParser(
+            prog="get_uniprot_proteins.py",
+            usage=None,
+            description="Retrieve protein data from UniProtKB",
+            conflict_handler="error",
+            add_help=True,
+        )
+        return parser_args
+
     def mock_parser(*args, **kwargs):
         parser = Namespace(output=output_dir)
         return parser
@@ -424,9 +434,11 @@ def test_main(output_dir, null_logger, monkeypatch):
     def mock_configuration(*args, **kwargs):
         return
 
+    monkeypatch.setattr(get_uniprot_proteins, "build_parser", mock_built_parser)
     monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
     monkeypatch.setattr(get_uniprot_proteins, "build_logger", mock_build_logger)
     monkeypatch.setattr(get_uniprot_proteins, "make_output_directory", mock_making_dir)
     monkeypatch.setattr(get_uniprot_proteins, "configuration", mock_configuration)
 
-    get_uniprot_proteins.main()
+    get_uniprot_proteins.main(argv=["1", "2"])
+
