@@ -86,11 +86,11 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         make_output_directory(args, logger)
 
     # Initate scripts main function
-    configuration(args, logger)
+    read_configuration(args, logger)
 
 
-def configuration(args, logger):
-    """Coordinate calling to UniProtKB."""
+def read_configuration(args, logger):
+    """Coordinate calling to UniProtKB based on configuration file."""
     # Retrieve data from configuration file
     tax_ids, query_list = get_config_data(logger, args)
 

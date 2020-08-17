@@ -173,7 +173,7 @@ def test_config_no_tx_ids(
     monkeypatch.setattr(get_uniprot_proteins, "get_config_data", mock_get_config_data)
     monkeypatch.setattr(get_uniprot_proteins, "build_uniprot_df", mock_build_uniprot_df)
 
-    get_uniprot_proteins.configuration(args_config_no_tax_ids["args"], null_logger)
+    get_uniprot_proteins.read_configuration(args_config_no_tax_ids["args"], null_logger)
 
 
 def test_config_no_queries(
@@ -190,7 +190,7 @@ def test_config_no_queries(
     monkeypatch.setattr(get_uniprot_proteins, "get_config_data", mock_get_config_data)
     monkeypatch.setattr(get_uniprot_proteins, "build_uniprot_df", mock_build_uniprot_df)
 
-    get_uniprot_proteins.configuration(args_config_no_tax_ids["args"], null_logger)
+    get_uniprot_proteins.read_configuration(args_config_no_tax_ids["args"], null_logger)
 
 
 def test_config_ids_and_queries(
@@ -212,7 +212,7 @@ def test_config_ids_and_queries(
     monkeypatch.setattr(get_uniprot_proteins, "get_config_data", mock_get_config_data)
     monkeypatch.setattr(get_uniprot_proteins, "build_uniprot_df", mock_build_uniprot_df)
 
-    get_uniprot_proteins.configuration(args_config_no_tax_ids["args"], null_logger)
+    get_uniprot_proteins.read_configuration(args_config_no_tax_ids["args"], null_logger)
 
 
 # test function "get_config_data"
