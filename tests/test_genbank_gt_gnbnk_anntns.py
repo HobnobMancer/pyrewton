@@ -148,8 +148,7 @@ def test_main(null_logger, output_dir, coordination_args, test_input_df, monkeyp
         return null_logger
 
     def mock_df_reading(*args, **kwargs):
-        df = pd.read_csv(test_input_df_path, header=0, index_col=0)
-        return df
+        return test_input_df_path
 
     def mock_create_dataframe(*args, **kwargs):
         df = test_input_df
@@ -168,6 +167,8 @@ def test_main(null_logger, output_dir, coordination_args, test_input_df, monkeyp
     monkeypatch.setattr(
         get_genbank_annotations, "write_out_dataframe", mock_write_out_dataframe
     )
+
+    get_genbank_annotations.main()
 
 
 # Test the creation of the dataframe
