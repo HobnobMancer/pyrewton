@@ -125,7 +125,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     logger.info("Program finished and exiting")
 
 
-
 def parse_input_file(input_filename, logger, retries):
     """Parse input file, returning dataframe of species names and NCBI Taxonomy IDs.
 
