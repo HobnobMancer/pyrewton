@@ -11,3 +11,4 @@ queries: # store all queries to be searched along side the tax ID
 # for example "cellulase" will be used in a query as:
 # taxonomy:5061 AND cellulase
   - "database:(type:cazy) AND cellulase" 
+# YAML files need a blank line at the end
