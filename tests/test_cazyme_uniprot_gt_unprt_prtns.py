@@ -29,6 +29,7 @@ import pandas as pd
 
 from argparse import Namespace, ArgumentParser
 from bioservices import UniProt
+from collections import namedtuple
 
 from pyrewton.cazymes.uniprot import get_uniprot_proteins
 
@@ -87,7 +88,7 @@ def args_config_no_tax_ids_queries(input_path):
 
 @pytest.fixture
 def args_build_uniprot_df():
-    argsdict = {"args": Namespace(output=None, force=False)}
+    argsdict = {"args": Namespace(outdir=None, force=False)}
     return argsdict
 
 
@@ -138,7 +139,7 @@ def output_dir(test_dir):
 
 @pytest.fixture
 def args_fasta(output_dir):
-    argsdict = {"args": Namespace(fasta=True, output=output_dir)}
+    argsdict = {"args": Namespace(fasta=True, outdir=output_dir)}
     return argsdict
 
 
@@ -251,6 +252,8 @@ def test_build_unprt_df_no_tax_id(
     def mock_writing_out_df(*args, **kwargs):
         return
 
+    UniProtQuery = namedtuple("UniProtQuery", "query taxid")
+
     monkeypatch.setattr(get_uniprot_proteins, "call_uniprotkb", mock_call_uniprotkb)
     monkeypatch.setattr(
         get_uniprot_proteins, "format_search_results", mock_call_uniprotkb
@@ -260,7 +263,7 @@ def test_build_unprt_df_no_tax_id(
     )
 
     get_uniprot_proteins.build_uniprot_df(
-        None, queries, null_logger, args_build_uniprot_df["args"]
+        UniProtQuery(queries[0], None), null_logger, args_build_uniprot_df["args"]
     )
 
 
@@ -275,6 +278,8 @@ def test_build_unprt_df_no_query(
     def mock_writing_out_df(*args, **kwargs):
         return
 
+    UniProtQuery = namedtuple("UniProtQuery", "query taxid")
+
     monkeypatch.setattr(get_uniprot_proteins, "call_uniprotkb", mock_call_uniprotkb)
     monkeypatch.setattr(
         get_uniprot_proteins, "format_search_results", mock_call_uniprotkb
@@ -284,7 +289,7 @@ def test_build_unprt_df_no_query(
     )
 
     get_uniprot_proteins.build_uniprot_df(
-        tax_ids[0], None, null_logger, args_build_uniprot_df["args"]
+        UniProtQuery(None, tax_ids[0]), null_logger, args_build_uniprot_df["args"]
     )
 
 
@@ -304,6 +309,8 @@ def test_build_unprt_df(
     def mock_writing_out_df(*args, **kwargs):
         return
 
+    UniProtQuery = namedtuple("UniProtQuery", "query taxid")
+
     monkeypatch.setattr(get_uniprot_proteins, "call_uniprotkb", mock_call_uniprotkb)
     monkeypatch.setattr(
         get_uniprot_proteins, "format_search_results", mock_call_uniprotkb
@@ -313,7 +320,7 @@ def test_build_unprt_df(
     )
 
     get_uniprot_proteins.build_uniprot_df(
-        tax_ids[0], queries, null_logger, args_build_uniprot_df["args"]
+        UniProtQuery(queries[0], tax_ids[0]), null_logger, args_build_uniprot_df["args"]
     )
 
 
@@ -422,7 +429,7 @@ def test_main(output_dir, null_logger, monkeypatch):
         return parser_args
 
     def mock_parser(*args, **kwargs):
-        parser = Namespace(output=output_dir)
+        parser = Namespace(force=True, outdir=output_dir, nodelete=True)
         return parser
 
     def mock_build_logger(*args, **kwargs):
@@ -438,9 +445,9 @@ def test_main(output_dir, null_logger, monkeypatch):
     monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
     monkeypatch.setattr(get_uniprot_proteins, "build_logger", mock_build_logger)
     monkeypatch.setattr(get_uniprot_proteins, "make_output_directory", mock_making_dir)
-    monkeypatch.setattr(get_uniprot_proteins, "configuration", mock_configuration)
+    monkeypatch.setattr(get_uniprot_proteins, "read_configuration", mock_configuration)
 
-    get_uniprot_proteins.main(argv=["1", "2"])
+    get_uniprot_proteins.main()
 
 
 def test_main(output_dir, null_logger, monkeypatch):
@@ -457,7 +464,7 @@ def test_main(output_dir, null_logger, monkeypatch):
         return parser_args
 
     def mock_parser(*args, **kwargs):
-        parser = Namespace(output=output_dir)
+        parser = Namespace(outdir=output_dir)
         return parser
 
     def mock_build_logger(*args, **kwargs):
@@ -473,6 +480,6 @@ def test_main(output_dir, null_logger, monkeypatch):
     monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
     monkeypatch.setattr(get_uniprot_proteins, "build_logger", mock_build_logger)
     monkeypatch.setattr(get_uniprot_proteins, "make_output_directory", mock_making_dir)
-    monkeypatch.setattr(get_uniprot_proteins, "configuration", mock_configuration)
+    monkeypatch.setattr(get_uniprot_proteins, "read_configuration", mock_configuration)
 
     get_uniprot_proteins.main()
