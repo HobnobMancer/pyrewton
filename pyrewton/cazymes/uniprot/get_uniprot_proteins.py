@@ -84,7 +84,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # If specified output directory, create output directory to write FASTA files too
     if args.outdir is not sys.stdout:
-        make_output_directory(args, logger)
+        make_output_directory(args.outdir, logger, args.force, args.nodelete)
 
     # Initate scripts main function
     read_configuration(args, logger)

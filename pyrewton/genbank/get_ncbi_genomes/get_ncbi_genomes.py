@@ -102,7 +102,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # If specified output directory for genomic files, create output directory
     if args.output is not sys.stdout:
-        make_output_directory(args, logger)
+        make_output_directory(args.output, logger, args.force, args.nodelete)
 
     coordinate_data_retrieval(logger, args)
 

@@ -21,7 +21,7 @@
 import shutil
 
 
-def make_output_directory(args, logger):
+def make_output_directory(output, logger, force, nodelete):
     """Create output directory for genomic files.
 
     :param args: Namespace with cmd-line arguments
@@ -34,18 +34,18 @@ def make_output_directory(args, logger):
     Raises FileExistsError if an attempt is made to create a directory that already
     exists, without a suitable args.force/args.nodelete combination
     """
-    if args.force is True:
+    if force is True:
         logger.warning(
-            "Output directory %s exists, nodelete is %s", args.output, args.nodelete,
+            "Output directory %s exists, nodelete is %s", output, nodelete,
         )
-        if args.nodelete and args.output.exists():
-            logger.warning("Not deleting directory %s", args.output)
-        elif args.output.exists():
-            logger.warning("Deleting directory %s", args.output)
-            shutil.rmtree(args.output)
+        if nodelete and output.exists():
+            logger.warning("Not deleting directory %s", output)
+        elif output.exists():
+            logger.warning("Deleting directory %s", output)
+            shutil.rmtree(output)
 
-    logger.info("Creating directory %s", args.output)
-    args.output.mkdir(exist_ok=args.force)
+    logger.info("Creating directory %s", output)
+    output.mkdir(exist_ok=force)
 
 
 def write_out_dataframe(dataframe, logger, outdir, force):
