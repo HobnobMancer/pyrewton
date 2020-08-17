@@ -45,7 +45,10 @@ def make_output_directory(output, logger, force, nodelete):
             shutil.rmtree(output)
 
     logger.info("Creating directory %s", output)
-    output.mkdir(exist_ok=force)
+    try:
+        output.mkdir(exist_ok=force)
+    except FileExistsError:
+        logger.warning("Out directory already exists. New directory not made.")
 
 
 def write_out_dataframe(dataframe, logger, outdir, force):
