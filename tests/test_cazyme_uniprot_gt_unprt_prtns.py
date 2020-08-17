@@ -450,7 +450,7 @@ def test_main(output_dir, null_logger, monkeypatch):
     get_uniprot_proteins.main()
 
 
-def test_main(output_dir, null_logger, monkeypatch):
+def test_main_argv(output_dir, null_logger, monkeypatch):
     """Test function 'main'."""
 
     def mock_built_parser(*args, **kwargs):
@@ -464,7 +464,7 @@ def test_main(output_dir, null_logger, monkeypatch):
         return parser_args
 
     def mock_parser(*args, **kwargs):
-        parser = Namespace(outdir=output_dir)
+        parser = Namespace(force=True, outdir=output_dir, nodelete=True)
         return parser
 
     def mock_build_logger(*args, **kwargs):
@@ -482,4 +482,5 @@ def test_main(output_dir, null_logger, monkeypatch):
     monkeypatch.setattr(get_uniprot_proteins, "make_output_directory", mock_making_dir)
     monkeypatch.setattr(get_uniprot_proteins, "read_configuration", mock_configuration)
 
-    get_uniprot_proteins.main()
+    get_uniprot_proteins.main(argv=["1", "2"])
+
