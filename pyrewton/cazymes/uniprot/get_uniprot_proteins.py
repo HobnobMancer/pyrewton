@@ -51,6 +51,7 @@ import re
 import sys
 import yaml
 
+from collections import namedtuple
 from typing import List, Optional
 from datetime import datetime
 
@@ -82,7 +83,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         logger = build_logger("get_cazyme_annotations", args)
 
     # If specified output directory, create output directory to write FASTA files too
-    if args.output is not sys.stdout:
+    if args.outdir is not sys.stdout:
         make_output_directory(args, logger)
 
     # Initate scripts main function
@@ -95,16 +96,17 @@ def read_configuration(args, logger):
     tax_ids, query_list = get_config_data(logger, args)
 
     # Mediate iteration of tax IDs and/or queries, as retrieved from config file
+    UniProtQuery = namedtuple("query", "taxid")
 
     # Search by user defined query only
     if tax_ids is None:
         for query in tqdm(range(len(query_list)), desc="Querying UniProtKB"):
-            build_uniprot_df(None, query, logger, args)
+            build_uniprot_df(UniProtQuery(query, None), logger, args)
 
     # Search by taxonomy ID only
     elif query_list is None:
         for tax_id in tqdm(range(len(tax_ids)), desc="Querying UniProtKB"):
-            build_uniprot_df(tax_id, None, logger, args)
+            build_uniprot_df(UniProtQuery(None, tax_id), logger, args)
 
     # Search every user defined query with ('AND') for each taxonomy ID
     else:
@@ -113,7 +115,9 @@ def read_configuration(args, logger):
             query_index = 0
             for query in tqdm(range(len(query_list)), desc="Querying UniProtKB"):
                 build_uniprot_df(
-                    tax_ids[id_index], query_list[query_index], logger, args
+                    UniProtQuery(tax_ids[id_index], query_list[query_index]),
+                    logger,
+                    args,
                 )
                 query_index += 1
             id_index += 1
@@ -181,28 +185,25 @@ def get_config_data(logger, args):
     return tax_ids, query_list
 
 
-def build_uniprot_df(tax_id, query, logger, args):
+def build_uniprot_df(query, logger, args):
     """Build dataframe to store data retrieved from UniProtKB.
 
-    :param tax_id: str, NCBI taxonomy ID of species
-    :param query: str, term to search for in specified
+    :param query: tuple, contains query terms: query, tax id
     :param logger: logger object
     :param args: parser arguments
 
     Returns nothing.
     """
-    # remove NCBI:txid prefix, otherwise UniProtKB will return no results
-    if tax_id is not None:
-        tax_id = tax_id.replace("NCBI:txid", "")
+    query_elements = []  # empty list to store elements of query
+    if query.taxid:  # if there is a tax ID
+        tax_id = (query.taxid).replace("NCBI:txid", "")
+        query_elements.append(f'taxonomy:"{tax_id}')
+    if query.query:  # if a query term was passed
+        query_elements.append(f"{query.query}")
+    uniprot_query = " AND ".join(query_elements)
 
     # construct query and filestem for dataframes and FASTA files
     time_stamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-    if tax_id is None:
-        uniprot_query = query
-    elif query is None:
-        uniprot_query = f'taxonomy:"{tax_id}"'
-    else:
-        uniprot_query = f'taxonomy:"{tax_id}" AND {query[0]}'
 
     filestem = f"uniprot_{uniprot_query}_{time_stamp}"
 
@@ -219,7 +220,7 @@ def build_uniprot_df(tax_id, query, logger, args):
 
     # write out resulting dataframe for UniProtKB query
     write_out_pre_named_dataframe(
-        uniprot_df, f"{filestem}", logger, args.output, args.force
+        uniprot_df, f"{filestem}", logger, args.outdir, args.force
     )
 
     return
@@ -396,10 +397,10 @@ def write_fasta(df_row, filestem, logger, args):
     file_content = f">{protein_id} {uniprot_tax_id} {organism} \n{sequence}\n"
 
     # Create output path
-    if args.output is not sys.stdout:
-        output_path = args.output / f"{filestem}.fasta"
+    if args.outdir is not sys.stdout:
+        output_path = args.outdir / f"{filestem}.fasta"
     else:
-        output_path = args.output
+        output_path = args.outdir
 
     # Write out data to Fasta file
     with open(output_path, "a") as fh:
