@@ -96,26 +96,27 @@ def read_configuration(args, logger):
     tax_ids, query_list = get_config_data(logger, args)
 
     # Mediate iteration of tax IDs and/or queries, as retrieved from config file
-    UniProtQuery = namedtuple("query", "taxid")
+    # below 'q' is short for query, and 't' for for tax_id
+    UniProtQuery = namedtuple("UniProtQuery", "query taxid")
 
     # Search by user defined query only
     if tax_ids is None:
-        for query in tqdm(range(len(query_list)), desc="Querying UniProtKB"):
-            build_uniprot_df(UniProtQuery(query, None), logger, args)
+        for q in tqdm(range(len(query_list)), desc="Querying UniProtKB"):
+            build_uniprot_df(UniProtQuery(q, None), logger, args)
 
     # Search by taxonomy ID only
     elif query_list is None:
-        for tax_id in tqdm(range(len(tax_ids)), desc="Querying UniProtKB"):
-            build_uniprot_df(UniProtQuery(None, tax_id), logger, args)
+        for t in tqdm(range(len(tax_ids)), desc="Querying UniProtKB"):
+            build_uniprot_df(UniProtQuery(None, t), logger, args)
 
     # Search every user defined query with ('AND') for each taxonomy ID
     else:
         id_index = 0
         for id_index in range(len(tax_ids)):
             query_index = 0
-            for query in tqdm(range(len(query_list)), desc="Querying UniProtKB"):
+            for q in tqdm(range(len(query_list)), desc="Querying UniProtKB"):
                 build_uniprot_df(
-                    UniProtQuery(tax_ids[id_index], query_list[query_index]),
+                    (UniProtQuery(query_list[query_index][0], tax_ids[id_index])),
                     logger,
                     args,
                 )
@@ -197,7 +198,7 @@ def build_uniprot_df(query, logger, args):
     query_elements = []  # empty list to store elements of query
     if query.taxid:  # if there is a tax ID
         tax_id = (query.taxid).replace("NCBI:txid", "")
-        query_elements.append(f'taxonomy:"{tax_id}')
+        query_elements.append(f'taxonomy:"{tax_id}"')
     if query.query:  # if a query term was passed
         query_elements.append(f"{query.query}")
     uniprot_query = " AND ".join(query_elements)
