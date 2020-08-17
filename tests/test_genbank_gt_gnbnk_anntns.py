@@ -112,14 +112,44 @@ def no_gb_args(test_dir, gb_file_dir):
     return argsdict
 
 
+@pytest.fixture
+def output_dir(test_dir):
+    path = test_dir / "test_targets" / "gt_unprt_prtns_test_targets"
+    return path
+
+
 # Test coordination of script
 
 
 @pytest.mark.run(order=36)
-def test_genbank_anno_coordination(
-    null_logger, coordination_args, test_input_df, monkeypatch
-):
-    """Test coordination of GenBank protein annotation retrieval."""
+def test_main(null_logger, output_dir, coordination_args, test_input_df, monkeypatch):
+    """Test coordination of GenBank protein annotation retrieval by main()."""
+
+    def mock_built_parser(*args, **kwargs):
+        parser_args = ArgumentParser(
+            prog="get_genbank_annotations.py",
+            usage=None,
+            description="Retrieve protein data from UniProtKB",
+            conflict_handler="error",
+            add_help=True,
+        )
+        return parser_args
+
+    def mock_parser(*args, **kwargs):
+        parser = Namespace(
+            output=output_dir,
+            force=False,
+            genbank=gb_file_dir,
+            df_input=test_input_df_path,
+        )
+        return parser
+
+    def mock_build_logger(*args, **kwargs):
+        return null_logger
+
+    def mock_df_reading(*args, **kwargs):
+        df = pd.read_csv(test_input_df_path, header=0, index_col=0)
+        return df
 
     def mock_create_dataframe(*args, **kwargs):
         df = test_input_df
@@ -128,15 +158,15 @@ def test_genbank_anno_coordination(
     def mock_write_out_dataframe(*args, **kwargs):
         return
 
+    monkeypatch.setattr(get_genbank_annotations, "build_parser", mock_built_parser)
+    monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
+    monkeypatch.setattr(get_genbank_annotations, "build_logger", mock_build_logger)
+    monkeypatch.setattr(pd, "read_csv", mock_df_reading)
     monkeypatch.setattr(
         get_genbank_annotations, "create_dataframe", mock_create_dataframe
     )
     monkeypatch.setattr(
         get_genbank_annotations, "write_out_dataframe", mock_write_out_dataframe
-    )
-
-    get_genbank_annotations.retrieve_genbank_annotations(
-        null_logger, coordination_args["args"]
     )
 
 

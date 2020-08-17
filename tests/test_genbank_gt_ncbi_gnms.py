@@ -271,6 +271,12 @@ def expected_accesions():
     return expected_result
 
 
+@pytest.fixture
+def output_dir(test_dir):
+    path = test_dir / "test_targets" / "gt_unprt_prtns_test_targets"
+    return path
+
+
 # Test parsing of input file
 
 
@@ -721,86 +727,114 @@ def test_download(null_logger, ncbi_args, test_dir, monkeypatch):
     )
 
 
-# Test coordination of retrieving all data from NCBI
+# Test function main()
 
 
 @pytest.mark.run(order=31)
-def test_script_coordination_stdout(
-    accession_df, null_logger, coordination_args_stdout, monkeypatch
-):
-    """Test coordination of NCBI data retrieval of when output is stdout"""
+def test_main(output_dir, accession_df, null_logger, monkeypatch):
+    """Test function main()."""
 
-    def mock_parse_input_file(*args, **kwargs):
-        df = accession_df
-        return df
-
-    def mock_accession_retrieval(*args, **kwargs):
-        accessions = [["123456"]]
-        return accessions
-
-    def mock_writing_out_df(*args, **kwargs):
-        return
-
-    monkeypatch.setattr(get_ncbi_genomes, "parse_input_file", mock_parse_input_file)
-    monkeypatch.setattr(
-        get_ncbi_genomes, "get_accession_numbers", mock_accession_retrieval
-    )
-    monkeypatch.setattr(get_ncbi_genomes, "write_out_dataframe", mock_writing_out_df)
-
-    get_ncbi_genomes.coordinate_data_retrieval(
-        null_logger, coordination_args_stdout["args"]
-    )
-
-
-@pytest.mark.run(order=32)
-def test_script_coordination(accession_df, null_logger, coordination_args, monkeypatch):
-    """Test coordination of NCBI data retrieval of when output is not stdout"""
-
-    def mock_parse_input_file(*args, **kwargs):
-        df = accession_df
-        return df
-
-    def mock_accession_retrieval(*args, **kwargs):
-        accessions = [["123456"]]
-        return accessions
-
-    def mock_writing_out_df(*args, **kwargs):
-        return
-
-    monkeypatch.setattr(get_ncbi_genomes, "parse_input_file", mock_parse_input_file)
-    monkeypatch.setattr(
-        get_ncbi_genomes, "get_accession_numbers", mock_accession_retrieval
-    )
-    monkeypatch.setattr(get_ncbi_genomes, "write_out_dataframe", mock_writing_out_df)
-
-    get_ncbi_genomes.coordinate_data_retrieval(null_logger, coordination_args["args"])
-
-
-# test function 'main'
-
-
-def test_main(test_dir, null_logger, monkeypatch):
-    """Test function 'main'."""
-    target_path = test_dir / "test_targets" / "gt_ncbi_gnms_test_targets"
+    def mock_built_parser(*args, **kwargs):
+        parser_args = ArgumentParser(
+            prog="get_uniprot_proteins.py",
+            usage=None,
+            description="Retrieve protein data from UniProtKB",
+            conflict_handler="error",
+            add_help=True,
+        )
+        return parser_args
 
     def mock_parser(*args, **kwargs):
-        parser = Namespace(user="dummy_email", output=target_path)
+        parser = Namespace(
+            user="dummy_email@domain",
+            output=output_dir,
+            input_file="mock input",
+            retries=10,
+            dataframe="dataframe",
+            force=False,
+            nodelete=False,
+        )
         return parser
 
     def mock_build_logger(*args, **kwargs):
         return null_logger
 
+    def mock_parsed_inputfile(*args, **kwargs):
+        # retrn dataframe when initially parsing input file
+        df = accession_df
+        return df
+
     def mock_making_dir(*args, **kwargs):
         return
 
-    def mock_coordination(*args, **kwargs):
+    def mock_accession_retrieval(*args, **kwargs):
+        accessions = [["123456"]]
+        return accessions
+
+    def mock_writing_out_df(*args, **kwargs):
         return
 
+    monkeypatch.setattr(get_ncbi_genomes, "build_parser", mock_built_parser)
     monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
     monkeypatch.setattr(get_ncbi_genomes, "build_logger", mock_build_logger)
     monkeypatch.setattr(get_ncbi_genomes, "make_output_directory", mock_making_dir)
+    monkeypatch.setattr(get_ncbi_genomes, "parse_input_file", mock_parsed_inputfile)
     monkeypatch.setattr(
-        get_ncbi_genomes, "coordinate_data_retrieval", mock_coordination
+        get_ncbi_genomes, "get_accession_numbers", mock_accession_retrieval
     )
+    monkeypatch.setattr(get_ncbi_genomes, "write_out_dataframe", mock_writing_out_df)
 
     get_ncbi_genomes.main()
+
+
+@pytest.mark.run(order=32)
+def test_main_no_email(output_dir, accession_df, null_logger, monkeypatch):
+    """Test function main() when no email is given."""
+
+    def mock_built_parser(*args, **kwargs):
+        parser_args = ArgumentParser(
+            prog="get_uniprot_proteins.py",
+            usage=None,
+            description="Retrieve protein data from UniProtKB",
+            conflict_handler="error",
+            add_help=True,
+        )
+        return parser_args
+
+    def mock_parser(*args, **kwargs):
+        parser = Namespace(
+            user=None, output=output_dir, input_file="mock input", retries=10
+        )
+        return parser
+
+    def mock_build_logger(*args, **kwargs):
+        return null_logger
+
+    def mock_parsed_inputfile(*args, **kwargs):
+        # retrn dataframe when initially parsing input file
+        df = accession_df
+        return df
+
+    def mock_making_dir(*args, **kwargs):
+        return
+
+    def mock_accession_retrieval(*args, **kwargs):
+        accessions = [["123456"]]
+        return accessions
+
+    def mock_writing_out_df(*args, **kwargs):
+        return
+
+    monkeypatch.setattr(get_ncbi_genomes, "build_parser", mock_built_parser)
+    monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
+    monkeypatch.setattr(get_ncbi_genomes, "build_logger", mock_build_logger)
+    monkeypatch.setattr(get_ncbi_genomes, "make_output_directory", mock_making_dir)
+    monkeypatch.setattr(get_ncbi_genomes, "parse_input_file", mock_parsed_inputfile)
+    monkeypatch.setattr(
+        get_ncbi_genomes, "get_accession_numbers", mock_accession_retrieval
+    )
+    monkeypatch.setattr(get_ncbi_genomes, "write_out_dataframe", mock_writing_out_df)
+
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        get_ncbi_genomes.main()
+    assert pytest_wrapped_e.type == SystemExit
