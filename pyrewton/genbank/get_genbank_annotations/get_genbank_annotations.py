@@ -37,7 +37,6 @@ files directly linked to a given species.
 
 import gzip
 import logging
-import sys
 
 from pathlib import Path
 from typing import List, Optional
@@ -47,24 +46,25 @@ import pandas as pd
 from Bio import SeqIO
 from tqdm import tqdm
 
-from pyrewton.file_io import make_output_directory, write_out_dataframe
+from pyrewton.file_io import write_out_dataframe
 from pyrewton.loggers import build_logger
 from pyrewton.parsers.parser_get_genbank_annotations import build_parser
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
-    """docstring summary.
+    """Coordinate the retrieval of protein annotations from GenBank (.gbff) files.
 
-    Detail.
+    Including building parser, logger and output directory.
 
-    Return.
+    Return dataframe of protein data.
     """
     # Programme preparation:
     # Parse arguments
     # Check if namepsace isn't passed, if not parse command-line
     if argv is None:
         # Parse command-line
-        args = build_parser().parse_args()
+        parser = build_parser()
+        args = parser.parse_args()
     else:
         args = build_parser(argv).parse_args()
 
@@ -72,12 +72,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Note: log file only created if specified at cmdline
     if logger is None:
         logger = build_logger("get_cazyme_annotations", args)
-
-    retrieve_genbank_annotations(logger, args)
-
-
-def retrieve_genbank_annotations(logger, args):
-    """Coordinate the retrieval of protein annotations from GenBank (.gbff) files."""
 
     # Open input dataframe
     logger.info("Opening input dataframe %s", args.df_input)
@@ -327,7 +321,10 @@ def get_annotations(accession_number, args, logger):
                         # and don't add to all_protein_data list
                         if protein_data == ["NA", "NA", "NA", "NA", "NA"]:
                             logger.warning(
-                                f"No data retrieved from CDS type feature, index: {index}, accession: {accession_number}",
+                                (
+                                    f"No data retrieved from CDS type feature, index: {index}, "
+                                    "accession: {accession_number}"
+                                ),
                                 exc_info=1,
                             )
                         # if some data retrieved, add to all_protein_list
