@@ -36,6 +36,7 @@ such as "database:(type:cazy)".
 :param verbose: optional, change logger level to 'info'
 
 :func main: set-up script, configure call to UniProtKB
+:func read_configuration: interprets and configuration data to set up UniProtKB call
 :func get_config_data: retrieve data from config file
 :func build_uniprot_df: build query, coordinate dataframe formating
 :func call_uniprotkb: call to UniProtKB
@@ -47,6 +48,7 @@ such as "database:(type:cazy)".
 
 import io
 import logging
+import os
 import re
 import sys
 import yaml
@@ -81,6 +83,11 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Note: log file only created if specificied at cmdline
     if logger is None:
         logger = build_logger("get_cazyme_annotations", args)
+
+    # Check config is present
+    if (args.input is None) or (os.path.exists(args.input) is False):
+        logger.error("No configuration file found. Terminating.")
+        sys.exit(1)
 
     # If specified output directory, create output directory to write FASTA files too
     if args.outdir is not sys.stdout:
@@ -180,8 +187,8 @@ def get_config_data(logger, args):
                 "Ensure correct file was passed to script, and file contains configuration data.\n"
                 "Terminating program."
             ),
-            sys.exit(1),
         )
+        sys.exit(1)
 
     return tax_ids, query_list
 
@@ -199,6 +206,7 @@ def build_uniprot_df(query, logger, args):
     if query.taxid:  # if there is a tax ID
         tax_id = (query.taxid).replace("NCBI:txid", "")
         query_elements.append(f'taxonomy:"{tax_id}"')
+
     if query.query:  # if a query term was passed
         query_elements.append(f"{query.query}")
     uniprot_query = " AND ".join(query_elements)
