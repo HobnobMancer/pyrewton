@@ -33,6 +33,7 @@ such as "database:(type:cazy)".
 :cmd_args --output: optional, path to output dir
 :cmd_args --verbose: optional, change logger level to 'info'
 :func main: set-up script, configure call to UniProtKB
+:func read_configuration: interprets and configuration data to set up UniProtKB call
 :func get_config_data: retrieve data from config file
 :func build_uniprot_df: build query, coordinate dataframe formating
 :func call_uniprotkb: call to UniProtKB

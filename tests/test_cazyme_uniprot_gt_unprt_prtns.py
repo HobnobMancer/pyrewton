@@ -63,10 +63,15 @@ def input_path(test_dir):
 
 
 @pytest.fixture
-def args_config_no_tax_ids(input_path):
+def args_config_path(input_path):
+    con_path = input_path / "config_no_tax_ids.yaml"
+    return con_path
+
+
+@pytest.fixture
+def args_config_no_tax_ids(args_config_path):
     """Args containing path to config file with only user defined queries."""
-    path = input_path / "config_no_tax_ids.yaml"
-    argsdict = {"args": Namespace(input=path)}
+    argsdict = {"args": Namespace(input=args_config_path)}
     return argsdict
 
 
@@ -415,7 +420,7 @@ def test_writing_out_fasta_file(df_series_for_writing, null_logger, args_fasta):
 # test function 'main'
 
 
-def test_main(output_dir, null_logger, monkeypatch):
+def test_main(output_dir, null_logger, args_config_path, monkeypatch):
     """Test function 'main'."""
 
     def mock_built_parser(*args, **kwargs):
@@ -429,7 +434,9 @@ def test_main(output_dir, null_logger, monkeypatch):
         return parser_args
 
     def mock_parser(*args, **kwargs):
-        parser = Namespace(force=True, outdir=output_dir, nodelete=True)
+        parser = Namespace(
+            force=True, outdir=output_dir, nodelete=True, input=args_config_path
+        )
         return parser
 
     def mock_build_logger(*args, **kwargs):
@@ -450,7 +457,7 @@ def test_main(output_dir, null_logger, monkeypatch):
     get_uniprot_proteins.main()
 
 
-def test_main_argv(output_dir, null_logger, monkeypatch):
+def test_main_argv(output_dir, null_logger, args_config_path, monkeypatch):
     """Test function 'main'."""
 
     def mock_built_parser(*args, **kwargs):
@@ -464,7 +471,9 @@ def test_main_argv(output_dir, null_logger, monkeypatch):
         return parser_args
 
     def mock_parser(*args, **kwargs):
-        parser = Namespace(force=True, outdir=output_dir, nodelete=True)
+        parser = Namespace(
+            force=True, outdir=output_dir, nodelete=True, input=args_config_path
+        )
         return parser
 
     def mock_build_logger(*args, **kwargs):
@@ -484,3 +493,39 @@ def test_main_argv(output_dir, null_logger, monkeypatch):
 
     get_uniprot_proteins.main(argv=["1", "2"])
 
+
+def test_main_no_config(output_dir, null_logger, monkeypatch):
+    """Test function 'main'."""
+
+    def mock_built_parser(*args, **kwargs):
+        parser_args = ArgumentParser(
+            prog="get_uniprot_proteins.py",
+            usage=None,
+            description="Retrieve protein data from UniProtKB",
+            conflict_handler="error",
+            add_help=True,
+        )
+        return parser_args
+
+    def mock_parser(*args, **kwargs):
+        parser = Namespace(force=True, outdir=output_dir, nodelete=True, input=None)
+        return parser
+
+    def mock_build_logger(*args, **kwargs):
+        return null_logger
+
+    def mock_making_dir(*args, **kwargs):
+        return
+
+    def mock_configuration(*args, **kwargs):
+        return
+
+    monkeypatch.setattr(get_uniprot_proteins, "build_parser", mock_built_parser)
+    monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
+    monkeypatch.setattr(get_uniprot_proteins, "build_logger", mock_build_logger)
+    monkeypatch.setattr(get_uniprot_proteins, "make_output_directory", mock_making_dir)
+    monkeypatch.setattr(get_uniprot_proteins, "read_configuration", mock_configuration)
+
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        get_uniprot_proteins.main()
+    assert pytest_wrapped_e.type == SystemExit
