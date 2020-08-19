@@ -108,7 +108,7 @@ def read_configuration(args, logger):
 
     # Search by user defined query only
     if tax_ids is None:
-        for q in tqdm(range(len(query_list)), desc="Querying UniProtKB"):
+        for q in tqdm(range(len(query_list[0])), desc="Querying UniProtKB"):
             build_uniprot_df(UniProtQuery(q, None), logger, args)
 
     # Search by taxonomy ID only
@@ -121,9 +121,9 @@ def read_configuration(args, logger):
         id_index = 0
         for id_index in range(len(tax_ids)):
             query_index = 0
-            for q in tqdm(range(len(query_list)), desc="Querying UniProtKB"):
+            for q in tqdm(range(len(query_list[0])), desc="Querying UniProtKB"):
                 build_uniprot_df(
-                    (UniProtQuery(query_list[query_index][0], tax_ids[id_index])),
+                    (UniProtQuery(query_list[0][query_index], tax_ids[id_index])),
                     logger,
                     args,
                 )
