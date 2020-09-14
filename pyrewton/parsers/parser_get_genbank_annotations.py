@@ -33,16 +33,14 @@ def build_parser(argv: Optional[List] = None):
         description="Retrieve protein annotations from GenBank files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-
     # Add arguments to parser
-    # Add option to specific input directory for dataframe
     parser.add_argument(
         "-d",
-        "--df_input",
+        "--output_df",
         type=Path,
-        metavar="input dataframe name",
-        default=sys.stdin,
-        help="input dataframe path",
+        metavar="Output dataframe path",
+        default=sys.stdout,
+        help="Path to output dataframe",
     )
     # Add option to force file over writting
     parser.add_argument(
@@ -61,6 +59,15 @@ def build_parser(argv: Optional[List] = None):
         metavar="GenBank file directory",
         default=sys.stdin,
         help="GenBank file path directory",
+    )
+    # Add option to specific input directory for dataframe
+    parser.add_argument(
+        "-i",
+        "--input_df",
+        type=Path,
+        metavar="input dataframe name",
+        default=sys.stdin,
+        help="input dataframe path",
     )
     # Add option to specific directory for log to be written out to
     parser.add_argument(
@@ -86,9 +93,9 @@ def build_parser(argv: Optional[List] = None):
         "-o",
         "--output",
         type=Path,
-        metavar="output directory",
+        metavar="output directory for fasta files",
         default=sys.stdout,
-        help="Path to directory where all outputs are written",
+        help="Path to directory fasta files are written",
     )
     # Add option to specify verbose logging
     parser.add_argument(
