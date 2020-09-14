@@ -203,11 +203,13 @@ def parse_line(line, logger, line_count, retries):
     :line_count: number of line in input file - enable tracking if error occurs
     :param retries: parser argument, maximum number of retries excepted if network error encountered
 
-    Return list of genus, species and taxonomy ID"""
+    Return list of genus, species and taxonomy ID """
+    line_data = []
+
     # For taxonomy ID retrieve scientific name
     if line.startswith("NCBI:txid"):
         gs_name = get_genus_species_name(line[9:], logger, line_count, retries)
-        line_data = gs_name.split()
+        line_data = gs_name.split(" ", 1)
         line_data.append(line)
     # For scientific name retrieve taxonomy ID
     else:
