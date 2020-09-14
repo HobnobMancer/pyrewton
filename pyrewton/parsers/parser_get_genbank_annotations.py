@@ -86,9 +86,9 @@ def build_parser(argv: Optional[List] = None):
         "-o",
         "--output",
         type=Path,
-        metavar="output file name",
+        metavar="output directory",
         default=sys.stdout,
-        help="output filename",
+        help="Path to directory where all outputs are written",
     )
     # Add option to specify verbose logging
     parser.add_argument(
