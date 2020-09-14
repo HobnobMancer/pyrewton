@@ -37,6 +37,8 @@ files directly linked to a given species.
 
 import gzip
 import logging
+import re
+import sys
 
 from pathlib import Path
 from typing import List, Optional
@@ -82,6 +84,13 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # Write out dataframe
     write_out_dataframe(protein_annotation_df, logger, args.output, args.force)
+
+    # Write out FASTA files
+    index = 0
+    for index in range(len(protein_annotation_df["Genus"])):
+        df_row = protein_annotation_df.iloc[index]
+        write_fasta(df_row, logger, args)
+        index += 1
 
     logger.info("Programme finsihed. Terminating.")
 
@@ -432,6 +441,54 @@ def get_record_feature(feature, qualifier, logger, accession):
                 f"Failed to retrieve feature {qualifier}, returning 'NA', accession: {accession}",
             )
             return "NA"
+
+
+def write_fasta(df_row, logger, args, filestem="genbank_proteins"):
+    """Write out FASTA file.
+
+    :param df_row: row from pandas df of UniProt search results
+    :param filestem: str, FASTA file name
+    :param logger: logger object
+    :param args: parser arguments
+
+    Returns nothing.
+    """
+    # Create file content
+
+    # FASTA sequences have 60 characters per line, add line breakers into protein sequence
+    # to match FASTA format
+    sequence = df_row["Protein Sequence"]
+    sequence = "\n".join([sequence[i : i + 60] for i in range(0, len(sequence), 60)])
+    # Retrieve protein ID
+    protein_id = df_row["NCBI Protein ID"] + df_row["Locus Tag"]
+
+    file_content = f">{protein_id} \n{sequence}"
+
+    # Create file name
+
+    # Retrieve Taxonomy ID and add txid prefix is present
+    tax_id = str(df_row["NCBI Taxonomy ID"])
+    if tax_id.startswith("NCBI:txid") is False:
+        tax_id = "txid" + tax_id
+    tax_id.replace(" ", "_")
+    # Retrieve accession number
+    accession = df_row["NCBI Accession Number"]
+    # remove characters that could make file names invalid
+    invalid_file_name_characters = re.compile(r'[,;./ "*#<>?|\\:]')
+    tax_id = re.sub(invalid_file_name_characters, "_", tax_id)
+    accession = re.sub(invalid_file_name_characters, "_", accession)
+
+    # Create output path
+    if args.output is not sys.stdout:
+        output_path = args.output / f"{filestem}_{tax_id}_{accession}.fasta"
+    else:
+        output_path = args.output
+
+    # Write out data to Fasta file
+    with open(output_path, "w+") as fh:
+        fh.write(file_content)
+
+    return
 
 
 if __name__ == "__main__":
