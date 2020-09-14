@@ -667,33 +667,32 @@ def download_file(
             f"Failed to download {file_type} for {accession_number}", exc_info=1,
         )
         return
-
     if args.output is not sys.stdout:
         if out_file_path.exists():
             logger.warning(f"Output file {out_file_path} exists, not downloading")
             return
-    else:
-        # Download file
-        logger.info("Opened URL and parsed metadata")
-        file_size = int(response.info().get("Content-length"))
-        bsize = 1_048_576
-        try:
-            with open(out_file_path, "wb") as out_handle:
-                # Using leave=False as this will be an internally-nested progress bar
-                with tqdm(
-                    total=file_size,
-                    leave=False,
-                    desc=f"Downloading {accession_number} {file_type}",
-                ) as pbar:
-                    while True:
-                        buffer = response.read(bsize)
-                        if not buffer:
-                            break
-                        pbar.update(len(buffer))
-                        out_handle.write(buffer)
-        except IOError:
-            logger.error(f"Download failed for {accession_number}", exc_info=1)
-            return
+
+    # Download file
+    logger.info("Opened URL and parsed metadata")
+    file_size = int(response.info().get("Content-length"))
+    bsize = 1_048_576
+    try:
+        with open(out_file_path, "wb") as out_handle:
+            # Using leave=False as this will be an internally-nested progress bar
+            with tqdm(
+                total=file_size,
+                leave=False,
+                desc=f"Downloading {accession_number} {file_type}",
+            ) as pbar:
+                while True:
+                    buffer = response.read(bsize)
+                    if not buffer:
+                        break
+                    pbar.update(len(buffer))
+                    out_handle.write(buffer)
+    except IOError:
+        logger.error(f"Download failed for {accession_number}", exc_info=1)
+        return
 
         logger.info(
             f"Finished downloading GenBank file for {accession_number}", exc_info=1
