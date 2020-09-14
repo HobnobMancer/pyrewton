@@ -18,12 +18,14 @@
 # The MIT License
 """Retrieve all protein annotations from GenBank files.
 
-:cmd_args df_input: path, path to input dataframe
 :cmd_args force: bool, force overwriting files in output directory
 :cmd_args genbank: path, path to directory containing GenBank files
+:cmd_args input_df: path, path to input dataframe
 :cmd_args log: path, path to direct writing out log file
 :cmd_args nodelete: not delete existing files in output directory
-:cmd_args output: path, path to output directory
+:cmd_args output: path, path to output directory for FASTA files
+:cdm_args output_df: path, path to output dataframe
+:cmd_args verbose: bool, enable verbose logging
 
 :func main: Coordinate calling of other functions
 :func create_dataframe: build dataframe summarising CAZy annotation in GenBank files
@@ -48,7 +50,7 @@ import pandas as pd
 from Bio import SeqIO
 from tqdm import tqdm
 
-from pyrewton.file_io import write_out_dataframe
+from pyrewton.file_io import make_output_directory, write_out_dataframe
 from pyrewton.loggers import build_logger
 from pyrewton.parsers.parser_get_genbank_annotations import build_parser
 
@@ -73,24 +75,32 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Initiate logger
     # Note: log file only created if specified at cmdline
     if logger is None:
-        logger = build_logger("get_cazyme_annotations", args)
+        logger = build_logger("get_genbank_annotations", args)
+
+    # If specified output directory, create output directory to write FASTA files too
+    if args.output is not sys.stdout:
+        make_output_directory(args, logger)
 
     # Open input dataframe
-    logger.info("Opening input dataframe %s", args.df_input)
-    input_df = pd.read_csv(args.df_input, header=0, index_col=0)
+    logger.info("Opening input dataframe %s", args.input_df)
+    input_df = pd.read_csv(args.input_df, header=0, index_col=0)
 
     # Build dataframe
     protein_annotation_df = create_dataframe(input_df, args, logger)
 
     # Write out dataframe
-    write_out_dataframe(protein_annotation_df, logger, args.output, args.force)
+    if args.output_df is not None:
+        write_out_dataframe(protein_annotation_df, logger, args.output_df, args.force)
 
     # Write out FASTA files
-    index = 0
-    for index in range(len(protein_annotation_df["Genus"])):
-        df_row = protein_annotation_df.iloc[index]
-        write_fasta(df_row, logger, args)
-        index += 1
+    if args.output is not None:
+        index = 0
+        for index in tqdm(
+            range(len(protein_annotation_df["Genus"])), desc=f"Writing protein to FASTA"
+        ):
+            df_row = protein_annotation_df.iloc[index]
+            write_fasta(df_row, logger, args)
+            index += 1
 
     logger.info("Programme finsihed. Terminating.")
 
@@ -460,9 +470,9 @@ def write_fasta(df_row, logger, args, filestem="genbank_proteins"):
     sequence = df_row["Protein Sequence"]
     sequence = "\n".join([sequence[i : i + 60] for i in range(0, len(sequence), 60)])
     # Retrieve protein ID
-    protein_id = df_row["NCBI Protein ID"] + df_row["Locus Tag"]
+    protein_id = df_row["NCBI Protein ID"] + " " + df_row["Locus Tag"]
 
-    file_content = f">{protein_id} \n{sequence}"
+    file_content = f">{protein_id} \n{sequence}\n"
 
     # Create file name
 
@@ -470,6 +480,8 @@ def write_fasta(df_row, logger, args, filestem="genbank_proteins"):
     tax_id = str(df_row["NCBI Taxonomy ID"])
     if tax_id.startswith("NCBI:txid") is False:
         tax_id = "txid" + tax_id
+    else:
+        tax_id = tax_id.replace("NCBI:txid", "txid")
     tax_id.replace(" ", "_")
     # Retrieve accession number
     accession = df_row["NCBI Accession Number"]
@@ -485,7 +497,7 @@ def write_fasta(df_row, logger, args, filestem="genbank_proteins"):
         output_path = args.output
 
     # Write out data to Fasta file
-    with open(output_path, "w+") as fh:
+    with open(output_path, "a") as fh:
         fh.write(file_content)
 
     return
