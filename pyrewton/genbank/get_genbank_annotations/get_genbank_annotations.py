@@ -18,12 +18,12 @@
 # The MIT License
 """Retrieve all protein annotations from GenBank files.
 
-:cmd_args df_input: path, path to input dataframe
-:cmd_args force: bool, force overwriting files in output directory
-:cmd_args genbank: path, path to directory containing GenBank files
-:cmd_args log: path, path to direct writing out log file
-:cmd_args nodelete: not delete existing files in output directory
-:cmd_args output: path, path to output directory
+:cmd_args df_input: path, path to input dataframe - required
+:cmd_args genbank: path, path to directory containing GenBank files - required
+:cmd_args --force: bool, force overwriting files in output directory
+:cmd_args --log: path, path to direct writing out log file
+:cmd_args --nodelete: not delete existing files in output directory
+:cmd_args --output: path, path to output directory
 
 :func main: Coordinate calling of other functions
 :func create_dataframe: build dataframe summarising CAZy annotation in GenBank files

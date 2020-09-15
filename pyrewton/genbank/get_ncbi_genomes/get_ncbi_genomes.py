@@ -18,7 +18,7 @@
 # The MIT License
 """Pull down GenBank files (.gbff) from NCBI database.
 
-:cmd_args --user: email address of user
+:cmd_args user: email address of user - required
 :cmd_args --dataframe: output directory for dataframe
 :cmd_args --force: force writing in output directory
 :cmd_args --genbank: enable/disable GenBank file download
