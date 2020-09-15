@@ -114,15 +114,59 @@ def no_gb_args(test_dir, gb_file_dir):
 
 @pytest.fixture
 def output_dir(test_dir):
-    path = test_dir / "test_targets" / "gt_unprt_prtns_test_targets"
+    path = test_dir / "test_targets" / "gt_gnbnk_anntns_test_targets"
     return path
+
+
+@pytest.fixture
+def args_fasta(output_dir):
+    argsdict = {"args": Namespace(fasta=True, output=output_dir)}
+    return argsdict
+
+
+@pytest.fixture
+def protein_df():
+    columns_list = [
+        "Genus",
+        "Species",
+        "NCBI Taxonomy ID",
+        "NCBI Accession Number",
+        "NCBI Protein ID",
+        "Locus Tag",
+        "Gene Locus",
+        "Function",
+        "Protein Sequence",
+    ]
+    data = [
+        [
+            "Botrytis",
+            "cinerea B05.10",
+            "NCBI:txid332648",
+            "GCF_000143535.2",
+            "XP_001553137.1",
+            "BCIN_14g02180",
+            "[891975:892232](-),[891495:891895](-)",
+            "hypothetical proteins",
+            "MSSHCHDEHDHGHGGHSHEGHDHSDDITPALQYSLYQHIKFDDITT",
+        ]
+    ]
+    df = pd.DataFrame(data, columns=columns_list)
+    return df
+
+
+@pytest.fixture
+def df_series(protein_df):
+    df_row = protein_df.iloc[0]
+    return df_row
 
 
 # Test coordination of script
 
 
 @pytest.mark.run(order=36)
-def test_main(null_logger, output_dir, coordination_args, test_input_df, monkeypatch):
+def test_main(
+    null_logger, output_dir, coordination_args, test_input_df, protein_df, monkeypatch
+):
     """Test coordination of GenBank protein annotation retrieval by main()."""
 
     def mock_built_parser(*args, **kwargs):
@@ -138,9 +182,11 @@ def test_main(null_logger, output_dir, coordination_args, test_input_df, monkeyp
     def mock_parser(*args, **kwargs):
         parser = Namespace(
             output=output_dir,
-            force=False,
+            force=True,
             genbank=gb_file_dir,
-            df_input=test_input_df_path,
+            input_df=test_input_df_path,
+            nodelete=True,
+            output_df=output_dir,
         )
         return parser
 
@@ -151,7 +197,7 @@ def test_main(null_logger, output_dir, coordination_args, test_input_df, monkeyp
         return test_input_df_path
 
     def mock_create_dataframe(*args, **kwargs):
-        df = test_input_df
+        df = protein_df
         return df
 
     def mock_write_out_dataframe(*args, **kwargs):
@@ -399,3 +445,8 @@ def test_get_file_empty(coordination_args, null_logger):
         accession, coordination_args["args"], null_logger
     )
 
+
+@pytest.mark.run(order=51)
+def test_write_proteins_to_fasta(df_series, null_logger, args_fasta):
+    """Test writing fasta file."""
+    get_genbank_annotations.write_fasta(df_series, null_logger, args_fasta["args"])
