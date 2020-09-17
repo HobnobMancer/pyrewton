@@ -125,6 +125,11 @@ def write_dbcan_dfs(accession_numbers, directories, args, logger):
                 dataframes[2].apply(
                     standardise_dbcan_results, args=("HMMER", logger), axis=1
                 )
+                dataframes[0].apply(
+                    standardise_dbcan_results,
+                    args=("dbCAN consensus CAZyme prediction", logger),
+                    axis=1,
+                )
 
                 # Write out dataframes to csv files
                 dataframe_names = ["dbCAN", "DIAMOND", "HMMER", "Hotpep"]
@@ -160,17 +165,13 @@ def parse_dbcan_overview_file(overview_file_path, logger):
     )
 
     # Create separate dataframes for DIAMOND, HMMER and Hotpep
-    diamond_df = df[["Gene ID", "DIAMOND"]]
-    hmmer_df = df[["Gene ID", "HMMER"]]
-    hotpep_df = df[["Gene ID, Hotpep"]]
+    diamond_df = df[["Gene ID", "DIAMOND CAZyme prediction"]]
+    hmmer_df = df[["Gene ID", "HMMER CAZyme prediction"]]
+    hotpep_df = df[["Gene ID, Hotpep CAZyme prediction"]]
 
     # Create consensus dbCAN dataframe (result when 2 or more tools match predications)
     # rename "#ofTools" column to facilitate use of .contains
-    df = df.rename(columns={"#ofTools": "Matches"})
-    consensus_found = df.Matches.str.contains(
-        "2" or "3"
-    )  # when 2 or more tools' results match
-    dbcan_df = df[consensus_found]
+    dbcan_df = get_dbcan_consensus(df, logger)
 
     return [dbcan_df, diamond_df, hmmer_df, hotpep_df]
 
@@ -204,13 +205,89 @@ def standardise_dbcan_results(df_row, column_name, logger):
     return df_row
 
 
-def write_cupp_df():
+def get_dbcan_consensus(df, logger):
+    """Get dataframe of consensus dbCAN results.
+
+    :param df: pandas dataframe, dbCAN output formated into dataframe
+    :param logger: logger object
+
+    Return dataframe of consensus dbCAN output, where 2 or more tools match.
+    """
+    df = df.rename(columns={"#ofTools": "Matches"})
+    consensus_found = df.Matches.str.contains(
+        "2" or "3"
+    )  # when 2 or more tools' results match
+    df = df[consensus_found]  # results where 2 or more tools match
+
+    # Create consensus result to summarise all
+    consensus_result = []
+    index = 0
+    for index in range(len(df)):
+        df_row = df.iloc[index]
+        row_data = []  # empty list to store data for dbCAN df row
+        if df["HMMER"] != "-":
+            row_data.append(df["HMMER"])
+        elif df["Hotpep"] != "-":
+            row_data.append(df["Hotpep"])
+        else:
+            row_data.append(df["DIAMOND"])
+        consensus_result.append(row_data)
+
+    dbcan_df = df["Gene ID"]
+    dbcan_df["dbCAN consensus CAZyme prediction"] = consensus_result
+
+    return dbcan_df
+
+
+def write_cupp_df(accession_numbers, files, args, logger):
     """Formate output from CUPP into Pandas dataframe.
 
-    :param
-    
+    :param accession_numbers: list, list of genomic assembly accession numbers
+    :param directories: list, list of directory paths in args.input
+    :param args: parser object
+    :param logger: logger object
+
     Return nothing.
     """
+    for accession in accession_numbers:
+        # format accession to match format in dir name
+        accession.replace(".", "_")
+        for entry in files:
+            if entry.find(accession):
+                # Collect predicated CAZyme families from output
+                # Store in tuple with each list containing the predicated CAZyme
+                # family of a unique protein
+                dataframe_data = parse_cupp_output(entry, logger)
+
+                df = pd.DataFrame(
+                    dataframe_data, columns=["Gene ID", "CUPP CAZyme prediction"]
+                )
+
+    return
+
+
+def parse_cupp_output(output_file, logger):
+    """Parse CUPP output file, creating tuple of predicated CAZymes.
+    
+    Each list in the tuple contains two items, the first item being
+    the gene ID, and the second the predicated CAZy family.
+
+    :param output_file: path, path to CUPP output file
+    :param logger: logger object
+
+    Return tuple.
+    """
+    dataframe_data = []  # empty tuple to store dataframe data
+    with open(output_file) as fh:
+        file_lines = fh.read().splitlines
+    for line in file_lines:
+        line_data = []  # list to store CAZyme family prediction from working line
+        line = line.split()
+        line_data.append(line[0])  # add gene ID
+        line_data.append(line[2])  # add CAZy family prediction
+        dataframe_data.append(line_data)
+
+    return dataframe_data
 
 
 def write_ecami_df(accession_numbers, files, args, logger):
@@ -221,7 +298,7 @@ def write_ecami_df(accession_numbers, files, args, logger):
     :param args: parser object
     :param logger: logger object
 
-    Return dataframe.
+    Return nothing.
     """
     for accession in accession_numbers:
         # format accession to match format in dir name
