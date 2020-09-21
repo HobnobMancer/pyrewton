@@ -38,10 +38,7 @@ def build_parser(argv: Optional[List] = None):
 
     # Add path to the directory containing the output file of the CAZyme prediction tool
     parser.add_argument(
-        "input",
-        type=Path,
-        metavar="input file name",
-        help="Path to the CAZyme"
+        "input", type=Path, metavar="input file name", help="Path to the CAZyme"
     )
 
     # Add string to define the CAZyme prediction tool whose output is to be processed
@@ -49,32 +46,6 @@ def build_parser(argv: Optional[List] = None):
         "tool",
         choices=["dbcan", "cupp", "ecami"],
         help="The CAZyme prediction tool whose output is to be processed",
-    )
-
-    # Add optional arguments to parser to determine which CAZyme predicton tool's output to be processed
-    parser.add_argument(
-        "-c",
-        "--cupp",
-        dest="cupp",
-        action="store_true",
-        default=False,
-        help="Enable processing of CUPP output, only enable processing of one CAZyme prediction tool output",
-    )
-    parser.add_argument(
-        "-d",
-        "--dbcan",
-        dest="dbcan",
-        action="store_true",
-        default=False,
-        help="Enable processing of dbCAN ouput, only enable processing of one CAZyme prediction tool output",
-    )
-    parser.add_argument(
-        "-e",
-        "--ecami",
-        dest="ecami",
-        action="store_true",
-        default=False,
-        help="Enalbe processing of eCAMI output, only enable processing of one CAZyme prediction tool output",
     )
 
     # Add additional optional arguments
@@ -116,7 +87,6 @@ def build_parser(argv: Optional[List] = None):
         metavar="output file name",
         default=sys.stdout,
         help="Output filename",
-    )
     )
     # Add option for more detail (verbose) logging
     parser.add_argument(
