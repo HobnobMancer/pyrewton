@@ -77,24 +77,24 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     make_output_directory(args.output, logger, args.force, args.nodelete)
 
     # Retrieve accession numbers of genomic assemblies to identify the tools' output directories
-    genomic_accessions, dirs = parse_inputs(args, logger)
+    genomic_accessions, path_list = parse_input(args, logger)
 
     # Build dataframe from dbCAN output
     # Create consensus dataframe and dataframe per tool
     if args.tool == "dbcan":
-        write_dbcan_dfs(genomic_accessions, dirs, args, logger)
+        write_dbcan_dfs(genomic_accessions, path_list, args, logger)
 
     # Build dataframe from CUPP output
     if args.cupp == "cupp":
-        write_cupp_df(genomic_accessions, dirs, args, logger)
+        write_cupp_df(genomic_accessions, path_list, args, logger)
 
     # Build dataframe from eCAMI output
     if args.ecami == "ecami":
-        write_ecami_df(genomic_accessions, dirs, args, logger)
+        write_ecami_df(genomic_accessions, path_list, args, logger)
 
 
-def parse_inputs(args, logger):
-    """Parse input csv file to retrieve accession numbers and retrieve dir listing.
+def parse_input(args, logger):
+    """Parse input csv file to retrieve accession numbers and retrieve dir or file listing.
 
     :param args: parser object
     :param logger: logger object
@@ -104,18 +104,29 @@ def parse_inputs(args, logger):
     df = pd.read_cvs(args.accessions, header=0, index_col=0)
     accessions = df["NCBI Accession Numbers"]
 
-    # Generate list of directories in specified input parent directory
-    dir_list = []  # list to store directory names
+    # Generate list of directories or files in specified input parent directory
+    path_list = []  # list to store directory names
     parent_dir = Path(args.input)  # get path to parent directory of tools outputs
-    for directory in parent_dir.iterdir():
-        # add path for each directory to directory list
-        if args.tools == "dbcan" and path.isdir(directory):
-            dir_list.append(directory)
-        # add path for each file in directory list
-        elif args.tools is "ecami" and path.isfile(directory):
-            dir_list.append(directory)
 
-    return accessions, dir_list
+    if args.tools == "dbcan":
+        for entry in parent_dir.iterdir():
+            # add the path for each DIRECTORY in the parent directory to the directory list
+            if path.isdir(entry):
+                path_list.append(entry)
+
+    elif args.tools == "cupp":
+        for entry in parent_dir.iterdir():
+            # add the path for each .fasta.log FILE in the parent directory to the path list
+            if path.isfile(entry) and str(entry).endswith(".fasta.log"):
+                path_list.append(entry)
+
+    elif args.tools == "ecami":
+        for entry in parent_dir.iterdir():
+            # add the path for each .txt file in the parent directory to the path list
+            if path.isfile(entry) and str(entry).endswith(".txt"):
+                path_list.append(entry)
+
+    return accessions, path_list
 
 
 def write_dbcan_dfs(accession_numbers, directories, args, logger):
@@ -136,8 +147,11 @@ def write_dbcan_dfs(accession_numbers, directories, args, logger):
         accession.replace(".", "_")
         for directory in directories:
             if directory.find(accession):
+                # Write path to the 'overview.txt' in the directory containing the working
+                # accession number
                 overview_file_path = directory / "overview.txt"
-                # Generate summary dataframes from dbCAN overview.txt file
+
+                # Create datframes containing results from the overview.txt file
                 # in order of dbcan_df, diamond_df, hmmer_df, hotpep_df
                 dataframes = parse_dbcan_overview_file(overview_file_path, logger)
 
