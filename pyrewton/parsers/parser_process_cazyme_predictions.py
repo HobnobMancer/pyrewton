@@ -35,7 +35,21 @@ def build_parser(argv: Optional[List] = None):
     )
 
     # Add positional arguments to parser
-    parser.add_argument("input")
+
+    # Add path to the directory containing the output file of the CAZyme prediction tool
+    parser.add_argument(
+        "input",
+        type=Path,
+        metavar="input file name",
+        help="Path to the CAZyme"
+    )
+
+    # Add string to define the CAZyme prediction tool whose output is to be processed
+    parser.add_argument(
+        "tool",
+        choices=["dbcan", "cupp", "ecami"],
+        help="The CAZyme prediction tool whose output is to be processed",
+    )
 
     # Add optional arguments to parser to determine which CAZyme predicton tool's output to be processed
     parser.add_argument(
