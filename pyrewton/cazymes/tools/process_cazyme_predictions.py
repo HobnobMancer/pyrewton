@@ -18,35 +18,60 @@
 # The MIT License
 """Process output from dbCAN, CUPP and eCAMI into dataframes.
 
-:cmd_args:
+:cmd_args force:
+:cmd_args log:
+:cmd_args nodelete:
+:cmd_args output:
+:cmd_args tool: 'dbcan', 'cupp', 'ecami', define which tools output is to be processed
+:cmd_args verbose:
 
-:func --:
+:func main: Build parser, build logger and coordinate script operation
+:func parse_inputs: parse input dataframe and retrieve files/dirs in cwd
+:func write_dbcan_dfs: write df for dbcan, HMMER, DIAMOND and Hotpep
+:func parse_dbcan_overview_file: parse 'overview.txt' output from dbCAN
+:func standardise_dbcan_results: remove added data from predicated CAZy family
+:func get_dbcan_consensus: get the consensus results from dbCAN
+:func write_cupp_df: write CUPP results in dataframe
+:func parse_cupp_output: parse output from CUPP, to create dataframe data
+:func write_ecami_df: write out dataframe of eCAMI results
+:func parse_ecami_output: parse eCAMI output file, to create dataframe data
+
+Write out dataframe containing gene IDs and result from the given CAZyme
+prediction tool. The output from one CAZyme prediction tool can be processed
+at a time.
 """
 
+import logging
 import re
-import sys
 
 import pandas as pd
 
 from os import path
 from pathlib import Path
+from typing import List, Optional
 
 from pyrewton.file_io import make_output_directory, write_out_pre_named_dataframe
 from pyrewton.loggers import build_logger
 from pyrewton.parsers.parser_process_cazyme_predictions import build_parser
 
 
-def main():
+def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
     """Build parser and logger, and coordinate creation of dataframes."""
 
+    # Programme preparation
     # Build parser
+    # Check if namepsace isn't passed, if not parse command-line
+    if argv is None:
+        # Parse command-line
+        args = build_parser().parse_args()
+    else:
+        args = build_parser(argv).parse_args()
 
     # Build logger
-
-    # Check CAZyme prediction tool was selected
-    if (args.dbcan is None) and (args.cupp is None) and (args.ecami is None):
-        logger.error()
-        sys.exit(1)
+    # Note: log file only created if specified at cmdline
+    if logger is None:
+        logger = build_logger("process_cazyme_predictions", args)
+    logger.info("Run initated")
 
     # Make output directory to store all create dataframes
     make_output_directory(args.output, logger, args.force, args.nodelete)
@@ -56,16 +81,16 @@ def main():
 
     # Build dataframe from dbCAN output
     # Create consensus dataframe and dataframe per tool
-    if args.dbcan is not None:
+    if args.tool == "dbcan":
         write_dbcan_dfs(genomic_accessions, dirs, args, logger)
 
     # Build dataframe from CUPP output
-    if args.cupp is not None:
+    if args.cupp == "cupp":
         write_cupp_df(genomic_accessions, dirs, args, logger)
 
     # Build dataframe from eCAMI output
-    if args.ecami is not None:
-        write_ecami_df(args, logger)
+    if args.ecami == "ecami":
+        write_ecami_df(genomic_accessions, dirs, args, logger)
 
 
 def parse_inputs(args, logger):
@@ -84,10 +109,10 @@ def parse_inputs(args, logger):
     parent_dir = Path(args.input)  # get path to parent directory of tools outputs
     for directory in parent_dir.iterdir():
         # add path for each directory to directory list
-        if args.dbcan is True and path.isdir(directory):
+        if args.tools == "dbcan" and path.isdir(directory):
             dir_list.append(directory)
         # add path for each file in directory list
-        elif args.ecami is True and path.isfile(directory):
+        elif args.tools is "ecami" and path.isfile(directory):
             dir_list.append(directory)
 
     return accessions, dir_list
@@ -138,6 +163,9 @@ def write_dbcan_dfs(accession_numbers, directories, args, logger):
                     write_out_pre_named_dataframe(
                         dataframes[index],
                         f"{dataframe_names[index]}_{accession}_output.csv",
+                        logger,
+                        args.output,
+                        args.force,
                     )
                     index += 1
 
@@ -213,25 +241,28 @@ def get_dbcan_consensus(df, logger):
 
     Return dataframe of consensus dbCAN output, where 2 or more tools match.
     """
+    # Retrieve the rows from the dataframe that have 2 or 3 results
+    # recorded in the '#ofTools' column
     df = df.rename(columns={"#ofTools": "Matches"})
-    consensus_found = df.Matches.str.contains(
-        "2" or "3"
-    )  # when 2 or more tools' results match
-    df = df[consensus_found]  # results where 2 or more tools match
+    consensus_found = df.Matches.str.contains("2" or "3")
+    df = df[consensus_found]
 
     # Create consensus result to summarise all
     consensus_result = []
     index = 0
     for index in range(len(df)):
         df_row = df.iloc[index]
+
         row_data = []  # empty list to store data for dbCAN df row
-        if df["HMMER"] != "-":
-            row_data.append(df["HMMER"])
-        elif df["Hotpep"] != "-":
-            row_data.append(df["Hotpep"])
+
+        if df_row["HMMER"] != "-":
+            row_data.append(df_row["HMMER"])
+        elif df_row["Hotpep"] != "-":
+            row_data.append(df_row["Hotpep"])
         else:
-            row_data.append(df["DIAMOND"])
+            row_data.append(df_row["DIAMOND"])
         consensus_result.append(row_data)
+        index += 1
 
     dbcan_df = df["Gene ID"]
     dbcan_df["dbCAN consensus CAZyme prediction"] = consensus_result
@@ -262,6 +293,8 @@ def write_cupp_df(accession_numbers, files, args, logger):
                 df = pd.DataFrame(
                     dataframe_data, columns=["Gene ID", "CUPP CAZyme prediction"]
                 )
+
+                write_out_pre_named_dataframe(df, logger, args.output, args.force)
 
     return
 
