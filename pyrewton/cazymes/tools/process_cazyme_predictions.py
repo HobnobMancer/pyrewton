@@ -154,6 +154,9 @@ def parse_input_df(args, logger):
     return accessions
 
 
+##############################################################################################
+
+
 def write_dbcan_dfs(accession_numbers, args, logger):
     """Build dataframe from dbCAN output file.
 
@@ -168,8 +171,10 @@ def write_dbcan_dfs(accession_numbers, args, logger):
     Return nothing.
     """
     for accession in accession_numbers:
-        # format accession to match format in dir name
-        overview_file_path = get_overview_file(accession, args, logger)
+        overview_file_path = get_cazyme_prediction_output(
+            accession, "dbCAN", args, logger
+        )
+        overview_file_path = overview_file_path / "overview.txt"
 
         # logger warning when no overview file found are given in get_overview_file()
         if overview_file_path is not None:
@@ -241,62 +246,6 @@ def write_dbcan_dfs(accession_numbers, args, logger):
                 logger.warning(f"No dataframe written for DIAMOND - {accession}")
 
     return
-
-
-def get_overview_file(accession, args, logger):
-    """Retrieve run_dbCAN overview.txt file for the corresponding accession number.
-
-    :param accession: str, genomic accession number
-    :param args: parser object
-    :param logger: logger object
-
-    Return path to overview.txt file.
-    """
-    # Formate accession number into directory name formate
-    accession = accession.replace(".", "_")
-
-    # empty list to store file entries, allows checking if multiple files retrieved
-    directory = []
-
-    # Retrieve all directories from within args.input indicated directory
-    directories = (entry for entry in Path(args.input).iterdir() if path.isdir(entry))
-
-    for item in directories:
-        # search for accession number in directory names
-        if item.name.find(f"{accession}") != -1:
-            directory.append(item)
-
-    # check directory was found, not multiple or none
-    if len(directory) == 0:
-        logger.warning(
-            (
-                f"Did not find directory containing {accession} in name.\n"
-                f"NOT processing output for {accession}"
-            )
-        )
-        return
-
-    elif len(directory) > 1:
-        logger.warning(
-            (
-                f"Found multiple directories containing {accession} in their name.\n"
-                f"NOT processing output for {accession}"
-            )
-        )
-        return
-
-    # check if directory is empty
-    if directory[0].stat().st_size == 0:
-        logger.warning(
-            (
-                f"Directory found for {accession} is empty.\n"
-                f"NOT processing output for {accession}"
-            )
-        )
-        return
-
-    overview_file_path = directory[0] / "overview.txt"
-    return overview_file_path
 
 
 def parse_dbcan_overview_file(overview_file_path, logger):
@@ -416,6 +365,9 @@ def get_dbcan_consensus(df, logger):
     return dbcan_df
 
 
+################################################################################################
+
+
 def write_cupp_df(accession_numbers, args, logger):
     """Formate output from CUPP into Pandas dataframe.
 
@@ -427,6 +379,8 @@ def write_cupp_df(accession_numbers, args, logger):
     Return nothing.
     """
     for accession in accession_numbers:
+        cupp_output_file = get_cupp_output(accession, args, logger)
+
         # format accession to match format in dir name
         accession.replace(".", "_")
         for entry in files:
@@ -483,6 +437,9 @@ def parse_cupp_output(output_file, logger):
     return dataframe_data
 
 
+###################################################################################
+
+
 def write_ecami_df(accession_numbers, args, logger):
     """Retrieve data from CUPP output and store in dataframe.
 
@@ -505,7 +462,7 @@ def write_ecami_df(accession_numbers, args, logger):
 
                 if dataframe_data is None:
                     logger.warning(
-                        f"No output dataframe written for eCAMO {accession} output"
+                        f"No output dataframe written for eCAMI - {accession} output"
                     )
 
                 else:
@@ -567,6 +524,71 @@ def parse_ecami_output(output_file, logger):
             dataframe_data.append(line_data)
 
     return dataframe_data
+
+
+######################################################################################
+
+
+def get_cazyme_prediction_output(accession, tool, args, logger):
+    """Retrieve path to CAZyme prediction tool output file for corresponding genomic accession number.
+
+    :param accession: str, genomic accession number
+    :param args: parser object
+    :param logger: logger object
+
+    Return path.
+    """
+    # Format accession number into directory name formate
+    accession.replace(".", "_")
+
+    # empty list to store entries, allows checking if multiple files retrieved
+    tool_output = []
+
+    if tool == "dbCAN":
+        # Retrieve list of directories within directory indicated by args.input
+        entries = (entry for entry in Path(args.input).iterdir() if path.isdir(entry))
+        entry_type = ["directory", "directories"]
+
+    else:
+        # retrieve all diles from within args.input indiciated directory
+        entries = (entry for entry in Path(args.input).iterdir if path.isfile(entry))
+        entry_type = ["file", "files"]
+
+    for item in entries:
+        # search for accession number in file names
+        if item.name.find(f"{accession}") != -1:
+            tool_output.append(item)
+
+    # check directory was found, not multiple or none
+    if len(tool_output) == 0:
+        logger.warning(
+            (
+                f"Did not find {entry_type[0]} containing {accession} in name.\n"
+                f"NOT processing output for {tool} - {accession}"
+            )
+        )
+        return
+
+    elif len(tool_output) > 1:
+        logger.warning(
+            (
+                f"Multiple {entry_type[1]} found containing {accession} in their name.\n"
+                f"NOT processing output for {tool} - {accession}"
+            )
+        )
+        return
+
+    # check if retrieved output file is empty
+    if tool_output[0].stat.st_size == 0:
+        logger.warning(
+            (
+                f"The {entry_type[0]} found for {accession} is empty.\n"
+                f"NOT processing output for {tool} - {accession}"
+            )
+        )
+        return
+
+    return tool_output[0]
 
 
 if __name__ == "__main__":
