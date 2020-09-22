@@ -35,6 +35,12 @@ def build_parser(argv: Optional[List] = None):
     )
 
     # Add positional arguments to parser
+    parser.add_argument(
+        "input_df",
+        type=Path,
+        metavar="input dataframe",
+        help="Path to the input dataframe",
+    )
 
     # Add path to the directory containing the output file of the CAZyme prediction tool
     parser.add_argument(
@@ -84,9 +90,9 @@ def build_parser(argv: Optional[List] = None):
         "-o",
         "--output",
         type=Path,
-        metavar="output file name",
+        metavar="output directory name",
         default=sys.stdout,
-        help="Output filename",
+        help="Directory output files are written to",
     )
     # Add option for more detail (verbose) logging
     parser.add_argument(
