@@ -462,7 +462,7 @@ def write_ecami_df(accession_numbers, args, logger):
 
         if ecami_output_file is not None:
             # logging for it it is None is completed within get_cazyme_prediction_output()
-            dataframe_data = parse_ecami_output(entry, logger)
+            dataframe_data = parse_ecami_output(ecami_output_file, logger)
 
             if dataframe_data is None:
                 logger.warning(
@@ -538,7 +538,7 @@ def parse_ecami_output(output_file, logger):
 
 
 def get_cazyme_prediction_output(accession, tool, args, logger):
-    """Retrieve path to CAZyme prediction tool output file for corresponding genomic accession number.
+    """Retrieve path to CAZyme prediction tool output file for genomic accession number.
 
     :param accession: str, genomic accession number
     :param args: parser object
