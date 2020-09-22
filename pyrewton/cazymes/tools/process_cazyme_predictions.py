@@ -176,7 +176,7 @@ def write_dbcan_dfs(accession_numbers, args, logger):
         )
         overview_file_path = overview_file_path / "overview.txt"
 
-        # logger warning when no overview file found are given in get_overview_file()
+        # logger warning when no overview file found are given in get_cazyme_prediction_output()
         if overview_file_path is not None:
             # Create datframes containing results from the overview.txt file
             dbcan_df, diamond_df, hmmer_df, hotpep_df = parse_dbcan_overview_file(
@@ -198,6 +198,7 @@ def write_dbcan_dfs(accession_numbers, args, logger):
                     args.output,
                     args.force,
                 )
+                logger.info(f"Processed Hotpep output for {accession}")
             else:
                 logger.warning(f"No dataframe written for Hotpep - {accession}.")
 
@@ -215,6 +216,7 @@ def write_dbcan_dfs(accession_numbers, args, logger):
                     args.output,
                     args.force,
                 )
+                logger.info(f"Processed HMMER output for {accession}")
             else:
                 logger.warning(f"No dataframe written for HMMER- {accession}.")
 
@@ -231,6 +233,7 @@ def write_dbcan_dfs(accession_numbers, args, logger):
                     args.output,
                     args.force,
                 )
+                logger.info(f"Processed dbCAN output for {accession}")
             else:
                 logger.warning(f"No dataframe written for dbCAN - {accession}.")
 
@@ -242,6 +245,7 @@ def write_dbcan_dfs(accession_numbers, args, logger):
                     args.output,
                     args.force,
                 )
+                logger.info(f"Processed DIAMOND output for {accession}")
             else:
                 logger.warning(f"No dataframe written for DIAMOND - {accession}")
 
@@ -379,31 +383,27 @@ def write_cupp_df(accession_numbers, args, logger):
     Return nothing.
     """
     for accession in accession_numbers:
-        cupp_output_file = get_cupp_output(accession, args, logger)
+        # Retrieve path to the CUPP output file corresponding to accession number
+        cupp_output_file = get_cazyme_prediction_output(accession, "CUPP", args, logger)
 
-        # format accession to match format in dir name
-        accession.replace(".", "_")
-        for entry in files:
-            if str(entry).find(accession):
-                # Collect predicated CAZyme families from output
-                # Store in tuple with each list containing the predicated CAZyme
-                # family of a unique protein
-                dataframe_data = parse_cupp_output(entry, logger)
+        if cupp_output_file is not None:
+            # logging for if it is None is completed within get_cazymes_prediction_output()
+            dataframe_data = parse_cupp_output(cupp_output_file, logger)
 
-                if dataframe_data is None:
-                    logger.warning(
-                        f"No output dataframe written for CUPP {accession} output"
-                    )
+            if dataframe_data is None:
+                logger.warning(
+                    f"No output dataframe written for CUPP {accession} output"
+                )
 
-                else:
-                    df = pd.DataFrame(
-                        dataframe_data, columns=["Gene ID", "CUPP CAZyme prediction"]
-                    )
+            else:
+                df = pd.DataFrame(
+                    dataframe_data, columns=["Gene ID", "CUPP CAZyme prediction"]
+                )
 
-                    write_out_pre_named_dataframe(
-                        df, f"cupp_{accession}_output", logger, args.output, args.force,
-                    )
-
+                write_out_pre_named_dataframe(
+                    df, f"cupp_{accession}_output", logger, args.output, args.force,
+                )
+                logger.info(f"Processed output for CUPP - {accession}")
     return
 
 
@@ -424,8 +424,12 @@ def parse_cupp_output(output_file, logger):
         with open(output_file) as fh:
             file_lines = fh.read().splitlines
     except (FileNotFoundError, IOError) as error:
-        logger.error(f"Could not open {output_file}.")
-        return
+        if error is FileNotFoundError:
+            logger.error(f"Could not find {output_file}")
+            return
+        elif error is IOError:
+            logger.error(f"Could not open {output_file}.")
+            return
 
     for line in file_lines:
         line_data = []  # list to store CAZyme family prediction from working line
@@ -437,7 +441,7 @@ def parse_cupp_output(output_file, logger):
     return dataframe_data
 
 
-###################################################################################
+########################################################################################
 
 
 def write_ecami_df(accession_numbers, args, logger):
@@ -451,34 +455,34 @@ def write_ecami_df(accession_numbers, args, logger):
     Return nothing.
     """
     for accession in accession_numbers:
-        # format accession to match format in dir name
-        accession.replace(".", "_")
-        for entry in files:
-            if str(entry).find(accession):
-                # Collect predicated CAZyme families from output
-                # Store in tuple with each list containing the predicated CAZyme
-                # family of a unique protein
-                dataframe_data = parse_ecami_output(entry, logger)
+        # Retroeve path the eCAMI output file corresponding to the accession number
+        ecami_output_file = get_cazyme_prediction_output(
+            accession, "eCAMI", args, logger
+        )
 
-                if dataframe_data is None:
-                    logger.warning(
-                        f"No output dataframe written for eCAMI - {accession} output"
-                    )
+        if ecami_output_file is not None:
+            # logging for it it is None is completed within get_cazyme_prediction_output()
+            dataframe_data = parse_ecami_output(entry, logger)
 
-                else:
-                    # Construct dataframe
-                    ecami_df = pd.DataFrame(
-                        dataframe_data, columns=["Gene ID", "eCAMI"]
-                    )
+            if dataframe_data is None:
+                logger.warning(
+                    f"No output dataframe written for eCAMI - {accession} output"
+                )
 
-                    # Write out dataframe containing all predicated CAZymes for genomic accession
-                    write_out_pre_named_dataframe(
-                        ecami_df,
-                        f"ecami_{accession}_output",
-                        logger,
-                        args.output,
-                        args.force,
-                    )
+            else:
+                # Construct dataframe
+                ecami_df = pd.DataFrame(dataframe_data, columns=["Gene ID", "eCAMI"])
+
+                # Write out dataframe containing all predicated CAZymes for genomic accession
+                write_out_pre_named_dataframe(
+                    ecami_df,
+                    f"ecami_{accession}_output",
+                    logger,
+                    args.output,
+                    args.force,
+                )
+
+                logger.info(f"Processed output for eCAMI - {accession}")
 
     return
 
@@ -500,8 +504,12 @@ def parse_ecami_output(output_file, logger):
         with open(output_file) as fh:
             file_lines = fh.read().splitlines
     except (FileNotFoundError, IOError) as error:
-        logger.warning(f"Could not open {output_file}")
-        return
+        if error is FileNotFoundError:
+            logger.error(f"Could not find {output_file}")
+            return
+        elif error is IOError:
+            logger.error(f"Could not open {output_file}.")
+            return
 
     for line in file_lines:
         line_data = []  # list to store CAZyme family prediction from working line
@@ -544,20 +552,27 @@ def get_cazyme_prediction_output(accession, tool, args, logger):
     # empty list to store entries, allows checking if multiple files retrieved
     tool_output = []
 
+    # Retrieve list of directories or files within directory indicated by args.input
     if tool == "dbCAN":
-        # Retrieve list of directories within directory indicated by args.input
         entries = (entry for entry in Path(args.input).iterdir() if path.isdir(entry))
         entry_type = ["directory", "directories"]
 
     else:
-        # retrieve all diles from within args.input indiciated directory
-        entries = (entry for entry in Path(args.input).iterdir if path.isfile(entry))
+        entries = (entry for entry in Path(args.input).iterdir() if path.isfile(entry))
         entry_type = ["file", "files"]
 
-    for item in entries:
-        # search for accession number in file names
-        if item.name.find(f"{accession}") != -1:
-            tool_output.append(item)
+    # Retrieve corresponding file/directory within entries list for accession number
+    if tool == "CUPP":
+        for item in entries:
+            if (item.name.find(f"{accession}") != -1) and (
+                item.name.endswith(".fasta.log")
+            ):
+                tool_output.append(item)
+
+    else:
+        for item in entries:
+            if item.name.find(f"{accession}") != -1:
+                tool_output.append(item)
 
     # check directory was found, not multiple or none
     if len(tool_output) == 0:
