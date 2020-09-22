@@ -310,7 +310,7 @@ def write_cupp_df(accession_numbers, files, args, logger):
                 )
 
                 write_out_pre_named_dataframe(
-                    df, "0HERER0", logger, args.output, args.force
+                    df, f"cupp_{accession}_output.csv", logger, args.output, args.force
                 )
 
     return
@@ -365,7 +365,11 @@ def write_ecami_df(accession_numbers, files, args, logger):
 
                 # Write out dataframe containing all predicated CAZymes for genomic accession
                 write_out_pre_named_dataframe(
-                    ecami_df, "0HERE0", logger, args.output, args.force
+                    ecami_df,
+                    f"ecami_{accession}_output.csv",
+                    logger,
+                    args.output,
+                    args.force,
                 )
 
     return
