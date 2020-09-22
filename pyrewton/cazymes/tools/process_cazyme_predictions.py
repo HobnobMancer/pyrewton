@@ -174,10 +174,10 @@ def write_dbcan_dfs(accession_numbers, args, logger):
         overview_file_path = get_cazyme_prediction_output(
             accession, "dbCAN", args, logger
         )
-        overview_file_path = overview_file_path / "overview.txt"
 
         # logger warning when no overview file found are given in get_cazyme_prediction_output()
         if overview_file_path is not None:
+            overview_file_path = overview_file_path / "overview.txt"
             # Create datframes containing results from the overview.txt file
             dbcan_df, diamond_df, hmmer_df, hotpep_df = parse_dbcan_overview_file(
                 overview_file_path, logger
@@ -385,6 +385,7 @@ def write_cupp_df(accession_numbers, args, logger):
     for accession in accession_numbers:
         # Retrieve path to the CUPP output file corresponding to accession number
         cupp_output_file = get_cazyme_prediction_output(accession, "CUPP", args, logger)
+        print("cupp_output_file:", cupp_output_file)
 
         if cupp_output_file is not None:
             # logging for if it is None is completed within get_cazymes_prediction_output()
@@ -547,7 +548,7 @@ def get_cazyme_prediction_output(accession, tool, args, logger):
     Return path.
     """
     # Format accession number into directory name formate
-    accession.replace(".", "_")
+    accession = accession.replace(".", "_")
 
     # empty list to store entries, allows checking if multiple files retrieved
     tool_output = []
@@ -594,7 +595,7 @@ def get_cazyme_prediction_output(accession, tool, args, logger):
         return
 
     # check if retrieved output file is empty
-    if tool_output[0].stat.st_size == 0:
+    if (tool != "dbCAN") and (tool_output[0].stat.st_size == 0):
         logger.warning(
             (
                 f"The {entry_type[0]} found for {accession} is empty.\n"
