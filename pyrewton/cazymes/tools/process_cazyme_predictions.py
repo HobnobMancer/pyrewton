@@ -175,7 +175,7 @@ def write_dbcan_dfs(accession_numbers, directories, args, logger):
                 # in order of dbcan_df, diamond_df, hmmer_df, hotpep_df
                 dataframes = parse_dbcan_overview_file(overview_file_path, logger)
 
-                if dataframes != None:
+                if dataframes is not None:
                     # Remove k-mer cluster labeling from Hotpep results
                     dataframes[3].apply(
                         standardise_dbcan_results, args=("Hotpep", logger), axis=1
@@ -231,7 +231,7 @@ def parse_dbcan_overview_file(overview_file_path, logger):
             file_lines = fh.read().splitlines()
     except (FileNotFoundError, IOError) as error:
         logger.warning(f"Could not open {overview_file_path} overview.txt file.")
-        return None
+        return
 
     df_rows = []
     for line in file_lines:
@@ -385,7 +385,7 @@ def parse_cupp_output(output_file, logger):
             file_lines = fh.read().splitlines
     except (FileNotFoundError, IOError) as error:
         logger.error(f"Could not open {output_file}.")
-        return None
+        return
 
     for line in file_lines:
         line_data = []  # list to store CAZyme family prediction from working line
