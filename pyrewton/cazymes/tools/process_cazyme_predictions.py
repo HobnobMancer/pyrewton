@@ -18,6 +18,7 @@
 # The MIT License
 """Process output from dbCAN, CUPP and eCAMI into dataframes.
 
+:cmd_args input_df: (Required) path to dataframe containing accession numbers
 :cmd_args input: (Required) path to directory containing prediction tool outputs
 :cmd_args tool: (Required) 'dbcan', 'cupp', 'ecami', define which tools output is to be processed
 :cmd_args force: Force enabling of writing existing output directory
@@ -44,6 +45,7 @@ at a time.
 
 import logging
 import re
+import sys
 
 import pandas as pd
 
@@ -102,7 +104,14 @@ def parse_input(args, logger):
 
     Return list of accession numbers and list of directories in cwd.
     """
-    df = pd.read_cvs(args.accessions, header=0, index_col=0)
+    try:
+        df = pd.read_cvs(args.input_df, header=0, index_col=0)
+    except FileNotFoundError:
+        logger.error(
+            "Input .csv file not found. Check path to file is correct.\nTerminating program"
+        )
+        sys.exit(1)
+
     accessions = df["NCBI Accession Numbers"]
 
     # Generate list of directories or files in specified input parent directory
@@ -126,6 +135,16 @@ def parse_input(args, logger):
             # add the path for each .txt file in the parent directory to the path list
             if path.isfile(entry) and str(entry).endswith(".txt"):
                 path_list.append(entry)
+
+    if len(path_list) == 0:
+        logger.error(
+            (
+                "No CAZyme prediction tool dirs/files found.\n"
+                "Check path to directory containing output from CAZyme prediction tools.\n"
+                "Terminating program"
+            )
+        )
+        sys.exit(1)
 
     return accessions, path_list
 
@@ -156,33 +175,45 @@ def write_dbcan_dfs(accession_numbers, directories, args, logger):
                 # in order of dbcan_df, diamond_df, hmmer_df, hotpep_df
                 dataframes = parse_dbcan_overview_file(overview_file_path, logger)
 
-                # Remove k-mer cluster labeling from Hotpep results
-                dataframes[3].apply(
-                    standardise_dbcan_results, args=("Hotpep", logger), axis=1
-                )
-
-                # Remove standardise HMMER predicated CAZy class/family formating
-                dataframes[2].apply(
-                    standardise_dbcan_results, args=("HMMER", logger), axis=1
-                )
-                dataframes[0].apply(
-                    standardise_dbcan_results,
-                    args=("dbCAN consensus CAZyme prediction", logger),
-                    axis=1,
-                )
-
-                # Write out dataframes to csv files
-                dataframe_names = ["dbCAN", "DIAMOND", "HMMER", "Hotpep"]
-                index = 0
-                for index in range(len(dataframes)):
-                    write_out_pre_named_dataframe(
-                        dataframes[index],
-                        f"{dataframe_names[index]}_{accession}_output.csv",
-                        logger,
-                        args.output,
-                        args.force,
+                if dataframes != None:
+                    # Remove k-mer cluster labeling from Hotpep results
+                    dataframes[3].apply(
+                        standardise_dbcan_results, args=("Hotpep", logger), axis=1
                     )
-                    index += 1
+
+                    # Remove standardise HMMER predicated CAZy class/family formating
+                    dataframes[2].apply(
+                        standardise_dbcan_results, args=("HMMER", logger), axis=1
+                    )
+                    dataframes[0].apply(
+                        standardise_dbcan_results,
+                        args=("dbCAN consensus CAZyme prediction", logger),
+                        axis=1,
+                    )
+
+                    # Write out dataframes to csv files
+                    dataframe_names = ["dbCAN", "DIAMOND", "HMMER", "Hotpep"]
+                    index = 0
+                    for index in range(len(dataframes)):
+                        if dataframes[index] is not None:
+                            write_out_pre_named_dataframe(
+                                dataframes[index],
+                                f"{dataframe_names[index]}_{accession}_output.csv",
+                                logger,
+                                args.output,
+                                args.force,
+                            )
+                        else:
+                            logger.warning(
+                                (
+                                    f"No dataframe found for {dataframe_names[index]}.\n"
+                                    f"Not writing output dataframe for {dataframe_names[index]}\n"
+                                    f"genomic accession {accession}"
+                                )
+                            )
+                        index += 1
+                else:
+                    logger.warning(f"No output dataframes written for {accession}")
 
     return
 
@@ -195,8 +226,12 @@ def parse_dbcan_overview_file(overview_file_path, logger):
 
     Return list of dataframes.
     """
-    with open(overview_file_path) as fh:
-        file_lines = fh.read().splitlines()
+    try:
+        with open(overview_file_path) as fh:
+            file_lines = fh.read().splitlines()
+    except (FileNotFoundError, IOError) as error:
+        logger.warning(f"Could not open {overview_file_path} overview.txt file.")
+        return None
 
     df_rows = []
     for line in file_lines:
@@ -233,7 +268,13 @@ def standardise_dbcan_results(df_row, column_name, logger):
     Return dataframe.
     """
     # Remove content within parentheses
-    column_content = df_row[f"{column_name}"].split("+")
+    try:
+        column_content = df_row[f"{column_name}"].split("+")
+    except KeyError:
+        logger.warning(
+            f"'{column_name}' not found in dataframe. Results not standardised"
+        )
+        return df_row
 
     index = 0
     for index in range(len(column_content)):
@@ -305,13 +346,23 @@ def write_cupp_df(accession_numbers, files, args, logger):
                 # family of a unique protein
                 dataframe_data = parse_cupp_output(entry, logger)
 
-                df = pd.DataFrame(
-                    dataframe_data, columns=["Gene ID", "CUPP CAZyme prediction"]
-                )
+                if dataframe_data is None:
+                    logger.warning(
+                        f"No output dataframe written for CUPP {accession} output"
+                    )
 
-                write_out_pre_named_dataframe(
-                    df, f"cupp_{accession}_output.csv", logger, args.output, args.force
-                )
+                else:
+                    df = pd.DataFrame(
+                        dataframe_data, columns=["Gene ID", "CUPP CAZyme prediction"]
+                    )
+
+                    write_out_pre_named_dataframe(
+                        df,
+                        f"cupp_{accession}_output.csv",
+                        logger,
+                        args.output,
+                        args.force,
+                    )
 
     return
 
@@ -328,8 +379,14 @@ def parse_cupp_output(output_file, logger):
     Return tuple.
     """
     dataframe_data = []  # empty tuple to store dataframe data
-    with open(output_file) as fh:
-        file_lines = fh.read().splitlines
+
+    try:
+        with open(output_file) as fh:
+            file_lines = fh.read().splitlines
+    except (FileNotFoundError, IOError) as error:
+        logger.error(f"Could not open {output_file}.")
+        return None
+
     for line in file_lines:
         line_data = []  # list to store CAZyme family prediction from working line
         line = line.split()
@@ -360,17 +417,25 @@ def write_ecami_df(accession_numbers, files, args, logger):
                 # family of a unique protein
                 dataframe_data = parse_ecami_output(entry, logger)
 
-                # Construct dataframe
-                ecami_df = pd.DataFrame(dataframe_data, columns=["Gene ID", "eCAMI"])
+                if dataframe_data is None:
+                    logger.warning(
+                        f"No output dataframe written for eCAMO {accession} output"
+                    )
 
-                # Write out dataframe containing all predicated CAZymes for genomic accession
-                write_out_pre_named_dataframe(
-                    ecami_df,
-                    f"ecami_{accession}_output.csv",
-                    logger,
-                    args.output,
-                    args.force,
-                )
+                else:
+                    # Construct dataframe
+                    ecami_df = pd.DataFrame(
+                        dataframe_data, columns=["Gene ID", "eCAMI"]
+                    )
+
+                    # Write out dataframe containing all predicated CAZymes for genomic accession
+                    write_out_pre_named_dataframe(
+                        ecami_df,
+                        f"ecami_{accession}_output.csv",
+                        logger,
+                        args.output,
+                        args.force,
+                    )
 
     return
 
@@ -387,8 +452,14 @@ def parse_ecami_output(output_file, logger):
     Return tuple.
     """
     dataframe_data = []  # empty tuple to store dataframe data
-    with open(output_file) as fh:
-        file_lines = fh.read().splitlines
+
+    try:
+        with open(output_file) as fh:
+            file_lines = fh.read().splitlines
+    except (FileNotFoundError, IOError) as error:
+        logger.warning(f"Could not open {output_file}")
+        return
+
     for line in file_lines:
         line_data = []  # list to store CAZyme family prediction from working line
         if line.startswith(">"):
