@@ -385,9 +385,9 @@ def write_cupp_df(accession_numbers, args, logger):
     for accession in accession_numbers:
         # Retrieve path to the CUPP output file corresponding to accession number
         cupp_output_file = get_cazyme_prediction_output(accession, "CUPP", args, logger)
-        print("cupp_output_file:", cupp_output_file)
 
         if cupp_output_file is not None:
+            print("cupp_output_file:", cupp_output_file)
             # logging for if it is None is completed within get_cazymes_prediction_output()
             dataframe_data = parse_cupp_output(cupp_output_file, logger)
 
@@ -423,7 +423,7 @@ def parse_cupp_output(output_file, logger):
 
     try:
         with open(output_file) as fh:
-            file_lines = fh.read().splitlines
+            file_lines = fh.read().splitlines()
     except (FileNotFoundError, IOError) as error:
         if error is FileNotFoundError:
             logger.error(f"Could not find {output_file}")
@@ -595,7 +595,7 @@ def get_cazyme_prediction_output(accession, tool, args, logger):
         return
 
     # check if retrieved output file is empty
-    if (tool != "dbCAN") and (tool_output[0].stat.st_size == 0):
+    if tool_output[0].stat().st_size == 0:
         logger.warning(
             (
                 f"The {entry_type[0]} found for {accession} is empty.\n"
