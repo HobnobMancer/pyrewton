@@ -18,12 +18,13 @@
 # The MIT License
 """Process output from dbCAN, CUPP and eCAMI into dataframes.
 
-:cmd_args force:
-:cmd_args log:
-:cmd_args nodelete:
-:cmd_args output:
-:cmd_args tool: 'dbcan', 'cupp', 'ecami', define which tools output is to be processed
-:cmd_args verbose:
+:cmd_args input: (Required) path to directory containing prediction tool outputs
+:cmd_args tool: (Required) 'dbcan', 'cupp', 'ecami', define which tools output is to be processed
+:cmd_args force: Force enabling of writing existing output directory
+:cmd_args log: Enable writing of log file
+:cmd_args nodelete: Enable not deleting content in existing output directory
+:cmd_args output: Define output directory to which output dataframes are written
+:cmd_args verbose: Change logger level from WARNING to INFO - verbose logging
 
 :func main: Build parser, build logger and coordinate script operation
 :func parse_inputs: parse input dataframe and retrieve files/dirs in cwd
@@ -308,14 +309,16 @@ def write_cupp_df(accession_numbers, files, args, logger):
                     dataframe_data, columns=["Gene ID", "CUPP CAZyme prediction"]
                 )
 
-                write_out_pre_named_dataframe(df, logger, args.output, args.force)
+                write_out_pre_named_dataframe(
+                    df, "0HERER0", logger, args.output, args.force
+                )
 
     return
 
 
 def parse_cupp_output(output_file, logger):
     """Parse CUPP output file, creating tuple of predicated CAZymes.
-    
+
     Each list in the tuple contains two items, the first item being
     the gene ID, and the second the predicated CAZy family.
 
@@ -355,20 +358,22 @@ def write_ecami_df(accession_numbers, files, args, logger):
                 # Collect predicated CAZyme families from output
                 # Store in tuple with each list containing the predicated CAZyme
                 # family of a unique protein
-                dataframe_data = parse_ecami_output(entry, accession, logger)
+                dataframe_data = parse_ecami_output(entry, logger)
 
                 # Construct dataframe
                 ecami_df = pd.DataFrame(dataframe_data, columns=["Gene ID", "eCAMI"])
 
                 # Write out dataframe containing all predicated CAZymes for genomic accession
-                write_out_dataframe(ecami_df, logger, args.output, args.force)
+                write_out_pre_named_dataframe(
+                    ecami_df, "0HERE0", logger, args.output, args.force
+                )
 
     return
 
 
 def parse_ecami_output(output_file, logger):
     """Parse eCAMI output file, creating tuple of predicated CAZymes.
-    
+
     Each list in the tuple contains two items, the first item being
     the gene ID, and the second the predicated CAZy family.
 
