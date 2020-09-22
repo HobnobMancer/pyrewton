@@ -95,6 +95,9 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     if args.ecami == "ecami":
         write_ecami_df(genomic_accessions, path_list, args, logger)
 
+    # Finish
+    logger.info("Program finished")
+
 
 def parse_input(args, logger):
     """Parse input csv file to retrieve accession numbers and retrieve dir or file listing.
@@ -193,52 +196,71 @@ def write_dbcan_dfs(accession_numbers, directories, args, logger):
                 overview_file_path = directory / "overview.txt"
 
                 # Create datframes containing results from the overview.txt file
-                # in order of dbcan_df, diamond_df, hmmer_df, hotpep_df
-                dataframes = parse_dbcan_overview_file(overview_file_path, logger)
+                dbcan_df, diamond_df, hmmer_df, hotpep_df = parse_dbcan_overview_file(
+                    overview_file_path, logger
+                )
 
-                if dataframes is not None:
+                # check dataframe was returned from parse_dbcan_overview_file()
+                if hotpep_df is not None:
                     # Remove k-mer cluster labeling from Hotpep results
-                    dataframes[3].apply(
+                    hotpep_df = hotpep_df.apply(
                         standardise_dbcan_results,
                         args=("Hotpep CAZyme prediction", logger),
                         axis=1,
                     )
+                    write_out_pre_named_dataframe(
+                        hotpep_df,
+                        f"hotpep_{accession}_output.csv",
+                        logger,
+                        args.output,
+                        args.force,
+                    )
+                else:
+                    logger.warning(f"No dataframe written for Hotpep - {accession}.")
 
-                    # Remove standardise HMMER predicated CAZy class/family formating
-                    dataframes[2].apply(
+                if hmmer_df is not None:
+                    # Standardise HMMER predicated CAZy class/family formating
+                    hmmer_df = hmmer_df.apply(
                         standardise_dbcan_results,
                         args=("HMMER CAZyme prediction", logger),
                         axis=1,
                     )
-                    dataframes[0].apply(
+                    write_out_pre_named_dataframe(
+                        hmmer_df,
+                        f"hmmer_{accession}_output.csv",
+                        logger,
+                        args.output,
+                        args.force,
+                    )
+                else:
+                    logger.warning(f"No dataframe written for HMMER- {accession}.")
+
+                if dbcan_df is not None:
+                    dbcan_df = dbcan_df.apply(
                         standardise_dbcan_results,
                         args=("dbCAN consensus CAZyme prediction", logger),
                         axis=1,
                     )
-
-                    # Write out dataframes to csv files
-                    dataframe_names = ["dbCAN", "DIAMOND", "HMMER", "Hotpep"]
-                    index = 0
-                    for index in range(len(dataframes)):
-                        if dataframes[index] is not None:
-                            write_out_pre_named_dataframe(
-                                dataframes[index],
-                                f"{dataframe_names[index]}_{accession}_output.csv",
-                                logger,
-                                args.output,
-                                args.force,
-                            )
-                        else:
-                            logger.warning(
-                                (
-                                    f"No dataframe found for {dataframe_names[index]}.\n"
-                                    f"Not writing output dataframe for {dataframe_names[index]}\n"
-                                    f"genomic accession {accession}"
-                                )
-                            )
-                        index += 1
+                    write_out_pre_named_dataframe(
+                        dbcan_df,
+                        f"dbcan_consensus_{accession}_output.csv",
+                        logger,
+                        args.output,
+                        args.force,
+                    )
                 else:
-                    logger.warning(f"No output dataframes written for {accession}")
+                    logger.warning(f"No dataframe written for dbCAN - {accession}.")
+
+                if diamond_df is not None:
+                    write_out_pre_named_dataframe(
+                        diamond_df,
+                        f"diamond_{accession}_output.csv",
+                        logger,
+                        args.output,
+                        args.force,
+                    )
+                else:
+                    logger.warning(f"No dataframe written for DIAMOND - {accession}")
 
     return
 
@@ -249,7 +271,7 @@ def parse_dbcan_overview_file(overview_file_path, logger):
     :param args: parser object
     :param logger: logger object
 
-    Return list of dataframes.
+    Return four dataframes.
     """
     try:
         with open(overview_file_path) as fh:
@@ -270,7 +292,7 @@ def parse_dbcan_overview_file(overview_file_path, logger):
     # Create separate dataframes for DIAMOND, HMMER and Hotpep
     diamond_df = df[["Gene ID", "DIAMOND"]]
     hmmer_df = df[["Gene ID", "HMMER"]]
-    hotpep_df = df[["Gene ID, Hotpep"]]
+    hotpep_df = df[["Gene ID", "Hotpep"]]
 
     # Rename column names to improve understandability when later viewing dataframes
     diamond_df = diamond_df.rename(columns={"DIAMOND": "DIAMOND CAZyme prediction"})
