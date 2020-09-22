@@ -80,26 +80,29 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     make_output_directory(args.output, logger, args.force, args.nodelete)
 
     # Retrieve accession numbers of genomic assemblies to identify the tools' output directories
-    genomic_accessions, path_list = parse_input(args, logger)
+    genomic_accessions = parse_input_df(args, logger)
+
+    # Remove duplicates from accession list
+    genomic_accessions = list(dict.fromkeys(genomic_accessions))
 
     # Build dataframe from dbCAN output
     # Create consensus dataframe and dataframe per tool
     if args.tool == "dbcan":
-        write_dbcan_dfs(genomic_accessions, path_list, args, logger)
+        write_dbcan_dfs(genomic_accessions, args, logger)
 
     # Build dataframe from CUPP output
-    if args.cupp == "cupp":
-        write_cupp_df(genomic_accessions, path_list, args, logger)
+    if args.tool == "cupp":
+        write_cupp_df(genomic_accessions, args, logger)
 
     # Build dataframe from eCAMI output
-    if args.ecami == "ecami":
-        write_ecami_df(genomic_accessions, path_list, args, logger)
+    if args.tool == "ecami":
+        write_ecami_df(genomic_accessions, args, logger)
 
     # Finish
     logger.info("Program finished")
 
 
-def parse_input(args, logger):
+def parse_input_df(args, logger):
     """Parse input csv file to retrieve accession numbers and retrieve dir or file listing.
 
     :param args: parser object
@@ -137,43 +140,21 @@ def parse_input(args, logger):
                 "Terminating"
             )
         )
+        sys.exit(1)
 
-    # Generate list of directories or files in specified input parent directory
-    path_list = []  # list to store directory names
-    parent_dir = Path(args.input)  # get path to parent directory of tools outputs
-
-    if args.tool == "dbcan":
-        for entry in parent_dir.iterdir():
-            # add the path for each DIRECTORY in the parent directory to the directory list
-            if path.isdir(entry):
-                path_list.append(entry)
-
-    elif args.tool == "cupp":
-        for entry in parent_dir.iterdir():
-            # add the path for each .fasta.log FILE in the parent directory to the path list
-            if path.isfile(entry) and str(entry).endswith(".fasta.log"):
-                path_list.append(entry)
-
-    elif args.tool == "ecami":
-        for entry in parent_dir.iterdir():
-            # add the path for each .txt file in the parent directory to the path list
-            if path.isfile(entry) and str(entry).endswith(".txt"):
-                path_list.append(entry)
-
-    if len(path_list) == 0:
+    if len(accessions) == 0:
         logger.error(
             (
-                "No CAZyme prediction tool dirs/files found.\n"
-                "Check path to directory containing output from CAZyme prediction tools.\n"
+                "No accessions numbers retrieved from input dataframe.\n"
                 "Terminating program"
             )
         )
         sys.exit(1)
 
-    return accessions, path_list
+    return accessions
 
 
-def write_dbcan_dfs(accession_numbers, directories, args, logger):
+def write_dbcan_dfs(accession_numbers, args, logger):
     """Build dataframe from dbCAN output file.
 
     Create summary dataframe of dbCAN consensus result and per tool.
@@ -188,81 +169,134 @@ def write_dbcan_dfs(accession_numbers, directories, args, logger):
     """
     for accession in accession_numbers:
         # format accession to match format in dir name
-        accession.replace(".", "_")
-        for directory in directories:
-            if str(directory).find(accession):
-                # Write path to the 'overview.txt' in the directory containing the working
-                # accession number
-                overview_file_path = directory / "overview.txt"
+        overview_file_path = get_overview_file(accession, args, logger)
 
-                # Create datframes containing results from the overview.txt file
-                dbcan_df, diamond_df, hmmer_df, hotpep_df = parse_dbcan_overview_file(
-                    overview_file_path, logger
+        # logger warning when no overview file found are given in get_overview_file()
+        if overview_file_path is not None:
+            # Create datframes containing results from the overview.txt file
+            dbcan_df, diamond_df, hmmer_df, hotpep_df = parse_dbcan_overview_file(
+                overview_file_path, logger
+            )
+
+            # check dataframe was returned from parse_dbcan_overview_file()
+            if hotpep_df is not None:
+                # Remove k-mer cluster labeling from Hotpep results
+                hotpep_df = hotpep_df.apply(
+                    standardise_dbcan_results,
+                    args=("Hotpep CAZyme prediction", logger),
+                    axis=1,
                 )
+                write_out_pre_named_dataframe(
+                    hotpep_df,
+                    f"hotpep_{accession}_output",
+                    logger,
+                    args.output,
+                    args.force,
+                )
+            else:
+                logger.warning(f"No dataframe written for Hotpep - {accession}.")
 
-                # check dataframe was returned from parse_dbcan_overview_file()
-                if hotpep_df is not None:
-                    # Remove k-mer cluster labeling from Hotpep results
-                    hotpep_df = hotpep_df.apply(
-                        standardise_dbcan_results,
-                        args=("Hotpep CAZyme prediction", logger),
-                        axis=1,
-                    )
-                    write_out_pre_named_dataframe(
-                        hotpep_df,
-                        f"hotpep_{accession}_output.csv",
-                        logger,
-                        args.output,
-                        args.force,
-                    )
-                else:
-                    logger.warning(f"No dataframe written for Hotpep - {accession}.")
+            if hmmer_df is not None:
+                # Standardise HMMER predicated CAZy class/family formating
+                hmmer_df = hmmer_df.apply(
+                    standardise_dbcan_results,
+                    args=("HMMER CAZyme prediction", logger),
+                    axis=1,
+                )
+                write_out_pre_named_dataframe(
+                    hmmer_df,
+                    f"hmmer_{accession}_output",
+                    logger,
+                    args.output,
+                    args.force,
+                )
+            else:
+                logger.warning(f"No dataframe written for HMMER- {accession}.")
 
-                if hmmer_df is not None:
-                    # Standardise HMMER predicated CAZy class/family formating
-                    hmmer_df = hmmer_df.apply(
-                        standardise_dbcan_results,
-                        args=("HMMER CAZyme prediction", logger),
-                        axis=1,
-                    )
-                    write_out_pre_named_dataframe(
-                        hmmer_df,
-                        f"hmmer_{accession}_output.csv",
-                        logger,
-                        args.output,
-                        args.force,
-                    )
-                else:
-                    logger.warning(f"No dataframe written for HMMER- {accession}.")
+            if dbcan_df is not None:
+                dbcan_df = dbcan_df.apply(
+                    standardise_dbcan_results,
+                    args=("dbCAN consensus CAZyme prediction", logger),
+                    axis=1,
+                )
+                write_out_pre_named_dataframe(
+                    dbcan_df,
+                    f"dbcan_consensus_{accession}_output",
+                    logger,
+                    args.output,
+                    args.force,
+                )
+            else:
+                logger.warning(f"No dataframe written for dbCAN - {accession}.")
 
-                if dbcan_df is not None:
-                    dbcan_df = dbcan_df.apply(
-                        standardise_dbcan_results,
-                        args=("dbCAN consensus CAZyme prediction", logger),
-                        axis=1,
-                    )
-                    write_out_pre_named_dataframe(
-                        dbcan_df,
-                        f"dbcan_consensus_{accession}_output.csv",
-                        logger,
-                        args.output,
-                        args.force,
-                    )
-                else:
-                    logger.warning(f"No dataframe written for dbCAN - {accession}.")
-
-                if diamond_df is not None:
-                    write_out_pre_named_dataframe(
-                        diamond_df,
-                        f"diamond_{accession}_output.csv",
-                        logger,
-                        args.output,
-                        args.force,
-                    )
-                else:
-                    logger.warning(f"No dataframe written for DIAMOND - {accession}")
+            if diamond_df is not None:
+                write_out_pre_named_dataframe(
+                    diamond_df,
+                    f"diamond_{accession}_output",
+                    logger,
+                    args.output,
+                    args.force,
+                )
+            else:
+                logger.warning(f"No dataframe written for DIAMOND - {accession}")
 
     return
+
+
+def get_overview_file(accession, args, logger):
+    """Retrieve run_dbCAN overview.txt file for the corresponding accession number.
+
+    :param accession: str, genomic accession number
+    :param args: parser object
+    :param logger: logger object
+
+    Return path to overview.txt file.
+    """
+    # Formate accession number into directory name formate
+    accession = accession.replace(".", "_")
+
+    # empty list to store file entries, allows checking if multiple files retrieved
+    directory = []
+
+    # Retrieve all directories from within args.input indicated directory
+    directories = (entry for entry in Path(args.input).iterdir() if path.isdir(entry))
+
+    for item in directories:
+        # search for accession number in directory names
+        if item.name.find(f"{accession}") != -1:
+            directory.append(item)
+
+    # check directory was found, not multiple or none
+    if len(directory) == 0:
+        logger.warning(
+            (
+                f"Did not find directory containing {accession} in name.\n"
+                f"NOT processing output for {accession}"
+            )
+        )
+        return
+
+    elif len(directory) > 1:
+        logger.warning(
+            (
+                f"Found multiple directories containing {accession} in their name.\n"
+                f"NOT processing output for {accession}"
+            )
+        )
+        return
+
+    # check if directory is empty
+    if directory[0].stat().st_size == 0:
+        logger.warning(
+            (
+                f"Directory found for {accession} is empty.\n"
+                f"NOT processing output for {accession}"
+            )
+        )
+        return
+
+    overview_file_path = directory[0] / "overview.txt"
+    return overview_file_path
 
 
 def parse_dbcan_overview_file(overview_file_path, logger):
@@ -277,7 +311,10 @@ def parse_dbcan_overview_file(overview_file_path, logger):
         with open(overview_file_path) as fh:
             file_lines = fh.read().splitlines()
     except (FileNotFoundError, IOError) as error:
-        logger.warning(f"Could not open {overview_file_path} overview.txt file.")
+        if error is FileNotFoundError:
+            logger.warning(f"Could not find {overview_file_path} file.")
+        elif error is IOError:
+            logger.warning(f"Could not open {overview_file_path} file.")
         return
 
     df_rows = []
@@ -318,7 +355,8 @@ def standardise_dbcan_results(df_row, column_name, logger):
 
     Return dataframe.
     """
-    # Remove content within parentheses
+    # Retrieve predicated CAZy family/families, and separate families in a list
+    # If multile CAZy families were predicated, each family is separated by '+'
     try:
         column_content = df_row[f"{column_name}"].split("+")
     except KeyError:
@@ -334,6 +372,7 @@ def standardise_dbcan_results(df_row, column_name, logger):
         # Remove non-standardised class names, e.g "_Chitin_synth_1"
         column_content[index] = re.sub(r"_\D*", "", column_content[index])
         index += 1
+
     new_column_content = "+".join(column_content)
     df_row[f"{column_name}"] = new_column_content
 
@@ -355,29 +394,29 @@ def get_dbcan_consensus(df, logger):
     df = df[consensus_found]
 
     # Create consensus result to summarise all
-    consensus_result = []
+    consensus_result = []  # empty list to store data for dbCAN consensus result column
     index = 0
     for index in range(len(df)):
         df_row = df.iloc[index]
 
-        row_data = []  # empty list to store data for dbCAN df row
-
         if df_row["HMMER"] != "-":
-            row_data.append(df_row["HMMER"])
+            consensus_result.append(df_row["HMMER"])
         elif df_row["Hotpep"] != "-":
-            row_data.append(df_row["Hotpep"])
+            consensus_result.append(df_row["Hotpep"])
         else:
-            row_data.append(df_row["DIAMOND"])
-        consensus_result.append(row_data)
+            consensus_result.append(df_row["DIAMOND"])
+
         index += 1
 
-    dbcan_df = df["Gene ID"]
+    dbcan_df = pd.DataFrame()
+    dbcan_df["Gene ID"] = df["Gene ID"]
+    dbcan_df = dbcan_df.reset_index(drop=True)
     dbcan_df["dbCAN consensus CAZyme prediction"] = consensus_result
 
     return dbcan_df
 
 
-def write_cupp_df(accession_numbers, files, args, logger):
+def write_cupp_df(accession_numbers, args, logger):
     """Formate output from CUPP into Pandas dataframe.
 
     :param accession_numbers: list, list of genomic assembly accession numbers
@@ -408,11 +447,7 @@ def write_cupp_df(accession_numbers, files, args, logger):
                     )
 
                     write_out_pre_named_dataframe(
-                        df,
-                        f"cupp_{accession}_output.csv",
-                        logger,
-                        args.output,
-                        args.force,
+                        df, f"cupp_{accession}_output", logger, args.output, args.force,
                     )
 
     return
@@ -448,7 +483,7 @@ def parse_cupp_output(output_file, logger):
     return dataframe_data
 
 
-def write_ecami_df(accession_numbers, files, args, logger):
+def write_ecami_df(accession_numbers, args, logger):
     """Retrieve data from CUPP output and store in dataframe.
 
     :param accession_numbers: list, list of genomic assembly accession numbers
@@ -482,7 +517,7 @@ def write_ecami_df(accession_numbers, files, args, logger):
                     # Write out dataframe containing all predicated CAZymes for genomic accession
                     write_out_pre_named_dataframe(
                         ecami_df,
-                        f"ecami_{accession}_output.csv",
+                        f"ecami_{accession}_output",
                         logger,
                         args.output,
                         args.force,
