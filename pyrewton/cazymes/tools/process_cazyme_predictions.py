@@ -105,32 +105,53 @@ def parse_input(args, logger):
     Return list of accession numbers and list of directories in cwd.
     """
     try:
-        df = pd.read_cvs(args.input_df, header=0, index_col=0)
-    except FileNotFoundError:
-        logger.error(
-            "Input .csv file not found. Check path to file is correct.\nTerminating program"
-        )
+        df = pd.read_csv(args.input_df, header=0, index_col=0)
+    except (FileNotFoundError, IOError) as error:
+        if error is FileNotFoundError:
+            logger.error(
+                (
+                    "Input input dataframe not found. Check path to file is correct.\n"
+                    "Terminating program"
+                )
+            )
+        elif error is IOError:
+            logger.error(
+                (
+                    "Unable to open input dataframe."
+                    "Check file is not corrupted or currently in use.\n"
+                    "Terminating program"
+                )
+            )
         sys.exit(1)
 
-    accessions = df["NCBI Accession Numbers"]
+    try:
+        accessions = df["NCBI Accession Number"]
+    except KeyError:
+        logger.error(
+            (
+                f"Could not find 'NCBI Accession Number' column in {args.input_df}.\n"
+                "Make sure input dataframe contains the column 'NCBI Accession Number'.\n"
+                "Terminating"
+            )
+        )
 
     # Generate list of directories or files in specified input parent directory
     path_list = []  # list to store directory names
     parent_dir = Path(args.input)  # get path to parent directory of tools outputs
 
-    if args.tools == "dbcan":
+    if args.tool == "dbcan":
         for entry in parent_dir.iterdir():
             # add the path for each DIRECTORY in the parent directory to the directory list
             if path.isdir(entry):
                 path_list.append(entry)
 
-    elif args.tools == "cupp":
+    elif args.tool == "cupp":
         for entry in parent_dir.iterdir():
             # add the path for each .fasta.log FILE in the parent directory to the path list
             if path.isfile(entry) and str(entry).endswith(".fasta.log"):
                 path_list.append(entry)
 
-    elif args.tools == "ecami":
+    elif args.tool == "ecami":
         for entry in parent_dir.iterdir():
             # add the path for each .txt file in the parent directory to the path list
             if path.isfile(entry) and str(entry).endswith(".txt"):
@@ -166,7 +187,7 @@ def write_dbcan_dfs(accession_numbers, directories, args, logger):
         # format accession to match format in dir name
         accession.replace(".", "_")
         for directory in directories:
-            if directory.find(accession):
+            if str(directory).find(accession):
                 # Write path to the 'overview.txt' in the directory containing the working
                 # accession number
                 overview_file_path = directory / "overview.txt"
@@ -178,12 +199,16 @@ def write_dbcan_dfs(accession_numbers, directories, args, logger):
                 if dataframes is not None:
                     # Remove k-mer cluster labeling from Hotpep results
                     dataframes[3].apply(
-                        standardise_dbcan_results, args=("Hotpep", logger), axis=1
+                        standardise_dbcan_results,
+                        args=("Hotpep CAZyme prediction", logger),
+                        axis=1,
                     )
 
                     # Remove standardise HMMER predicated CAZy class/family formating
                     dataframes[2].apply(
-                        standardise_dbcan_results, args=("HMMER", logger), axis=1
+                        standardise_dbcan_results,
+                        args=("HMMER CAZyme prediction", logger),
+                        axis=1,
                     )
                     dataframes[0].apply(
                         standardise_dbcan_results,
@@ -243,12 +268,16 @@ def parse_dbcan_overview_file(overview_file_path, logger):
     )
 
     # Create separate dataframes for DIAMOND, HMMER and Hotpep
-    diamond_df = df[["Gene ID", "DIAMOND CAZyme prediction"]]
-    hmmer_df = df[["Gene ID", "HMMER CAZyme prediction"]]
-    hotpep_df = df[["Gene ID, Hotpep CAZyme prediction"]]
+    diamond_df = df[["Gene ID", "DIAMOND"]]
+    hmmer_df = df[["Gene ID", "HMMER"]]
+    hotpep_df = df[["Gene ID, Hotpep"]]
+
+    # Rename column names to improve understandability when later viewing dataframes
+    diamond_df = diamond_df.rename(columns={"DIAMOND": "DIAMOND CAZyme prediction"})
+    hmmer_df = hmmer_df.rename(columns={"HMMER": "HMMER CAZyme prediction"})
+    hotpep_df = hotpep_df.rename(columns={"Hotpep": "Hotpep CAZyme prediction"})
 
     # Create consensus dbCAN dataframe (result when 2 or more tools match predications)
-    # rename "#ofTools" column to facilitate use of .contains
     dbcan_df = get_dbcan_consensus(df, logger)
 
     return [dbcan_df, diamond_df, hmmer_df, hotpep_df]
@@ -340,7 +369,7 @@ def write_cupp_df(accession_numbers, files, args, logger):
         # format accession to match format in dir name
         accession.replace(".", "_")
         for entry in files:
-            if entry.find(accession):
+            if str(entry).find(accession):
                 # Collect predicated CAZyme families from output
                 # Store in tuple with each list containing the predicated CAZyme
                 # family of a unique protein
@@ -411,7 +440,7 @@ def write_ecami_df(accession_numbers, files, args, logger):
         # format accession to match format in dir name
         accession.replace(".", "_")
         for entry in files:
-            if entry.find(accession):
+            if str(entry).find(accession):
                 # Collect predicated CAZyme families from output
                 # Store in tuple with each list containing the predicated CAZyme
                 # family of a unique protein
