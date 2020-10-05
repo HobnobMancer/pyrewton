@@ -8,36 +8,47 @@
 [![Documentation Status](https://readthedocs.org/projects/phd-project-scripts/badge/?version=latest)](https://phd-project-scripts.readthedocs.io/en/latest/?badge=latest)
 [![Python](https://img.shields.io/badge/Python-v3.7.---orange)](https://www.python.org/about/)
 [![Research](https://img.shields.io/badge/Bioinformatics-Protein%20Engineering-ff69b4)](http://www.eastscotbiodtp.ac.uk/eastbio-student-cohort-2019)
+[![Version](https://img.shields.io/badge/Version-v0.1.1-9cf)]]
 
-Version v0.1.1 2020/06/04
-
-This repository contains all scripts associated with the EastBio PhD project ‘Identifying Engineering Candidates for Advanced Biocatalysis in Biofuel Production'.
-
-Please find more detailed documentation at for operation and troubleshooting at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/)
+_Please find more detailed documentation at for operation and troubleshooting at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/)_
 
 ## Contents
 
 1. [Overview](#Overview)
 2. [Installation](#Installation)
     - [Requirements](#Requirements)
-3. [Directories, modules and files](#Directories)
-
+3. [Directories](#Directories)
+4. [Modules](#Modules)
+    - [genbank](#genbank)
+    - [cazymes](#cazymes)
+        - [uniprot](#uniprot)
+        - [prediction](#prediction)
+        
 ## Overview
 
-Scripts are packaged into `pyrewton`, which is a Python3 script package run at the command line, and free to use under the MIT license. All modules, submodules and associated Python scripts are located within the `pyrewton` directory in this repository. Specifically, `pyrewton` supports:
+`pyrewton` is a Python3 script package for the automated identification of CAZyomes (call carbohydrates encoded within the genome of an given species). The package is run at the command line and free to use under the MIT license.
+
+All modules, submodules and associated Python scripts are located within the `pyrewton` directory in this repository. Specifically, `pyrewton` supports:
 
 - Downloading of all genomic assemblies (as GenBank files .gbff) from the [NCBI Assembly database](https://www.ncbi.nlm.nih.gov/assembly)
 associated with each species passed to the programme
-- Retrieving cazyme annotations (and associated data from UniProtKB) from GenBank files
-- Retrieve all cazyme entries in UniProt for a given species
+- Retrieval of all annotated protein sequences from GenBank (.gbff) files
+- Retrieve proteins entries from [UniProtKB](https://www.uniprot.org/), using a JSON file to configure the queries
+
+Features currently in development:
+- Use the tools [dbCAN](https://github.com/linnabrown/run_dbcan), [CUPP](https://www.bioengineering.dtu.dk/english/researchny/research-sections/section-for-protein-chemistry-and-enzyme-technology/enzyme-technology/cupp), and [eCAMI](https://github.com/zhanglabNKU/eCAMI) to predict the which query protein sequences are CAZymes and predict their CAZy family
+- Evaluate the accuracy of the CAZyme prediction tools to distinguish between CAZyme and non-CAZyme protein sequences
+- Evaluate the accuracy of the CAZyme prediction tools to the correct CAZy family
+- Produce a report of the CAZyme prediction tool evaluation
 
 Inital plans and devleopment plans are stored within the [Wiki](https://github.com/HobnobMancer/PhD_Project_Scripts/wiki).
 
 ## Installation
 
-The easiest way to install `pyrewton` is to use `pip`:  
+The easiest way to install `pyrewton` is to use `pip3`:  
 `pip3 install -e <path to directory containing pyrewton setup.py>`.  
-Pass a path to the **directory** containing the setup.py file, **not** the path to the setup.py file.  
+Pass the path to the **directory** containing the setup.py file, **not** the path to the setup.py file.
+ 
 Using this method of installation will install all required Python package dependencies.
 
 ## Requirements
@@ -45,14 +56,15 @@ Using this method of installation will install all required Python package depen
 Python version 3.7+
 Miniconda3 managed microenvironment, incorporated code checkers are included in list form in 'requirements.txt'.
 Miniconda3 environment file is also available in the GitHub repository: 'environment.yml'.
+For all required Python libraries please read 'requirements.txt'.
 
 ## Directories
 
-Below is a directory plan of the pyrewton module structure, followed by a brief overview of each directories role in the repository, to facilitate navigation through the repository.
+Below is a directory plan of this repositorty, followed by a brief overview of each directories role , to facilitate navigation through the repository.
 
 ### assets
 
-Directory containing all files needed for the GitHub page.
+Directory containing all files needed for the GitHub page, created for easy access to accompnaying Jupyter notebooks.
 
 ### docs
 
@@ -64,37 +76,35 @@ Directory containing all jupyter notebooks, and html copies used for easier in-b
 
 ### tests
 
-Directory containing all `pytest` files for testing `pyrewton` during development, including subdirectories for test inputs and targets, with each module/submodule possessing its own specific test input and target subdirectory.
+Directory containing all `pytest` files for testing `pyrewton`, including subdirectories for test inputs and targets. Each module/submodule has its own specific test input and target subdirectory.
 
 ### pyrewton
 
 Directory containing all `pyrewton` program modules (including all submodules and Python scripts).
 
-### pyrewton module: parsers
+## Modules
 
-Directory containing all Python scripts for building command-line parsers.
+_Please find more detailed documentation at for operation and troubleshooting at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/)_
 
-### pyrewton module: loggers
+This is a brief overview of the functionalities of each module within `pyrewton`. For more detailed documentation on the operation of each module and indiviudal Python scripts please see the documentation at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/) or the module specific READMEs, found in their respecitve module repository.
 
-Directory containing Python scripts for building loggers.
+### utilities
 
-### pyrewton module: file_io
+Contains all Python scripts for building command-line parsers and loggers.
 
-Directory contains functions for handling directories and files in `pyrewton` Python scripts, including retrieving program inputs and creating output directories.
+### file_io
 
-### pyrewton module: genbank
+Contains functions for handling directories and files in `pyrewton`, including retrieving program inputs and creating output directories.
 
-Directory containing all submodules that are involved in handling GenBank files.
+### genbank
 
-**Genbank submodule: get_ncbi_genomes** - Takes a list of species and downloads all directly linked GenBank (.gbff) files in the NCBI Assembly database.
+Directory containing all submodules that are involved in retrieving handling GenBank files. This includes retrieval of GenBank files from GenBank, and retrieval of protein sequences from GenBank files.
 
-**Genbank submodule: get_genbank_annotations** - Retrieve all protein annotations from GenBank files.
+### cazymes
 
-### pyrewton module: annotations
+Contains all submodules associated with identifying CAZymes, including:
+    - `uniprot` which retrieves proteins from UniProt which meet query criteria set out in a configuration JSON file
+    - `prediction` which predicates which query protein sequences are CAZymes and non-CAZymes, evaluate the accuracy of the tools and produce a report of this evaluation
 
-Directory containing all submodules that are involved in retrieving genomic annotations.
-
-**get_uniprot_proteins.py** - retrieves all protein entries in UniProt in the species passed to the script.  
-**search_uniprot_proteins.py** - search proteins retrieved from UniProt to identify those with link to the CAZy database, and those with potential cazyme functionality inferred from their EC number and/or GO (Gene Ontology) annotated function.  
-**search_genbank_annotations.py** - search dataframe of cazymes retrieved from UniProt against dataframe of proteins retrieved from GenBank files to identify cazymes retrieved from the GenBank files. Then search GenBank proteins for those with inferred cazyme functionality and write these out to another dataframe.
-
+## Repository renamed 2020-10-05
+**Note:** This repository was renamed from 'PhD_Project_Scripts' to 'pyrewton'.
