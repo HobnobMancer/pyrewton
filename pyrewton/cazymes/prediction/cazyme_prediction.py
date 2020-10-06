@@ -26,9 +26,12 @@ Creates dataframes of CAZyme predictions and report
 summarising statistical analsis of prediction accuracy.
 """
 
+import subprocess
 import sys
 
 from pathlib import Path
+
+from pyrewton.file_io import make_output_directory
 
 
 def main():
@@ -40,9 +43,33 @@ def main():
     # retrieve paths to fasta files
     fasta_file_paths = get_fasta_paths(args, logger)
 
+    # empty list to store the names of the output directories
+    outdirs = []
+
     # for each FASTA file invoke dbCAN, CUPP and eCAMI
     for file_path in fasta_file_paths:
-        # ...
+        # create name of output dir that will house all raw output
+        # from prediction tools and parsed outputs
+        # possibly "<fasta file name (minus the file extension)>_<tool name>_<time/date stamp>"
+        out_dir_name = f""
+        outdirs.append(out_dir_name)
+        make_output_directory() # ADD PARAM IN!!!!
+
+        # run dbCAN
+        subprocess.run()
+        # run CUPP
+        subprocess.run()
+        # run eCAMI
+        subprocess.run()
+
+    # parse output from prediction tools to create standardised output format
+    # call functions from pyrewton.cazymes.prediction.parse submodule
+    for directory in outdirs:
+        # parse dbCAN output
+
+        # parse CUPP output
+
+        # parse eCAMI output
 
 
 def get_fasta_paths(args, logger):
@@ -77,6 +104,7 @@ def get_fasta_paths(args, logger):
         sys.exit(1)
 
     return fasta_file_paths
+
 
 if __name__ == "__main__":
     main()
