@@ -18,9 +18,9 @@ Please find more detailed documentation at for operation and troubleshooting at 
 ## Contents
 
 1. [Overview](#Overview)
-2. [Installation](#Installation)
-    - [Requirements](#Requirements)
-3. [Directories, modules and files](#Directories)
+2. [Requirements](#Requirements)
+3. [Installation](#Installation)
+4. [Directories, modules and files](#Directories)
 
 ## Overview
 
@@ -33,18 +33,26 @@ associated with each species passed to the programme
 
 Inital plans and devleopment plans are stored within the [Wiki](https://github.com/HobnobMancer/PhD_Project_Scripts/wiki).
 
+## Requirements
+
+- Python version 3.7+
+- Virtual environment (Anaconda or miniconda), incorporated code checkers are included in list form in 'requirements.txt'. A Miniconda3 environment file is also available in the GitHub repository: 'environment.yml'.
+- OS: Posix or MacOS X
+
 ## Installation
 
 The easiest way to install `pyrewton` is to use `pip`:  
 `pip3 install -e <path to directory containing pyrewton setup.py>`.  
-Pass a path to the **directory** containing the setup.py file, **not** the path to the setup.py file.  
-Using this method of installation will install all required Python package dependencies.
+Using this method of installation will install all required Python package dependencies, and create the virtual environment 'pyrewton_env'._Pass the path to the **directory** containing the setup.py file to pip3, **not** the path to the setup.py file._ 
 
-## Requirements
+Before running `pyrewton`, activate the virtual environment:
+`conda activate pyrewton_env`
+Make sure the correct virtual environment is activated each time pyrewton is executed.
 
-Python version 3.7+
-Miniconda3 managed microenvironment, incorporated code checkers are included in list form in 'requirements.txt'.
-Miniconda3 environment file is also available in the GitHub repository: 'environment.yml'.
+If not using the pip3 installation method using the following commands to create the necessary virtual environment:
+`conda create -n <env_name> python=3.8 diamond hmmer prodigal -c conda-forge -c bioconda`
+`conda activate <env_name>`
+`pip3 install -r <path to pyrewton requirements.txt file>`
 
 ## Directories
 
