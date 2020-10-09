@@ -18,12 +18,15 @@
 # The MIT License
 """Retrieve all protein annotations from GenBank files.
 
-:cmd_args df_input: path, path to input dataframe
-:cmd_args force: bool, force overwriting files in output directory
-:cmd_args genbank: path, path to directory containing GenBank files
-:cmd_args log: path, path to direct writing out log file
-:cmd_args nodelete: not delete existing files in output directory
-:cmd_args output: path, path to output directory
+:cmd_args df_input: path, path to input dataframe - required
+:cmd_args genbank: path, path to directory containing GenBank files - required
+
+:cmd_args --force: bool, force overwriting files in output directory
+:cmd_args --log: path, path to direct writing out log file
+:cmd_args --nodelete: not delete existing files in output directory
+:cmd_args --output: path, path to output directory
+:cmd_args --output_df: path, path to output dataframe, including file name
+:cmd_args --verbose: boolean, enable verbose logging
 
 :func main: Coordinate calling of other functions
 :func create_dataframe: build dataframe summarising CAZy annotation in GenBank files
@@ -37,6 +40,7 @@ files directly linked to a given species.
 
 import gzip
 import logging
+import re
 import sys
 
 from pathlib import Path
@@ -53,41 +57,50 @@ from pyrewton.parsers.parser_get_genbank_annotations import build_parser
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
-    """docstring summary.
+    """Coordinate the retrieval of protein annotations from GenBank (.gbff) files.
 
-    Detail.
+    Including building parser, logger and output directory.
 
-    Return.
+    Return dataframe of protein data.
     """
     # Programme preparation:
     # Parse arguments
     # Check if namepsace isn't passed, if not parse command-line
     if argv is None:
         # Parse command-line
-        args = build_parser().parse_args()
+        parser = build_parser()
+        args = parser.parse_args()
     else:
         args = build_parser(argv).parse_args()
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
     if logger is None:
-        logger = build_logger("get_cazyme_annotations", args)
+        logger = build_logger("get_genbank_annotations", args)
 
-    retrieve_genbank_annotations(logger, args)
-
-
-def retrieve_genbank_annotations(logger, args):
-    """Coordinate the retrieval of protein annotations from GenBank (.gbff) files."""
+    # If specified output directory, create output directory to write FASTA files too
+    if args.output is not sys.stdout:
+        make_output_directory(args, logger)
 
     # Open input dataframe
-    logger.info("Opening input dataframe %s", args.df_input)
-    input_df = pd.read_csv(args.df_input, header=0, index_col=0)
+    logger.info("Opening input dataframe %s", args.input_df)
+    input_df = pd.read_csv(args.input_df, header=0, index_col=0)
 
     # Build dataframe
     protein_annotation_df = create_dataframe(input_df, args, logger)
 
     # Write out dataframe
-    write_out_dataframe(protein_annotation_df, logger, args.output, args.force)
+    if args.output_df is not None:
+        write_out_dataframe(protein_annotation_df, logger, args.output_df, args.force)
+
+    # Write out FASTA files
+    index = 0
+    for index in tqdm(
+        range(len(protein_annotation_df["Genus"])), desc=f"Writing protein to FASTA"
+    ):
+        df_row = protein_annotation_df.iloc[index]
+        write_fasta(df_row, logger, args)
+        index += 1
 
     logger.info("Programme finsihed. Terminating.")
 
@@ -327,7 +340,10 @@ def get_annotations(accession_number, args, logger):
                         # and don't add to all_protein_data list
                         if protein_data == ["NA", "NA", "NA", "NA", "NA"]:
                             logger.warning(
-                                f"No data retrieved from CDS type feature, index: {index}, accession: {accession_number}",
+                                (
+                                    f"No data retrieved from CDS type feature, index: {index}, "
+                                    "accession: {accession_number}"
+                                ),
                                 exc_info=1,
                             )
                         # if some data retrieved, add to all_protein_list
@@ -435,6 +451,56 @@ def get_record_feature(feature, qualifier, logger, accession):
                 f"Failed to retrieve feature {qualifier}, returning 'NA', accession: {accession}",
             )
             return "NA"
+
+
+def write_fasta(df_row, logger, args, filestem="genbank_proteins"):
+    """Write out FASTA file.
+
+    :param df_row: row from pandas df of UniProt search results
+    :param filestem: str, FASTA file name
+    :param logger: logger object
+    :param args: parser arguments
+
+    Returns nothing.
+    """
+    # Create file content
+
+    # FASTA sequences have 60 characters per line, add line breakers into protein sequence
+    # to match FASTA format
+    sequence = df_row["Protein Sequence"]
+    sequence = "\n".join([sequence[i : i + 60] for i in range(0, len(sequence), 60)])
+    # Retrieve protein ID
+    protein_id = df_row["NCBI Protein ID"] + " " + df_row["Locus Tag"]
+
+    file_content = f">{protein_id} \n{sequence}\n"
+
+    # Create file name
+
+    # Retrieve Taxonomy ID and add txid prefix is present
+    tax_id = str(df_row["NCBI Taxonomy ID"])
+    if tax_id.startswith("NCBI:txid") is False:
+        tax_id = "txid" + tax_id
+    else:
+        tax_id = tax_id.replace("NCBI:txid", "txid")
+    tax_id.replace(" ", "_")
+    # Retrieve accession number
+    accession = df_row["NCBI Accession Number"]
+    # remove characters that could make file names invalid
+    invalid_file_name_characters = re.compile(r'[,;./ "*#<>?|\\:]')
+    tax_id = re.sub(invalid_file_name_characters, "_", tax_id)
+    accession = re.sub(invalid_file_name_characters, "_", accession)
+
+    # Create output path
+    if args.output is not sys.stdout:
+        output_path = args.output / f"{filestem}_{tax_id}_{accession}.fasta"
+    else:
+        output_path = args.output
+
+    # Write out data to Fasta file
+    with open(output_path, "a") as fh:
+        fh.write(file_content)
+
+    return
 
 
 if __name__ == "__main__":

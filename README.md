@@ -98,3 +98,6 @@ Directory containing all submodules that are involved in retrieving genomic anno
 **search_uniprot_proteins.py** - search proteins retrieved from UniProt to identify those with link to the CAZy database, and those with potential cazyme functionality inferred from their EC number and/or GO (Gene Ontology) annotated function.  
 **search_genbank_annotations.py** - search dataframe of cazymes retrieved from UniProt against dataframe of proteins retrieved from GenBank files to identify cazymes retrieved from the GenBank files. Then search GenBank proteins for those with inferred cazyme functionality and write these out to another dataframe.
 
+## Repository rename
+
+Note the repository was renamed from 'PhD_Project_Scripts' to 'pyrewton' on 2020-10-07.

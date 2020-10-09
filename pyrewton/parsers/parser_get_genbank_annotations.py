@@ -34,15 +34,33 @@ def build_parser(argv: Optional[List] = None):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
-    # Add arguments to parser
-    # Add option to specific input directory for dataframe
+    # Add positional arguments to parser
+    # Specify path to input dataframe
     parser.add_argument(
-        "-d",
-        "--df_input",
+        "input_df",
         type=Path,
         metavar="input dataframe name",
-        default=sys.stdin,
-        help="input dataframe path",
+        help="Path to input dataframe",
+    )
+    # Specify path to directory containing GenBank files
+    parser.add_argument(
+        "genbank",
+        type=Path,
+        metavar="GenBank file directory",
+        help="Path to directory containing GenBank files",
+    )
+
+    # Add optional arguments to parser
+
+    # Add option to specify path for output datafame to be written to
+    parser.add_argument(
+        "-d",
+        "--output_df",
+        type=Path,
+        metavar="output dataframe name",
+        default=sys.stdout,
+        help="path to output directory to write FASTA files to",
+
     )
     # Add option to force file over writting
     parser.add_argument(
@@ -52,15 +70,6 @@ def build_parser(argv: Optional[List] = None):
         action="store_true",
         default=False,
         help="Force file over writting",
-    )
-    # Add option to specific input directory for GenBank files
-    parser.add_argument(
-        "-g",
-        "--genbank",
-        type=Path,
-        metavar="GenBank file directory",
-        default=sys.stdin,
-        help="GenBank file path directory",
     )
     # Add option to specific directory for log to be written out to
     parser.add_argument(
@@ -86,9 +95,9 @@ def build_parser(argv: Optional[List] = None):
         "-o",
         "--output",
         type=Path,
-        metavar="output file name",
+        metavar="output directory for fasta files",
         default=sys.stdout,
-        help="output filename",
+        help="Path to directory yo whicg FASTA files are written",
     )
     # Add option to specify verbose logging
     parser.add_argument(

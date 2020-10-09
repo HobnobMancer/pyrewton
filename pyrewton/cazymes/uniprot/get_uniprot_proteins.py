@@ -27,16 +27,15 @@ uniprot.ord/help/text-syntax).
 Write all tax IDs and queries within quotation marks,
 such as "database:(type:cazy)".
 
-:param input: optional, path to configuration file
-:param fasta: optional, enable writing out of fasta files
-:param force: optional, force overwrite if output already exists
-:param log: optional, enable writing out of log file
-:param nodelete: optional, enable no deletion of content in output dir
-:param output: optional, path to output dir
-:param verbose: optional, change logger level to 'info'
+:cmd_args input: optional, path to configuration file - required
+:cmd_args --fasta: optional, enable writing out of fasta files
+:cmd_args --force: optional, force overwrite if output already exists
+:cmd_args --log: optional, enable writing out of log file
+:cmd_args --nodelete: optional, enable no deletion of content in output dir
+:cmd_args --output: optional, path to output dir
+:cmd_args --verbose: optional, change logger level to 'info'
 
 :func main: set-up script, configure call to UniProtKB
-:func read_configuration: interprets and configuration data to set up UniProtKB call
 :func get_config_data: retrieve data from config file
 :func build_uniprot_df: build query, coordinate dataframe formating
 :func call_uniprotkb: call to UniProtKB
@@ -304,7 +303,7 @@ def call_uniprotkb(query, logger):
 
 
 def format_search_results(search_result_df, filestem, logger, args):
-    """Rename columns, add EC number, genus, species and tax ID columns.
+    """Rename columns, and add EC number column.
 
     :param search_result_df: pandas dataframe of UniProt search results
     :param tax_id: str, NCBI taxonomy ID of species

@@ -18,7 +18,7 @@
 # The MIT License
 """Pull down GenBank files (.gbff) from NCBI database.
 
-:cmd_args --user: email address of user
+:cmd_args user: email address of user - required
 :cmd_args --dataframe: output directory for dataframe
 :cmd_args --force: force writing in output directory
 :cmd_args --genbank: enable/disable GenBank file download
@@ -30,11 +30,7 @@
 :cmd_args --timeout: timeout limit of URL connection
 :cmd_args --verbose: set logging level to 'INFO'
 
-:func build_parser: create parser object
-:func main: coordinate script setup (args, logger)
-:func coordinate_data_retrieval: generate a dataframe of species data
-:func build_logger: creates logger object
-:func make_output_directory: create directory for genomic files to be written to
+:func main: coordinate script setup (args, logger) and taxonomy df creation
 :func parse_input_file: parse input file
 :func parse_line: coordinate retrieval of scientific names and taxonomy IDs
 :func get_genus_species_name: retrieve scientific name from taxonomy ID
@@ -74,27 +70,32 @@ from pyrewton.file_io import make_output_directory, write_out_dataframe
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
-    """Set up loggers, parsers and directories for retrieval of genomes from NCBI."""
+    """Set up loggers, parsers and directories for retrieval of genomes from NCBI.
+
+    Then retrieve taxonomy data and GenBank files from NCBI.
+
+    Return GenBank (.gbff) files and dataframe of taxonomy data.
+    """
     # Programme preparation:
     # Parse arguments
     # Check if namepsace isn't passed, if not parse command-line
     if argv is None:
         # Parse command-line
-        args = build_parser().parse_args()
+        parser = build_parser()
+        args = parser.parse_args()
     else:
         args = build_parser(argv).parse_args()
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
     if logger is None:
-        logger = build_logger("Extract_genomes_NCBI", args)
-    # logger = logging.getLogger("Extract_genomes_NCBI")
+        logger = build_logger("get_ncbi_genomes", args)
     logger.info("Run initated")
 
     # Add users email address from parser
     if args.user is None:
         logger.error(
-            "No user email provided. Email MUST be providd. Terminating programme"
+            "No user email provided. Email MUST be provided. Terminating programme"
         )
         sys.exit(1)
     else:
@@ -104,11 +105,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     if args.output is not sys.stdout:
         make_output_directory(args.output, logger, args.force, args.nodelete)
 
-    coordinate_data_retrieval(logger, args)
-
-
-def coordinate_data_retrieval(logger, args):
-    """Coordinate retrieval of data from NCBI."""
     # Invoke main usage of programme
     # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'
     species_table = parse_input_file(args.input_file, logger, args.retries)
@@ -207,11 +203,13 @@ def parse_line(line, logger, line_count, retries):
     :line_count: number of line in input file - enable tracking if error occurs
     :param retries: parser argument, maximum number of retries excepted if network error encountered
 
-    Return list of genus, species and taxonomy ID"""
+    Return list of genus, species and taxonomy ID """
+    line_data = []
+
     # For taxonomy ID retrieve scientific name
     if line.startswith("NCBI:txid"):
         gs_name = get_genus_species_name(line[9:], logger, line_count, retries)
-        line_data = gs_name.split()
+        line_data = gs_name.split(" ", 1)
         line_data.append(line)
     # For scientific name retrieve taxonomy ID
     else:
@@ -669,33 +667,32 @@ def download_file(
             f"Failed to download {file_type} for {accession_number}", exc_info=1,
         )
         return
-
     if args.output is not sys.stdout:
         if out_file_path.exists():
             logger.warning(f"Output file {out_file_path} exists, not downloading")
             return
-    else:
-        # Download file
-        logger.info("Opened URL and parsed metadata")
-        file_size = int(response.info().get("Content-length"))
-        bsize = 1_048_576
-        try:
-            with open(out_file_path, "wb") as out_handle:
-                # Using leave=False as this will be an internally-nested progress bar
-                with tqdm(
-                    total=file_size,
-                    leave=False,
-                    desc=f"Downloading {accession_number} {file_type}",
-                ) as pbar:
-                    while True:
-                        buffer = response.read(bsize)
-                        if not buffer:
-                            break
-                        pbar.update(len(buffer))
-                        out_handle.write(buffer)
-        except IOError:
-            logger.error(f"Download failed for {accession_number}", exc_info=1)
-            return
+
+    # Download file
+    logger.info("Opened URL and parsed metadata")
+    file_size = int(response.info().get("Content-length"))
+    bsize = 1_048_576
+    try:
+        with open(out_file_path, "wb") as out_handle:
+            # Using leave=False as this will be an internally-nested progress bar
+            with tqdm(
+                total=file_size,
+                leave=False,
+                desc=f"Downloading {accession_number} {file_type}",
+            ) as pbar:
+                while True:
+                    buffer = response.read(bsize)
+                    if not buffer:
+                        break
+                    pbar.update(len(buffer))
+                    out_handle.write(buffer)
+    except IOError:
+        logger.error(f"Download failed for {accession_number}", exc_info=1)
+        return
 
         logger.info(
             f"Finished downloading GenBank file for {accession_number}", exc_info=1
