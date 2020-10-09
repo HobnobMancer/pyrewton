@@ -8,7 +8,7 @@
 [![Documentation Status](https://readthedocs.org/projects/phd-project-scripts/badge/?version=latest)](https://phd-project-scripts.readthedocs.io/en/latest/?badge=latest)
 [![Python](https://img.shields.io/badge/Python-v3.7.---orange)](https://www.python.org/about/)
 [![Research](https://img.shields.io/badge/Bioinformatics-Protein%20Engineering-ff69b4)](http://www.eastscotbiodtp.ac.uk/eastbio-student-cohort-2019)
-[![Version](https://img.shields.io/badge/Version-v0.1.1-9cf)
+![Version](https://img.shields.io/badge/Version-v0.1.1-9cf)
 
 _Please find more detailed documentation for operation and troubleshooting at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/)_
 
@@ -41,6 +41,7 @@ Features currently in development:
 - Produce a report of the CAZyme prediction tool evaluation
 
 Development plans are stored within the [Wiki](https://github.com/HobnobMancer/PhD_Project_Scripts/wiki).
+<p>&nbsp;</p>
 
 ## Installation
 
@@ -49,6 +50,7 @@ The easiest way to install `pyrewton` is to use `pip3`:
 Pass the path to the **directory** containing the setup.py file, **not** the path to the setup.py file.
  
 Using this method of installation will install all required Python package dependencies.
+<p>&nbsp;</p>
 
 ## Requirements
 
@@ -56,51 +58,53 @@ Python version 3.7+
 Miniconda3 managed microenvironment, incorporated code checkers are included in list form in 'requirements.txt'.
 Miniconda3 environment file is also available in the GitHub repository: 'environment.yml'.
 For all required Python libraries please read 'requirements.txt'.
+<p>&nbsp;</p>
 
 ## Directories
 
-Below is a directory plan of this repositorty, followed by a brief overview of each directories role , to facilitate navigation through the repository.
+Below is a directory plan of this repository, followed by a brief overview of each directories role , to facilitate navigation through the repository.
 
-### assets
+### **assets**
 
-Directory containing all files needed for the GitHub page, created for easy access to accompnaying Jupyter notebooks.
+Directory containing all files needed for the GitHub page, created for easy access to accompanying Jupyter notebooks.
 
-### docs
+### **docs**
 
 Directory containing files to build documentation hosted at ReadTheDocs.
 
-### notebooks
+### **notebooks**
 
-Directory containing all jupyter notebooks, and html copies used for easier in-browser viewing via the GitHub pages.
+Directory containing all Jupyter notebooks, and html copies used for easier in-browser viewing via the GitHub pages.
 
-### tests
+### **tests**
 
 Directory containing all `pytest` files for testing `pyrewton`, including subdirectories for test inputs and targets. Each module/submodule has its own specific test input and target subdirectory.
 
-### pyrewton
+### **pyrewton**
 
 Directory containing all `pyrewton` program modules (including all submodules and Python scripts).
+<p>&nbsp;</p>
 
 ## Modules
 
 _Please find more detailed documentation at for operation and troubleshooting at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/)_
 
-This is anoverview of the functionalities of each module within `pyrewton`, as well as basics of operation. For more detailed documentation on the operation of each module and indiviudal Python scripts please see the documentation at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/)
+This is an overview of the functionalities of each module within `pyrewton`, as well as basics of operation. For more detailed documentation on the operation of each module and indiviudal Python scripts please see the documentation at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/)
 
-### utilities
+### **utilities**
 
 Contains all functions that are called from other Python scripts for building command-line parsers and loggers.
 
-### file_io
+### **file_io**
 
-Contains functions that are called from other Python scriptsfor handling directories and files in `pyrewton`, including retrieving program inputs and creating output directories.
+Contains functions that are called from other Python scripts for handling directories and files in `pyrewton`, including retrieving program inputs and creating output directories.
 
-### genbank
+### **genbank**
 
 Directory containing all submodules that are involved in retrieving handling GenBank files. This includes retrieval of GenBank files from GenBank, and retrieval of protein sequences from GenBank files.
 
-#### get_ncbi_genomes
-This submodule is for the retrieval of genomic assemblies (as .gbff files) for each species listed in a plain text file (.txt). Each line of the plain text file must contain a single, unique species, for an example see 'get_ncbi_genomes_template_input_file.txt' within the directory. The species can be specified by taxonomy ID (using the 'NCBI:txid' prefix) or scientific name. `get_ncbi_genomes` will retrieve the scientific name or taxonomy depending on which is given, and will write out a dataframe containing the scientific name, NCBI taxonomy ID and all accession numbers of all genomic asseblies retrieved from NCBI.
+#### **get_ncbi_genomes**
+This submodule is for the retrieval of genomic assemblies (as .gbff files) for each species listed in a plain text file (.txt). Each line of the plain text file must contain a single, unique species, for an example see 'get_ncbi_genomes_template_input_file.txt' within the directory. The species can be specified by taxonomy ID (using the 'NCBI:txid' prefix) or scientific name. `get_ncbi_genomes` will retrieve the scientific name or taxonomy depending on which is given, and will write out a dataframe containing the scientific name, NCBI taxonomy ID and all accession numbers of all genomic assemblies retrieved from NCBI.
 
 **Note:** What is meant by all genomic assemblies is the latest version of all genomic assemblies, taking preference for GenBank files over reference assemblies. If not GenBank (identified by the 'GCA' prefix) assembly if available then the latest version of the reference assembly (identified by the 'GCF' prefix) will be retrieved.
 
@@ -111,7 +115,7 @@ An example of the basic operation is:
 
 All command options can be viewed by using `python3 get_ncbi_genomes -h` or `python3 get_ncbi_genomes --help`, and at [ReadtheDocs](https://phd-project-scripts.readthedocs.io/en/latest/genbank.html#get-ncbi-genomes).
 
-#### get_genbank_proteins
+#### **get_genbank_proteins**
 This submodule is for the retrieval of proteins sequences from GenBank (.gbff) genomic assemblies. The protein sequences are identified as 'CDS' annotated features. The locus tag, gene start/end, gene ID, annotated function and protein sequence are retrieved and written out to a dataframe, with a unique protein on each line and including a columns for the host species scientific name, NCBI taxonomy and accession number of the host genomic assembly. The protein sequences are also written out to FASTA files, with a single FASTA file containing all the protein sequences from only one genomic assembly. Therefore, each genomic assembly input results in one FASTA file output.
 
 When invoking `get_genbank_proteins` the path to the input dataframe (which is the output from `get_ncbi_genomes`) and the directory containing the genomic assemblies must be parsed, and in this order.
@@ -121,10 +125,10 @@ An example of basic operation is:
 
 All command options can be viewed by using `python3 get_ncbi_genomes -h` or `python3 get_genbank_proteins --help`, and at [ReadtheDocs](https://phd-project-scripts.readthedocs.io/en/latest/annotations.html).
 
-### cazymes
+### **cazymes**
 This module is involved in the identification and prediction of CAZymes.
 
-#### uniprot
+#### **uniprot**
 This submodule retrieved protein from UniProtKB. The query criteria are configured by a YAML file. The configuration file incorporates two keys: 'tax_ids' and 'queries'. Under 'tax_ids' list the NCBI taxonomy ID of the species the search is to be restricted to. Under 'queries' list the queries to be performed (for each taxonomy ID if given) using the UniProt query [syntax](https://www.uniprot.org/help/text-search) and query [fields](https://www.uniprot.org/help/query-fields). If only the taxonomy ID is given then all proteins for that taxonomy ID will be given. For an example configuration file see 'uniprot_config.yaml' in the `uniprot` directory.
 
 The submodule writes out a dataframe containing
@@ -141,7 +145,7 @@ The submodule writes out a dataframe containing
 - Gene Ontology ID, molecular function and biological process annotations
 - Protein sequence
 
-The submodule also writes out all protein sequences to FASTA files, with each query to UniProt producing a single FASTA file containing all the resulting protein sequences retrieved from the query. The FASTA file names follow the format: 'uniprot_{uniprot_query}_{time_stamp}'. If only the taxonomy ID is given then the taxonomy ID will be written in the FASTA file name in the possion of 'uniprot_query'.
+The submodule also writes out all protein sequences to FASTA files, with each query to UniProt producing a single FASTA file containing all the resulting protein sequences retrieved from the query. The FASTA file names follow the format: 'uniprot_{uniprot_query}_{time_stamp}'. If only the taxonomy ID is given then the taxonomy ID will be written in the FASTA file name in the place of 'uniprot_query'.
 
 When invoking the submodule `uniprot`, invoke the script `get_uniprot_proteins.py` and the path to the configuration must be provided.
 
@@ -150,7 +154,7 @@ An example of basic operation is:
 
 All command options can be viewed by using `python3 get_uniprot_proteins -h` or `python3 get_uniprot_proteins --help`. 'Read the Docs' documentation coming soon!
 
-#### prediction
+#### **prediction**
 
 _This module is still in early development, on the branch `new_feature_CPT_evaluation`, more detailed documentation will be added post development._
 
