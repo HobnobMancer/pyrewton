@@ -151,9 +151,10 @@ An example of basic operation is:
 All command options can be viewed by using `python3 get_uniprot_proteins -h` or `python3 get_uniprot_proteins --help`. 'Read the Docs' documentation coming soon!
 
 #### prediction
+
+_This module is still in early development, on the branch `new_feature_CPT_evaluation`, more detailed documentation will be added post development._
+
 This submodule is for the prediction if a query protein sequence is a CAZyme or non-CAZyme, and the prediction of the CAZy family if the protein is predicated to be a CAZyme.
-
-
 
 ## Repository renamed 2020-10-05
 **Note:** This repository was renamed from 'PhD_Project_Scripts' to 'pyrewton'.
