@@ -52,6 +52,15 @@ def build_parser(argv: Optional[List] = None):
 
     # Add optional arguments to parser
 
+    # Add option to specify path for output datafame to be written to
+    parser.add_argument(
+        "-d",
+        "--output_df",
+        type=Path,
+        metavar="output dataframe name",
+        default=sys.stdout,
+        help="path to output directory to write FASTA files to",
+    )
     # Add option to force file over writting
     parser.add_argument(
         "-f",
@@ -85,9 +94,9 @@ def build_parser(argv: Optional[List] = None):
         "-o",
         "--output",
         type=Path,
-        metavar="output file name",
+        metavar="output directory",
         default=sys.stdout,
-        help="output filename",
+        help="path to output directory to write FASTA files to",
     )
     # Add option to specify verbose logging
     parser.add_argument(
