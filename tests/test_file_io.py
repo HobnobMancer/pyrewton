@@ -52,14 +52,12 @@ def making_output_dir(testing_output_dir):
 
 @pytest.fixture
 def args_make_dir_nd_true(making_output_dir):
-    argsdict = {"args": Namespace(output=making_output_dir, nodelete=True, force=True)}
-    return argsdict
+    return [making_output_dir, True, True]
 
 
 @pytest.fixture
 def args_make_dir_nd_false(making_output_dir):
-    argsdict = {"args": Namespace(output=making_output_dir, nodelete=False, force=True)}
-    return argsdict
+    return [making_output_dir, False, True]
 
 
 # Create fixtures for testing writing out a dataframe
@@ -86,13 +84,24 @@ def df_output_file(test_dir):
 @pytest.mark.run(order=6)
 def test_output_dir_creation_nd_true(args_make_dir_nd_true, null_logger):
     """Test creation of output dir when args.nodelete is false"""
-    file_io.make_output_directory(args_make_dir_nd_true["args"], null_logger)
+    file_io.make_output_directory(
+        args_make_dir_nd_true[0],
+        null_logger,
+        args_make_dir_nd_true[1],
+        args_make_dir_nd_true[2],
+    )
 
 
 @pytest.mark.run(order=7)
 def test_output_dir_creation_n_false(args_make_dir_nd_false, null_logger):
     """Test creation of output dir when args.nodelete is true"""
-    file_io.make_output_directory(args_make_dir_nd_false["args"], null_logger)
+
+    file_io.make_output_directory(
+        args_make_dir_nd_false[0],
+        null_logger,
+        args_make_dir_nd_false[1],
+        args_make_dir_nd_false[2],
+    )
 
 
 # Test write_out_dataframe
