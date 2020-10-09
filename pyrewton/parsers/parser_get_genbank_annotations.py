@@ -37,7 +37,7 @@ def build_parser(argv: Optional[List] = None):
     # Add positional arguments to parser
     # Specify path to input dataframe
     parser.add_argument(
-        "df_input",
+        "input_df",
         type=Path,
         metavar="input dataframe name",
         help="Path to input dataframe",
