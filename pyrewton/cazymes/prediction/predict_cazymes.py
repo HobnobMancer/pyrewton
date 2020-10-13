@@ -29,9 +29,30 @@ summarising statistical analsis of prediction accuracy.
 import subprocess
 import sys
 
+from dataclasses import dataclass
 from pathlib import Path
+from typing import List, Optional
 
 from pyrewton.file_io import make_output_directory
+
+
+@dataclass
+class SpeciesData:
+    """Store species and associated FASTA file data.
+
+    Contains all data for a given species, including path to
+    FASTA file containing species proteins, NCBI taxonomy ID and
+    the source of the protein sequences, i.e the accession number
+    of the genomic assembly or the remote database, e.g. UniProt.
+    """
+    tax_id: str  # NCBI taxonomy id, prefix NCBI:txid
+    fasta: Path  # path to FASTA file containing species protein
+    source: str  # source of protein sequences, genomic assembly or database
+    prediction_dir: Path  # path to output dir of prediciton tools
+
+    def __str__(self):
+        """Representation of object"""
+        return f"{self.tax_id} {self.source} fasta: {self.fasta}, pred_dir: {prediction_dir}"
 
 
 def main():
