@@ -86,8 +86,13 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # Initate scripts main function
     configuration(args, logger)
+<<<<<<< HEAD
 
 
+=======
+
+
+>>>>>>> improve catching no queries provided
 def configuration(args, logger):
     """Coordinate calling to UniProtKB."""
     # Retrieve data from configuration file
