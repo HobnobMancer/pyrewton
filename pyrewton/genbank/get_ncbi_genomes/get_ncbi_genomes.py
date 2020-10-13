@@ -89,11 +89,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Initiate logger
     # Note: log file only created if specified at cmdline
     if logger is None:
-<<<<<<< HEAD
         logger = build_logger("get_ncbi_genomes", args)
-=======
-        logger = build_logger("Extract_genomes_NCBI", args)
->>>>>>> correct typo
     logger.info("Run initated")
 
     # Add users email address from parser
@@ -108,6 +104,11 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # If specified output directory for genomic files, create output directory
     if args.output is not sys.stdout:
         make_output_directory(args.output, logger, args.force, args.nodelete)
+<<<<<<< HEAD
+=======
+
+    coordinate_data_retrieval(logger, args)
+>>>>>>> 98e5ae8976d52feed0217a839d579fa54aba6a84
 
     # Invoke main usage of programme
     # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'

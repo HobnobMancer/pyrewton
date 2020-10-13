@@ -32,6 +32,7 @@ such as "database:(type:cazy)".
 :cmd_args --nodelete: optional, enable no deletion of content in output dir
 :cmd_args --output: optional, path to output dir
 :cmd_args --verbose: optional, change logger level to 'info'
+
 :func main: set-up script, configure call to UniProtKB
 :func read_configuration: interprets and configuration data to set up UniProtKB call
 :func get_config_data: retrieve data from config file

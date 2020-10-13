@@ -16,7 +16,7 @@
 # UK
 
 # The MIT License
-"""Build parser for 'get_uniprot_proteins.py'"""
+"""Build parser for 'uniprot' module"""
 
 import argparse
 import sys
@@ -34,24 +34,31 @@ def build_parser(argv: Optional[List] = None):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
-    # Add positional arguments to parser
-    # Specify input config file
-    parser.add_argument(
-        "input",
-        type=Path,
-        metavar="configuration file",
-        help="Path to configuration file",
-    )
-
-    # Add optional arguments to parser
+    # Add arguments to parser
     # Add option to enable/disable fasta file writing
     parser.add_argument(
-        "-fa",
+        "-a",
         "--fasta",
         dest="fasta",
         action="store_true",
         default=False,
         help="Enable fasta file writing",
+    )
+    # Add option to specify directory for output to be written to
+    parser.add_argument(
+        "-d",
+        "--outdir",
+        type=Path,
+        metavar="output directory path",
+        default=sys.stdout,
+        help="output directory path",
+    )
+    # Add option to specific input config file
+    parser.add_argument(
+        "input",
+        type=Path,
+        metavar="configuration file",
+        help="Path to configuration file",
     )
     # Add option to force file over writting
     parser.add_argument(
@@ -80,15 +87,6 @@ def build_parser(argv: Optional[List] = None):
         action="store_true",
         default=False,
         help="enable/disable deletion of exisiting files",
-    )
-    # Add option to specify directory for output to be written to
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        metavar="output directory path",
-        default=sys.stdout,
-        help="output directory path",
     )
     # Add option to specify verbose logging
     parser.add_argument(
