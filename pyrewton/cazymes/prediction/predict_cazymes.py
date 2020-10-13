@@ -40,7 +40,7 @@ from pyrewton.file_io import make_output_directory
 
 
 @dataclass
-class SpeciesData:
+class FastaFile:
     """Store species and associated FASTA file data.
 
     Contains all data for a given species, including path to
@@ -70,54 +70,29 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # for each FASTA file invoke dbCAN, CUPP and eCAMI
     for file_path in all_fasta_paths:
-        # retrieve taxonomy ID from file path
-        tax_pattern = re.compile(r"ncbi-txid\d+?", re.IGNORECASE)
-        match_result = re.match(tax_pattern, str(file_path), re.IGNORECASE)
-        tax_id = match_result.group()
+        # retrieve data on source of protein sequences and species taxonomy ID
+        protein_source = get_protein_source(file_path, args, logger)
+        tax_id = get_tax_id(file_path, args, logger)
 
-        # retrieve protein source name, e.g. genomic assembly or UniProt
-        # try to find accession number of source genomic assembly
-        accession_pattern = re.compile(r"GC(A|F)\d+?_\d+?", re.IGNORECASE)
-        match_result = re.match(accession_pattern, str(file_path), re.IGNORECASE)
-        if match_result.group() is None:
-            protein_source = "UniProt"
-        else:
-            protein_source = match_result.group()
+        time_stamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
 
         # name output dir to store prediction output and statistical evaluation
-        time_stamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-        outdir_name = f"cazyme_predictions_{tax_id}_{protein_source}_{time_stamp}"
+        if tax_id is None:
+            outdir_name = f"cazyme_predictions_{protein_source}_{time_stamp}"
+        else:
+            outdir_name = f"cazyme_predictions_{tax_id}_{protein_source}_{time_stamp}"
 
         # create output_dir
         make_output_directory(outdir_name, logger, args.force, args.nodelete)
         outdir_path = Path(outdir_name)
 
-        # create class object to store species, FASTA file and output data
-        class_data = SpeciesData(tax_id, file_path, protein_source, outdir_path)
+        # create FastaFile class object to store data for fasta file
 
-        # pass path to FASTA file to prediction tools and invoke CAZyme prediction
-        invoke_prediction_tools()  # what inputs do each need
-
-        # possibly "<fasta file name (minus the file extension)>_<tool name>_<time/date stamp>"
-        out_dir_name = f""
-        outdirs.append(out_dir_name)
-        make_output_directory()  # ADD PARAM IN!!!!
-
-        # run dbCAN
-        subprocess.run()
-        # run CUPP
-        subprocess.run()
-        # run eCAMI
-        subprocess.run()
-
-    # parse output from prediction tools to create standardised output format
-    # call functions from pyrewton.cazymes.prediction.parse submodule
-    # for directory in outdirs:
-    # parse dbCAN output
-
-    # parse CUPP output
-
-    # parse eCAMI output
+        # pass FASTA file path and outdir_path to invoke prediction tools
+        ##
+        #
+        #
+        #
 
 
 def get_fasta_paths(args, logger):
@@ -153,6 +128,59 @@ def get_fasta_paths(args, logger):
         sys.exit(1)
 
     return fasta_file_paths
+
+
+def get_protein_source(file_path, args, logger):
+    """Retrieve source of protein sequences from FASTA file path.
+
+    :param file_path: path, path to fasta file
+    :param args: parser objects
+    :param logger: logger object
+
+    Return string, source of protein sequences.
+    """
+    # Attempt to retrieve genomic assembly from FASTA file path
+    accession_pattern = re.compile(r"GC(A|F)\d+?_\d+?", re.IGNORECASE)
+    search_result = re.search(accession_pattern, str(file_path), re.IGNORECASE)
+
+    try:
+        protein_source = search_result.group()
+        return protein_source
+    except AttributeError:
+        search_result = re.search(r"uniprot", str(file_path), re.IGNORECASE)
+        try:
+            protein_source = search_result.group()
+            return protein_source
+        except AttributeError:
+            protein_source = "unknown_source"
+            return protein_source
+
+
+def get_tax_id(file_path, args, logger):
+    """Retrieve taxonomy ID from fasta file path.
+
+    :param file_path: path, path to fasta file path
+    :param args: parser object
+    :param logger: logger object
+
+    Return string, taxonomy ID of proteins' host species.
+    """
+    # search for first taxonomy ID format
+    tax_pattern = re.compile(r"ncbi(-|_)txid\d+?", re.IGNORECASE)
+    search_result = re.search(tax_pattern, str(file_path))
+
+    try:
+        tax_id = search_result.group()
+        return tax_id
+    except AttributeError:
+        # search for other taxonomy ID format
+        tax_pattern = re.compile(r"taxonomy__\d+?__", re.IGNORECASE)
+        search_result = re.search(tax_pattern, str(file_path))
+        try:
+            tax_id = search_result.group()
+            return tax_id
+        except AttributeError:
+            return
 
 
 if __name__ == "__main__":
