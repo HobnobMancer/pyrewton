@@ -28,8 +28,8 @@ def invoke_prediction_tools(query, args, logger):
     # <fasta_path> protein --output_dir <outdir_path>
 
     # args required by ecami for prediction.py
-    # -input <fasta_path> -kmer_db CAZyme -output <outdir_path>
+    # -input <fasta_path> -kmer_db CAZyme -output <path to output file, including .text ext>
 
     # args required by cupp prediction.py
-    # -query <fasta_path> -output_path <outdir_path>
+    # -query <fasta_path> -output_path <path to output fasta file including .fasta ext>
 
