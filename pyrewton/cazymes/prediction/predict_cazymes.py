@@ -38,6 +38,8 @@ from typing import List, Optional
 
 from pyrewton.cazymes.prediction.tools import invoke_prediction_tools
 from pyrewton.file_io import make_output_directory
+from pyrewton.loggers import build_logger
+from pyrewton.parsers.parser_predict_cazymes import build_parser
 
 
 @dataclass
@@ -63,8 +65,19 @@ class Query:
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
     """Set up parser and logger, and coordinate prediction of CAZymes."""
     # build parser
+    # Parse arguments
+    # Check if namepsace isn't passed, if not parse command-line
+    if argv is None:
+        # Parse command-line
+        parser = build_parser()
+        args = parser.parse_args()
+    else:
+        args = build_parser(argv).parse_args()
 
-    # build logger
+    # Initiate logger
+    # Note: log file only created if specified at cmdline
+    if logger is None:
+        logger = build_logger("predict_cazymes", args)
 
     # create list of paths to all fasta files in input directory
     all_fasta_paths = get_fasta_paths(args, logger)
