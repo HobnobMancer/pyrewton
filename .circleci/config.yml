@@ -7,9 +7,6 @@ jobs:
   build-and-test:
     docker:
       - image: circleci/python:3.7.5
-        auth:
-          username: docker_username
-          password: docker_password
 
     working_directory: ~/phd_eastbio
 
@@ -58,6 +55,4 @@ jobs:
 workflows:
   main:
     jobs:
-      - build-and-test:
-          context:
-            - pyrewton_ci
+      - build-and-test
