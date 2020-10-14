@@ -36,12 +36,19 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
+from pyrewton.cazymes.prediction.tools import invoke_prediction_tools
 from pyrewton.file_io import make_output_directory
 
 
 @dataclass
-class Prediction:
-    """Data for prediction of CAZymes within a given FASTA file."""
+class Query:
+    """Data of prediction tool query.
+    
+    :param fasta: path, path to query fasta file
+    :param tax_id: str, NCBI taxonomy ID of host species
+    :param source: str, source of proteins within fasta file
+    :param prediction_dir: path, path to which prediction tool output is written
+    """
 
     fasta: Path  # path to FASTA file containing proteins for prediction
     tax_id: str  # NCBI taxonomy id, prefix NCBI:txid
@@ -84,10 +91,10 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         outdir_path = Path(outdir_name)
 
         # create FastaFile class object to store data for fasta file
-        prediction = Prediction(file_path, tax_id, protein_source, outdir_path)
+        prediction_tool_query = Query(file_path, tax_id, protein_source, outdir_path)
 
         # pass FASTA file path and outdir_path to invoke prediction tools
-        ##
+        invoke_prediction_tools(prediction_tool_query)
 
     # standardist output from prediction tools for the prediction output per
     # FASTA file
