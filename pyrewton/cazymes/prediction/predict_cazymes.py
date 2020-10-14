@@ -40,19 +40,13 @@ from pyrewton.file_io import make_output_directory
 
 
 @dataclass
-class FastaFile:
-    """Store species and associated FASTA file data.
+class Prediction:
+    """Data for prediction of CAZymes within a given FASTA file."""
 
-    Contains all data for a given species, including path to
-    FASTA file containing species proteins, NCBI taxonomy ID and
-    the source of the protein sequences, i.e the accession number
-    of the genomic assembly or the remote database, e.g. UniProt.
-    """
-
+    fasta: Path  # path to FASTA file containing proteins for prediction
     tax_id: str  # NCBI taxonomy id, prefix NCBI:txid
-    fasta: Path  # path to FASTA file containing species protein
     source: str  # source of protein sequences, genomic assembly or database
-    prediction_dir: Path  # path to output dir of prediciton tools
+    prediction_dir: Path  # path to dir containing outputs from prediciton tools
 
     def __str__(self):
         """Representation of object"""
@@ -68,8 +62,11 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # create list of paths to all fasta files in input directory
     all_fasta_paths = get_fasta_paths(args, logger)
 
+    # create empty list to store all instances of Prediction class objects
+    predictions = []
+
     # for each FASTA file invoke dbCAN, CUPP and eCAMI
-    for file_path in all_fasta_paths:
+    for file_path in all_fasta_paths:  # make tqdm
         # retrieve data on source of protein sequences and species taxonomy ID
         protein_source = get_protein_source(file_path, args, logger)
         tax_id = get_tax_id(file_path, args, logger)
@@ -87,12 +84,23 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         outdir_path = Path(outdir_name)
 
         # create FastaFile class object to store data for fasta file
+        prediction = Prediction(file_path, tax_id, protein_source, outdir_path)
 
         # pass FASTA file path and outdir_path to invoke prediction tools
         ##
-        #
-        #
-        #
+
+    # standardist output from prediction tools for the prediction output per
+    # FASTA file
+    for prediction in predictions:  # make tqdm
+        # 
+    
+    # statistical evaluate CAZyme predictions per FASTA file input
+    for prediction in predictions:  # make tqdm
+
+    # calculate overall statistcal evaluation of prediction
+
+    # write reports of statistical evaluation
+    for prediction in predictions:  # make tqdm
 
 
 def get_fasta_paths(args, logger):
