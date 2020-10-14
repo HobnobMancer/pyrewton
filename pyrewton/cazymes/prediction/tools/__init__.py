@@ -17,3 +17,19 @@
 #
 # The MIT License
 """Module invoking CAZyme prediction tools: dbCAN, CUPP and eCAMI"""
+
+
+def invoke_prediction_tools(query, args, logger):
+    """Pass paramaters to CAZyme prediction tools and invoke tool run."""
+    fasta_path = query.fasta
+    outdir = query.prediction_dir
+
+    # args required by run_dbCAN
+    # <fasta_path> protein --output_dir <outdir_path>
+
+    # args required by ecami for prediction.py
+    # -input <fasta_path> -kmer_db CAZyme -output <outdir_path>
+
+    # args required by cupp prediction.py
+    # -query <fasta_path> -output_path <outdir_path>
+
