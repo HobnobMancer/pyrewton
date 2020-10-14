@@ -8,8 +8,8 @@ jobs:
     docker:
       - image: circleci/python:3.7.5
         auth:
-          username: docker_password
-          password: docker_username
+          username: docker_username
+          password: docker_password
 
     working_directory: ~/phd_eastbio
 
