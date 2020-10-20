@@ -282,8 +282,14 @@ def output_dir(test_dir):
 
 @pytest.mark.run(order=8)
 def test_reading_input_file(
-    test_ncbi_species_file, null_logger, gt_ncbi_gnms_test_inputs
+    test_ncbi_species_file, null_logger, gt_ncbi_gnms_test_inputs, monkeypatch
 ):
+    def mock_line_parsing(*args, **kwargs):
+        """Mock results from the function parse_link."""
+        return ["genus", "species", "tax_id"]
+
+    monkeypatch.setattr(get_ncbi_genomes, "parse_line", mock_line_parsing)
+
     """Tests script can open and read supplied input file."""
     get_ncbi_genomes.parse_input_file(
         test_ncbi_species_file, null_logger, gt_ncbi_gnms_test_inputs[1]
@@ -351,7 +357,10 @@ def test_scientific_name_retrieval(
 
 @pytest.mark.run(order=12)
 def test_scientific_name_retrieval_indexerror_catch(
-    gt_ncbi_gnms_test_inputs, null_logger, efetch_result_empty, monkeypatch,
+    gt_ncbi_gnms_test_inputs,
+    null_logger,
+    efetch_result_empty,
+    monkeypatch,
 ):
     """Tests get_scientific name retrieval handling when no entry with the
     given taxonomy ID is found."""
@@ -394,7 +403,10 @@ def test_taxonomy_id_retrieval(
         monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_txid_call)
 
         assert gt_ncbi_gnms_targets[1] == get_ncbi_genomes.get_tax_id(
-            gt_ncbi_gnms_test_inputs[2], null_logger, 1, gt_ncbi_gnms_test_inputs[0],
+            gt_ncbi_gnms_test_inputs[2],
+            null_logger,
+            1,
+            gt_ncbi_gnms_test_inputs[0],
         )
 
 
@@ -406,7 +418,10 @@ def test_tax_id_check(null_logger):
 
 @pytest.mark.run(order=15)
 def test_tax_id_retrieval_indexerror_catch(
-    gt_ncbi_gnms_test_inputs, null_logger, monkeypatch, esearch_result_empty,
+    gt_ncbi_gnms_test_inputs,
+    null_logger,
+    monkeypatch,
+    esearch_result_empty,
 ):
     """Tests handling index Error when retrieving tax ID"""
     with open(esearch_result_empty, "rb") as fh:
