@@ -342,7 +342,6 @@ def test_scientific_name_retrieval(
     null_logger,
     efetch_result,
     monkeypatch,
-    entrez_dtd_dir,
 ):
     """Tests Entrez call to NCBI to retrieve scientific name from taxonomy ID.
     Tests that correct output is returned from from get_genus_species_name()
@@ -371,7 +370,6 @@ def test_scientific_name_retrieval_indexerror_catch(
     null_logger,
     efetch_result_empty,
     monkeypatch,
-    entrez_dtd_dir,
 ):
     """Tests get_scientific name retrieval handling when no entry with the
     given taxonomy ID is found."""
