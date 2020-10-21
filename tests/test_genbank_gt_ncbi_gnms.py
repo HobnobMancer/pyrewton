@@ -39,11 +39,20 @@ import pandas as pd
 from argparse import Namespace, ArgumentParser
 
 from Bio import Entrez
+from Bio.Entrez import Parser
 
 from pyrewton.genbank.get_ncbi_genomes import get_ncbi_genomes
 
 # Define dummy email for Entrez
 Entrez.email = "my.email@my.domain"
+
+
+@pytest.fixture
+def entrez_dtd_dir(test_dir):
+    dir_path = test_dir / "test_inputs" / "Bio" / "Entrez" / "DTDs"
+    handler = Parser.DataHandler(validate=False, escape=False)
+    handler.directory = dir_path
+    return
 
 
 @pytest.fixture
@@ -333,6 +342,7 @@ def test_scientific_name_retrieval(
     null_logger,
     efetch_result,
     monkeypatch,
+    entrez_dtd_dir,
 ):
     """Tests Entrez call to NCBI to retrieve scientific name from taxonomy ID.
     Tests that correct output is returned from from get_genus_species_name()
@@ -361,6 +371,7 @@ def test_scientific_name_retrieval_indexerror_catch(
     null_logger,
     efetch_result_empty,
     monkeypatch,
+    entrez_dtd_dir,
 ):
     """Tests get_scientific name retrieval handling when no entry with the
     given taxonomy ID is found."""
