@@ -49,6 +49,13 @@ Entrez.email = "my.email@my.domain"
 
 @pytest.fixture
 def entrez_dtd_dir(test_dir):
+    """Fixes CircleCI failure to retrieve DTDs for Entrez.Parser from NCBI.
+    
+    See BioPython GitHub repository for demonstration of ability to pass
+    Entrez.Parser a custom directory containting DTDs. Found in
+    Tests.test_Entrez.py classCustomDirectoryTest:
+    https://github.com/biopython/biopython/blob/master/Tests/test_Entrez.py
+    """
     dir_path = test_dir / "test_inputs" / "Bio" / "Entrez" / "DTDs"
     handler = Parser.DataHandler(validate=False, escape=False)
     handler.directory = dir_path
