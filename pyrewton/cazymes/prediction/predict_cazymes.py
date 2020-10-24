@@ -107,7 +107,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         prediction_tool_query = Query(file_path, tax_id, protein_source, outdir_path)
 
         # pass FASTA file path and outdir_path to invoke prediction tools
-        invoke_prediction_tools(prediction_tool_query)
+        invoke_prediction_tools(prediction_tool_query, args, logger)
 
     # standardist output from prediction tools for the prediction output per
     # FASTA file
