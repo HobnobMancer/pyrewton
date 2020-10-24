@@ -45,7 +45,7 @@ from pyrewton.parsers.parser_predict_cazymes import build_parser
 @dataclass
 class Query:
     """Data of prediction tool query.
-    
+
     :param fasta: path, path to query fasta file
     :param tax_id: str, NCBI taxonomy ID of host species
     :param source: str, source of proteins within fasta file
@@ -111,16 +111,16 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # standardist output from prediction tools for the prediction output per
     # FASTA file
-    for prediction in predictions:  # make tqdm
-        # 
-    
+    # for prediction in predictions:  # make tqdm
+    #
+
     # statistical evaluate CAZyme predictions per FASTA file input
-    for prediction in predictions:  # make tqdm
+    # for prediction in predictions:  # make tqdm
 
     # calculate overall statistcal evaluation of prediction
 
     # write reports of statistical evaluation
-    for prediction in predictions:  # make tqdm
+    # for prediction in predictions:  # make tqdm
 
 
 def get_fasta_paths(args, logger):
