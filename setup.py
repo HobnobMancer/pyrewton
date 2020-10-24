@@ -54,9 +54,8 @@ setuptools.setup(
             "get_ncbi_genomes.py = pyrewton.genbank.get_ncbi_genomes.get_ncbi_genomes:main",
             "get_genbank_annotations.py = pyrewton.genbank.get_genbank_annotations."
             "get_genbank_annotations:main",
-            "get_uniprot_proteins.py = pyrewton.annotations.get_uniprot_proteins:main",
-            "search_uniprot_proteins.py = pyrewton.annotations.search_uniprot_proteins:main",
-            "search_genbank_annotations.py = pyrewton.annotations.search_genbank_annotations:main",
+            "get_uniprot_proteins.py = pyrewton.cazymes.uniprot.get_uniprot_proteins:main",
+            "predict_cazymes.py = pyrewton.cazymes.prediction.predict_cazymes:main",
         ]
     },
     # Ensure all additional requirements are installed
