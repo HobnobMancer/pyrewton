@@ -168,7 +168,7 @@ def get_protein_source(file_path, args, logger):
     Return string, source of protein sequences.
     """
     # Attempt to retrieve genomic assembly from FASTA file path
-    accession_pattern = re.compile(r"GC(A|F)\d+?_\d+?", re.IGNORECASE)
+    accession_pattern = re.compile(r"GC(A|F)\d+?_\d+?")
     search_result = re.search(accession_pattern, str(file_path), re.IGNORECASE)
 
     try:
@@ -176,8 +176,8 @@ def get_protein_source(file_path, args, logger):
         return protein_source
     except AttributeError:
         # search for uniprot query used to retrieve proteins
-        query_pattern = re.compile(r"uniprot(.+?\.)", re.IGNORECASE)
-        search_result = re.search(query_pattern, str(file_path))
+        query_pattern = re.compile(r"uniprot(.+?\.)")
+        search_result = re.search(query_pattern, str(file_path), re.IGNORECASE)
         try:
             protein_source = search_result.group()[:-1]  # remove terminal '.'
             return protein_source
@@ -196,16 +196,16 @@ def get_tax_id(file_path, args, logger):
     Return string, taxonomy ID of proteins' host species.
     """
     # search for first taxonomy ID format
-    tax_pattern = re.compile(r"ncbi(-|_)txid\d+?", re.IGNORECASE)
-    search_result = re.search(tax_pattern, str(file_path))
+    tax_pattern = re.compile(r"ncbi(-|_)txid\d+?")
+    search_result = re.search(tax_pattern, str(file_path), re.IGNORECASE)
 
     try:
         tax_id = search_result.group()
         return tax_id
     except AttributeError:
         # search for other taxonomy ID format
-        tax_pattern = re.compile(r"taxonomy__\d+?__", re.IGNORECASE)
-        search_result = re.search(tax_pattern, str(file_path))
+        tax_pattern = re.compile(r"taxonomy__\d+?__")
+        search_result = re.search(tax_pattern, str(file_path), re.IGNORECASE)
         try:
             tax_id = search_result.group()
             return tax_id
