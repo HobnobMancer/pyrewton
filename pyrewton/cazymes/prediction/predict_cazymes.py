@@ -180,8 +180,7 @@ def get_protein_source(file_path, args, logger):
         return protein_source
     except AttributeError:
         # search for uniprot query used to retrieve proteins
-        query_pattern = re.compile(r"uniprot(.+?\.)")
-        search_result = re.search(query_pattern, str(file_path), re.IGNORECASE)
+        search_result = re.search(r"uniprot(.+?\.)", str(file_path), re.IGNORECASE)
         try:
             protein_source = search_result.group()[:-1]  # remove terminal '.'
             return protein_source
