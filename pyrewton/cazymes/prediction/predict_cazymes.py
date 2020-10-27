@@ -102,13 +102,13 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         else:
             outdir_name = f"cazyme_predictions_{tax_id}_{protein_source}_{time_stamp}"
 
-        # create output_dir
-        make_output_directory(outdir_name, logger, args.force, args.nodelete)
-        outdir_path = Path(outdir_name)
+        # create output_dir for given input FASTA file within user specified parent directory
+        output_path = args.output / outdir_name
+        make_output_directory(output_path, logger, args.force, args.nodelete)
 
         # create FastaFile class object to store data for fasta file
-        prediction_tool_query = Query(file_path, tax_id, protein_source, outdir_path)
-
+        prediction_tool_query = Query(file_path, tax_id, protein_source, output_path)
+        print("''''''\n",prediction_tool_query,"\n'''''''''")
         # pass FASTA file path and outdir_path to invoke prediction tools
         invoke_prediction_tools(prediction_tool_query, args, logger)
 
@@ -173,7 +173,7 @@ def get_protein_source(file_path, args, logger):
     Return string, source of protein sequences.
     """
     # Attempt to retrieve genomic assembly from FASTA file path
-    search_result = re.search(r"GC(A|F)\d+?_\d+?", str(file_path), re.IGNORECASE)
+    search_result = re.search(r"GC(A|F)_\d+?_\d+?", str(file_path), re.IGNORECASE)
 
     try:
         protein_source = search_result.group()
