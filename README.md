@@ -3,12 +3,11 @@
 [![DOI](https://zenodo.org/badge/243783792.svg)](https://zenodo.org/badge/latestdoi/243783792)
 [![Funding](https://img.shields.io/badge/Funding-EASTBio-blue)](http://www.eastscotbiodtp.ac.uk/)
 [![PhD licence](https://img.shields.io/badge/Licence-MIT-green)](https://github.com/HobnobMancer/PhD_Project_Scripts/blob/master/LICENSE)
-[![CircleCI](https://circleci.com/gh/HobnobMancer/PhD_Project_Scripts.svg?style=shield)](https://circleci.com/gh/HobnobMancer/PhD_Project_Scripts)
+[![CircleCI](https://circleci.com/gh/HobnobMancer/pyrewton.svg?style=shield)](https://circleci.com/gh/HobnobMancer/PhD_Project_Scripts)
 [![codecov](https://codecov.io/gh/HobnobMancer/PhD_Project_Scripts/branch/master/graph/badge.svg)](https://codecov.io/gh/HobnobMancer/PhD_Project_Scripts)
-[![Documentation Status](https://readthedocs.org/projects/phd-project-scripts/badge/?version=latest)](https://phd-project-scripts.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/pyrewton/badge/?version=latest)](https://pyrewton.readthedocs.io/en/latest/?badge=latest)
 [![Python](https://img.shields.io/badge/Python-v3.7.---orange)](https://www.python.org/about/)
 [![Research](https://img.shields.io/badge/Bioinformatics-Protein%20Engineering-ff69b4)](http://www.eastscotbiodtp.ac.uk/eastbio-student-cohort-2019)
-![Version](https://img.shields.io/badge/Version-v0.1.1-9cf)
 
 _Please find more detailed documentation for operation and troubleshooting at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/)_
 
@@ -26,9 +25,9 @@ _Please find more detailed documentation for operation and troubleshooting at [R
         
 ## Overview
 
-`pyrewton` is a Python3 script package for the automated identification of CAZyomes (all carbohydrates encoded within the genome of a given species). The package is run at the command line and free to use under the MIT license.
+Pyrewton is a Python3 script package for the automated identification of CAZyomes (all carbohydrates encoded within the genome of a given species). The package is run at the command line and free to use under the MIT license.
 
-All modules, submodules and associated Python scripts are located within the `pyrewton` directory in this repository. Specifically, `pyrewton` supports:
+Pyrewton supports:
 - Downloading of all genomic assemblies (as GenBank files .gbff) from the [NCBI Assembly database](https://www.ncbi.nlm.nih.gov/assembly)
 associated with each species passed to the programme
 - Retrieval of all annotated protein sequences from GenBank (.gbff) files
@@ -40,24 +39,44 @@ Features currently in development:
 - Evaluate the accuracy of the CAZyme prediction tools to the correct CAZy family
 - Produce a report of the CAZyme prediction tool evaluation
 
-Development plans are stored within the [Wiki](https://github.com/HobnobMancer/PhD_Project_Scripts/wiki).
+Development plans are stored within the [Wiki](https://github.com/HobnobMancer/pyrewton/wiki).
 <p>&nbsp;</p>
 
 ## Installation
 
-The easiest way to install `pyrewton` is to use `pip3`:  
-`pip3 install -e <path to directory containing pyrewton setup.py>`.  
-Pass the path to the **directory** containing the setup.py file, **not** the path to the setup.py file.
- 
-Using this method of installation will install all required Python package dependencies.
+1. Navigate the directory you wish to store pyrewton in, then clone this repository.
+`git clone https://github.com/HobnobMancer/pyrewton.git`
+
+1. Create a virtual environment with dependencies, then activate the environment.   
+`conda create -n <venv_name> python=3.8 diamond hmmer prodigal -c conda-forge -c bioconda`   
+`conda activate <venv_name>`
+
+2. Install all requirements from requirements.txt file. The requirements.txt file is stored in the root of this repository.  
+`pip3 install -r <path to requirements.txt file>`   
+
+3. Install pyrewton.
+`pip3 install -e <path to directory containing setup.py file>`   
+Do not forget to use the **-e** option when install using pip3, otherwise each time pyrewton is invoked a ModuleNotFound error will be raised. Pass the path to the **directory** containign the setup.py file not the path to the setup.py file; if you are currently in the root directory of the repoistory where the file is located, simply use '.' to indicate the current working directory.
+
+4. Install third party tools.   
+Pyrewton invokves 3 third party tools: dbCAN, CUPP and eCAMI.
+
+To install dbCAN follow the instructions within their [GitHub repository](https://github.com/linnabrown/run_dbcan), **BUT ignore** steps 1 and 2 of their installtion guide, becuase the necessary virtual environment was already created in the second step of this installation and it meets all requirements of dbCAN. Install dbCAN within **'pyrewton/cazymes/prediction/tools/dbcan'** directory within the repository, otherwise pyrewton will not be able to find the tool.  
+
+To install eCAMI follow the instructions within their [GitHub respository](https://github.com/yinlabniu/eCAMI). eCAMI must be installed within the directory pyrewton/cazymes/prediction/tools/ecami. Following the method from the eCAMI repository will write eCAMI to 'pyrewton/cazymes/prediction/tools/ecami/**eCAMI**', to avoid this perform the installation within 'pyrewton/cazymes/prediction/tools' and rename 'eCAMI' to 'ecami', thus install eCAMI in **'pyrewton/cazymes/prediction/tools/ecami'**.   
+
+To install CUPP download the CUPP files from the [DTU Bioengineering server](https://www.bioengineering.dtu.dk/english/ResearchNy/Research-Sections/Section-for-Protein-Chemistry-and-Enzyme-Technology/Enzyme-Technology/CUPP), and store the files in **'pyrewton/cazymes/prediction/tools/cupp'**. It is not necessary to download all the files becuase the .tar and .tar.gz directories each contain all the files, therefore, download either the .tar _or_ .tar.gz directories and unpackage them or download all the files located within 'CUPP_v1.0.14'.
+
 <p>&nbsp;</p>
 
 ## Requirements
 
-Python version 3.7+
-Miniconda3 managed microenvironment, incorporated code checkers are included in list form in 'requirements.txt'.
-Miniconda3 environment file is also available in the GitHub repository: 'environment.yml'.
-For all required Python libraries please read 'requirements.txt'.
+POISx or Mac OS, or linux emulator   
+Python version 3.7+   
+Miniconda3 or Anaconda managed microenvironment, incorporated code checkers are included in list form in 'requirements.txt'.   
+Miniconda3 environment file is also available in the GitHub repository: 'environment.yml'.   
+For all required Python libraries please read 'requirements.txt'.   
+
 <p>&nbsp;</p>
 
 ## Directories
@@ -162,4 +181,4 @@ This submodule is for the prediction if a query protein sequence is a CAZyme or 
 <p>&nbsp;</p>
 
 ## Repository renamed 2020-10-05
-**Note:** This repository was renamed from 'PhD_Project_Scripts' to 'pyrewton'.
+**Note:** This repository was renamed from 'pyrewton' to 'pyrewton'.
