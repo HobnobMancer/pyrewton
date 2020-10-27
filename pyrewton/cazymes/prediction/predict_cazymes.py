@@ -27,6 +27,7 @@ summarising statistical analsis of prediction accuracy.
 """
 
 import logging
+import os
 import re
 import sys
 
@@ -58,7 +59,12 @@ class Query:
 
     def __str__(self):
         """Representation of object"""
-        return f"<tax-id={self.tax_id} source={self.source} fasta={self.fasta} prediction_dir={self.prediction_dir}"
+        return(
+            (
+                f"<tax-id={self.tax_id} source={self.source} "
+                "fasta={self.fasta} prediction_dir={self.prediction_dir}"
+            )
+        )
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
@@ -77,6 +83,9 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Note: log file only created if specified at cmdline
     if logger is None:
         logger = build_logger("predict_cazymes", args)
+
+    # check current working directory, to make sure can access the CAZyme prediction tools
+    check_cwd(logger)
 
     # If specified output directory for genomic files, create output directory
     if args.output is not sys.stdout:
@@ -108,7 +117,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
         # create FastaFile class object to store data for fasta file
         prediction_tool_query = Query(file_path, tax_id, protein_source, output_path)
-        print("''''''\n",prediction_tool_query,"\n'''''''''")
         # pass FASTA file path and outdir_path to invoke prediction tools
         invoke_prediction_tools(prediction_tool_query, args, logger)
 
@@ -126,6 +134,44 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # write reports of statistical evaluation
     # for prediction in predictions:  # make tqdm
+
+
+def check_cwd(logger):
+    """Check user invoked script in correct directory so can access the prediciton tools.
+
+    If user is not within any of pyrewton/cazymes/prediction module directories then
+    raise error and terminate program. Excepted directories for starting at:
+    pyrewton/cazymes/prediction
+    pyrewton/cazymes/tools
+
+    :param logger: logger object
+
+    Return nothing.
+    """
+    current_path = os.getcwd()
+
+    if current_path.endswith("pyrewton/cazymes/prediction"):
+        return
+
+    elif current_path.endswith("pyrewton/cazymes/prediction/tools"):
+        logger.warning(
+            (
+                "Script invoked in 'tools' directory.\n"
+                "Changed current working directory to pyrewton/cazymes/prediction."
+            )
+        )
+        os.chdir('../')
+        return
+
+    else:
+        logger.error(
+            (
+                "Script invokved in wrong directory.\n"
+                "To be able to access dbCAN, CUPP and eCAMI please invokve script when cwd is\n"
+                "pyrewton/cazymes/prediction within the pyrewton programm. Terminating program."
+            )
+        )
+        sys.exit(1)
 
 
 def get_fasta_paths(args, logger):
