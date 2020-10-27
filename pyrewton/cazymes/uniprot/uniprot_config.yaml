@@ -1,5 +1,14 @@
-tax_ids:
-  - "5061"
+# This is an example configuration file for get_uniprot_proteins.py
+# Store NCBI tax IDs under tax_ids, and write out queries to
+# to be searched along side the tax_ids (i.e. tax ID AND query)
+# under 'queries' using the UniProtKB syntax
+# https://www.uniprot.org/help/text-search)
+tax_ids: # store tax ids as a list under this heading
+  - "5061" # store all tax ids within double quotes
   - "51453"
-queries:
-  - "database:(type:cazy) AND cellulase"
+queries: # store all queries to be searched along side the tax ID
+# under this heading
+# for example "cellulase" will be used in a query as:
+# taxonomy:5061 AND cellulase
+  - "database:(type:cazy) AND cellulase" 
+# YAML files need a blank line at the end

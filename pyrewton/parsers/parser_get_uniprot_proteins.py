@@ -34,16 +34,16 @@ def build_parser(argv: Optional[List] = None):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
-    # Add arguments to parser
-    # Add option to specific input config file
+    # Add positional arguments to parser
+    # Specify input config file
     parser.add_argument(
-        "-i",
-        "--input",
+        "input",
         type=Path,
         metavar="configuration file",
-        default=sys.stdin,
-        help="configuration file path",
+        help="Path to configuration file",
     )
+
+    # Add optional arguments to parser
     # Add option to enable/disable fasta file writing
     parser.add_argument(
         "-fa",

@@ -18,14 +18,15 @@
 # The MIT License
 """Retrieve all protein annotations from GenBank files.
 
-:cmd_args force: bool, force overwriting files in output directory
-:cmd_args genbank: path, path to directory containing GenBank files
-:cmd_args input_df: path, path to input dataframe
-:cmd_args log: path, path to direct writing out log file
-:cmd_args nodelete: not delete existing files in output directory
-:cmd_args output: path, path to output directory for FASTA files
-:cdm_args output_df: path, path to output dataframe
-:cmd_args verbose: bool, enable verbose logging
+:cmd_args df_input: path, path to input dataframe - required
+:cmd_args genbank: path, path to directory containing GenBank files - required
+
+:cmd_args --force: bool, force overwriting files in output directory
+:cmd_args --log: path, path to direct writing out log file
+:cmd_args --nodelete: not delete existing files in output directory
+:cmd_args --output: path, path to output directory
+:cmd_args --output_df: path, path to output dataframe, including file name
+:cmd_args --verbose: boolean, enable verbose logging
 
 :func main: Coordinate calling of other functions
 :func create_dataframe: build dataframe summarising CAZy annotation in GenBank files
@@ -93,14 +94,13 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         write_out_dataframe(protein_annotation_df, logger, args.output_df, args.force)
 
     # Write out FASTA files
-    if args.output is not None:
-        index = 0
-        for index in tqdm(
-            range(len(protein_annotation_df["Genus"])), desc=f"Writing protein to FASTA"
-        ):
-            df_row = protein_annotation_df.iloc[index]
-            write_fasta(df_row, logger, args)
-            index += 1
+    index = 0
+    for index in tqdm(
+        range(len(protein_annotation_df["Genus"])), desc=f"Writing protein to FASTA"
+    ):
+        df_row = protein_annotation_df.iloc[index]
+        write_fasta(df_row, logger, args)
+        index += 1
 
     logger.info("Programme finsihed. Terminating.")
 

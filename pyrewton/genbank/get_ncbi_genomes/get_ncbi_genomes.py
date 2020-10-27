@@ -18,7 +18,7 @@
 # The MIT License
 """Pull down GenBank files (.gbff) from NCBI database.
 
-:cmd_args --user: email address of user
+:cmd_args user: email address of user - required
 :cmd_args --dataframe: output directory for dataframe
 :cmd_args --force: force writing in output directory
 :cmd_args --genbank: enable/disable GenBank file download
@@ -103,7 +103,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # If specified output directory for genomic files, create output directory
     if args.output is not sys.stdout:
-        make_output_directory(args, logger)
+        make_output_directory(args.output, logger, args.force, args.nodelete)
 
     # Invoke main usage of programme
     # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'

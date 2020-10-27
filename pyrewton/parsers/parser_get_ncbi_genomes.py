@@ -34,16 +34,18 @@ def build_parser(argv: Optional[List] = None):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
-    # Add arguments to parser
-    # Add user email address
+    # Add positional arguments to parser
+    # Add user email for Entrez
     parser.add_argument(
-        "-u",
-        "--user",
+        "user_email",
         type=str,
         metavar="user email address",
         default=None,
-        help="Email address of user, this must be provided",
+        help="Email address of user, this must be provided for Entrez",
     )
+
+    # Add optional arguments to parser
+
     # Add dataframe write out options
     # if not given dataframe written to STDOUT
     parser.add_argument(
