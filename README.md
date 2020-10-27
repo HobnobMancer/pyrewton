@@ -3,7 +3,7 @@
 [![DOI](https://zenodo.org/badge/243783792.svg)](https://zenodo.org/badge/latestdoi/243783792)
 [![Funding](https://img.shields.io/badge/Funding-EASTBio-blue)](http://www.eastscotbiodtp.ac.uk/)
 [![PhD licence](https://img.shields.io/badge/Licence-MIT-green)](https://github.com/HobnobMancer/PhD_Project_Scripts/blob/master/LICENSE)
-[![CircleCI](https://circleci.com/gh/HobnobMancer/PhD_Project_Scripts.svg?style=shield)](https://circleci.com/gh/HobnobMancer/PhD_Project_Scripts)
+[![CircleCI](https://circleci.com/gh/HobnobMancer/pyrewton.svg?style=shield)](https://circleci.com/gh/HobnobMancer/pyrewton)
 [![codecov](https://codecov.io/gh/HobnobMancer/PhD_Project_Scripts/branch/master/graph/badge.svg)](https://codecov.io/gh/HobnobMancer/PhD_Project_Scripts)
 [![Documentation Status](https://readthedocs.org/projects/phd-project-scripts/badge/?version=latest)](https://phd-project-scripts.readthedocs.io/en/latest/?badge=latest)
 [![Python](https://img.shields.io/badge/Python-v3.7.---orange)](https://www.python.org/about/)
@@ -41,18 +41,15 @@ Inital plans and devleopment plans are stored within the [Wiki](https://github.c
 
 ## Installation
 
-The easiest way to install `pyrewton` is to use `pip`:  
-`pip3 install -e <path to directory containing pyrewton setup.py>`.  
-Using this method of installation will install all required Python package dependencies, and create the virtual environment 'pyrewton_env'._Pass the path to the **directory** containing the setup.py file to pip3, **not** the path to the setup.py file._ 
-
-Before running `pyrewton`, activate the virtual environment:
-`conda activate pyrewton_env`
-Make sure the correct virtual environment is activated each time pyrewton is executed.
-
-If not using the pip3 installation method using the following commands to create the necessary virtual environment:
+1. Create a virtual environment
 `conda create -n <env_name> python=3.8 diamond hmmer prodigal -c conda-forge -c bioconda`
-`conda activate <env_name>`
+
+2. Install other requirements
 `pip3 install -r <path to pyrewton requirements.txt file>`
+
+3. Install pyrewton
+`pip3 install -e <path to directory containing setup.py file>`
+_Pass the path to the **directory** containing the setup.py file to pip3, **not** the path to the setup.py file, and the **-e** option on `pip3 install` must be used otherwise ModuleNotFound errors will be raised when trying to execute pyrewton._ 
 
 ## Directories
 
