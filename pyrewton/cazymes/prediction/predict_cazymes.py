@@ -77,6 +77,10 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Note: log file only created if specified at cmdline
     if logger is None:
         logger = build_logger("predict_cazymes", args)
+    
+    # If specified output directory for genomic files, create output directory
+    if args.output is not sys.stdout:
+        make_output_directory(args.output, logger, args.force, args.nodelete)
 
     # create list of paths to all fasta files in input directory
     all_fasta_paths = get_fasta_paths(args, logger)
