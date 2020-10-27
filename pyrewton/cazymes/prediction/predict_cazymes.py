@@ -58,7 +58,7 @@ class Query:
 
     def __str__(self):
         """Representation of object"""
-        return f"{self.tax_id} {self.source} fasta: {self.fasta}, pred_dir: {self.prediction_dir}"
+        return f"<tax-id={self.tax_id} source={self.source} fasta={self.fasta} prediction_dir={self.prediction_dir}"
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
