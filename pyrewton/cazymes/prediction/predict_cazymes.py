@@ -28,7 +28,6 @@ summarising statistical analsis of prediction accuracy.
 
 import logging
 import re
-import subprocess
 import sys
 
 from dataclasses import dataclass
