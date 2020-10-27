@@ -108,6 +108,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         # pass FASTA file path and outdir_path to invoke prediction tools
         invoke_prediction_tools(prediction_tool_query, args, logger)
 
+        predictions.append(prediction_tool_query)
+
     # standardist output from prediction tools for the prediction output per
     # FASTA file
     # for prediction in predictions:  # make tqdm
