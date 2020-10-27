@@ -182,4 +182,4 @@ This submodule is for the prediction if a query protein sequence is a CAZyme or 
 
 
 ## Repository renamed 2020-10-05
-**Note:** This repository was renamed from 'pyrewton' to 'pyrewton'.
+**Note:** This repository was renamed from 'PhD_project_scripts' to 'pyrewton'.
