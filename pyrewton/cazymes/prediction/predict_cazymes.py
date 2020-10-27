@@ -77,7 +77,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Note: log file only created if specified at cmdline
     if logger is None:
         logger = build_logger("predict_cazymes", args)
-    
+
     # If specified output directory for genomic files, create output directory
     if args.output is not sys.stdout:
         make_output_directory(args.output, logger, args.force, args.nodelete)
@@ -173,8 +173,7 @@ def get_protein_source(file_path, args, logger):
     Return string, source of protein sequences.
     """
     # Attempt to retrieve genomic assembly from FASTA file path
-    accession_pattern = re.compile(r"GC(A|F)\d+?_\d+?")
-    search_result = re.search(accession_pattern, str(file_path), re.IGNORECASE)
+    search_result = re.search(r"GC(A|F)\d+?_\d+?", str(file_path), re.IGNORECASE)
 
     try:
         protein_source = search_result.group()
@@ -201,16 +200,14 @@ def get_tax_id(file_path, args, logger):
     Return string, taxonomy ID of proteins' host species.
     """
     # search for first taxonomy ID format
-    tax_pattern = re.compile(r"ncbi(-|_)txid\d+?")
-    search_result = re.search(tax_pattern, str(file_path), re.IGNORECASE)
+    search_result = re.search(r"ncbi(-|_)txid\d+?", str(file_path), re.IGNORECASE)
 
     try:
         tax_id = search_result.group()
         return tax_id
     except AttributeError:
         # search for other taxonomy ID format
-        tax_pattern = re.compile(r"taxonomy__\d+?__")
-        search_result = re.search(tax_pattern, str(file_path), re.IGNORECASE)
+        search_result = re.search(r"taxonomy__\d+?__", str(file_path), re.IGNORECASE)
         try:
             tax_id = search_result.group()
             return tax_id
