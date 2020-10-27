@@ -5,10 +5,10 @@ Trouble Shooting
 
 This section covers common errors expected to arise when invoking each module/submodule, and the probable causes.
 If any other issues arise, please raise any issues with any of the programmers at the GitHub repository issues pages, by
-following `the link <https://github.com/HobnobMancer/PhD_Project_Scripts/issues>`_.
+following `the link <https://github.com/HobnobMancer/pyrewton/issues>`_.
 
 | - :ref:`genbank-mod-get-ncbi-genomes`
-| - :ref:`genbank-mod-get-cazyme-annotations`
+| - :ref:`genbank-mod-get-genbank-annotations`
 
 genbank: get_nbci_genomes
 =========================
@@ -63,9 +63,9 @@ formatting of the assembly IDs or the request is too large for Entrez/ NCBI. If 
 in batches. If this error occurs the program with exit the retrieval of the NCBI accession numbers, and return the
 string 'NA'. This allows for troubleshooting using on the specie(s) for which it is required, to reduce demand on NCBI.
 
-.. _genbank-mod-get-cazyme-annotations:
+.. _genbank-mod-get-genbank-annotations:
 
-get_cazyme_annotations
+get_genbank_annotations
 ======================
 
 This section deals with troubleshooting the genbank module's submodule get_cazyme_annotations,
