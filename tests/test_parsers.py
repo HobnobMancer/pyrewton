@@ -29,6 +29,7 @@ from pyrewton.parsers import (
     parser_get_ncbi_genomes,
     parser_get_genbank_annotations,
     parser_get_uniprot_proteins,
+    parser_predict_cazymes,
 )
 
 
@@ -38,13 +39,38 @@ def test_parser_gt_ncb_gnms():
     parser_get_ncbi_genomes.build_parser()
 
 
+def test_parser_gt_ncb_gnms_argc():
+    """Tests building of parser for get_ncbi_genomes when argv is not None"""
+    parser_get_ncbi_genomes.build_parser(["dummy_email"])
+
+
 @pytest.mark.run(order=2)
-def test_parser_gt_czym_anno():
+def test_parser_gt_gnbnk_anno():
     """Tests building of parser"""
     parser_get_genbank_annotations.build_parser()
+
+
+def test_parser_gt_gnbnk_anno_argv():
+    """Tests building of parser for get_genbank_annotations when argv is not None"""
+    parser_get_genbank_annotations.build_parser(["tests", "tests"])
 
 
 @pytest.mark.run(order=3)
 def test_parser_gt_unprt_prtns():
     """Tests building of parser"""
     parser_get_uniprot_proteins.build_parser()
+
+
+def test_parser_gt_unprt_prtns_argv():
+    """Tests building of parser for get_uniprot_proteins when argv is not None"""
+    parser_get_uniprot_proteins.build_parser(["tests/"])
+
+
+def test_parser_prdct_czyms():
+    """Test building parser for predict_cazymes.py"""
+    parser_predict_cazymes.build_parser()
+
+
+def test_parser_prdct_czyms_argv():
+    """Test building parser for predict_cazymes.py when argv is not none"""
+    parser_predict_cazymes.build_parser(["tests/"])
