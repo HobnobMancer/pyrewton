@@ -235,11 +235,10 @@ def get_protein_source(file_path, logger):
             return protein_source
 
 
-def get_tax_id(file_path, args, logger):
+def get_tax_id(file_path, logger):
     """Retrieve taxonomy ID from fasta file path.
 
     :param file_path: path, path to fasta file path
-    :param args: parser object
     :param logger: logger object
 
     Return string, taxonomy ID of proteins' host species.
