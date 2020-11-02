@@ -397,6 +397,28 @@ def test_scientific_name_retrieval_indexerror_catch(
         )
 
 
+def test_scientific_name_retrieval_typeerror_catch(
+    gt_ncbi_gnms_test_inputs,
+    null_logger,
+    monkeypatch,
+):
+    """Tests get_scientific name retrieval handling when no entry with the
+    given taxonomy ID is found."""
+
+    def mock_entrez_sci_call(*args, **kwargs):
+        """Mocks call to Entrez to retrieve scientific name."""
+        return None
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_sci_call)
+
+    assert "NA" == get_ncbi_genomes.get_genus_species_name(
+        gt_ncbi_gnms_test_inputs[1],
+        null_logger,
+        gt_ncbi_gnms_test_inputs[3],
+        gt_ncbi_gnms_test_inputs[0],
+    )
+
+
 # Test retrieval of taxonomy ID
 
 
@@ -456,6 +478,27 @@ def test_tax_id_retrieval_indexerror_catch(
             gt_ncbi_gnms_test_inputs[0],
         )
 
+
+def test_tax_id_retrieval_typeerror_catch(
+    gt_ncbi_gnms_test_inputs,
+    null_logger,
+    monkeypatch,
+):
+    """Tests handling index Error when retrieving tax ID"""
+
+
+    def mock_entrez_txid_call(*args, **kwargs):
+        """Mocks call to Entrez to retrieve taxonomy ID."""
+        return
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_txid_call)
+
+    assert "NA" == get_ncbi_genomes.get_genus_species_name(
+        gt_ncbi_gnms_test_inputs[2],
+        null_logger,
+        gt_ncbi_gnms_test_inputs[3],
+        gt_ncbi_gnms_test_inputs[0],
+    )
 
 # Test retrieval of accession numbers from NCBI
 
