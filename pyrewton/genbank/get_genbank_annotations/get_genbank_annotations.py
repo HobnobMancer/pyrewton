@@ -97,7 +97,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Write out FASTA files
     index = 0
     for index in tqdm(
-        range(len(protein_annotation_df["Genus"])), desc=f"Writing protein to FASTA"
+        range(len(protein_annotation_df["Genus"])), desc="Writing protein to FASTA"
     ):
         df_row = protein_annotation_df.iloc[index]
         write_fasta(df_row, logger, args)
