@@ -17,6 +17,7 @@
 #
 # The MIT License
 """Retrieves proteins from UniProt and write fasta files.
+
 Queries and Taxonomy IDs are passed to this script via a YAML
 file.
 Taxonomy IDs must be stored as a list under 'tax_ids'.
@@ -25,6 +26,7 @@ and written in the UniProtKB query syntax (see
 uniprot.ord/help/text-syntax).
 Write all tax IDs and queries within quotation marks,
 such as "database:(type:cazy)".
+
 :cmd_args input: optional, path to configuration file - required
 :cmd_args --fasta: optional, enable writing out of fasta files
 :cmd_args --force: optional, force overwrite if output already exists
@@ -34,13 +36,13 @@ such as "database:(type:cazy)".
 :cmd_args --verbose: optional, change logger level to 'info'
 
 :func main: set-up script, configure call to UniProtKB
-:func read_configuration: interprets and configuration data to set up UniProtKB call
 :func get_config_data: retrieve data from config file
 :func build_uniprot_df: build query, coordinate dataframe formating
 :func call_uniprotkb: call to UniProtKB
 :func format_search_result: rename columns, add EC number column
 :func get_ec_numbers: retrieve EC numbers for UniProt dataframe
 :func write_fasta: write out data to fasta file
+
 """
 
 import io
@@ -132,8 +134,10 @@ def read_configuration(args, logger):
 
 def get_config_data(logger, args):
     """Retrieve data from configration file.
+
     :param logger: logger objects
     :param args: parser arguments.
+
     Returns list of taxonomy IDs and list of queries.
     """
     logger.info("Retrieving queries from config file")
@@ -190,9 +194,11 @@ def get_config_data(logger, args):
 
 def build_uniprot_df(query, logger, args):
     """Build dataframe to store data retrieved from UniProtKB.
+
     :param query: tuple, contains query terms: query, tax id
     :param logger: logger object
     :param args: parser arguments
+
     Returns nothing.
     """
     query_elements = []  # empty list to store elements of query
@@ -230,9 +236,12 @@ def build_uniprot_df(query, logger, args):
 
 def call_uniprotkb(query, logger):
     """Calls to UniProt.
+
     If no data is retieved a default 'blank' dataframe is returned.
+
     :param query: str, query for UniProt
     :param logger: logger object
+
     Returns dataframe of search results.
     """
     # Establish data to be retrieved from UniProt
@@ -295,11 +304,13 @@ def call_uniprotkb(query, logger):
 
 def format_search_results(search_result_df, filestem, logger, args):
     """Rename columns, and add EC number column.
+
     :param search_result_df: pandas dataframe of UniProt search results
     :param tax_id: str, NCBI taxonomy ID of species
     :param filestem: str, FASTA file name
     :param logger: logger object
     :param args: parser arguments
+
     Return pandas dataframe.
     """
     logger.info("Renaming column headers")
@@ -342,8 +353,10 @@ def format_search_results(search_result_df, filestem, logger, args):
 
 def get_ec_numbers(df_row, logger):
     """Retrieve EC numbers in dataframe row.
+
     :param df_row: pandas series
     :param logger: logger object
+
     Returns str of all EC numbers retrieved (human readible list).
     """
     ec_search = re.findall(r"\(EC [\d-]\d*\.[\d-]\d*\.[\d-]\d*\.[\d-]\d*\)", df_row[4])
@@ -366,10 +379,12 @@ def get_ec_numbers(df_row, logger):
 
 def write_fasta(df_row, filestem, logger, args):
     """Write out FASTA file.
+
     :param df_row: row from pandas df of UniProt search results
     :param filestem: str, FASTA file name
     :param logger: logger object
     :param args: parser arguments
+
     Returns nothing.
     """
     # FASTA sequences have 60 characters per line, add line breakers into protein sequence
