@@ -53,7 +53,7 @@ def invoke_prediction_tools(query, logger):
     if process.returncode != 0:  # return code is 0 for successful run
         logger.warning(
             (
-                f"dbCAN ran into error for {output_dir[-1]}\n."
+                f"dbCAN ran into error for {outdir}\n."
                 "dbCAN error:\n"
                 f"{process.stderr}"
             )
@@ -80,7 +80,7 @@ def invoke_prediction_tools(query, logger):
     if process.returncode != 0:
         logger.warning(
             (
-                f"CUPP ran into error for {output_dir[-1]}\n."
+                f"CUPP ran into error for {outdir}\n."
                 "CUPP error:\n"
                 f"{process.stderr}"
             )
@@ -109,7 +109,7 @@ def invoke_prediction_tools(query, logger):
     if process.returncode != 0:
         logger.warning(
             (
-                f"eCAMI ran into error for {output_dir[-1]}\n."
+                f"eCAMI ran into error for {outdir}\n."
                 "eCAMI error:\n"
                 f"{process.stderr}"
             )
