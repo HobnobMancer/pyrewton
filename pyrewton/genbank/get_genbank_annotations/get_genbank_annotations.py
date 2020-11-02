@@ -81,7 +81,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # If specified output directory, create output directory to write FASTA files too
     if args.output is not sys.stdout:
-        make_output_directory(args, logger)
+        make_output_directory(args.output, logger, args.force, args.nodelete)
 
     # Open input dataframe
     logger.info("Opening input dataframe %s", args.input_df)
