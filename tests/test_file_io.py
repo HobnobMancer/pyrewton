@@ -29,7 +29,7 @@ import pytest
 
 import pandas as pd
 
-from pyrewton import file_io
+from pyrewton.utilities import file_io
 
 
 # Create general fixtures for tests in this file
