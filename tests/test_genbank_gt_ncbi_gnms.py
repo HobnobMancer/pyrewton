@@ -407,7 +407,7 @@ def test_scientific_name_retrieval_typeerror_catch(
 
     def mock_entrez_sci_call(*args, **kwargs):
         """Mocks call to Entrez to retrieve scientific name."""
-        return None
+        return
 
     monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_sci_call)
 
@@ -622,6 +622,22 @@ def test_failed_elink(
         assert "NA" == get_ncbi_genomes.get_assembly_ids(
             input_ncbi_df, null_logger, ncbi_args["args"]
         )
+
+
+def test_no_elink(
+    input_ncbi_df, null_logger, ncbi_args, monkeypatch, elink_result_empty
+):
+    """Test catching of when nothing returned from Entrez.elink"""
+
+    def mock_elink(*args, **kwargs):
+        """mock Entre.elink when no result is returned"""
+        return
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_elink)
+
+    assert "NA" == get_ncbi_genomes.get_assembly_ids(
+        input_ncbi_df, null_logger, ncbi_args["args"]
+    )
 
 
 @pytest.mark.run(order=22)

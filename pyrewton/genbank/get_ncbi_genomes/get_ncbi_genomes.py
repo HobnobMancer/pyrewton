@@ -414,27 +414,28 @@ def get_assembly_ids(df_row, logger, args):
 
     Return list of assembly IDs """
     # df_row[2][9:] removes 'NCBI:txid' prefix
-    with entrez_retry(
-        logger,
-        args.retries,
-        Entrez.elink,
-        dbfrom="Taxonomy",
-        id=df_row[2][9:],
-        db="Assembly",
-        linkname="taxonomy_assembly",
-    ) as assembly_number_handle:
-        try:
+    try: 
+        with entrez_retry(
+            logger,
+            args.retries,
+            Entrez.elink,
+            dbfrom="Taxonomy",
+            id=df_row[2][9:],
+            db="Assembly",
+            linkname="taxonomy_assembly",
+        ) as assembly_number_handle:
             assembly_number_record = Entrez.read(assembly_number_handle)
-        # if no record is returned from call to Entrez
-        except (TypeError, AttributeError) as error:
-            logger.error(
-                (
-                    f"Entrez failed to retrieve accession numbers for NCBI:txid{df_row[2]}.\n"
-                    "Returned null value 'NA'."
-                ),
-                exc_info=1,
-            )
-            return "NA"
+
+    # if no record is returned from call to Entrez
+    except (TypeError, AttributeError) as error:
+        logger.error(
+            (
+                f"Entrez failed to retrieve accession numbers for NCBI:txid{df_row[2]}.\n"
+                "Returned null value 'NA'."
+            ),
+            exc_info=1,
+        )
+        return "NA"
 
     # extract assembly IDs from record
     try:
