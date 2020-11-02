@@ -33,10 +33,12 @@ In the above URL separate out the search criteria used by '&'.
 import json
 import pytest
 import sys
+import urllib.request
 
 import pandas as pd
 
 from argparse import Namespace, ArgumentParser
+from urllib.error import URLError
 
 from Bio import Entrez
 from Bio.Entrez import Parser
@@ -172,6 +174,38 @@ def ncbi_args(test_dir, test_ncbi_species_file):
         )
     }
     return argsdict
+
+
+@pytest.fixture
+def ncbi_args_ioerror(test_dir, test_ncbi_species_file):
+    path = test_dir / "test_inputs"
+    argsdict = {
+        "args": Namespace(
+            genbank=True,
+            retries=10,
+            timeout=10,
+            output=test_dir,
+            input_file=test_ncbi_species_file,
+        )
+    }
+    return argsdict
+
+
+@pytest.fixture
+def ncbi_args_file_exists(test_dir, test_ncbi_species_file):
+    path = test_dir / "test_targets" / "gt_ncbi_gnms_test_targets2"
+    path = path / "GCA_001599495_1_JCM_2005_assembly_v001_genomic.gbff.gz"
+    argsdict = {
+        "args": Namespace(
+            genbank=True,
+            retries=10,
+            timeout=10,
+            output=path,
+            input_file=test_ncbi_species_file,
+        )
+    }
+    return argsdict
+
 
 
 @pytest.fixture
@@ -827,12 +861,63 @@ def test_download(null_logger, ncbi_args, test_dir, monkeypatch):
     """Tests downloading of GenBank file"""
 
     def mock_url_open(*args, **kwargs):
-        return "open URL"
+        response = Namespace(info="info", get=1000)
+        return response
 
-    monkeypatch.setattr(get_ncbi_genomes, "download_file", mock_url_open)
+    def mock_reading_response(*args, **kwargs):
+        return "test test test"
+
+    monkeypatch.setattr("urllib3.connectionpool.HTTPConnectionPool.urlopen", mock_url_open)
+    monkeypatch.setattr("urllib3.response.HTTPResponse.read", mock_reading_response)
 
     get_ncbi_genomes.download_file(
-        "URL", ncbi_args["args"], test_dir, null_logger, "accession", "GenBank"
+        "http://www.google.com", ncbi_args["args"], test_dir, null_logger, "accession", "GenBank"
+    )
+
+
+# def test_download_raise_ioerror(null_logger, ncbi_args_ioerror, test_dir, monkeypatch):
+#     """Tests downloading of GenBank file"""
+
+#     def mock_url_open(*args, **kwargs):
+#         response = Namespace(info="info", get=1000)
+#         return response
+
+#     def mock_reading_response(*args, **kwargs):
+#         raise IOError("message")
+
+#     monkeypatch.setattr("urllib3.connectionpool.HTTPConnectionPool.urlopen", mock_url_open)
+#     monkeypatch.setattr(("urllib3.response.HTTPResponse.read"), mock_reading_response)
+
+#     with pytest.raises(IOError) as pytest_wrapped_e:
+#         get_ncbi_genomes.download_file(
+#             "http://www.google.com", ncbi_args_ioerror["args"], test_dir, null_logger, "accession", "GnBnk"
+#         )
+#     assert pytest_wrapped_e.type == IOError
+
+
+def test_download_raise_urlerror(null_logger, ncbi_args, test_dir, monkeypatch):
+    """Test file download when HTTP error is raised."""
+
+    def mock_urlopen(*args, **kwargs):
+        raise URLError("http://foo")
+
+    monkeypatch.setattr("urllib3.connectionpool.HTTPConnectionPool.urlopen", mock_urlopen)
+
+    get_ncbi_genomes.download_file(
+        "http://foo", ncbi_args["args"], test_dir, null_logger, "accession", "GenBank"
+    )
+
+
+def test_download_file_exists(null_logger, ncbi_args_file_exists, test_dir, monkeypatch):
+    """Tests downloading of GenBank file"""
+
+    def mock_url_open(*args, **kwargs):
+        return
+
+    monkeypatch.setattr("urllib3.connectionpool.HTTPConnectionPool.urlopen", mock_url_open)
+
+    get_ncbi_genomes.download_file(
+        "http://foo", ncbi_args_file_exists["args"], test_dir, null_logger, "accession", "GenBank"
     )
 
 
