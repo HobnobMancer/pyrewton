@@ -67,9 +67,6 @@ def invoke_prediction_tools(query, args, logger):
         )
         dbcan_returncode = 1
 
-    print("done dbCAN!")
-    sys.exit(1)
-
     # move to cupp directory so can access CUPP
     os.chdir('../')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('cupp')
