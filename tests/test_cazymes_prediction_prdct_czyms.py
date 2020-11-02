@@ -251,3 +251,27 @@ def test_get_protein_source_unknown(null_logger):
 
     file_path = "test_test_test.fasta"
     assert predict_cazymes.get_protein_source(file_path, null_logger) == "unknown_source"
+
+
+# test get_tax_id()
+
+
+def test_get_tax_id(null_logger):
+    """Test get_tax_id when retrieved with ncbi-txid prefix."""
+
+    file_path = "ncbi_txid123.fasta"
+    assert predict_cazymes.get_tax_id(file_path, null_logger) == "ncbi_txid123"
+
+
+def test_get_tax_id_taxonomy(null_logger):
+    """Test get_tax_id when retrieved with taxonomy prefix."""
+
+    file_path = "taxonomy__123__.fasta"
+    assert predict_cazymes.get_tax_id(file_path, null_logger) == "taxonomy__123"
+
+
+def test_get_tax_id_fail(null_logger):
+    """Test get_tax_id when no tax ID is returned."""
+
+    file_path = "test_test_test.fasta"
+    assert predict_cazymes.get_tax_id(file_path, null_logger) == None
