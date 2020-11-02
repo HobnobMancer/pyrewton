@@ -101,8 +101,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # for each FASTA file invoke dbCAN, CUPP and eCAMI
     for file_path in all_fasta_paths:  # make tqdm
         # retrieve data on source of protein sequences and species taxonomy ID
-        protein_source = get_protein_source(file_path, args, logger)
-        tax_id = get_tax_id(file_path, args, logger)
+        protein_source = get_protein_source(file_path, logger)
+        tax_id = get_tax_id(file_path, logger)
 
         time_stamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
 
