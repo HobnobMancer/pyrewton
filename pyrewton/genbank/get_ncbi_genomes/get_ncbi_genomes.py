@@ -498,28 +498,28 @@ def retrieve_accession_numbers(webenv, df_row, logger, args):
     # create empty list to store accession numbers
     ncbi_accession_numbers_list = []
 
-    with entrez_retry(
-        logger,
-        args.retries,
-        Entrez.efetch,
-        db="Assembly",
-        query_key=webenv[1],
-        WebEnv=webenv[0],
-        rettype="docsum",
-        retmode="xml",
-    ) as accession_handle:
-        try:
+    try:
+        with entrez_retry(
+            logger,
+            args.retries,
+            Entrez.efetch,
+            db="Assembly",
+            query_key=webenv[1],
+            WebEnv=webenv[0],
+            rettype="docsum",
+            retmode="xml",
+        ) as accession_handle:
             accession_record = Entrez.read(accession_handle, validate=False)
-        # if no record is returned from call to Entrez
-        except (TypeError, AttributeError) as error:
-            logger.error(
-                (
-                    f"Entrez failed to retireve accession numbers, for {df_row[2]}."
-                    "Exiting retrieval of accession numbers, and returning null value 'NA'"
-                ),
-                exc_info=1,
-            )
-            return "NA"
+    # if no record is returned from call to Entrez
+    except (TypeError, AttributeError) as error:
+        logger.error(
+            (
+                f"Entrez failed to retireve accession numbers, for {df_row[2]}."
+                "Exiting retrieval of accession numbers, and returning null value 'NA'"
+            ),
+            exc_info=1,
+        )
+        return "NA"
 
     # Extract accession numbers from document summary
     for index_number in tqdm(

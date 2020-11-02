@@ -718,6 +718,25 @@ def test_failed_accession_retrieval(
         )
 
 
+def test_no_accession_retrieval(
+    input_ncbi_df,
+    null_logger,
+    ncbi_args,
+    monkeypatch,
+    efetch_accession_result_empty,
+    mocked_webenv,
+):
+    """Test handling data when nothing is returned from Entrez.efetch."""
+    def mock_efetch(*args, **kwargs):
+        return
+
+    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_efetch)
+
+    "NA" == get_ncbi_genomes.retrieve_accession_numbers(
+        mocked_webenv, input_ncbi_df, null_logger, ncbi_args["args"]
+    )
+
+
 @pytest.mark.run(order=26)
 def test_successful_accession_number_retrieval(
     input_ncbi_df,
