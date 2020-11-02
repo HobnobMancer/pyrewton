@@ -16,7 +16,7 @@
 # UK
 #
 # The MIT License
-"""Build loggers for pyrewton modules."""
+"""Module for building loggers and cmd-line args parsers for pyrewton modules."""
 
 import logging
 
