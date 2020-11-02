@@ -253,7 +253,7 @@ def get_tax_id(file_path, logger):
         # search for other taxonomy ID format
         search_result = re.search(r"taxonomy__\d+?__", str(file_path), re.IGNORECASE)
         try:
-            tax_id = search_result.group()
+            tax_id = search_result.group()[:-2]
             return tax_id
         except AttributeError:
             return
