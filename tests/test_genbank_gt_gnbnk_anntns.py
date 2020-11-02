@@ -227,6 +227,69 @@ def test_main(
     get_genbank_annotations.main()
 
 
+def test_main_argv(
+    null_logger, output_dir, coordination_args, test_input_df, protein_df, monkeypatch
+):
+    """Test coordination of GenBank protein annotation retrieval by main()."""
+
+    def mock_built_parser(*args, **kwargs):
+        parser_args = ArgumentParser(
+            prog="get_genbank_annotations.py",
+            usage=None,
+            description="Retrieve protein data from UniProtKB",
+            conflict_handler="error",
+            add_help=True,
+        )
+        return parser_args
+
+    def mock_parser(*args, **kwargs):
+        parser = Namespace(
+            output=output_dir,
+            force=True,
+            genbank=gb_file_dir,
+            input_df=test_input_df_path,
+            nodelete=True,
+            output_df=test_input_df_path,
+        )
+        return parser
+
+    def mock_build_logger(*args, **kwargs):
+        return null_logger
+
+    def mock_create_out_dir(*args, **kwargs):
+        return
+
+    def mock_df_reading(*args, **kwargs):
+        return test_input_df_path
+
+    def mock_create_dataframe(*args, **kwargs):
+        df = protein_df
+        return df
+
+    def mock_write_out_dataframe(*args, **kwargs):
+        return
+
+    def mock_write_fasta(*args, **kwargs):
+        return
+
+    monkeypatch.setattr(get_genbank_annotations, "build_parser", mock_built_parser)
+    monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
+    monkeypatch.setattr(get_genbank_annotations, "build_logger", mock_build_logger)
+    monkeypatch.setattr(pd, "read_csv", mock_df_reading)
+    monkeypatch.setattr(
+        get_genbank_annotations, "create_dataframe", mock_create_dataframe
+    )
+    monkeypatch.setattr(
+        get_genbank_annotations, "write_out_dataframe", mock_write_out_dataframe
+    )
+    monkeypatch.setattr(get_genbank_annotations, "write_fasta", mock_write_fasta)
+    monkeypatch.setattr(
+        get_genbank_annotations, "make_output_directory", mock_create_out_dir
+    )
+
+    get_genbank_annotations.main(["argv"])
+
+
 # Test the creation of the dataframe
 
 
