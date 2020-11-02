@@ -24,6 +24,7 @@ pytest -v
 """
 
 import pytest
+import sys
 
 import pandas as pd
 
@@ -158,6 +159,43 @@ def protein_df():
 def df_series(protein_df):
     df_row = protein_df.iloc[0]
     return df_row
+
+
+@pytest.fixture
+def protein_df_alt():
+    columns_list = [
+        "Genus",
+        "Species",
+        "NCBI Taxonomy ID",
+        "NCBI Accession Number",
+        "NCBI Protein ID",
+        "Locus Tag",
+        "Gene Locus",
+        "Function",
+        "Protein Sequence",
+    ]
+    data = [
+        [
+            "Botrytis",
+            "cinerea B05.10",
+            "332648",
+            "GCF_000143535.2",
+            "XP_001553137.1",
+            "BCIN_14g02180",
+            "[891975:892232](-),[891495:891895](-)",
+            "hypothetical proteins",
+            "MSSHCHDEHDHGHGGHSHEGHDHSDDITPALQYSLYQHIKFDDITT",
+        ]
+    ]
+    df = pd.DataFrame(data, columns=columns_list)
+    return df
+
+
+@pytest.fixture
+def df_series_alt(protein_df_alt):
+    df_row = protein_df_alt.iloc[0]
+    return df_row
+
 
 
 # Test coordination of script
@@ -523,3 +561,8 @@ def test_get_file_empty(coordination_args, null_logger):
 def test_write_proteins_to_fasta(df_series, null_logger, args_fasta):
     """Test writing fasta file."""
     get_genbank_annotations.write_fasta(df_series, null_logger, args_fasta["args"])
+
+
+def test_write_proteins_to_fasta_alter(df_series_alt, null_logger, args_fasta):
+    """Test writing fasta file, tax id doesn't start with NCBI prefix and output is sys.stdout"""
+    get_genbank_annotations.write_fasta(df_series_alt, null_logger, args_fasta["args"])
