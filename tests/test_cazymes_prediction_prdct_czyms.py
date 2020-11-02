@@ -158,9 +158,10 @@ def test_main_argv_tax_id_none(output_dir, null_logger, input_dir, monkeypatch):
 
 # test check_cwd()
 
+
 def test_check_cwd_pass(null_logger, monkeypatch):
     """Test check_cwd() when it should fully pass."""
-    
+
     def mock_getcwd(*args, **kwargs):
         return "pyrewton/cazymes/prediction"
 
@@ -168,10 +169,30 @@ def test_check_cwd_pass(null_logger, monkeypatch):
 
     predict_cazymes.check_cwd(null_logger)
 
-# def test_check_cwd_move_dir(null_logger):
-#     """Test check_cwd() when invokved in tools/ dir."""
 
-#     def mock
+def test_check_cwd_move_dir(null_logger, monkeypatch):
+    """Test check_cwd() when invokved in tools/ dir."""
 
-# def test_check_cwd_fail(null_logger):
-#     """Test check_cwd() when script should be terminated because in incorrect dir."""
+    def mock_getcwd(*args, **kwargs):
+        return "pyrewton/cazymes/prediction/tools"
+
+    def mock_chdir(*args, **kwargs):
+        return
+
+    monkeypatch.setattr(os, "getcwd", mock_getcwd)
+    monkeypatch.setattr(os, "chdir", mock_chdir)
+
+    predict_cazymes.check_cwd(null_logger)
+
+
+def test_check_cwd_fail(null_logger, monkeypatch):
+    """Test check_cwd() when script should be terminated because in incorrect dir."""
+
+    def mock_getcwd(*args, **kwargs):
+        return "pyrewton/cazymes/"
+
+    monkeypatch.setattr(os, "getcwd", mock_getcwd)
+
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        predict_cazymes.check_cwd(null_logger)
+    assert pytest_wrapped_e.type == SystemExit
