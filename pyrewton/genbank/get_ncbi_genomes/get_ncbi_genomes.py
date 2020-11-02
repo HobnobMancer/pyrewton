@@ -104,11 +104,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # If specified output directory for genomic files, create output directory
     if args.output is not sys.stdout:
         make_output_directory(args.output, logger, args.force, args.nodelete)
-<<<<<<< HEAD
-=======
-
-    coordinate_data_retrieval(logger, args)
->>>>>>> 98e5ae8976d52feed0217a839d579fa54aba6a84
 
     # Invoke main usage of programme
     # Create dataframe storing genus, species and NCBI Taxonomy ID, called 'species_table'

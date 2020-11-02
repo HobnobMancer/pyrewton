@@ -46,15 +46,6 @@ def build_parser(argv: Optional[List] = None):
 
     # Add optional arguments to parser
 
-    # Add user email address
-    parser.add_argument(
-        "-u",
-        "--user",
-        type=str,
-        metavar="user email address",
-        default=None,
-        help="Email address of user, this must be provided",
-    )
     # Add dataframe write out options
     # if not given dataframe written to STDOUT
     parser.add_argument(

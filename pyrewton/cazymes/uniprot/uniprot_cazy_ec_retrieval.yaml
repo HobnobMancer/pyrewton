@@ -64,4 +64,3 @@ queries:
     - "ec:1.11.1.- AND database:(type:cazy)"
     - "ec:1.14.99.- AND database:(type:cazy)"
     - "ec:2.4.-.- AND database:(type:cazy)"
-
