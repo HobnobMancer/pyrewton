@@ -716,7 +716,7 @@ def entrez_retry(logger, retries, entrez_func, *func_args, **func_kwargs):
 
     Returns record.
     """
-    record, retries, tries = None, 10, 0
+    record, retries, tries = None, retries, 0
 
     while record is None and tries < retries:
         try:
