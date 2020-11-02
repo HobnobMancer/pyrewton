@@ -494,12 +494,13 @@ def write_fasta(df_row, logger, args, filestem="genbank_proteins"):
     # Create output path
     if args.output is not sys.stdout:
         output_path = args.output / f"{filestem}_{tax_id}_{accession}.fasta"
+        # Write out data to Fasta file
+        with open(output_path, "a") as fh:
+            fh.write(file_content)
     else:
         output_path = args.output
-
-    # Write out data to Fasta file
-    with open(output_path, "a") as fh:
-        fh.write(file_content)
+        binary_file_content = bytearray(file_content, "utf8")
+        sys.stdout.buffer.write(binary_file_content)
 
     return
 

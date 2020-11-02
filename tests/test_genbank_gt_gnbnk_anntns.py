@@ -199,7 +199,7 @@ def df_series_alt(protein_df_alt):
 
 @pytest.fixture
 def args_fasta_alt():
-    argsdict = {"args": Namespace(fasta=True, output=sys.stdin)}
+    argsdict = {"args": Namespace(fasta=True, output=(sys.stdout))}
     return argsdict
 
 
