@@ -24,6 +24,7 @@ pytest -v
 """
 
 import pytest
+import sys
 
 import pandas as pd
 
@@ -153,6 +154,12 @@ def output_dir(test_dir):
 @pytest.fixture
 def args_fasta(output_dir):
     argsdict = {"args": Namespace(fasta=True, outdir=output_dir)}
+    return argsdict
+
+
+@pytest.fixture
+def args_fasta_stdout():
+    argsdict = {"args": Namespace(fasta=True, outdir=sys.stdout)}
     return argsdict
 
 
@@ -427,6 +434,13 @@ def test_writing_out_fasta_file(df_series_for_writing, null_logger, args_fasta):
     """Test writing out fasta file."""
     get_uniprot_proteins.write_fasta(
         df_series_for_writing, "filestem", null_logger, args_fasta["args"]
+    )
+
+
+def test_writing_out_fasta_file_stdout(df_series_for_writing, null_logger, args_fasta_stdout):
+    """Test writing out fasta file."""
+    get_uniprot_proteins.write_fasta(
+        df_series_for_writing, "filestem", null_logger, args_fasta_stdout["args"]
     )
 
 
