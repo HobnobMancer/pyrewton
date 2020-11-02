@@ -25,12 +25,14 @@ pytest -v
 
 import os
 import pytest
+import subprocess
 
 import pandas as pd
 
 from argparse import Namespace, ArgumentParser
+from pathlib import Path
 
-from pyrewton.cazymes.prediction import predict_cazymes
+from pyrewton.cazymes.prediction import predict_cazymes, tools
 
 
 # create pytest fixtures for tests
@@ -59,6 +61,21 @@ def fasta_args(input_dir):
 def fasta_args_fail(input_dir):
     parser = Namespace(input=input_dir)
     return parser
+
+
+@pytest.fixture
+def prediction_query(input_dir):
+    in_path = input_dir / "input_fasta" / "genbank_proteins_txid73501_GCA_003332165_1.fasta"
+    out_path = Path("test_targets")
+    out_path = out_path / "prdct_czyms_test_targets"
+    query = Namespace(fasta=in_path, prediction_dir=out_path)
+    return query
+
+
+@pytest.fixture
+def subprocess_returncode_1():
+    subpro = Namespace(returncode=1, stderr="PredictionToolError")
+    return subpro
 
 
 # test function 'main'
@@ -275,3 +292,31 @@ def test_get_tax_id_fail(null_logger):
 
     file_path = "test_test_test.fasta"
     assert predict_cazymes.get_tax_id(file_path, null_logger) == None
+
+
+# test invoking prediction tools
+
+
+def test_invoking_prediction_tools(
+    prediction_query,
+    null_logger,
+    test_dir,
+    subprocess_returncode_1,
+    monkeypatch,
+):
+    """Test invoking prediction tools."""
+
+    def mock_getcwd(*args, **kwargs):
+        return test_dir
+
+    def mock_changing_dir(*args, **kwargs):
+        return
+
+    def mock_invoking_tools(*args, **kwargs):
+        return subprocess_returncode_1
+
+    monkeypatch.setattr(os, "getcwd", mock_getcwd)
+    monkeypatch.setattr(os, "chdir", mock_changing_dir)
+    monkeypatch.setattr(subprocess, "run", mock_invoking_tools)
+
+    tools.invoke_prediction_tools(prediction_query, null_logger)
