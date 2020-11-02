@@ -23,6 +23,7 @@ These tests are inteded to be run from the root repository using:
 pytest -v
 """
 
+import os
 import pytest
 
 import pandas as pd
@@ -103,7 +104,7 @@ def test_main(output_dir, null_logger, input_dir, monkeypatch):
 
 
 def test_main_argv_tax_id_none(output_dir, null_logger, input_dir, monkeypatch):
-    """Test function 'main'."""
+    """Test function 'main', when argv is not None and Tax ID is None."""
 
     def mock_built_parser(*args, **kwargs):
         parser_args = ArgumentParser(
@@ -154,5 +155,23 @@ def test_main_argv_tax_id_none(output_dir, null_logger, input_dir, monkeypatch):
 
     predict_cazymes.main(["argv"])
 
-# argsv is not None
-# tax id is None
+
+# test check_cwd()
+
+def test_check_cwd_pass(null_logger, monkeypatch):
+    """Test check_cwd() when it should fully pass."""
+    
+    def mock_getcwd(*args, **kwargs):
+        return "pyrewton/cazymes/prediction"
+
+    monkeypatch.setattr(os, "getcwd", mock_getcwd)
+
+    predict_cazymes.check_cwd(null_logger)
+
+# def test_check_cwd_move_dir(null_logger):
+#     """Test check_cwd() when invokved in tools/ dir."""
+
+#     def mock
+
+# def test_check_cwd_fail(null_logger):
+#     """Test check_cwd() when script should be terminated because in incorrect dir."""
