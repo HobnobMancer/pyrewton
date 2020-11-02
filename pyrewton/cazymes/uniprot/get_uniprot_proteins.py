@@ -142,7 +142,7 @@ def get_config_data(logger, args):
     Returns list of taxonomy IDs and list of queries.
     """
     logger.info("Retrieving queries from config file")
-    with open(args.input) as ifh:
+    with open(args.input, "r") as ifh:
         config_dict = yaml.full_load(ifh)
 
     # Retrieve Taxonomy IDs from configuration data
@@ -405,15 +405,15 @@ def write_fasta(df_row, filestem, logger, args):
 
     file_content = f">{protein_id} {uniprot_tax_id} {organism} \n{sequence}\n"
 
-    # Create output path
     if args.outdir is not sys.stdout:
         output_path = args.outdir / f"{filestem}.fasta"
-    else:
-        output_path = args.outdir
+        with open(output_path, "a") as fh:
+            fh.write(file_content)
 
-    # Write out data to Fasta file
-    with open(output_path, "a") as fh:
-        fh.write(file_content)
+    else:
+        binary_file_content = bytearray(file_content, "utf8")
+        sys.stdout.buffer.write(binary_file_content)
+
 
     return
 

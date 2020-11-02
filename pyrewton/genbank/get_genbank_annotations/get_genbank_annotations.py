@@ -498,7 +498,6 @@ def write_fasta(df_row, logger, args, filestem="genbank_proteins"):
         with open(output_path, "a") as fh:
             fh.write(file_content)
     else:
-        output_path = args.output
         binary_file_content = bytearray(file_content, "utf8")
         sys.stdout.buffer.write(binary_file_content)
 
