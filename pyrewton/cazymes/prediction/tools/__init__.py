@@ -18,11 +18,9 @@
 # The MIT License
 """Module invoking CAZyme prediction tools: dbCAN, CUPP and eCAMI"""
 
+
 import os
 import subprocess
-import sys
-
-from pathlib import Path
 
 
 def invoke_prediction_tools(query, args, logger):
@@ -129,4 +127,4 @@ def invoke_prediction_tools(query, args, logger):
     os.chdir('../')  # moves to 'tools/'
     os.chdir('../')  # moves to 'predictions/'
 
-    return dbcan_returncode, cupp_returncode, ecami_returncode
+    return
