@@ -197,6 +197,12 @@ def df_series_alt(protein_df_alt):
     return df_row
 
 
+@pytest.fixture
+def args_fasta_alt():
+    argsdict = {"args": Namespace(fasta=True, output=sys.stdin)}
+    return argsdict
+
+
 # Test coordination of script
 
 
@@ -562,6 +568,6 @@ def test_write_proteins_to_fasta(df_series, null_logger, args_fasta):
     get_genbank_annotations.write_fasta(df_series, null_logger, args_fasta["args"])
 
 
-def test_write_proteins_to_fasta_alter(df_series_alt, null_logger, args_fasta):
+def test_write_proteins_to_fasta_alter(df_series_alt, null_logger, args_fasta_alt):
     """Test writing fasta file, tax id doesn't start with NCBI prefix and output is sys.stdout"""
-    get_genbank_annotations.write_fasta(df_series_alt, null_logger, args_fasta["args"])
+    get_genbank_annotations.write_fasta(df_series_alt, null_logger, args_fasta_alt["args"])
