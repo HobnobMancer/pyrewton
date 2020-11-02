@@ -1109,7 +1109,7 @@ def test_main_stdout(accession_df, null_logger, monkeypatch):
             output=sys.stdout,
             input_file="mock input",
             retries=10,
-            dataframe="dataframe",
+            dataframe=sys.stdout,
             force=False,
             nodelete=False,
         )
