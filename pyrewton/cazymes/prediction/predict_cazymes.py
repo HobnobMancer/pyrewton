@@ -244,10 +244,10 @@ def get_tax_id(file_path, logger):
     Return string, taxonomy ID of proteins' host species.
     """
     # search for first taxonomy ID format
-    search_result = re.search(r"ncbi(-|_)txid\d+?", str(file_path), re.IGNORECASE)
+    search_result = re.search(r"ncbi(-|_)txid\d+?\D", str(file_path), re.IGNORECASE)
 
     try:
-        tax_id = search_result.group()
+        tax_id = search_result.group()[:-1]
         return tax_id
     except AttributeError:
         # search for other taxonomy ID format
