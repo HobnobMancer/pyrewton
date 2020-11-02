@@ -177,6 +177,21 @@ def ncbi_args(test_dir, test_ncbi_species_file):
 
 
 @pytest.fixture
+def ncbi_args_ioerror(test_dir, test_ncbi_species_file):
+    path = test_dir / "test_inputs"
+    argsdict = {
+        "args": Namespace(
+            genbank=True,
+            retries=10,
+            timeout=10,
+            output=test_dir,
+            input_file=test_ncbi_species_file,
+        )
+    }
+    return argsdict
+
+
+@pytest.fixture
 def ncbi_args_file_exists(test_dir, test_ncbi_species_file):
     path = test_dir / "test_targets" / "gt_ncbi_gnms_test_targets2"
     path = path / "GCA_001599495_1_JCM_2005_assembly_v001_genomic.gbff.gz"
@@ -453,18 +468,18 @@ def test_taxonomy_id_retrieval(
     with open(esearch_result, "rb") as fh:
         result = fh
 
-    def mock_entrez_txid_call(*args, **kwargs):
-        """Mocks call to Entrez to retrieve taxonomy ID."""
-        return result
+        def mock_entrez_txid_call(*args, **kwargs):
+            """Mocks call to Entrez to retrieve taxonomy ID."""
+            return result
 
-    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_txid_call)
+        monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_txid_call)
 
-    assert gt_ncbi_gnms_targets[1] == get_ncbi_genomes.get_tax_id(
-        gt_ncbi_gnms_test_inputs[2],
-        null_logger,
-        1,
-        gt_ncbi_gnms_test_inputs[0],
-    )
+        assert gt_ncbi_gnms_targets[1] == get_ncbi_genomes.get_tax_id(
+            gt_ncbi_gnms_test_inputs[2],
+            null_logger,
+            1,
+            gt_ncbi_gnms_test_inputs[0],
+        )
 
 
 @pytest.mark.run(order=14)
@@ -484,18 +499,18 @@ def test_tax_id_retrieval_indexerror_catch(
     with open(esearch_result_empty, "rb") as fh:
         result = fh
 
-    def mock_entrez_txid_call(*args, **kwargs):
-        """Mocks call to Entrez to retrieve taxonomy ID."""
-        return result
+        def mock_entrez_txid_call(*args, **kwargs):
+            """Mocks call to Entrez to retrieve taxonomy ID."""
+            return result
 
-    monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_txid_call)
+        monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_txid_call)
 
-    assert "NA" == get_ncbi_genomes.get_genus_species_name(
-        gt_ncbi_gnms_test_inputs[2],
-        null_logger,
-        gt_ncbi_gnms_test_inputs[3],
-        gt_ncbi_gnms_test_inputs[0],
-    )
+        get_ncbi_genomes.get_genus_species_name(
+            gt_ncbi_gnms_test_inputs[2],
+            null_logger,
+            gt_ncbi_gnms_test_inputs[3],
+            gt_ncbi_gnms_test_inputs[0],
+        )
 
 
 def test_tax_id_retrieval_typeerror_catch(
@@ -504,6 +519,7 @@ def test_tax_id_retrieval_typeerror_catch(
     monkeypatch,
 ):
     """Tests handling index Error when retrieving tax ID"""
+
 
     def mock_entrez_txid_call(*args, **kwargs):
         """Mocks call to Entrez to retrieve taxonomy ID."""
@@ -859,6 +875,26 @@ def test_download(null_logger, ncbi_args, test_dir, monkeypatch):
     )
 
 
+# def test_download_raise_ioerror(null_logger, ncbi_args_ioerror, test_dir, monkeypatch):
+#     """Tests downloading of GenBank file"""
+
+#     def mock_url_open(*args, **kwargs):
+#         response = Namespace(info="info", get=1000)
+#         return response
+
+#     def mock_reading_response(*args, **kwargs):
+#         raise IOError("message")
+
+#     monkeypatch.setattr("urllib3.connectionpool.HTTPConnectionPool.urlopen", mock_url_open)
+#     monkeypatch.setattr(("urllib3.response.HTTPResponse.read"), mock_reading_response)
+
+#     with pytest.raises(IOError) as pytest_wrapped_e:
+#         get_ncbi_genomes.download_file(
+#             "http://www.google.com", ncbi_args_ioerror["args"], test_dir, null_logger, "accession", "GnBnk"
+#         )
+#     assert pytest_wrapped_e.type == IOError
+
+
 def test_download_raise_urlerror(null_logger, ncbi_args, test_dir, monkeypatch):
     """Test file download when HTTP error is raised."""
 
@@ -943,6 +979,30 @@ def test_main(output_dir, accession_df, null_logger, monkeypatch):
     monkeypatch.setattr(get_ncbi_genomes, "write_out_dataframe", mock_writing_out_df)
 
     get_ncbi_genomes.main()
+
+
+# test entrez_retry
+
+
+def test_entry_retry(null_logger):
+    """Test entrez_retry."""
+
+    def mock_record(*args, **kwargs):
+        return "test_record"
+
+    assert "test_record" == get_ncbi_genomes.entrez_retry(null_logger, 1, mock_record)
+
+
+def test_entrez_retry_none(null_logger):
+    """Test entrez_retry when nothing is returned."""
+
+    def mock_record(*args, **kwargs):
+        return
+
+    assert get_ncbi_genomes.entrez_retry(null_logger, 0, mock_record) is None
+
+
+# test main()
 
 
 @pytest.mark.run(order=32)
@@ -1108,24 +1168,3 @@ def test_main_stdout(accession_df, null_logger, monkeypatch):
     monkeypatch.setattr(get_ncbi_genomes, "write_out_dataframe", mock_writing_out_df)
 
     get_ncbi_genomes.main()
-
-
-# test entrez_retry
-
-
-def test_entry_retry(null_logger):
-    """Test entrez_retry."""
-
-    def mock_record(*args, **kwargs):
-        return "test_record"
-
-    assert "test_record" == get_ncbi_genomes.entrez_retry(null_logger, 1, mock_record)
-
-
-def test_entrez_retry_none(null_logger):
-    """Test entrez_retry when nothing is returned."""
-
-    def mock_record(*args, **kwargs):
-        return
-
-    assert get_ncbi_genomes.entrez_retry(null_logger, 0, mock_record) is None
