@@ -529,12 +529,12 @@ def test_anno_retrieval_no_qualifier(
 
 
 @pytest.mark.run(order=47)
-def test_get_file_success(coordination_args, null_logger):
+def test_get_file_success(coordination_args, null_logger, gb_file_dir):
     """Test successful retrieval of single gb_file using get_gb_file."""
-    accession = "GCA_test####"
-    get_genbank_annotations.get_genbank_file(
-        accession, coordination_args["args"], null_logger
-    )
+    accession = "GCA_test####_genomic"
+    result = gb_file_dir / "GCA_test####_genomic.gbff.gz"
+
+    assert result == get_genbank_annotations.get_genbank_file(accession, coordination_args["args"], null_logger)
 
 
 @pytest.mark.run(order=48)
