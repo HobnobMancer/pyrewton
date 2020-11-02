@@ -1144,3 +1144,24 @@ def test_main_stdout(accession_df, null_logger, monkeypatch):
     monkeypatch.setattr(get_ncbi_genomes, "write_out_dataframe", mock_writing_out_df)
 
     get_ncbi_genomes.main()
+
+
+# test entrez_retry
+
+
+def test_entry_retry(null_logger):
+    """Test entrez_retry."""
+
+    def mock_record(*args, **kwargs):
+        return "test_record"
+
+    assert "test_record" == get_ncbi_genomes.entrez_retry(null_logger, 1, mock_record)
+
+
+def test_entrez_retry_none(null_logger):
+    """Test entrez_retry when nothing is returned."""
+
+    def mock_record(*args, **kwargs):
+        return
+
+    assert get_ncbi_genomes.entrez_retry(null_logger, 0, mock_record) is None
