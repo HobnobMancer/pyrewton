@@ -77,7 +77,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         parser = build_parser()
         args = parser.parse_args()
     else:
-    	parser = build_parser(argv)
+        parser = build_parser(argv)
         args = parser.parse_args()
 
     # Initiate logger
@@ -210,11 +210,10 @@ def get_fasta_paths(args, logger):
     return fasta_file_paths
 
 
-def get_protein_source(file_path, args, logger):
+def get_protein_source(file_path, logger):
     """Retrieve source of protein sequences from FASTA file path.
 
     :param file_path: path, path to fasta file
-    :param args: parser objects
     :param logger: logger object
 
     Return string, source of protein sequences.
