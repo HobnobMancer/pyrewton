@@ -72,7 +72,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         args = parser.parse_args()
     else:
         parser = build_parser(argv)
-        args = parser.parse_args
+        args = parser.parse_args()
 
     # Initiate logger
     # Note: log file only created if specified at cmdline

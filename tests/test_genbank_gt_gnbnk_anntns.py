@@ -287,7 +287,7 @@ def test_main_argv(
         get_genbank_annotations, "make_output_directory", mock_create_out_dir
     )
 
-    get_genbank_annotations.main(["argv"])
+    get_genbank_annotations.main(["args"])
 
 
 # Test the creation of the dataframe
