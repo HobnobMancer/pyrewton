@@ -33,11 +33,6 @@ def invoke_prediction_tools(query, args, logger):
     outdir = query.prediction_dir
     output_dir = current_path / outdir
 
-    # variables to store successful/failed process return codes
-    dbcan_returncode = 0
-    cupp_returncode = 0
-    ecami_returncode = 0
-
     # create list of args to invoke run_dbCAN
     dbcan_args = [
         "run_dbcan.py",
@@ -63,7 +58,6 @@ def invoke_prediction_tools(query, args, logger):
                 f"{process.stderr}"
             )
         )
-        dbcan_returncode = 1
 
     # move to cupp directory so can access CUPP
     os.chdir('../')  # moves up to pyrewton/cazymes/prediction/tools
@@ -91,7 +85,6 @@ def invoke_prediction_tools(query, args, logger):
                 f"{process.stderr}"
             )
         )
-        cupp_returncode = 1
 
     # move to ecami directory so can access eCAMI
     os.chdir('../')  # moves up to pyrewton/cazymes/prediction/tools
@@ -121,7 +114,6 @@ def invoke_prediction_tools(query, args, logger):
                 f"{process.stderr}"
             )
         )
-        ecami_returncode = 1
 
     # move back to 'predictions/' directory
     os.chdir('../')  # moves to 'tools/'
