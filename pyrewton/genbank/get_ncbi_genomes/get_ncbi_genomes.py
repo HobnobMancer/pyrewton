@@ -414,7 +414,7 @@ def get_assembly_ids(df_row, logger, args):
 
     Return list of assembly IDs """
     # df_row[2][9:] removes 'NCBI:txid' prefix
-    try: 
+    try:
         with entrez_retry(
             logger,
             args.retries,
@@ -696,9 +696,9 @@ def download_file(
         logger.error(f"Download failed for {accession_number}", exc_info=1)
         return
 
-        logger.info(
-            f"Finished downloading GenBank file for {accession_number}", exc_info=1
-        )
+    logger.info(
+        f"Finished downloading GenBank file for {accession_number}", exc_info=1
+    )
 
     return
 
