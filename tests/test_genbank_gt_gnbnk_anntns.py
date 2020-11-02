@@ -197,7 +197,6 @@ def df_series_alt(protein_df_alt):
     return df_row
 
 
-
 # Test coordination of script
 
 
