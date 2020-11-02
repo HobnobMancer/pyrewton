@@ -63,9 +63,9 @@ from pandas.errors import EmptyDataError
 from tqdm import tqdm
 from urllib.error import HTTPError
 
-from pyrewton.file_io import write_out_pre_named_dataframe, make_output_directory
-from pyrewton.loggers import build_logger
-from pyrewton.parsers.parser_get_uniprot_proteins import build_parser
+from pyrewton.utilities import build_logger
+from pyrewton.utilities.cmd_parser_get_uniprot_proteins import build_parser
+from pyrewton.utilities.file_io import make_output_directory, write_out_pre_named_dataframe
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):

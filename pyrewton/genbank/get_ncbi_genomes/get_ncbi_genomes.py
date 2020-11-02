@@ -64,9 +64,9 @@ import pandas as pd
 from Bio import Entrez
 from tqdm import tqdm
 
-from pyrewton.loggers import build_logger
-from pyrewton.parsers.parser_get_ncbi_genomes import build_parser
-from pyrewton.file_io import make_output_directory, write_out_dataframe
+from pyrewton.utilities import build_logger
+from pyrewton.utilities.cmd_parser_get_ncbi_genomes import build_parser
+from pyrewton.utilities.file_io import make_output_directory, write_out_dataframe
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):

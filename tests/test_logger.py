@@ -27,7 +27,7 @@ from argparse import Namespace
 
 import pytest
 
-from pyrewton.loggers import build_logger
+from pyrewton.utilities import build_logger
 
 
 @pytest.fixture

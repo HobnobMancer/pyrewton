@@ -51,9 +51,9 @@ import pandas as pd
 from Bio import SeqIO
 from tqdm import tqdm
 
-from pyrewton.file_io import make_output_directory, write_out_dataframe
-from pyrewton.loggers import build_logger
-from pyrewton.parsers.parser_get_genbank_annotations import build_parser
+from pyrewton.utilities import build_logger
+from pyrewton.utilities.cmd_parser_get_genbank_annotations import build_parser
+from pyrewton.utilities.file_io import make_output_directory, write_out_dataframe
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):

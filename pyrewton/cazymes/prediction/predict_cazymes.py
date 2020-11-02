@@ -37,9 +37,9 @@ from pathlib import Path
 from typing import List, Optional
 
 from pyrewton.cazymes.prediction.tools import invoke_prediction_tools
-from pyrewton.file_io import make_output_directory
-from pyrewton.loggers import build_logger
-from pyrewton.parsers.parser_predict_cazymes import build_parser
+from pyrewton.utilities import build_logger
+from pyrewton.utilities.cmd_parser_predict_cazymes import build_parser
+from pyrewton.utilities.file_io import make_output_directory
 
 
 @dataclass
