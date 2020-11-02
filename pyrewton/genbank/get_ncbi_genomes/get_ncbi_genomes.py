@@ -120,7 +120,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     if args.dataframe is not sys.stdout:
         write_out_dataframe(species_table, logger, args.dataframe, args.force)
     else:
-        species_table.to_csv(args.dataframe)
+        species_table.to_pickle(args.dataframe)
 
     # Program finished
     logger.info("Program finished and exiting")
