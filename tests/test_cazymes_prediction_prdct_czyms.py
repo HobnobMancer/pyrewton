@@ -36,15 +36,30 @@ from pyrewton.cazymes.prediction import predict_cazymes
 
 # create pytest fixtures for tests
 
+
 @pytest.fixture
 def input_dir(test_dir):
     path = test_dir / "test_inputs" / "prdct_czyms_test_inputs"
     return path
 
+
 @pytest.fixture
 def output_dir(test_dir):
     path = test_dir / "test_targets" / "prdct_czyms_test_targets"
     return path
+
+
+@pytest.fixture
+def fasta_args(input_dir):
+    path = input_dir / "input_fasta"
+    parser = Namespace(input=path)
+    return parser
+
+
+@pytest.fixture
+def fasta_args_fail(input_dir):
+    parser = Namespace(input=input_dir)
+    return parser
 
 
 # test function 'main'
@@ -195,4 +210,21 @@ def test_check_cwd_fail(null_logger, monkeypatch):
 
     with pytest.raises(SystemExit) as pytest_wrapped_e:
         predict_cazymes.check_cwd(null_logger)
+    assert pytest_wrapped_e.type == SystemExit
+
+
+# test get_fasta_paths()
+
+
+def test_get_fasta_paths(fasta_args, null_logger):
+    """Test retrieval of fasta files by get_fasta_paths."""
+
+    assert len(predict_cazymes.get_fasta_paths(fasta_args, null_logger)) == 3
+
+
+def test_get_fasta_paths_sysexit(fasta_args_fail, null_logger):
+    """Test get_fasta_paths when no fasta files returned and sys.exit should be raised."""
+
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        predict_cazymes.get_fasta_paths(fasta_args_fail, null_logger)
     assert pytest_wrapped_e.type == SystemExit
