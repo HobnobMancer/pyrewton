@@ -119,7 +119,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         # create FastaFile class object to store data for fasta file
         prediction_tool_query = Query(file_path, tax_id, protein_source, output_path)
         # pass FASTA file path and outdir_path to invoke prediction tools
-        invoke_prediction_tools(prediction_tool_query, args, logger)
+        invoke_prediction_tools(prediction_tool_query, logger)
 
         predictions.append(prediction_tool_query)
 

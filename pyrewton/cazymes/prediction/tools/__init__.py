@@ -23,7 +23,7 @@ import os
 import subprocess
 
 
-def invoke_prediction_tools(query, args, logger):
+def invoke_prediction_tools(query, logger):
     """Pass paramaters to CAZyme prediction tools and invoke tool run."""
     # create complete path to fasta file to negate changing cwd
     current_path = os.getcwd()
