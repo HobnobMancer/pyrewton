@@ -38,7 +38,7 @@ def make_output_directory(output, logger, force, nodelete):
         logger.warning(
             "Output directory %s exists, nodelete is %s", output, nodelete,
         )
-        if nodelete and output.exists():
+        if (nodelete is True) and output.exists():
             logger.warning("Not deleting directory %s", output)
         elif output.exists():
             logger.warning("Deleting directory %s", output)

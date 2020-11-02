@@ -64,9 +64,9 @@ import pandas as pd
 from Bio import Entrez
 from tqdm import tqdm
 
-from pyrewton.loggers import build_logger
-from pyrewton.parsers.parser_get_ncbi_genomes import build_parser
-from pyrewton.file_io import make_output_directory, write_out_dataframe
+from pyrewton.utilities import build_logger
+from pyrewton.utilities.cmd_parser_get_ncbi_genomes import build_parser
+from pyrewton.utilities.file_io import make_output_directory, write_out_dataframe
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
@@ -84,7 +84,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         parser = build_parser()
         args = parser.parse_args()
     else:
-        args = build_parser(argv).parse_args()
+        parser = build_parser(argv)
+        args = parser.parse_args()
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
@@ -235,21 +236,21 @@ def get_genus_species_name(taxonomy_id, logger, line_number, retries):
     Return scientific name.
     """
     # Retrieve scientific name
-    with entrez_retry(
-        logger, retries, Entrez.efetch, db="Taxonomy", id=taxonomy_id, retmode="xml"
-    ) as handle:
-        try:
+    try:
+        with entrez_retry(
+            logger, retries, Entrez.efetch, db="Taxonomy", id=taxonomy_id, retmode="xml"
+        ) as handle:
             record = Entrez.read(handle)
         # if no record is returned from call to Entrez
-        except (TypeError, AttributeError) as error:
-            logger.error(
-                (
-                    f"Entrez failed to retrieve scientific name, for NCBI:txid{taxonomy_id}.\n"
-                    "Potential typo in taxonomy ID, check input. Returned null value 'NA'."
-                ),
-                exc_info=1,
-            )
-            return "NA"
+    except (TypeError, AttributeError) as error:
+        logger.error(
+            (
+                f"Entrez failed to retrieve scientific name, for NCBI:txid{taxonomy_id}.\n"
+                "Potential typo in taxonomy ID, check input. Returned null value 'NA'."
+            ),
+            exc_info=1,
+        )
+        return "NA"
 
     # extract scientific name from record
     try:
@@ -293,21 +294,21 @@ def get_tax_id(genus_species, logger, line_number, retries):
         return "NA"
 
     else:
-        with entrez_retry(
-            logger, retries, Entrez.esearch, db="Taxonomy", term=genus_species
-        ) as handle:
-            try:
+        try:
+            with entrez_retry(
+                logger, retries, Entrez.esearch, db="Taxonomy", term=genus_species
+            ) as handle:
                 record = Entrez.read(handle)
-            # if no record is returned from call to Entrez
-            except (TypeError, AttributeError) as error:
-                logger.error(
-                    (
-                        f"Entrez failed to retrieve scientific name, for {genus_species}.\n"
-                        "Potential typo in taxonomy ID, check input. Returned null value 'NA'."
-                    ),
-                    exc_info=1,
-                )
-                return "NA"
+        # if no record is returned from call to Entrez
+        except (TypeError, AttributeError) as error:
+            logger.error(
+                (
+                    f"Entrez failed to retrieve scientific name, for {genus_species}.\n"
+                    "Potential typo in taxonomy ID, check input. Returned null value 'NA'."
+                ),
+                exc_info=1,
+            )
+            return "NA"
 
     # extract taxonomy ID from record
     try:
@@ -413,27 +414,28 @@ def get_assembly_ids(df_row, logger, args):
 
     Return list of assembly IDs """
     # df_row[2][9:] removes 'NCBI:txid' prefix
-    with entrez_retry(
-        logger,
-        args.retries,
-        Entrez.elink,
-        dbfrom="Taxonomy",
-        id=df_row[2][9:],
-        db="Assembly",
-        linkname="taxonomy_assembly",
-    ) as assembly_number_handle:
-        try:
+    try:
+        with entrez_retry(
+            logger,
+            args.retries,
+            Entrez.elink,
+            dbfrom="Taxonomy",
+            id=df_row[2][9:],
+            db="Assembly",
+            linkname="taxonomy_assembly",
+        ) as assembly_number_handle:
             assembly_number_record = Entrez.read(assembly_number_handle)
-        # if no record is returned from call to Entrez
-        except (TypeError, AttributeError) as error:
-            logger.error(
-                (
-                    f"Entrez failed to retrieve accession numbers for NCBI:txid{df_row[2]}.\n"
-                    "Returned null value 'NA'."
-                ),
-                exc_info=1,
-            )
-            return "NA"
+
+    # if no record is returned from call to Entrez
+    except (TypeError, AttributeError) as error:
+        logger.error(
+            (
+                f"Entrez failed to retrieve accession numbers for NCBI:txid{df_row[2]}.\n"
+                "Returned null value 'NA'."
+            ),
+            exc_info=1,
+        )
+        return "NA"
 
     # extract assembly IDs from record
     try:
@@ -496,28 +498,28 @@ def retrieve_accession_numbers(webenv, df_row, logger, args):
     # create empty list to store accession numbers
     ncbi_accession_numbers_list = []
 
-    with entrez_retry(
-        logger,
-        args.retries,
-        Entrez.efetch,
-        db="Assembly",
-        query_key=webenv[1],
-        WebEnv=webenv[0],
-        rettype="docsum",
-        retmode="xml",
-    ) as accession_handle:
-        try:
+    try:
+        with entrez_retry(
+            logger,
+            args.retries,
+            Entrez.efetch,
+            db="Assembly",
+            query_key=webenv[1],
+            WebEnv=webenv[0],
+            rettype="docsum",
+            retmode="xml",
+        ) as accession_handle:
             accession_record = Entrez.read(accession_handle, validate=False)
-        # if no record is returned from call to Entrez
-        except (TypeError, AttributeError) as error:
-            logger.error(
-                (
-                    f"Entrez failed to retireve accession numbers, for {df_row[2]}."
-                    "Exiting retrieval of accession numbers, and returning null value 'NA'"
-                ),
-                exc_info=1,
-            )
-            return "NA"
+    # if no record is returned from call to Entrez
+    except (TypeError, AttributeError) as error:
+        logger.error(
+            (
+                f"Entrez failed to retireve accession numbers, for {df_row[2]}."
+                "Exiting retrieval of accession numbers, and returning null value 'NA'"
+            ),
+            exc_info=1,
+        )
+        return "NA"
 
     # Extract accession numbers from document summary
     for index_number in tqdm(
@@ -694,9 +696,9 @@ def download_file(
         logger.error(f"Download failed for {accession_number}", exc_info=1)
         return
 
-        logger.info(
-            f"Finished downloading GenBank file for {accession_number}", exc_info=1
-        )
+    logger.info(
+        f"Finished downloading GenBank file for {accession_number}", exc_info=1
+    )
 
     return
 
@@ -714,7 +716,7 @@ def entrez_retry(logger, retries, entrez_func, *func_args, **func_kwargs):
 
     Returns record.
     """
-    record, retries, tries = None, 10, 0
+    record, retries, tries = None, retries, 0
 
     while record is None and tries < retries:
         try:

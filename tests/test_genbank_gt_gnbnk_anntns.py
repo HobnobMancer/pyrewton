@@ -24,6 +24,7 @@ pytest -v
 """
 
 import pytest
+import sys
 
 import pandas as pd
 
@@ -160,6 +161,48 @@ def df_series(protein_df):
     return df_row
 
 
+@pytest.fixture
+def protein_df_alt():
+    columns_list = [
+        "Genus",
+        "Species",
+        "NCBI Taxonomy ID",
+        "NCBI Accession Number",
+        "NCBI Protein ID",
+        "Locus Tag",
+        "Gene Locus",
+        "Function",
+        "Protein Sequence",
+    ]
+    data = [
+        [
+            "Botrytis",
+            "cinerea B05.10",
+            "332648",
+            "GCF_000143535.2",
+            "XP_001553137.1",
+            "BCIN_14g02180",
+            "[891975:892232](-),[891495:891895](-)",
+            "hypothetical proteins",
+            "MSSHCHDEHDHGHGGHSHEGHDHSDDITPALQYSLYQHIKFDDITT",
+        ]
+    ]
+    df = pd.DataFrame(data, columns=columns_list)
+    return df
+
+
+@pytest.fixture
+def df_series_alt(protein_df_alt):
+    df_row = protein_df_alt.iloc[0]
+    return df_row
+
+
+@pytest.fixture
+def args_fasta_alt():
+    argsdict = {"args": Namespace(fasta=True, output=(sys.stdout))}
+    return argsdict
+
+
 # Test coordination of script
 
 
@@ -225,6 +268,69 @@ def test_main(
     )
 
     get_genbank_annotations.main()
+
+
+def test_main_argv(
+    null_logger, output_dir, coordination_args, test_input_df, protein_df, monkeypatch
+):
+    """Test coordination of GenBank protein annotation retrieval by main()."""
+
+    def mock_built_parser(*args, **kwargs):
+        parser_args = ArgumentParser(
+            prog="get_genbank_annotations.py",
+            usage=None,
+            description="Retrieve protein data from UniProtKB",
+            conflict_handler="error",
+            add_help=True,
+        )
+        return parser_args
+
+    def mock_parser(*args, **kwargs):
+        parser = Namespace(
+            output=output_dir,
+            force=True,
+            genbank=gb_file_dir,
+            input_df=test_input_df_path,
+            nodelete=True,
+            output_df=test_input_df_path,
+        )
+        return parser
+
+    def mock_build_logger(*args, **kwargs):
+        return null_logger
+
+    def mock_create_out_dir(*args, **kwargs):
+        return
+
+    def mock_df_reading(*args, **kwargs):
+        return test_input_df_path
+
+    def mock_create_dataframe(*args, **kwargs):
+        df = protein_df
+        return df
+
+    def mock_write_out_dataframe(*args, **kwargs):
+        return
+
+    def mock_write_fasta(*args, **kwargs):
+        return
+
+    monkeypatch.setattr(get_genbank_annotations, "build_parser", mock_built_parser)
+    monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
+    monkeypatch.setattr(get_genbank_annotations, "build_logger", mock_build_logger)
+    monkeypatch.setattr(pd, "read_csv", mock_df_reading)
+    monkeypatch.setattr(
+        get_genbank_annotations, "create_dataframe", mock_create_dataframe
+    )
+    monkeypatch.setattr(
+        get_genbank_annotations, "write_out_dataframe", mock_write_out_dataframe
+    )
+    monkeypatch.setattr(get_genbank_annotations, "write_fasta", mock_write_fasta)
+    monkeypatch.setattr(
+        get_genbank_annotations, "make_output_directory", mock_create_out_dir
+    )
+
+    get_genbank_annotations.main(["args"])
 
 
 # Test the creation of the dataframe
@@ -423,12 +529,12 @@ def test_anno_retrieval_no_qualifier(
 
 
 @pytest.mark.run(order=47)
-def test_get_file_success(coordination_args, null_logger):
+def test_get_file_success(coordination_args, null_logger, gb_file_dir):
     """Test successful retrieval of single gb_file using get_gb_file."""
-    accession = "GCA_test####"
-    get_genbank_annotations.get_genbank_file(
-        accession, coordination_args["args"], null_logger
-    )
+    accession = "GCA_test####_genomic"
+    result = gb_file_dir / "GCA_test####_genomic.gbff.gz"
+
+    assert result == get_genbank_annotations.get_genbank_file(accession, coordination_args["args"], null_logger)
 
 
 @pytest.mark.run(order=48)
@@ -460,3 +566,8 @@ def test_get_file_empty(coordination_args, null_logger):
 def test_write_proteins_to_fasta(df_series, null_logger, args_fasta):
     """Test writing fasta file."""
     get_genbank_annotations.write_fasta(df_series, null_logger, args_fasta["args"])
+
+
+def test_write_proteins_to_fasta_alter(df_series_alt, null_logger, args_fasta_alt):
+    """Test writing fasta file, tax id doesn't start with NCBI prefix and output is sys.stdout"""
+    get_genbank_annotations.write_fasta(df_series_alt, null_logger, args_fasta_alt["args"])

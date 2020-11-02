@@ -112,11 +112,7 @@ This is an overview of the functionalities of each module within `pyrewton`, as 
 
 ### **utilities**
 
-Contains all functions that are called from other Python scripts for building command-line parsers and loggers.
-
-### **file_io**
-
-Contains functions that are called from other Python scripts for handling directories and files in `pyrewton`, including retrieving program inputs and creating output directories.
+Contains all functions that are called from other Python scripts for building command-line parsers and loggers. Includes the submodule **file_io**, which contains functions that are called from other Python scripts for handling directories and files in `pyrewton`, including retrieving program inputs and creating output directories.
 
 ### **genbank**
 

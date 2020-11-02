@@ -35,6 +35,16 @@ def build_parser(argv: Optional[List] = None):
     )
 
     # Add arguments to parser
+    # Add positional/required arguments
+
+    # Add option to specific input config file
+    parser.add_argument(
+        "input",
+        type=Path,
+        metavar="configuration file",
+        help="Path to configuration file",
+    )
+
     # Add option to enable/disable fasta file writing
     parser.add_argument(
         "-a",
@@ -52,13 +62,6 @@ def build_parser(argv: Optional[List] = None):
         metavar="output directory path",
         default=sys.stdout,
         help="output directory path",
-    )
-    # Add option to specific input config file
-    parser.add_argument(
-        "input",
-        type=Path,
-        metavar="configuration file",
-        help="Path to configuration file",
     )
     # Add option to force file over writting
     parser.add_argument(

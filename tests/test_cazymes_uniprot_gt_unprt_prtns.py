@@ -24,6 +24,7 @@ pytest -v
 """
 
 import pytest
+import sys
 
 import pandas as pd
 
@@ -72,6 +73,14 @@ def args_config_path(input_path):
 def args_config_no_tax_ids(args_config_path):
     """Args containing path to config file with only user defined queries."""
     argsdict = {"args": Namespace(input=args_config_path)}
+    return argsdict
+
+
+@pytest.fixture
+def args_config_empty_tax_ids(input_path):
+    """Args containing path to config file with only user defined queries."""
+    path = input_path / "config_empty_tax_ids.yaml"
+    argsdict = {"args": Namespace(input=path)}
     return argsdict
 
 
@@ -145,6 +154,12 @@ def output_dir(test_dir):
 @pytest.fixture
 def args_fasta(output_dir):
     argsdict = {"args": Namespace(fasta=True, outdir=output_dir)}
+    return argsdict
+
+
+@pytest.fixture
+def args_fasta_stdout():
+    argsdict = {"args": Namespace(fasta=True, outdir=sys.stdout)}
     return argsdict
 
 
@@ -232,6 +247,11 @@ def test_get_config_no_tax_ids(args_config_no_tax_ids, null_logger):
 def test_get_config_no_queries(args_config_no_queries, null_logger):
     """Test 'get_config_data' when only tax IDs are provided."""
     get_uniprot_proteins.get_config_data(null_logger, args_config_no_queries["args"])
+
+
+def test_get_config_empty_tax_ids(args_config_empty_tax_ids, null_logger):
+    """Test 'get_config_data' when only tax IDs tag is present but no IDs are provided."""
+    get_uniprot_proteins.get_config_data(null_logger, args_config_empty_tax_ids["args"])
 
 
 def test_get_config_no_tax_or_queries(args_config_no_tax_ids_queries, null_logger):
@@ -417,6 +437,13 @@ def test_writing_out_fasta_file(df_series_for_writing, null_logger, args_fasta):
     )
 
 
+def test_writing_out_fasta_file_stdout(df_series_for_writing, null_logger, args_fasta_stdout):
+    """Test writing out fasta file."""
+    get_uniprot_proteins.write_fasta(
+        df_series_for_writing, "filestem", null_logger, args_fasta_stdout["args"]
+    )
+
+
 # test function 'main'
 
 
@@ -491,7 +518,7 @@ def test_main_argv(output_dir, null_logger, args_config_path, monkeypatch):
     monkeypatch.setattr(get_uniprot_proteins, "make_output_directory", mock_making_dir)
     monkeypatch.setattr(get_uniprot_proteins, "read_configuration", mock_configuration)
 
-    get_uniprot_proteins.main(argv=["1", "2"])
+    get_uniprot_proteins.main(["argv"])
 
 
 def test_main_no_config(output_dir, null_logger, monkeypatch):

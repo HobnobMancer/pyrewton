@@ -51,9 +51,9 @@ import pandas as pd
 from Bio import SeqIO
 from tqdm import tqdm
 
-from pyrewton.file_io import make_output_directory, write_out_dataframe
-from pyrewton.loggers import build_logger
-from pyrewton.parsers.parser_get_genbank_annotations import build_parser
+from pyrewton.utilities import build_logger
+from pyrewton.utilities.cmd_parser_get_genbank_annotations import build_parser
+from pyrewton.utilities.file_io import make_output_directory, write_out_dataframe
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
@@ -71,7 +71,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         parser = build_parser()
         args = parser.parse_args()
     else:
-        args = build_parser(argv).parse_args()
+        parser = build_parser(argv)
+        args = parser.parse_args()
 
     # Initiate logger
     # Note: log file only created if specified at cmdline
@@ -80,7 +81,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # If specified output directory, create output directory to write FASTA files too
     if args.output is not sys.stdout:
-        make_output_directory(args, logger)
+        make_output_directory(args.output, logger, args.force, args.nodelete)
 
     # Open input dataframe
     logger.info("Opening input dataframe %s", args.input_df)
@@ -96,7 +97,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Write out FASTA files
     index = 0
     for index in tqdm(
-        range(len(protein_annotation_df["Genus"])), desc=f"Writing protein to FASTA"
+        range(len(protein_annotation_df["Genus"])), desc="Writing protein to FASTA"
     ):
         df_row = protein_annotation_df.iloc[index]
         write_fasta(df_row, logger, args)
@@ -493,12 +494,12 @@ def write_fasta(df_row, logger, args, filestem="genbank_proteins"):
     # Create output path
     if args.output is not sys.stdout:
         output_path = args.output / f"{filestem}_{tax_id}_{accession}.fasta"
+        # Write out data to Fasta file
+        with open(output_path, "a") as fh:
+            fh.write(file_content)
     else:
-        output_path = args.output
-
-    # Write out data to Fasta file
-    with open(output_path, "a") as fh:
-        fh.write(file_content)
+        binary_file_content = bytearray(file_content, "utf8")
+        sys.stdout.buffer.write(binary_file_content)
 
     return
 

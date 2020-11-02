@@ -63,9 +63,9 @@ from pandas.errors import EmptyDataError
 from tqdm import tqdm
 from urllib.error import HTTPError
 
-from pyrewton.file_io import write_out_pre_named_dataframe, make_output_directory
-from pyrewton.loggers import build_logger
-from pyrewton.parsers.parser_get_uniprot_proteins import build_parser
+from pyrewton.utilities import build_logger
+from pyrewton.utilities.cmd_parser_get_uniprot_proteins import build_parser
+from pyrewton.utilities.file_io import make_output_directory, write_out_pre_named_dataframe
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
@@ -76,7 +76,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         parser = build_parser()
         args = parser.parse_args()
     else:
-        args = build_parser(argv).parse_args()
+        parser = build_parser(argv)
+        args = parser.parse_args()
 
     # Initate logger
     # Note: log file only created if specificied at cmdline
@@ -141,7 +142,7 @@ def get_config_data(logger, args):
     Returns list of taxonomy IDs and list of queries.
     """
     logger.info("Retrieving queries from config file")
-    with open(args.input) as ifh:
+    with open(args.input, "r") as ifh:
         config_dict = yaml.full_load(ifh)
 
     # Retrieve Taxonomy IDs from configuration data
@@ -404,15 +405,15 @@ def write_fasta(df_row, filestem, logger, args):
 
     file_content = f">{protein_id} {uniprot_tax_id} {organism} \n{sequence}\n"
 
-    # Create output path
     if args.outdir is not sys.stdout:
         output_path = args.outdir / f"{filestem}.fasta"
-    else:
-        output_path = args.outdir
+        with open(output_path, "a") as fh:
+            fh.write(file_content)
 
-    # Write out data to Fasta file
-    with open(output_path, "a") as fh:
-        fh.write(file_content)
+    else:
+        binary_file_content = bytearray(file_content, "utf8")
+        sys.stdout.buffer.write(binary_file_content)
+
 
     return
 
