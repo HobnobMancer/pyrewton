@@ -29,7 +29,6 @@ import pytest
 import pandas as pd
 
 from argparse import Namespace, ArgumentParser
-from collections import namedtuple
 
 from pyrewton.cazymes.prediction import predict_cazymes
 
@@ -228,3 +227,27 @@ def test_get_fasta_paths_sysexit(fasta_args_fail, null_logger):
     with pytest.raises(SystemExit) as pytest_wrapped_e:
         predict_cazymes.get_fasta_paths(fasta_args_fail, null_logger)
     assert pytest_wrapped_e.type == SystemExit
+
+
+# test get_protein_source()
+
+
+def test_protein_source_genomic_accession(null_logger):
+    """Test get_protein_source() when the protein source is a genomic accession number."""
+
+    file_path = "GCA_123_1.fasta"
+    assert predict_cazymes.get_protein_source(file_path, null_logger) == "GCA_123_1"
+
+
+def test_get_protein_source_uniprot(null_logger):
+    """Test get_protein_source() when the protein source is UniProtKB."""
+
+    file_path = "UniProt_fasta.fasta"
+    assert predict_cazymes.get_protein_source(file_path, null_logger) == "UniProt_fasta"
+
+
+def test_get_protein_source_unknown(null_logger):
+    """Test get_protein_source() when the protein source is unknown."""
+
+    file_path = "test_test_test.fasta"
+    assert predict_cazymes.get_protein_source(file_path, null_logger) == "unknown_source"
