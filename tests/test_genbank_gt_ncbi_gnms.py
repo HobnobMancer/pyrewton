@@ -33,7 +33,6 @@ In the above URL separate out the search criteria used by '&'.
 import json
 import pytest
 import sys
-import urllib.request
 
 import pandas as pd
 
@@ -52,7 +51,7 @@ Entrez.email = "my.email@my.domain"
 @pytest.fixture
 def entrez_dtd_dir(test_dir):
     """Fixes CircleCI failure to retrieve DTDs for Entrez.Parser from NCBI.
-    
+
     See BioPython GitHub repository for demonstration of ability to pass
     Entrez.Parser a custom directory containting DTDs. Found in
     Tests.test_Entrez.py classCustomDirectoryTest:
@@ -178,7 +177,6 @@ def ncbi_args(test_dir, test_ncbi_species_file):
 
 @pytest.fixture
 def ncbi_args_ioerror(test_dir, test_ncbi_species_file):
-    path = test_dir / "test_inputs"
     argsdict = {
         "args": Namespace(
             genbank=True,
@@ -205,7 +203,6 @@ def ncbi_args_file_exists(test_dir, test_ncbi_species_file):
         )
     }
     return argsdict
-
 
 
 @pytest.fixture
@@ -505,7 +502,7 @@ def test_tax_id_retrieval_indexerror_catch(
 
         monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_entrez_txid_call)
 
-        get_ncbi_genomes.get_genus_species_name(
+        assert "NA" == get_ncbi_genomes.get_genus_species_name(
             gt_ncbi_gnms_test_inputs[2],
             null_logger,
             gt_ncbi_gnms_test_inputs[3],
@@ -519,7 +516,6 @@ def test_tax_id_retrieval_typeerror_catch(
     monkeypatch,
 ):
     """Tests handling index Error when retrieving tax ID"""
-
 
     def mock_entrez_txid_call(*args, **kwargs):
         """Mocks call to Entrez to retrieve taxonomy ID."""
@@ -873,26 +869,6 @@ def test_download(null_logger, ncbi_args, test_dir, monkeypatch):
     get_ncbi_genomes.download_file(
         "http://www.google.com", ncbi_args["args"], test_dir, null_logger, "accession", "GenBank"
     )
-
-
-# def test_download_raise_ioerror(null_logger, ncbi_args_ioerror, test_dir, monkeypatch):
-#     """Tests downloading of GenBank file"""
-
-#     def mock_url_open(*args, **kwargs):
-#         response = Namespace(info="info", get=1000)
-#         return response
-
-#     def mock_reading_response(*args, **kwargs):
-#         raise IOError("message")
-
-#     monkeypatch.setattr("urllib3.connectionpool.HTTPConnectionPool.urlopen", mock_url_open)
-#     monkeypatch.setattr(("urllib3.response.HTTPResponse.read"), mock_reading_response)
-
-#     with pytest.raises(IOError) as pytest_wrapped_e:
-#         get_ncbi_genomes.download_file(
-#             "http://www.google.com", ncbi_args_ioerror["args"], test_dir, null_logger, "accession", "GnBnk"
-#         )
-#     assert pytest_wrapped_e.type == IOError
 
 
 def test_download_raise_urlerror(null_logger, ncbi_args, test_dir, monkeypatch):
