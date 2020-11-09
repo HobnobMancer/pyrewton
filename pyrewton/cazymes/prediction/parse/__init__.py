@@ -89,55 +89,6 @@ def parse_dbcan_output(overview_file_path):
     return dbcan_df, hmmer_df, hotpep_df, diamond_df
 
 
-def add_hotpep_ec_predictions(hotpep_output_file, hotpep_df):
-    """Retrieve predicated EC numbers from Hotpep output file and add to the Hotpep dataframe.
-
-    :param hotpep_output_file: path, path to Hotpep.out file
-    :param hotpep_df: pandas dataframe, containing Hotpep predicated CAZy families
-
-    Return pandas dataframe (hotpep_df with EC number predictions)
-    """
-    with open(hotpep_output_file, "r") as fh:
-        hotpep_file = fh.read().splitlines()
-
-        ec_predictions = {}
-
-        for line in hotpep_file[1:]:  # skip the first line which contains the titles
-            line = line.split("\t")
-
-            ec_numbers = line[-1].split(",")  # multiple EC numbers may be predicted
-
-            # remove (":score") from each EC number, and convert "NA" to proper null value
-            index = 0
-            for index in range(len(ec_numbers)):
-                ec = ec_numbers[index].split(":")[0]  # remove the (":score") from the EC number
-
-                if ec == "NA":
-                    ec_numbers[index] = np.nan
-
-                else:
-                    ec_numbers[index] = ec
-
-            protein_accession = line[2]
-            ec_predictions[protein_accession] = ec_numbers
-
-    for protein_accession in ec_predictions:  # dict {protein_accession: [predicated EC#s]}
-        # Check if there are EC numbers to add
-        if type(ec_predictions[protein_accession][0]) == float:  # EC number is null value
-            continue
-
-        # find index of row in hotpep_df with the same protein accession
-        row_index = hotpep_df.index[hotpep_df["protein_accession"] == protein_accession].tolist()[0]
-        # add EC numbers to this row
-        string = ""
-        for item in ec_predictions[protein_accession][:-1]:
-            string += f"{item},"
-        string += ec_predictions[protein_accession][((len(ec_predictions[protein_accession])) - 1)]
-        hotpep_df.iloc[row_index, 3] = string
-
-    return hotpep_df
-
-
 def parse_hmmer_output(line):
     """Parse the output from HMMER from the overview.txt file.
 
@@ -326,6 +277,55 @@ def get_dbcan_consensus(hmmer, hotpep, diamond):
     return consensus
 
 
+def add_hotpep_ec_predictions(hotpep_output_file, hotpep_df):
+    """Retrieve predicated EC numbers from Hotpep output file and add to the Hotpep dataframe.
+
+    :param hotpep_output_file: path, path to Hotpep.out file
+    :param hotpep_df: pandas dataframe, containing Hotpep predicated CAZy families
+
+    Return pandas dataframe (hotpep_df with EC number predictions)
+    """
+    with open(hotpep_output_file, "r") as fh:
+        hotpep_file = fh.read().splitlines()
+
+        ec_predictions = {}
+
+        for line in hotpep_file[1:]:  # skip the first line which contains the titles
+            line = line.split("\t")
+
+            ec_numbers = line[-1].split(",")  # multiple EC numbers may be predicted
+
+            # remove (":score") from each EC number, and convert "NA" to proper null value
+            index = 0
+            for index in range(len(ec_numbers)):
+                ec = ec_numbers[index].split(":")[0]  # remove the (":score") from the EC number
+
+                if ec == "NA":
+                    ec_numbers[index] = np.nan
+
+                else:
+                    ec_numbers[index] = ec
+
+            protein_accession = line[2]
+            ec_predictions[protein_accession] = ec_numbers
+
+    for protein_accession in ec_predictions:  # dict {protein_accession: [predicated EC#s]}
+        # Check if there are EC numbers to add
+        if type(ec_predictions[protein_accession][0]) == float:  # EC number is null value
+            continue
+
+        # find index of row in hotpep_df with the same protein accession
+        row_index = hotpep_df.index[hotpep_df["protein_accession"] == protein_accession].tolist()[0]
+        # add EC numbers to this row
+        string = ""
+        for item in ec_predictions[protein_accession][:-1]:
+            string += f"{item},"
+        string += ec_predictions[protein_accession][((len(ec_predictions[protein_accession])) - 1)]
+        hotpep_df.iloc[row_index, 3] = string
+
+    return hotpep_df
+
+
 # Functions for parsing the output from CUPP and eCAMI
 
 def parse_cupp_output(log_file_path):
@@ -385,7 +385,6 @@ def parse_cupp_output(log_file_path):
         else:
             if prediction["cazy_subfamily"][0].find(":") != -1:
                 prediction["cazy_subfamily"][0] = "*" + prediction["cazy_subfamily"][0]
-                print(prediction["cazy_subfamily"][0])
 
         prediction_df = pd.DataFrame(prediction)
         cupp_df = cupp_df.append(prediction_df)
@@ -413,7 +412,7 @@ def parse_ecami_output(txt_file_path):
         "cazy_family",
         "cazy_subfamily",
         "ec_number",
-        "domain_range",
+        "additional_domains",
     ])
 
     # parse the outputs so in format suitable for final dataframe
