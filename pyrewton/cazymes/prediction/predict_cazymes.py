@@ -34,6 +34,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from tqdm import tqdm
 from typing import List, Optional
 
 from pyrewton.cazymes.prediction.tools import invoke_prediction_tools
@@ -102,8 +103,35 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # standardist output from prediction tools for each input FASTA file
     for prediction in predictions:
-        output_files = get_output_files(prediction, logger)  # dict of output files per tool
-        parse.parse_dbcan_output(overview_file_path)
+        output_file_dict = prediction.output_files
+
+        dbcan_overview_file, hotpep_output_file = get_dbcan_files(output_file_dict["dbcan_raw"], logger)
+        dbcan_stnd, hmmer_stnd, hotpep_ stnd, diamond_stnd = parse.parse_dbcan_output(dbcan_overview_file)
+        hotpep_stnd = parse.add_hotpep_ec_predictions(hotpep_output_file, hotpep_stnd)
+
+        cupp_stnd = parse.parse_cupp_output(output_file_dict["cupp_raw"])
+
+        ecami_stnd = parse.parse_ecami_output(output_file_dict["ecami_raw"])
+
+        output_file_dict["dbcan_stnd"] = dbcan_stnd
+        output_file_dict["hmmer_stnd"] = hmmer_stnd
+        output_file_dict["hotpep_stnd"] = hotpep_stnd
+        output_file_dict["diamond_stnd"] = diamond_stnd
+        output_file_dict["cupp_stnd"] = cupp_stnd
+        output_file_dict["ecami_stnd"] = ecami_stnd
+
+        prediction.output_files = output_file_dict
+        
+
+def get_dbcan_files(dbcan_dir, logger):
+    """Retrieve paths to dbCAN overview.txt and Hotpep.out files.
+
+    :param dbcan_dir: path, dir containing dbcan output files
+    :param logger: logger object
+
+    Return two paths.
+    """
+
 
     # for prediction in predictions:  # make tqdm
     #
@@ -115,19 +143,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # write reports of statistical evaluation
     # for prediction in predictions:  # make tqdm
-
-
-def get_output_files(prediction, logger):
-    """Get path to the output files for each CAZyme prediciton tool. Store in dictionary.
-
-    :param prediction: Query class instance
-    :param logger: logger object
-
-    Return dictionary of output files from prediciton tools, keyed by tool name, valued by path.
-    """
-    # dbcan overview file
-    # ecami .txt file
-    # cupp .log file
 
 
 def get_predictions(all_fasta_paths, args, logger):
