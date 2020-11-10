@@ -102,38 +102,9 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     predictions = get_predictions(all_fasta_paths, args, logger)
 
     # standardist output from prediction tools for each input FASTA file
-    for prediction in tqdm(predictions, desc="Standardising tools outputs"):
-        output_file_dict = prediction.output_files
-
-        dbcan_overview_file, hotpep_output_file = get_dbcan_files(output_file_dict["dbcan_raw"], logger)
-        dbcan_stnd, hmmer_stnd, hotpep_stnd, diamond_stnd = parse.parse_dbcan_output(
-            dbcan_overview_file,
-        )
-        hotpep_stnd = parse.add_hotpep_ec_predictions(hotpep_output_file, hotpep_stnd)
-
-        cupp_stnd = parse.parse_cupp_output(output_file_dict["cupp_raw"])
-
-        ecami_stnd = parse.parse_ecami_output(output_file_dict["ecami_raw"])
-
-        output_file_dict["dbcan_stnd"] = dbcan_stnd
-        output_file_dict["hmmer_stnd"] = hmmer_stnd
-        output_file_dict["hotpep_stnd"] = hotpep_stnd
-        output_file_dict["diamond_stnd"] = diamond_stnd
-        output_file_dict["cupp_stnd"] = cupp_stnd
-        output_file_dict["ecami_stnd"] = ecami_stnd
-
-        prediction.output_files = output_file_dict
-
-
-def get_dbcan_files(dbcan_dir, logger):
-    """Retrieve paths to dbCAN overview.txt and Hotpep.out files.
-
-    :param dbcan_dir: path, dir containing dbcan output files
-    :param logger: logger object
-
-    Return two paths.
-    """
-
+    index = 0
+    for index in tqdm(range(len(predictions)), desc="Standardising tools outputs"):
+        predictions[index] = standardise_tools_outputs(predictions[index], logger)
 
     # for prediction in predictions:  # make tqdm
     #
@@ -145,6 +116,50 @@ def get_dbcan_files(dbcan_dir, logger):
 
     # write reports of statistical evaluation
     # for prediction in predictions:  # make tqdm
+
+
+def standardise_tools_outputs(prediction, logger):
+    """Coordinate the standardising the prediction tools outputs.
+
+    :param prediction: Query class object
+    :param logger: logger object
+
+    Return prediction (Query class object) with updated paths to output files
+    """
+    output_file_dict = prediction.output_files
+
+    dbcan_overview_file, hotpep_output_file = get_dbcan_files(output_file_dict["dbcan_raw"], logger)
+    dbcan_stnd, hmmer_stnd, hotpep_stnd, diamond_stnd = parse.parse_dbcan_output(
+        dbcan_overview_file,
+    )
+    hotpep_stnd = parse.add_hotpep_ec_predictions(hotpep_output_file, hotpep_stnd)
+
+    cupp_stnd = parse.parse_cupp_output(output_file_dict["cupp_raw"])
+
+    ecami_stnd = parse.parse_ecami_output(output_file_dict["ecami_raw"])
+
+    # updata dict of paths to the predictions tools outputs
+    output_file_dict["dbcan_stnd"] = dbcan_stnd
+    output_file_dict["hmmer_stnd"] = hmmer_stnd
+    output_file_dict["hotpep_stnd"] = hotpep_stnd
+    output_file_dict["diamond_stnd"] = diamond_stnd
+    output_file_dict["cupp_stnd"] = cupp_stnd
+    output_file_dict["ecami_stnd"] = ecami_stnd
+
+    prediction.output_files = output_file_dict
+    return prediction
+
+
+def get_dbcan_files(dbcan_dir, logger):
+    """Retrieve paths to dbCAN overview.txt and Hotpep.out files.
+
+    :param dbcan_dir: path, dir containing dbcan output files
+    :param logger: logger object
+
+    Return two paths.
+    """
+    ###
+    return overview_file_path, hotpep_file_path
 
 
 def get_predictions(all_fasta_paths, args, logger):
