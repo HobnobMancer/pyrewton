@@ -95,6 +95,33 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # create list of paths to all fasta files in input directory
     all_fasta_paths = get_fasta_paths(args, logger)
 
+    # invoke prediction tools and build prediciton Query instances
+    predictions = get_predictions(all_fasta_paths, args, logger)
+
+
+        # standardist output from prediction tools for the prediction output per
+    # FASTA file
+    # for prediction in predictions:  # make tqdm
+    #
+
+    # statistical evaluate CAZyme predictions per FASTA file input
+    # for prediction in predictions:  # make tqdm
+
+    # calculate overall statistcal evaluation of prediction
+
+    # write reports of statistical evaluation
+    # for prediction in predictions:  # make tqdm
+
+
+def get_predictions(all_fasta_paths, args, logger):
+    """Build prediction queries and invoke prediction tools for each query.
+
+    :param all_fasta_paths: list of paths to input fasta files
+    :param args: parser object
+    :param logger: logger object
+
+    Return list of Query class objects.
+    """
     # create empty list to store all instances of Prediction class objects
     predictions = []
 
@@ -122,19 +149,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         invoke_prediction_tools(prediction_tool_query, logger)
 
         predictions.append(prediction_tool_query)
-
-    # standardist output from prediction tools for the prediction output per
-    # FASTA file
-    # for prediction in predictions:  # make tqdm
-    #
-
-    # statistical evaluate CAZyme predictions per FASTA file input
-    # for prediction in predictions:  # make tqdm
-
-    # calculate overall statistcal evaluation of prediction
-
-    # write reports of statistical evaluation
-    # for prediction in predictions:  # make tqdm
+    
+    return predictions
 
 
 def check_cwd(logger):
