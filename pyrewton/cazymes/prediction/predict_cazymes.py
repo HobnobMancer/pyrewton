@@ -102,7 +102,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     predictions = get_predictions(all_fasta_paths, args, logger)
 
     # standardist output from prediction tools for each input FASTA file
-    for prediction in tqdm(predictions, desc="Standardising tools outputs":
+    for prediction in tqdm(predictions, desc="Standardising tools outputs"):
         output_file_dict = prediction.output_files
 
         dbcan_overview_file, hotpep_output_file = get_dbcan_files(output_file_dict["dbcan_raw"], logger)
