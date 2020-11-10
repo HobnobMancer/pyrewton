@@ -106,7 +106,9 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         output_file_dict = prediction.output_files
 
         dbcan_overview_file, hotpep_output_file = get_dbcan_files(output_file_dict["dbcan_raw"], logger)
-        dbcan_stnd, hmmer_stnd, hotpep_ stnd, diamond_stnd = parse.parse_dbcan_output(dbcan_overview_file)
+        dbcan_stnd, hmmer_stnd, hotpep_stnd, diamond_stnd = parse.parse_dbcan_output(
+            dbcan_overview_file,
+        )
         hotpep_stnd = parse.add_hotpep_ec_predictions(hotpep_output_file, hotpep_stnd)
 
         cupp_stnd = parse.parse_cupp_output(output_file_dict["cupp_raw"])
