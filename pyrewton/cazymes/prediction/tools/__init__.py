@@ -24,14 +24,20 @@ import subprocess
 
 
 def invoke_prediction_tools(query, logger):
-    """Pass paramaters to CAZyme prediction tools and invoke tool run."""
+    """Pass paramaters to CAZyme prediction tools and invoke tool run.
+    
+    :param query: Query class instance, input fasta file for tools
+    :param logger: logger object
+    
+    Return 3 paths, one each to the output file(s) of each tool.
+    """
     # create complete path to fasta file to negate changing cwd
     current_path = os.getcwd()
     fasta_path = query.fasta
     input_path = current_path / fasta_path
     # create complete path to output and directory, to negate changing cwd
     outdir = query.prediction_dir
-    output_dir = current_path / outdir
+    dbcan_output_dir = current_path / outdir
 
     # create list of args to invoke run_dbCAN
     dbcan_args = [
@@ -39,7 +45,7 @@ def invoke_prediction_tools(query, logger):
         str(input_path),
         "protein",
         "--out_dir",
-        str(output_dir),
+        str(dbcan_output_dir),
     ]
 
     # change cwd to dbCAN directory to be able to access database files
@@ -62,6 +68,7 @@ def invoke_prediction_tools(query, logger):
     # move to cupp directory so can access CUPP
     os.chdir('../')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('cupp')
+    cupp_output = outdir / "cupp_output.fasta"
 
     # create list of args to invoke cupp
     cupp_args = [
@@ -89,6 +96,7 @@ def invoke_prediction_tools(query, logger):
     # move to ecami directory so can access eCAMI
     os.chdir('../')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('ecami')
+    ecami_output = outdir / "ecami_output.txt"
 
     # create list of args for ecami
     ecami_args = [
@@ -100,6 +108,7 @@ def invoke_prediction_tools(query, logger):
         "-output",
         f"{output_dir}/ecami_output.txt",
     ]
+
 
     # create log of eCAMI run
     with open(f"{output_dir}/ecami.log", "w+") as fh:
@@ -119,4 +128,4 @@ def invoke_prediction_tools(query, logger):
     os.chdir('../')  # moves to 'tools/'
     os.chdir('../')  # moves to 'predictions/'
 
-    return
+    return dbcan_output_dir, cupp_output, ecami_output

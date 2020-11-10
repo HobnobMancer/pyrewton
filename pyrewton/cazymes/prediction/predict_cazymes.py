@@ -57,7 +57,7 @@ class Query:
     tax_id: str  # NCBI taxonomy id, prefix NCBI:txid
     source: str  # source of protein sequences, genomic assembly or database
     prediction_dir: Path  # path to dir containing outputs from prediciton tools
-    output: dict  # stores paths to output files, updated as files created
+    output_files: dict  # stores paths to output files, updated as files created
 
     def __str__(self):
         """Representation of object"""
@@ -130,7 +130,6 @@ def get_output_files(prediction, logger):
     # cupp .log file
 
 
-
 def get_predictions(all_fasta_paths, args, logger):
     """Build prediction queries and invoke prediction tools for each query.
 
@@ -164,7 +163,12 @@ def get_predictions(all_fasta_paths, args, logger):
         # create FastaFile class object to store data for fasta file
         prediction_tool_query = Query(file_path, tax_id, protein_source, output_path, {})
         # pass FASTA file path and outdir_path to invoke prediction tools
-        invoke_prediction_tools(prediction_tool_query, logger)
+        dbcan_output, cupp_output, ecami_output = invoke_prediction_tools(prediction_tool_query, logger)
+        prediction_tool_query.output_files = {
+            "dbcan_raw": dbcan_output,
+            "cupp_raw": cupp_output,
+            "ecami_raw": ecami_output
+        }
 
         predictions.append(prediction_tool_query)
 
