@@ -37,6 +37,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from pyrewton.cazymes.prediction.tools import invoke_prediction_tools
+from pyrewton.cazymes.prediction import parse
 from pyrewton.utilities import build_logger
 from pyrewton.utilities.cmd_parser_predict_cazymes import build_parser
 from pyrewton.utilities.file_io import make_output_directory
@@ -56,6 +57,7 @@ class Query:
     tax_id: str  # NCBI taxonomy id, prefix NCBI:txid
     source: str  # source of protein sequences, genomic assembly or database
     prediction_dir: Path  # path to dir containing outputs from prediciton tools
+    output: dict  # stores paths to output files, updated as files created
 
     def __str__(self):
         """Representation of object"""
@@ -98,9 +100,11 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # invoke prediction tools and build prediciton Query instances
     predictions = get_predictions(all_fasta_paths, args, logger)
 
+    # standardist output from prediction tools for each input FASTA file
+    for prediction in predictions:
+        output_files = get_output_files(prediction, logger)  # dict of output files per tool
+        parse.parse_dbcan_output(overview_file_path)
 
-        # standardist output from prediction tools for the prediction output per
-    # FASTA file
     # for prediction in predictions:  # make tqdm
     #
 
@@ -111,6 +115,20 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # write reports of statistical evaluation
     # for prediction in predictions:  # make tqdm
+
+
+def get_output_files(prediction, logger):
+    """Get path to the output files for each CAZyme prediciton tool. Store in dictionary.
+
+    :param prediction: Query class instance
+    :param logger: logger object
+
+    Return dictionary of output files from prediciton tools, keyed by tool name, valued by path.
+    """
+    # dbcan overview file
+    # ecami .txt file
+    # cupp .log file
+
 
 
 def get_predictions(all_fasta_paths, args, logger):
@@ -144,7 +162,7 @@ def get_predictions(all_fasta_paths, args, logger):
         make_output_directory(output_path, logger, args.force, args.nodelete)
 
         # create FastaFile class object to store data for fasta file
-        prediction_tool_query = Query(file_path, tax_id, protein_source, output_path)
+        prediction_tool_query = Query(file_path, tax_id, protein_source, output_path, {})
         # pass FASTA file path and outdir_path to invoke prediction tools
         invoke_prediction_tools(prediction_tool_query, logger)
 
