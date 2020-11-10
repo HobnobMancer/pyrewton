@@ -102,7 +102,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     predictions = get_predictions(all_fasta_paths, args, logger)
 
     # standardist output from prediction tools for each input FASTA file
-    for prediction in predictions:
+    for prediction in tqdm(predictions, desc="Standardising tools outputs":
         output_file_dict = prediction.output_files
 
         dbcan_overview_file, hotpep_output_file = get_dbcan_files(output_file_dict["dbcan_raw"], logger)
@@ -121,7 +121,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         output_file_dict["ecami_stnd"] = ecami_stnd
 
         prediction.output_files = output_file_dict
-        
+
 
 def get_dbcan_files(dbcan_dir, logger):
     """Retrieve paths to dbCAN overview.txt and Hotpep.out files.
@@ -158,7 +158,7 @@ def get_predictions(all_fasta_paths, args, logger):
     predictions = []
 
     # for each FASTA file invoke dbCAN, CUPP and eCAMI
-    for file_path in all_fasta_paths:  # make tqdm
+    for file_path in tqdm(all_fasta_paths, desc="Invoking tools for FASTA file"):  # make tqdm
         # retrieve data on source of protein sequences and species taxonomy ID
         protein_source = get_protein_source(file_path, logger)
         tax_id = get_tax_id(file_path, logger)
