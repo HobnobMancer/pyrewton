@@ -149,7 +149,7 @@ def get_predictions(all_fasta_paths, args, logger):
         invoke_prediction_tools(prediction_tool_query, logger)
 
         predictions.append(prediction_tool_query)
-    
+
     return predictions
 
 
