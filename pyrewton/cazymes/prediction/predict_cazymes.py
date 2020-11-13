@@ -288,33 +288,61 @@ def write_prediction_report(prediction, args, logger):
 
     Return nothing
     """
+    # Standardise the output from each prediction tool
+    (
+        dbcan_stnd_df,
+        hmmer_stnd_df,
+        hotpep_stnd_df,
+        diamond_stnd_df,
+        cupp_stnd_df,
+        ecami_stnd_df
+    ) = standardise_prediction_outputs(prediction, logger)
+
+    # Perform statistical evaluation of performance if CAZy data provided
+    # if args.cazy is not None:
+        # pass
+
+    # Produce summary report of predictions (number of CAZymes, numbers per class etc.)
+
+    return
+
+
+def standardise_prediction_outputs(prediction, logger):
+    """Coordinate standardising prediction tools outputs.
+
+    Produces a dataframe for eCAMI, CUPP, Hotpep, HMMER, DIAMOND and a consensus result for dbCAN
+    where consensus means any result where at least 2 tools (out of Hotpep, HMMER and DIAMOND)
+    match.
+
+    :param prediction: Query class object
+    :param args: cmd args parser
+    :param logger: logger object
+
+    Return 6 Pandas dataframes.
+    """
     # retrieve the paths to prediction tool output files in the output directory for 'prediction'
-    output_files = get_output_files(prediction.prediction_dir, logger)
+    raw_output_files = get_output_files(prediction.prediction_dir, logger)  # returns dict
 
     # Standardise the output from each prediction tool
-
-    output_file_dict = prediction.output_files
-
-    dbcan_overview_file, hotpep_output_file = get_dbcan_files(output_file_dict["dbcan_raw"], logger)
-    dbcan_stnd, hmmer_stnd, hotpep_stnd, diamond_stnd = parse.parse_dbcan_output(
-        dbcan_overview_file,
+    dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df = parse.parse_dbcan_output(
+        raw_output_files["dbcan"]
     )
-    hotpep_stnd = parse.add_hotpep_ec_predictions(hotpep_output_file, hotpep_stnd)
 
-    cupp_stnd = parse.parse_cupp_output(output_file_dict["cupp_raw"])
+    # retrieve predicated EC number for Hotpep
+    hotpep_stnd_df = parse.add_hotpep_ec_predictions(raw_output_files["hotpep"], hotpep_stnd_df)
 
-    ecami_stnd = parse.parse_ecami_output(output_file_dict["ecami_raw"])
+    cupp_stnd_df = parse.parse_cupp_output(raw_output_files["cupp_raw"])
 
-    # updata dict of paths to the predictions tools outputs
-    output_file_dict["dbcan_stnd"] = dbcan_stnd
-    output_file_dict["hmmer_stnd"] = hmmer_stnd
-    output_file_dict["hotpep_stnd"] = hotpep_stnd
-    output_file_dict["diamond_stnd"] = diamond_stnd
-    output_file_dict["cupp_stnd"] = cupp_stnd
-    output_file_dict["ecami_stnd"] = ecami_stnd
+    ecami_stnd_df = parse.parse_ecami_output(raw_output_files["ecami_raw"])
 
-    prediction.output_files = output_file_dict
-    return prediction
+    return(
+        dbcan_stnd_df,
+        hmmer_stnd_df,
+        hotpep_stnd_df,
+        diamond_stnd_df,
+        cupp_stnd_df,
+        ecami_stnd_df,
+    )
 
 
 def get_output_files(output_dir, logger):
@@ -325,7 +353,51 @@ def get_output_files(output_dir, logger):
 
     Return dictionary, keyed by tool name and valued by path to respective output file
     """
+    # create empty dictionary to store file to output files, keyed by prediciton tool name
     output_dict = {}
+
+    prediction_tools = ["dbcan", "hotpep", "cupp", "ecami"]
+
+    # retrieve all files in the output directory for the current working FASTA file
+    files_in_outdir = (entry for entry in output_dir.iterdir if entry.is_file())
+
+    try:
+        if len(files_in_outdir) == 0:
+            logger.error(
+                    "Did not retrieve any prediction tool output files in\n"
+                    f"{output_dir}\n"
+            )
+    except AttributeError:  # raised if files_in_outdir is None
+        logger.error(
+                "Did not retrieve any prediction tool output files in\n"
+                f"{output_dir}\n"
+        )
+
+    # Retrieve paths to specific prediction tool's output files
+    for entry in files_in_outdir:
+        # retrieve dbCAN overview.txt file
+        if entry.name.endswith("overview.txt"):
+            output_dict["dbcan"] = entry
+
+        # retrieve hotpep.out file
+        elif entry.name.endswith("hotpep.out"):
+            output_dict["hotpep"] = entry
+
+        # retrieve cupp output file
+        elif entry.name.endswith("cupp_output.fasta"):
+            output_dict["cupp"] = entry
+
+        # retrieve ecami output file
+        elif entry.name.endswith("ecami_output.txt"):
+            output_dict["ecami"] = entry
+
+    # check output file for each prediction tool was retrieved
+    for tool in prediction_tools:
+        try:
+            output_dict[tool]
+        except KeyError:
+            output_dict[tool] = "NA"
+
     return output_dict
 
 
