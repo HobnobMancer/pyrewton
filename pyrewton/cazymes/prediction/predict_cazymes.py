@@ -101,7 +101,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # summary report
     index = 0
     for index in tqdm(range(len(predictions)), desc="Standardising tools outputs"):
-        write_prediction_report(predictions[index], logger)
+        write_prediction_report(predictions[index], args, logger)
 
     logger.info("Program finished, and no terminating.")
 
