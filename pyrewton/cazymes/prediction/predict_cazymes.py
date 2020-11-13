@@ -97,21 +97,13 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # invoke prediction tools and build prediciton Query instances
     predictions = get_predictions(args, logger)
 
-    # standardist output from prediction tools for each input FASTA file
+    # standardist output, statistical evaluation performance (if CAZy data provided), and write
+    # summary report 
     index = 0
     for index in tqdm(range(len(predictions)), desc="Standardising tools outputs"):
-        predictions[index] = standardise_tools_outputs(predictions[index], logger)
+        write_prediction_report(predictions[index], logger)
 
-    # for prediction in predictions:  # make tqdm
-    #
-
-    # statistical evaluate CAZyme predictions per FASTA file input
-    # for prediction in predictions:  # make tqdm
-
-    # calculate overall statistcal evaluation of prediction
-
-    # write reports of statistical evaluation
-    # for prediction in predictions:  # make tqdm
+    logger.info("Program finished, and no terminating.")
 
 
 def check_cwd(logger):
