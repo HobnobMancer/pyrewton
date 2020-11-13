@@ -57,7 +57,7 @@ class Query:
     fasta: Path  # path to FASTA file containing proteins for prediction
     tax_id: str  # NCBI taxonomy id, prefix NCBI:txid
     source: str  # source of protein sequences, genomic assembly or database
-    prediction_dir: Path  # path to dir containing outputs from prediciton tools
+    prediction_dir: Path  # path to dir containing outputs from all prediciton tools
 
     def __str__(self):
         """Representation of object"""
@@ -98,7 +98,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     predictions = get_predictions(args, logger)
 
     # standardist output, statistical evaluation performance (if CAZy data provided), and write
-    # summary report 
+    # summary report
     index = 0
     for index in tqdm(range(len(predictions)), desc="Standardising tools outputs"):
         write_prediction_report(predictions[index], logger)
@@ -177,15 +177,14 @@ def get_predictions(args, logger):
         output_path = args.output / outdir_name
         make_output_directory(output_path, logger, args.force, args.nodelete)
 
-        # create FastaFile class object to store data for fasta file
+        # create Query class object to store data on the query made to the prediction tools
         prediction_tool_query = Query(file_path, tax_id, protein_source, output_path, {})
-        # pass FASTA file path and outdir_path to invoke prediction tools
-        dbcan_output, cupp_output, ecami_output = invoke_prediction_tools(prediction_tool_query, logger)
-        prediction_tool_query.output_files = {
-            "dbcan_raw": dbcan_output,
-            "cupp_raw": cupp_output,
-            "ecami_raw": ecami_output
-        }
+
+        # invoke prediction tools and retrieve paths to the prediction tools outputs
+        full_outdir_path = invoke_prediction_tools(prediction_tool_query, logger)
+
+        # update outdir path with full path
+        prediction_tool_query.prediction_dir = full_outdir_path
 
         predictions.append(prediction_tool_query)
 
@@ -276,14 +275,24 @@ def get_tax_id(file_path, logger):
             return
 
 
-def standardise_tools_outputs(prediction, logger):
-    """Coordinate the standardising the prediction tools outputs.
+def write_prediction_report(prediction, args, logger):
+    """Coordinate standardising prediction tools outputs and writing summary report.
+
+    If the data from CAZy is provided a statistical evaluation of the prediction tools, by using
+    the data from CAZy as the 'known truth', will be performed.
 
     :param prediction: Query class object
+    :param args: cmd args parser
     :param logger: logger object
 
-    Return prediction (Query class object) with updated paths to output files
+
+    Return nothing
     """
+    # retrieve the paths to prediction tool output files in the output directory for 'prediction'
+    output_files = get_output_files(prediction.prediction_dir, logger)
+
+    # Standardise the output from each prediction tool
+
     output_file_dict = prediction.output_files
 
     dbcan_overview_file, hotpep_output_file = get_dbcan_files(output_file_dict["dbcan_raw"], logger)
@@ -306,6 +315,18 @@ def standardise_tools_outputs(prediction, logger):
 
     prediction.output_files = output_file_dict
     return prediction
+
+
+def get_output_files(output_dir, logger):
+    """Retrieve files to CAZyme prediction tool output files.
+
+    :param output_dir: path to the directory containing prediction tool outputs
+    :param logger: logger object
+
+    Return dictionary, keyed by tool name and valued by path to respective output file
+    """
+    output_dict = {}
+    return output_dict
 
 
 if __name__ == "__main__":
