@@ -25,19 +25,20 @@ import subprocess
 
 def invoke_prediction_tools(query, logger):
     """Pass paramaters to CAZyme prediction tools and invoke tool run.
-    
+
     :param query: Query class instance, input fasta file for tools
     :param logger: logger object
-    
+
     Return 3 paths, one each to the output file(s) of each tool.
     """
     # create complete path to fasta file to negate changing cwd
     current_path = os.getcwd()
     fasta_path = query.fasta
     input_path = current_path / fasta_path
+
     # create complete path to output and directory, to negate changing cwd
-    outdir = query.prediction_dir
-    dbcan_output_dir = current_path / outdir
+    out_dir = query.prediction_dir
+    dbcan_output_dir = current_path / out_dir
 
     # create list of args to invoke run_dbCAN
     dbcan_args = [
@@ -52,14 +53,14 @@ def invoke_prediction_tools(query, logger):
     os.chdir('tools/dbcan/')
 
     # create log of dbCAN run
-    with open(f"{output_dir}/dbcan.log", "w+") as fh:
+    with open(f"{out_dir}/dbcan.log", "w+") as fh:
         process = subprocess.run(dbcan_args, stdout=fh, text=True)
 
     # check if successul
     if process.returncode != 0:  # return code is 0 for successful run
         logger.warning(
             (
-                f"dbCAN ran into error for {outdir}\n."
+                f"dbCAN ran into error for {out_dir}\n."
                 "dbCAN error:\n"
                 f"{process.stderr}"
             )
@@ -68,7 +69,7 @@ def invoke_prediction_tools(query, logger):
     # move to cupp directory so can access CUPP
     os.chdir('../')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('cupp')
-    cupp_output = outdir / "cupp_output.fasta"
+    cupp_output = out_dir / "cupp_output.fasta"
 
     # create list of args to invoke cupp
     cupp_args = [
@@ -76,18 +77,18 @@ def invoke_prediction_tools(query, logger):
         "-query",
         str(fasta_path),
         "-output_path",
-        f"{output_dir}/cupp_output.fasta",
+        f"{out_dir}/cupp_output.fasta",
     ]
 
     # create log of CUPP run
-    with open(f"{output_dir}/cupp.log", "w+") as fh:
+    with open(f"{out_dir}/cupp.log", "w+") as fh:
         process = subprocess.run(cupp_args, stdout=fh, text=True)
 
     # check if successful
     if process.returncode != 0:
         logger.warning(
             (
-                f"CUPP ran into error for {outdir}\n."
+                f"CUPP ran into error for {out_dir}\n."
                 "CUPP error:\n"
                 f"{process.stderr}"
             )
@@ -96,7 +97,7 @@ def invoke_prediction_tools(query, logger):
     # move to ecami directory so can access eCAMI
     os.chdir('../')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('ecami')
-    ecami_output = outdir / "ecami_output.txt"
+    ecami_output = out_dir / "ecami_output.txt"
 
     # create list of args for ecami
     ecami_args = [
@@ -106,19 +107,18 @@ def invoke_prediction_tools(query, logger):
         "-kmer_db",
         "CAZyme",
         "-output",
-        f"{output_dir}/ecami_output.txt",
+        f"{out_dir}/ecami_output.txt",
     ]
 
-
     # create log of eCAMI run
-    with open(f"{output_dir}/ecami.log", "w+") as fh:
+    with open(f"{out_dir}/ecami.log", "w+") as fh:
         process = subprocess.run(ecami_args, stdout=fh, text=True)
 
     # check if successful
     if process.returncode != 0:
         logger.warning(
             (
-                f"eCAMI ran into error for {outdir}\n."
+                f"eCAMI ran into error for {out_dir}\n."
                 "eCAMI error:\n"
                 f"{process.stderr}"
             )
