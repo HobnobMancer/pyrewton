@@ -29,7 +29,7 @@ def invoke_prediction_tools(query, logger):
     :param query: Query class instance, input fasta file for tools
     :param logger: logger object
 
-    Return 3 paths, one each to the output file(s) of each tool.
+    Return full path to directory containing output files for all predictions for input FASTA file.
     """
     # create complete path to fasta file to negate changing cwd
     current_path = os.getcwd()
@@ -38,15 +38,45 @@ def invoke_prediction_tools(query, logger):
 
     # create complete path to output and directory, to negate changing cwd
     out_dir = query.prediction_dir
-    dbcan_output_dir = current_path / out_dir
+    out_dir = current_path / out_dir
 
+    invoke_dbcan(input_path, out_dir, logger)
+
+    # move to cupp directory so can access CUPP
+    os.chdir('../')  # moves up to pyrewton/cazymes/prediction/tools
+    os.chdir('cupp')
+
+    invoke_cupp(input_path, out_dir, logger)
+
+    # move to ecami directory so can access eCAMI
+    os.chdir('../')  # moves up to pyrewton/cazymes/prediction/tools
+    os.chdir('ecami')
+
+    invoke_ecami(input_path, out_dir, logger)
+
+    # move back to 'predictions/' directory
+    os.chdir('../')  # moves to 'tools/'
+    os.chdir('../')  # moves to 'predictions/'
+
+    return out_dir
+
+
+def invoke_dbcan(input_path, out_dir, logger):
+    """Invoke the prediction tool (run-)dbCAN.
+
+    :param input_path: path to input FASTA file
+    :param out_dir: path to output directory for input FASTA file query
+    :param logger: logger object
+
+    Return nothing
+    """
     # create list of args to invoke run_dbCAN
     dbcan_args = [
         "run_dbcan.py",
         str(input_path),
         "protein",
         "--out_dir",
-        str(dbcan_output_dir),
+        str(out_dir),
     ]
 
     # change cwd to dbCAN directory to be able to access database files
@@ -66,16 +96,23 @@ def invoke_prediction_tools(query, logger):
             )
         )
 
-    # move to cupp directory so can access CUPP
-    os.chdir('../')  # moves up to pyrewton/cazymes/prediction/tools
-    os.chdir('cupp')
-    cupp_output = out_dir / "cupp_output.fasta"
+    return
 
+
+def invoke_cupp(input_path, out_dir, logger):
+    """Invoke the prediction tool CUPP.
+
+    :param input_path: path to input FASTA file
+    :param out_dir: path to output directory for input FASTA file query
+    :param logger: logger object
+
+    Return nothing
+    """
     # create list of args to invoke cupp
     cupp_args = [
         "prediction.py",
         "-query",
-        str(fasta_path),
+        str(input_path),
         "-output_path",
         f"{out_dir}/cupp_output.fasta",
     ]
@@ -94,16 +131,23 @@ def invoke_prediction_tools(query, logger):
             )
         )
 
-    # move to ecami directory so can access eCAMI
-    os.chdir('../')  # moves up to pyrewton/cazymes/prediction/tools
-    os.chdir('ecami')
-    ecami_output = out_dir / "ecami_output.txt"
+    return
 
+
+def invoke_ecami(input_path, out_dir, logger):
+    """Invoke the prediction tool eCAMI.
+
+    :param input_path: path to input FASTA file
+    :param out_dir: path to output directory for input FASTA file query
+    :param logger: logger object
+
+    Return nothing
+    """
     # create list of args for ecami
     ecami_args = [
         "prediction.py",
         "-input",
-        str(fasta_path),
+        str(input_path),
         "-kmer_db",
         "CAZyme",
         "-output",
@@ -124,8 +168,4 @@ def invoke_prediction_tools(query, logger):
             )
         )
 
-    # move back to 'predictions/' directory
-    os.chdir('../')  # moves to 'tools/'
-    os.chdir('../')  # moves to 'predictions/'
-
-    return dbcan_output_dir, cupp_output, ecami_output
+    return
