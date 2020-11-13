@@ -58,7 +58,6 @@ class Query:
     tax_id: str  # NCBI taxonomy id, prefix NCBI:txid
     source: str  # source of protein sequences, genomic assembly or database
     prediction_dir: Path  # path to dir containing outputs from prediciton tools
-    output_files: dict  # stores paths to output files, updated as files created
 
     def __str__(self):
         """Representation of object"""
@@ -95,11 +94,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     if args.output is not sys.stdout:
         make_output_directory(args.output, logger, args.force, args.nodelete)
 
-    # create list of paths to all fasta files in input directory
-    all_fasta_paths = get_fasta_paths(args, logger)
-
     # invoke prediction tools and build prediciton Query instances
-    predictions = get_predictions(all_fasta_paths, args, logger)
+    predictions = get_predictions(args, logger)
 
     # standardist output from prediction tools for each input FASTA file
     index = 0
@@ -116,95 +112,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # write reports of statistical evaluation
     # for prediction in predictions:  # make tqdm
-
-
-def standardise_tools_outputs(prediction, logger):
-    """Coordinate the standardising the prediction tools outputs.
-
-    :param prediction: Query class object
-    :param logger: logger object
-
-    Return prediction (Query class object) with updated paths to output files
-    """
-    output_file_dict = prediction.output_files
-
-    dbcan_overview_file, hotpep_output_file = get_dbcan_files(output_file_dict["dbcan_raw"], logger)
-    dbcan_stnd, hmmer_stnd, hotpep_stnd, diamond_stnd = parse.parse_dbcan_output(
-        dbcan_overview_file,
-    )
-    hotpep_stnd = parse.add_hotpep_ec_predictions(hotpep_output_file, hotpep_stnd)
-
-    cupp_stnd = parse.parse_cupp_output(output_file_dict["cupp_raw"])
-
-    ecami_stnd = parse.parse_ecami_output(output_file_dict["ecami_raw"])
-
-    # updata dict of paths to the predictions tools outputs
-    output_file_dict["dbcan_stnd"] = dbcan_stnd
-    output_file_dict["hmmer_stnd"] = hmmer_stnd
-    output_file_dict["hotpep_stnd"] = hotpep_stnd
-    output_file_dict["diamond_stnd"] = diamond_stnd
-    output_file_dict["cupp_stnd"] = cupp_stnd
-    output_file_dict["ecami_stnd"] = ecami_stnd
-
-    prediction.output_files = output_file_dict
-    return prediction
-
-
-def get_dbcan_files(dbcan_dir, logger):
-    """Retrieve paths to dbCAN overview.txt and Hotpep.out files.
-
-    :param dbcan_dir: path, dir containing dbcan output files
-    :param logger: logger object
-
-    Return two paths.
-    """
-    ###
-    return overview_file_path, hotpep_file_path
-
-
-def get_predictions(all_fasta_paths, args, logger):
-    """Build prediction queries and invoke prediction tools for each query.
-
-    :param all_fasta_paths: list of paths to input fasta files
-    :param args: parser object
-    :param logger: logger object
-
-    Return list of Query class objects.
-    """
-    # create empty list to store all instances of Prediction class objects
-    predictions = []
-
-    # for each FASTA file invoke dbCAN, CUPP and eCAMI
-    for file_path in tqdm(all_fasta_paths, desc="Invoking tools for FASTA file"):  # make tqdm
-        # retrieve data on source of protein sequences and species taxonomy ID
-        protein_source = get_protein_source(file_path, logger)
-        tax_id = get_tax_id(file_path, logger)
-
-        time_stamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-
-        # name output dir to store prediction output and statistical evaluation
-        if tax_id is None:
-            outdir_name = f"cazyme_predictions_{protein_source}_{time_stamp}"
-        else:
-            outdir_name = f"cazyme_predictions_{tax_id}_{protein_source}_{time_stamp}"
-
-        # create output_dir for given input FASTA file within user specified parent directory
-        output_path = args.output / outdir_name
-        make_output_directory(output_path, logger, args.force, args.nodelete)
-
-        # create FastaFile class object to store data for fasta file
-        prediction_tool_query = Query(file_path, tax_id, protein_source, output_path, {})
-        # pass FASTA file path and outdir_path to invoke prediction tools
-        dbcan_output, cupp_output, ecami_output = invoke_prediction_tools(prediction_tool_query, logger)
-        prediction_tool_query.output_files = {
-            "dbcan_raw": dbcan_output,
-            "cupp_raw": cupp_output,
-            "ecami_raw": ecami_output
-        }
-
-        predictions.append(prediction_tool_query)
-
-    return predictions
 
 
 def check_cwd(logger):
@@ -243,6 +150,54 @@ def check_cwd(logger):
             )
         )
         sys.exit(1)
+
+
+def get_predictions(args, logger):
+    """Build prediction queries and invoke prediction tools for each query.
+
+    :param all_fasta_paths: list of paths to input fasta files
+    :param args: parser object
+    :param logger: logger object
+
+    Return list of Query class objects, queries to prediction tools.
+    """
+    # create list of paths to all fasta files in input directory
+    all_fasta_paths = get_fasta_paths(args, logger)
+
+    # create empty list to store all instances of Prediction class objects
+    predictions = []
+
+    # for each FASTA file invoke dbCAN, CUPP and eCAMI
+    for file_path in tqdm(all_fasta_paths, desc="Invoking tools for FASTA file"):  # make tqdm
+        # retrieve data on source of protein sequences and species taxonomy ID
+        protein_source = get_protein_source(file_path, logger)
+        tax_id = get_tax_id(file_path, logger)
+
+        time_stamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
+
+        # name output dir to store prediction output and statistical evaluation
+        if tax_id is None:
+            outdir_name = f"cazyme_predictions_{protein_source}_{time_stamp}"
+        else:
+            outdir_name = f"cazyme_predictions_{tax_id}_{protein_source}_{time_stamp}"
+
+        # create output_dir for given input FASTA file within user specified parent directory
+        output_path = args.output / outdir_name
+        make_output_directory(output_path, logger, args.force, args.nodelete)
+
+        # create FastaFile class object to store data for fasta file
+        prediction_tool_query = Query(file_path, tax_id, protein_source, output_path, {})
+        # pass FASTA file path and outdir_path to invoke prediction tools
+        dbcan_output, cupp_output, ecami_output = invoke_prediction_tools(prediction_tool_query, logger)
+        prediction_tool_query.output_files = {
+            "dbcan_raw": dbcan_output,
+            "cupp_raw": cupp_output,
+            "ecami_raw": ecami_output
+        }
+
+        predictions.append(prediction_tool_query)
+
+    return predictions
 
 
 def get_fasta_paths(args, logger):
@@ -327,6 +282,38 @@ def get_tax_id(file_path, logger):
             return tax_id
         except AttributeError:
             return
+
+
+def standardise_tools_outputs(prediction, logger):
+    """Coordinate the standardising the prediction tools outputs.
+
+    :param prediction: Query class object
+    :param logger: logger object
+
+    Return prediction (Query class object) with updated paths to output files
+    """
+    output_file_dict = prediction.output_files
+
+    dbcan_overview_file, hotpep_output_file = get_dbcan_files(output_file_dict["dbcan_raw"], logger)
+    dbcan_stnd, hmmer_stnd, hotpep_stnd, diamond_stnd = parse.parse_dbcan_output(
+        dbcan_overview_file,
+    )
+    hotpep_stnd = parse.add_hotpep_ec_predictions(hotpep_output_file, hotpep_stnd)
+
+    cupp_stnd = parse.parse_cupp_output(output_file_dict["cupp_raw"])
+
+    ecami_stnd = parse.parse_ecami_output(output_file_dict["ecami_raw"])
+
+    # updata dict of paths to the predictions tools outputs
+    output_file_dict["dbcan_stnd"] = dbcan_stnd
+    output_file_dict["hmmer_stnd"] = hmmer_stnd
+    output_file_dict["hotpep_stnd"] = hotpep_stnd
+    output_file_dict["diamond_stnd"] = diamond_stnd
+    output_file_dict["cupp_stnd"] = cupp_stnd
+    output_file_dict["ecami_stnd"] = ecami_stnd
+
+    prediction.output_files = output_file_dict
+    return prediction
 
 
 if __name__ == "__main__":
