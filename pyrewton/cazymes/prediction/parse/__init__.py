@@ -18,6 +18,7 @@
 # The MIT License
 """Module to parse the output from dbCAN, CUPP and eCAMI. Create standarised output."""
 
+import re
 
 import pandas as pd
 import numpy as np
@@ -331,20 +332,20 @@ def add_hotpep_ec_predictions(hotpep_output_file, hotpep_df):
 
 def parse_cupp_output(log_file_path, logger):
     """Parse the output from the output log file from CUPP and write out data to a dataframe.
-    
+
     Retrieves the protein accession/name/identifier, predicated CAZy family, predicated CAZy
     subfamily, predicated EC number and predicated range of domain within the protein sequence
     (the index of the first and last residues of the domain).
-    
+
     :param log_file_path: path, path to the output log file
     :param logger: logger object
-    
+
     Return Pandas dataframe containing CUPP output
     """
-    
+
     with open(log_file_path, "r") as lfh:
         log_file = lfh.read().splitlines()
-    
+
     # build an empty dataframe to add predication outputs to
     cupp_df = pd.DataFrame(columns=["protein_accession","cazy_family","cazy_subfamily","ec_number","domain_range"])
 
@@ -357,7 +358,7 @@ def parse_cupp_output(log_file_path, logger):
 
         # retrieve EC number if given
         ec_number = get_cupp_ec_number(prediction_output)
-        
+
         # retrieve predicated CAZy subfamily
         subfam = prediction_output[-1] 
         # change empty string to null value
@@ -386,10 +387,10 @@ def parse_cupp_output(log_file_path, logger):
 
 def get_cupp_domain_range(prediction_output, logger):
     """Retrieve the amino acid domain_range from CUPP output log file.
-    
+
     :param prediciton_output: list of items from log file line.
     :param logger: logger object
-    
+
     Return string if domain range given, or null value if not.
     """
     for item in prediction_output:
@@ -406,9 +407,10 @@ def get_cupp_domain_range(prediction_output, logger):
             logger.warning(
                 "Incorrect parsing to retrieve domain ranges for\n"
                 f"{prediction_output[0]} in\n"
-                f"{log_file_path}
+                f"{log_file_path}"
+            )
             domain_range = np.nan
-    
+
     return domain_range
 
 
@@ -480,7 +482,7 @@ def get_cupp_ec_number(prediction_output):
     # standardise missing digits in ec number to -
     if type(ec_number) != float:  # if ec_number != np.nan
         ec_number = ec_number.replace("*","-")
-        
+
     return(ec_number)
 
 
