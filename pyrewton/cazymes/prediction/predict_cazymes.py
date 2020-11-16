@@ -41,7 +41,7 @@ from pyrewton.cazymes.prediction.tools import invoke_prediction_tools
 from pyrewton.cazymes.prediction import parse
 from pyrewton.utilities import build_logger
 from pyrewton.utilities.cmd_parser_predict_cazymes import build_parser
-from pyrewton.utilities.file_io import make_output_directory
+from pyrewton.utilities.file_io import make_output_directory, write_out_pre_named_dataframe
 
 
 @dataclass
@@ -296,7 +296,7 @@ def write_prediction_report(prediction, args, logger):
         diamond_stnd_df,
         cupp_stnd_df,
         ecami_stnd_df
-    ) = standardise_prediction_outputs(prediction, logger)
+    ) = standardise_prediction_outputs(prediction.prediction_dir, args, logger)
 
     # Perform statistical evaluation of performance if CAZy data provided
     # if args.cazy is not None:
@@ -307,21 +307,21 @@ def write_prediction_report(prediction, args, logger):
     return
 
 
-def standardise_prediction_outputs(prediction, logger):
+def standardise_prediction_outputs(out_dir, args, logger):
     """Coordinate standardising prediction tools outputs.
 
     Produces a dataframe for eCAMI, CUPP, Hotpep, HMMER, DIAMOND and a consensus result for dbCAN
     where consensus means any result where at least 2 tools (out of Hotpep, HMMER and DIAMOND)
     match.
 
-    :param prediction: Query class object
+    :param out_dir: path to directory containing respective prediction query's output files
     :param args: cmd args parser
     :param logger: logger object
 
     Return 6 Pandas dataframes.
     """
     # retrieve the paths to prediction tool output files in the output directory for 'prediction'
-    raw_output_files = get_output_files(prediction.prediction_dir, logger)  # returns dict
+    raw_output_files = get_output_files(out_dir, logger)  # returns dict
 
     # Standardise the output from each prediction tool
     dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df = parse.parse_dbcan_output(
@@ -331,9 +331,18 @@ def standardise_prediction_outputs(prediction, logger):
     # retrieve predicated EC number for Hotpep
     hotpep_stnd_df = parse.add_hotpep_ec_predictions(raw_output_files["hotpep"], hotpep_stnd_df)
 
+    # standardise output from CUPP and eCAMI
     cupp_stnd_df = parse.parse_cupp_output(raw_output_files["cupp_raw"])
 
     ecami_stnd_df = parse.parse_ecami_output(raw_output_files["ecami_raw"])
+
+    # Write out dataframes to disk
+    write_out_dataframes(dbcan_stnd_df, "dbcan_stnd_df", out_dir, args, logger)
+    write_out_dataframes(hmmer_stnd_df, "hmmer_stnd_df", out_dir, args, logger)
+    write_out_dataframes(hotpep_stnd_df, "hotpep_stnd_df", out_dir, args, logger)
+    write_out_dataframes(diamond_stnd_df, "diamond_stnd_df", out_dir, args, logger)
+    write_out_dataframes(cupp_stnd_df, "cupp_stnd_df", out_dir, args, logger)
+    write_out_dataframes(ecami_stnd_df, "ecami_stnd_df", out_dir, args, logger)
 
     return(
         dbcan_stnd_df,
@@ -343,6 +352,35 @@ def standardise_prediction_outputs(prediction, logger):
         cupp_stnd_df,
         ecami_stnd_df,
     )
+
+
+def write_out_dataframes(df, df_name, out_dir, args, logger):
+    """Coordinate writing out standardise dataframes to disk.
+
+    Performs check and logs if no dataframe was produced for a given CAZyme prediction tool.
+
+    :param df: pandas dataframe
+    :param df_name: path to location where dataframe is to be written (excludes .csv extension)
+    :param args: args parser object
+    :param logger: logger object
+
+    Return nothing.
+    """
+    if df is None:
+        logger.warning(
+            "No standardised dataframe was produced for\n"
+            f"{out_dir} / {df_name}"
+        )
+        return
+
+    if len(df["cazy_family"]) == 0:
+        logger.warning(
+            "Empty standardised dataframe created for\n"
+            f"{out_dir} / {df_name}"
+        )
+
+    write_out_pre_named_dataframe(df, df_name, logger, out_dir, args.force)
+    return
 
 
 def get_output_files(output_dir, logger):
