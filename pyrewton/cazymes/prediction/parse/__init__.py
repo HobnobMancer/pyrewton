@@ -346,9 +346,16 @@ def parse_cupp_output(log_file_path, logger):
 
     Return Pandas dataframe containing CUPP output
     """
-
-    with open(log_file_path, "r") as lfh:
-        log_file = lfh.read().splitlines()
+    try:
+        with open(log_file_path, "r") as lfh:
+            log_file = lfh.read().splitlines()
+    except FileNotFoundError:
+        logger.warning(
+            "Could not find CUPP output file\n"
+            f"{log_file_path}"
+            "Not producing standardised result for this file"
+        )
+        return None
 
     # build an empty dataframe to add predication outputs to
     cupp_df = pd.DataFrame(columns=[
@@ -500,7 +507,7 @@ def get_cupp_ec_number(prediction_output):
 # Functions for parsing the eCAMI output file
 
 
-def parse_ecami_output(txt_file_path):
+def parse_ecami_output(txt_file_path, logger):
     """Parse the output from the output text file from eCAMI and write out data to a dataframe.
 
     Retrieves the protein accession/name/identifier, predicated CAZy family, predicated CAZy
@@ -511,8 +518,16 @@ def parse_ecami_output(txt_file_path):
 
     Return Pandas dataframe containing eCAMI output
     """
-    with open(txt_file_path, "r") as fh:
-        ecami_file = fh.read().splitlines()
+    try:
+        with open(txt_file_path, "r") as fh:
+            ecami_file = fh.read().splitlines()
+    except FileNotFoundError:
+        logger.warning(
+            "Could not find eCAMI output file\n"
+            f"{txt_file_path}"
+            "Not producing standardised result for this file"
+        )
+        return None
 
     # build an empty dataframe to add predication outputs to
     ecami_df = pd.DataFrame(columns=[
