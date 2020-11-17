@@ -69,7 +69,7 @@ def parse_cupp_output(log_file_path, logger):
         domain_range = get_cupp_domain_range(prediction_output, log_file_path, logger)
 
         # retrieve EC number if given
-        ec_number = get_cupp_ec_number(prediction_output)
+        ec_number = get_cupp_ec_number(prediction_output, log_file_path, logger)
 
         # retrieve predicated CAZy subfamily
         subfam = prediction_output[-1]
@@ -127,7 +127,7 @@ def get_cupp_domain_range(prediction_output, log_file_path, logger):
     return domain_range
 
 
-def get_cupp_ec_number(prediction_output):
+def get_cupp_ec_number(prediction_output, log_file_path, logger):
     """Retrieve the predicted EC numbers from the CUPP output log file.
 
     EC numbers are represented as "CAZy_fam:EC_number" in the log file.
@@ -136,64 +136,58 @@ def get_cupp_ec_number(prediction_output):
     for the same CAZy family, these are separated by '&'.
 
     :param prediciton_output: list of items from log file line.
+    :param log_file_path: path to CUPP output file
+    :param logger: logger object
 
     Return string if EC numbers are given, or null value if not.
     """
+    # Separate CAZy families from their respective EC numbers
     ec_data = prediction_output[-2].split(":")
 
-    if len(ec_data) == 1:
-        ec_number = np.nan
+    # create empty list to store all predicted EC numbers in
+    ec_numbers = []
 
-    elif len(ec_data) == 2:
-        ec_numbers = []
-        ec_split = ec_data[1].split("&")  # multiple predicated EC numbers are separated by "&"
+    # If multiple CAZy families are listed these are separed by '-'
+    # and will appear on the end of an item in ec_data
 
-        for item in ec_split:
+    for item in ec_data:
+        item = item.strip()
+
+        # check that it isn't a CAZy family:
+        try:
+            re.match(r"\d", item).group()
+        except AttributeError:  # raised if first character is not a digit, thus not an EC number
+            continue
+
+        # check if CAZy family is appendaged to EC number
+        if item.find("-") != -1:
+            item = item[:(item.find("-"))]  # remove appendaged CAZy family
+
+        # separate out EC numbers if multiple were predicted
+        item = item.split("&")
+
+        # parse each predicted EC number
+        for ec in item:
             # check formating, e.g. somtimes 'Unknown' is written in stead of an EC number
-            try:
-                re.match(r"\d+?\.(\d+?|\*)\.(\d+?|\*)\.(\d+?|\*)", item)
-            except AttributeError:
-                ec_numbers.append(np.nan)
+            if (ec == "Unknown") or (ec == "unknown"):
+                print("unknown=", ec)
                 continue
-            ec_numbers.append(item)
-
-        ec_number = ", ".join(ec_numbers)
-
-    else:
-        ec_numbers = []
-        for item in ec_data:
-            # check first character is a digit and thus item contains an EC number
-            try:
-                re.match(r"\d.+", item).group()
-            except AttributeError:
-                continue
-
-            # check if item contains aditional info
-            if item.find("-") != -1:
-                cut_off = item.find("-")
-                ec = item[:cut_off]
-                ec_split = ec.split("&")
-
-                for i in ec_split:
-                    try:
-                        re.match(r"\d+?\.(\d+?|\*)\.(\d+?|\*)\.(\d+?|\*)", i)
-                    except AttributeError:
-                        continue
-                    ec_numbers.append(i)
-
             else:
-                ec = item.split("&")
-                for i in ec:
-                    try:
-                        re.match(r"\d+?\.(\d+?|\*)\.(\d+?|\*)\.(\d+?|\*)", i)
-                    except AttributeError:
-                        continue
-                    ec_numbers.append(i)
+                try:
+                    re.match(r"\d+?\.(\d+?|\*)\.(\d+?|\*)\.(\d+?|\*)", ec).group()
+                    #  standardise missing digits in ec number to '-'
+                    ec = ec.replace("*", "-")
+                    ec_numbers.append(ec)
+                except AttributeError:
+                    logger.warning(
+                        f"Non-standard EC# for {prediction_output[0]}, {ec} in\n"
+                        f"{log_file_path}"
+                    )
 
+    # Convert lists into more human readable strings
+    if len(ec_numbers) == 0:
+        ec_number = np.nan
+    else:
         ec_number = ", ".join(ec_numbers)
-
-    # standardise missing digits in ec number to -
-    if type(ec_number) != float:  # if ec_number != np.nan
-        ec_number = ec_number.replace("*", "-")
 
     return(ec_number)
