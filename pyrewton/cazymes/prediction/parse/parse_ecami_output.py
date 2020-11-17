@@ -67,10 +67,10 @@ def parse_ecami_output(txt_file_path, logger):
 
             # Retrieve the CAZy family
             cazy_family = prediction_output[1].split(":")[0]
-            
+
             # Check CAZy family is formated correctly
             try:
-                re.match(r"\D{2,3}\d+", cazy_family.group()
+                re.match(r"\D{2,3}\d+", cazy_family.group())
             except AttributeError:
                 # log irregularity
                 logger.warning(
@@ -86,7 +86,7 @@ def parse_ecami_output(txt_file_path, logger):
                 cazy_family,
                 txt_file_path,
                 logger,
-                )
+            )
 
             # build dict to enable easy building of df
             prediction = {
@@ -114,7 +114,7 @@ def get_ecami_additional_info(prediction_output, cazy_family, txt_file_path, log
     additional_domains = []
     ec_numbers = []
     subfams = []
-    
+
     # separate the data stored in the 'additional' data section of the line in the eCAMI output file
     additional_info = prediction_output[2].split("|")
 
@@ -133,12 +133,12 @@ def get_ecami_additional_info(prediction_output, cazy_family, txt_file_path, log
         except AttributeError:
             # log irreguarity
             logger.warning(
-                f"Non-standardised output for {line[0][1:]} {item} in\n"
+                f"Non-standardised output for {prediction_output[0][1:]} {item} in\n"
                 f"{txt_file_path}"
                 "Returning no CAZy family/subfamily"
             )
             continue
-        
+
         # Check if subfamily
         if item.find("_") != -1:  # predicated CAZy subfamily
             # check format
@@ -150,9 +150,9 @@ def get_ecami_additional_info(prediction_output, cazy_family, txt_file_path, log
                 else:
                     additional_domains.append(item)
             except AttributeError:
-                #log irregulatity
                 logger.warning(
-                    f"Non-standardised CAZy subfamily name for {line[0][1:]} {item} in\n"
+                    "Non-standardised CAZy subfamily name for "
+                    f"{prediction_output[0][1:]} {item} in\n"
                     f"{txt_file_path}"
                     "Returning subfamily"
                 )
@@ -165,7 +165,7 @@ def get_ecami_additional_info(prediction_output, cazy_family, txt_file_path, log
             except AttributeError:
                 # log irregularity
                 logger.warning(
-                    f"Non-standardised CAZy family name for {line[0][1:]} {item} in\n"
+                    f"Non-standardised CAZy family name for {prediction_output[0][1:]} {item} in\n"
                     f"{txt_file_path}"
                     "Returning no CAZy family"
                 )
