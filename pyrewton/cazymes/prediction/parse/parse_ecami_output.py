@@ -72,7 +72,6 @@ def parse_ecami_output(txt_file_path, logger):
             try:
                 re.match(r"\D{2,3}\d+", cazy_family.group())
             except AttributeError:
-                # log irregularity
                 logger.warning(
                     f"Non-standardised CAZy family name for {line[0][1:]} {cazy_family} in\n"
                     f"{txt_file_path}\n"
@@ -131,7 +130,6 @@ def get_ecami_additional_info(prediction_output, cazy_family, txt_file_path, log
         try:
             re.match(r"(\D{2,3}\d+)|(\D{2,3}\d+_\d+)", item).group()
         except AttributeError:
-            # log irreguarity
             logger.warning(
                 f"Non-standardised output for {prediction_output[0][1:]} {item} in\n"
                 f"{txt_file_path}"
@@ -163,7 +161,6 @@ def get_ecami_additional_info(prediction_output, cazy_family, txt_file_path, log
                 re.match(r"\D{2,3}\d+", item).group()
                 additional_domains.append(item)
             except AttributeError:
-                # log irregularity
                 logger.warning(
                     f"Non-standardised CAZy family name for {prediction_output[0][1:]} {item} in\n"
                     f"{txt_file_path}"
