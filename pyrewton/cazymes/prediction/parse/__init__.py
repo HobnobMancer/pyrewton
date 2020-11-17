@@ -503,9 +503,9 @@ def get_cupp_ec_number(prediction_output):
 def parse_ecami_output(txt_file_path):
     """Parse the output from the output text file from eCAMI and write out data to a dataframe.
 
-    Retrieves the protein accession/name/identifier, predicated CAZy family, predicated CAZy subfamily,
-    predicated EC number and additional/other domains predicated to also be within the protein sequence,
-    indicating prediciton of a multiple module enzymes.
+    Retrieves the protein accession/name/identifier, predicated CAZy family, predicated CAZy
+    subfamily, predicated EC number and additional/other domains predicated to also be within the
+    protein sequence, indicating prediciton of a multiple module enzymes.
 
     :param text_file_path: path, path to the output text file
 
