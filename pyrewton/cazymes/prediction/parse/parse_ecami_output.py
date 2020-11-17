@@ -36,6 +36,7 @@ def parse_ecami_output(txt_file_path, logger):
     protein sequence, indicating prediciton of a multiple module enzymes.
 
     :param text_file_path: path, path to the output text file
+    :param logger: logger object
 
     Return Pandas dataframe containing eCAMI output
     """
@@ -66,11 +67,25 @@ def parse_ecami_output(txt_file_path, logger):
 
             # Retrieve the CAZy family
             cazy_family = prediction_output[1].split(":")[0]
+            
+            # Check CAZy family is formated correctly
+            try:
+                re.match(r"\D{2,3}\d+", cazy_family.group()
+            except AttributeError:
+                # log irregularity
+                logger.warning(
+                    f"Non-standardised CAZy family name for {line[0][1:]} {cazy_family} in\n"
+                    f"{txt_file_path}\n"
+                    f"Returning no predicted CAZy family for {line[0][1:]}"
+                )
+                cazy_family = np.nan
 
             # Retrieve subfamily, additional domains and EC numbers from the additional info
             additional_domains, ec_number, cazy_subfam = get_ecami_additional_info(
                 prediction_output,
-                cazy_family
+                cazy_family,
+                txt_file_path,
+                logger,
                 )
 
             # build dict to enable easy building of df
@@ -88,39 +103,72 @@ def parse_ecami_output(txt_file_path, logger):
     return ecami_df
 
 
-def get_ecami_additional_info(prediction_output, cazy_family):
+def get_ecami_additional_info(prediction_output, cazy_family, txt_file_path, logger):
     """Retrieve additional predicated domains and EC numbers from eCAMI output file.
 
     :param prediction_output: list of predicted items for a given protein
     :param cazy_family: str, predicted CAZy family
 
-    Return list of additional domains and list of EC numbers as strings, items separated by ', '"""
+    Return list of additional domains and list of EC numbers as strings, items separated by ', '.
+    """
     additional_domains = []
-    ec_number = []
+    ec_numbers = []
     subfams = []
+    
+    # separate the data stored in the 'additional' data section of the line in the eCAMI output file
     additional_info = prediction_output[2].split("|")
 
     for item in additional_info:
         item = item.split(":")[0]  # drop the eCAMI group number
+        item = item.strip()
 
         # check if it is an EC number
         if item.find(".") != -1:
-            ec_number.append(item)
+            ec_numbers.append(item)
             continue
 
         # check if it is a subfamily or family prediction
         try:
             re.match(r"(\D{2,3}\d+)|(\D{2,3}\d+_\d+)", item).group()
         except AttributeError:
+            # log irreguarity
+            logger.warning(
+                f"Non-standardised output for {line[0][1:]} {item} in\n"
+                f"{txt_file_path}"
+                "Returning no CAZy family/subfamily"
+            )
             continue
-        # check if a subfamily of predicted CAZy family
-        if item.find("_") != -1:
-            if cazy_family == item[:item.find("_")]:
-                subfams.append(item)
-            else:
+        
+        # Check if subfamily
+        if item.find("_") != -1:  # predicated CAZy subfamily
+            # check format
+            try:
+                re.match(r"\D{2,3}\d+_\d+", item).group()
+                # check if it is the subfamily of the predicated CAZy family
+                if cazy_family == item[:item.find("_")]:
+                    subfams.append(item)
+                else:
+                    additional_domains.append(item)
+            except AttributeError:
+                #log irregulatity
+                logger.warning(
+                    f"Non-standardised CAZy subfamily name for {line[0][1:]} {item} in\n"
+                    f"{txt_file_path}"
+                    "Returning subfamily"
+                )
+
+        else:  # predicated CAZy family
+            # check format
+            try:
+                re.match(r"\D{2,3}\d+", item).group()
                 additional_domains.append(item)
-        else:
-            additional_domains.append(item)
+            except AttributeError:
+                # log irregularity
+                logger.warning(
+                    f"Non-standardised CAZy family name for {line[0][1:]} {item} in\n"
+                    f"{txt_file_path}"
+                    "Returning no CAZy family"
+                )
 
     # convert empty lists to null values if necessary, or make list more human readable
     if len(additional_domains) == 0:
@@ -128,14 +176,14 @@ def get_ecami_additional_info(prediction_output, cazy_family):
     else:
         additional_domains = ", ".join(additional_domains)
 
-    if len(ec_number) == 0:
-        ec_number = np.nan
+    if len(ec_numbers) == 0:
+        ec_numbers = np.nan
     else:
-        ec_number = ", ".join(ec_number)
+        ec_numbers = ", ".join(ec_numbers)
 
     if len(subfams) == 0:
         subfams = np.nan
     else:
         subfams = ", ".join(subfams)
 
-    return(additional_domains, ec_number, subfams)
+    return(additional_domains, ec_numbers, subfams)
