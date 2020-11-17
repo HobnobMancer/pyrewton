@@ -87,6 +87,13 @@ def write_out_pre_named_dataframe(dataframe, df_name, logger, outdir, force):
     :param outdir: cmd-args, Path, output directory
     :param force: booleon, cmd-line argument to enable/disable over writing of existing files
     """
+    if dataframe is None:
+        logger.warning(
+            f"Dataframe for {df_name} does not exist\n"
+            "Not writing out dataframe"
+        )
+        return
+
     # Check if overwrite of existing directory will occur
     logger.info("Checking if output directory for dataframe already exists")
     output_path = outdir / f"{df_name}.csv"
