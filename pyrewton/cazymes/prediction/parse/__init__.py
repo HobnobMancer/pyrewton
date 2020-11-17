@@ -16,7 +16,11 @@
 # UK
 #
 # The MIT License
-"""Module to parse the output from dbCAN, CUPP and eCAMI. Create standarised output."""
+"""Module to parse the output from dbCAN, CUPP and eCAMI. Create standarised output.
+
+:func:
+
+"""
 
 import re
 
@@ -493,23 +497,23 @@ def get_cupp_ec_number(prediction_output):
     return(ec_number)
 
 
-# Function for parsing the eCAMI output file
+# Functions for parsing the eCAMI output file
 
 
 def parse_ecami_output(txt_file_path):
     """Parse the output from the output text file from eCAMI and write out data to a dataframe.
-
-    Retrieves the protein accession/name/identifier, predicated CAZy family, predicated CAZy
-    subfamily, predicated EC number and additional/other domains predicated to also be within the
-    protein sequence, indicating prediciton of a multiple module enzymes.
-
+    
+    Retrieves the protein accession/name/identifier, predicated CAZy family, predicated CAZy subfamily,
+    predicated EC number and additional/other domains predicated to also be within the protein sequence,
+    indicating prediciton of a multiple module enzymes.
+    
     :param text_file_path: path, path to the output text file
-
+    
     Return Pandas dataframe containing eCAMI output
     """
     with open(txt_file_path, "r") as fh:
         ecami_file = fh.read().splitlines()
-
+    
     # build an empty dataframe to add predication outputs to
     ecami_df = pd.DataFrame(columns=[
         "protein_accession",
@@ -518,43 +522,84 @@ def parse_ecami_output(txt_file_path):
         "ec_number",
         "additional_domains",
     ])
-
+        
     # parse the outputs so in format suitable for final dataframe
     for line in ecami_file:
         if line.startswith(">"):  # identifies new protein
             prediction_output = line.split("\t")
-            cazy_fam = prediction_output[1].split(":")[0]
+            
+            # Retrieve the CAZy family
+            cazy_family = prediction_output[1].split(":")[0]
 
-            cazy_subfam = np.nan
-            ec_number = np.nan
-
-            # check for additional domains
-            other_domains = prediction_output[2].split("|")
-            additional_domains = []
-            for domain in other_domains:
-                domain = domain.split(":")[0]  # drop the eCAMI group number
-                # check if subfamily is predicated for the main CAZy family
-                if len(domain.split("_")) != 1:
-                    cazy_subfam = domain
-                # check if predicated EC number
-                elif domain.find(".") != -1:
-                    ec_number = domain
-                else:
-                    additional_domains.append(domain)
-
-            if len(additional_domains) == 0:
-                additional_domains = np.nan
+            # Retrieve subfamily, additional predicted domains and EC numbers from the additional info
+            additional_domains, ec_number, cazy_subfam = get_ecami_additional_info(prediction_output, cazy_family)
 
             # build dict to enable easy building of df
             prediction = {
-                "protein_accession": [prediction_output[0]],
-                "cazy_family": [cazy_fam],
+                "protein_accession": [prediction_output[0][1:]],
+                "cazy_family": [cazy_family],
                 "cazy_subfamily": [cazy_subfam],
                 "ec_number": [ec_number],
                 "additional_domains": [additional_domains],
             }
-
+            
             prediction_df = pd.DataFrame(prediction)
             ecami_df = ecami_df.append(prediction_df)
+    
+    return ecami_df
+
+
+def get_ecami_additional_info(prediction_output, cazy_family):
+    """Retrieve additional predicated domains and EC numbers from eCAMI output file.
+    
+    :param prediction_output: list of predicted items for a given protein
+    :param cazy_family: str, predicted CAZy family
+    
+    Return list of additional domains and list of EC numbers as strings, items separated by ', '"""
+    additional_domains = []
+    ec_number = []
+    subfams = []
+    additional_info = prediction_output[2].split("|")
+
+    for item in additional_info:
+        item = item.split(":")[0]  # drop the eCAMI group number
+
+        # check if it is an EC number
+        if item.find(".") != -1:
+            ec_number.append(item)
+            continue
+
+        # check if it is a subfamily or family prediction
+        try:
+            re.match(r"(\D{2,3}\d+)|(\D{2,3}\d+_\d+)", item).group()
+        except AttributeError:
+            continue        
+        # check if a subfamily of predicted CAZy family
+        if item.find("_") != -1:
+            if cazy_family == item[:item.find("_")]:
+                subfams.append(item)
+            else:
+                additional_domains.append(item)
+        else:
+            additional_domains.append(item)
+
+    # convert empty lists to null values if necessary, or make list more human readable
+    if len(additional_domains) == 0:
+        additional_domains = np.nan
+    else:
+        additional_domains = ", ".join(additional_domains)
+
+    if len(ec_number) == 0:
+        ec_number = np.nan
+    else:
+        ec_number = ", ".join(ec_numbers)
+
+    if len(subfams) == 0:
+        subfams = np.nan
+    else:
+        subfams = ", ".join(subfams)
+    
+    return(additional_domains, ec_number, subfams)
+
 
     return ecami_df
