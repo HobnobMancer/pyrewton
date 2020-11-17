@@ -37,8 +37,12 @@ from pathlib import Path
 from tqdm import tqdm
 from typing import List, Optional
 
+from pyrewton.cazymes.prediction.parse import (
+    parse_cupp_output,
+    parse_dbcan_output,
+    parse_ecami_output
+)
 from pyrewton.cazymes.prediction.tools import invoke_prediction_tools
-from pyrewton.cazymes.prediction import parse
 from pyrewton.utilities import build_logger
 from pyrewton.utilities.cmd_parser_predict_cazymes import build_parser
 from pyrewton.utilities.file_io import make_output_directory, write_out_pre_named_dataframe
@@ -295,7 +299,7 @@ def write_prediction_report(prediction, args, logger):
         hotpep_stnd_df,
         diamond_stnd_df,
         cupp_stnd_df,
-        ecami_stnd_df
+        ecami_stnd_df,
     ) = standardise_prediction_outputs(prediction.prediction_dir, args, logger)
 
     # Perform statistical evaluation of performance if CAZy data provided
@@ -324,17 +328,22 @@ def standardise_prediction_outputs(out_dir, args, logger):
     raw_output_files = get_output_files(out_dir, logger)  # returns dict
 
     # Standardise the output from each prediction tool
-    dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df = parse.parse_dbcan_output(
-        raw_output_files["dbcan"]
+    dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df = (
+        parse_dbcan_output.parse_dbcan_output(raw_output_files["dbcan"], logger)
     )
 
     # retrieve predicated EC number for Hotpep
-    hotpep_stnd_df = parse.add_hotpep_ec_predictions(raw_output_files["hotpep"], hotpep_stnd_df)
+    if hotpep_stnd_df is not None:
+        hotpep_stnd_df = parse_dbcan_output.add_hotpep_ec_predictions(
+            raw_output_files["hotpep"],
+            hotpep_stnd_df,
+            logger,
+        )
 
     # standardise output from CUPP and eCAMI
-    cupp_stnd_df = parse.parse_cupp_output(raw_output_files["cupp_raw"])
+    cupp_stnd_df = parse_cupp_output.parse_cupp_output(raw_output_files["cupp_raw"], logger)
 
-    ecami_stnd_df = parse.parse_ecami_output(raw_output_files["ecami_raw"])
+    ecami_stnd_df = parse_ecami_output.parse_ecami_output(raw_output_files["ecami_raw"], logger)
 
     # Write out dataframes to disk
     write_out_dataframes(dbcan_stnd_df, "dbcan_stnd_df", out_dir, args, logger)
