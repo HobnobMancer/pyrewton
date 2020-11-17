@@ -40,8 +40,16 @@ def parse_dbcan_output(overview_file_path, logger):
 
     Return 4 dataframes, one each for consensus dbCAN result, HMMER, Hotpep and DIAMOND
     """
-    with open(overview_file_path, "r") as fh:
-        overview_file = fh.read().splitlines()
+    try:
+        with open(overview_file_path, "r") as fh:
+            overview_file = fh.read().splitlines()
+    except FileNotFoundError:
+        logger.error(
+            "Could not open the dbCAN overview.txt file\n"
+            f"{overview_file_path}\n"
+            "Returning no dataframe for dbCAN, HMMER, Hotpep and DIAMOND for this output file"
+        )
+        return None, None, None, None
 
     # build empty dataframes to add the repsective prediction tools output to
     # list dfs store data as lists to build the dbcan_df
@@ -157,6 +165,7 @@ def parse_hmmer_output(line, logger):
                     logger.warning(
                         "Non-standardised CAZy family name in HMMER for "
                         f"{line[0]}, {fam}"
+                        f"Returning no CAZy family for {fam}"
                     )
 
                 try:
@@ -166,6 +175,7 @@ def parse_hmmer_output(line, logger):
                     logger.warning(
                         "Non-standardised CAZy subfamily name in HMMER for "
                         f"{line[0]}, {subfam}"
+                        f"Returning no CAZy subfamily for {subfam}"
                     )
 
             else:  # only CAZy family predicted
@@ -177,6 +187,7 @@ def parse_hmmer_output(line, logger):
                     logger.warning(
                         "Non-standardised CAZy family name in HMMER for "
                         f"{line[0]}, {domain_name}"
+                        f"Returning no CAZy family for {domain_name}"
                     )
 
             # Get predicted AA range for domain, called domain_range
@@ -194,6 +205,7 @@ def parse_hmmer_output(line, logger):
                     logger.warning(
                         "Non-standardised domain range in HMMER for "
                         f"{line[0]}, {domain_range}"
+                        f"Returning no domain range for {domain_range}"
                     )
 
     # convert lists to strings for human readability
@@ -280,6 +292,7 @@ def parse_hotpep_output(line, logger):
                 logger.warning(
                         "Non-standardised CAZy family name in overview.txt for Hotpep for "
                         f"{line[0]}, {fam}"
+                        f"Returning no CAZy family for {fam}"
                     )
 
             try:
@@ -289,6 +302,7 @@ def parse_hotpep_output(line, logger):
                 logger.warning(
                         "Non-standardised CAZy subfamily name in overview.txt for Hotpep for "
                         f"{line[0]}, {subfam}"
+                        f"Returning no CAZy subfamily for {subfam}"
                     )
 
         else:  # only CAZy family predicted
@@ -299,6 +313,7 @@ def parse_hotpep_output(line, logger):
                 logger.warning(
                         "Non-standardised CAZy family name in overview.txt for Hotpep for "
                         f"{line[0]}, {prediction}"
+                        f"Returning no CAZy family for {prediction}"
                     )
 
     # Convert lists to strings for human readability, identified by _hr suffix
@@ -374,6 +389,7 @@ def parse_diamond_output(line, logger):
                 logger.warning(
                         "Non-standardised CAZy family name in overview.txt for DIAMOND for "
                         f"{line[0]}, {fam}"
+                        f"Returning no CAZy family for {fam}"
                     )
 
             try:
@@ -383,6 +399,7 @@ def parse_diamond_output(line, logger):
                 logger.warning(
                         "Non-standardised CAZy subfamily name in overview.txt for DIAMOND for "
                         f"{line[0]}, {subfam}"
+                        f"Returning no CAZy subfamily for {subfam}"
                     )
 
         else:  # only CAZy family predicted
@@ -393,6 +410,7 @@ def parse_diamond_output(line, logger):
                 logger.warning(
                         "Non-standardised CAZy family name in overview.txt for DIAMOND for "
                         f"{line[0]}, {prediction}"
+                        f"Returning no CAZy family for {prediction}"
                     )
 
     # Convert lists to strings for human readability, identified by _hr suffix
@@ -473,41 +491,50 @@ def add_hotpep_ec_predictions(hotpep_output_file, hotpep_df, logger):
     hotpep_df["ec_number"] = np.nan
 
     # Retrieve all the predicted EC numbers from the Hotpep.out file
+    try:
+        with open(hotpep_output_file, "r") as fh:
+            hotpep_file = fh.read().splitlines()
+    except FileNotFoundError:
+        logger.error(
+            "Could no open Hotpep output file\n"
+            f"{hotpep_output_file}"
+            "Retunring no EC numbers for this file"
+        )
+        return hotpep_df
 
-    with open(hotpep_output_file, "r") as fh:
-        hotpep_file = fh.read().splitlines()
+    # create empty dict to store EC numbers, keyed by protein accession, valued by predicted EC#
+    ec_predictions = {}
 
-        # create empty dict to store EC numbers, keyed by protein accession, valued by predicted EC#
-        ec_predictions = {}
+    for line in hotpep_file[1:]:  # skip the first line which contains the titles
+        # separate items in the line
+        line = line.split("\t")
 
-        for line in hotpep_file[1:]:  # skip the first line which contains the titles
-            # separate items in the line
-            line = line.split("\t")
+        # separate out the predicted EC numbers, multiple maybe predicted
+        ec_numbers = line[-1].split(", ")
 
-            # separate out the predicted EC numbers, multiple maybe predicted
-            ec_numbers = line[-1].split(", ")
+        # remove (":score") from each EC number, and convert "NA" to proper null value
+        index = 0
+        for index in range(len(ec_numbers)):
+            ec = ec_numbers[index].split(":")[0].strip()  # remove the (":score") from the EC#
 
-            # remove (":score") from each EC number, and convert "NA" to proper null value
-            index = 0
-            for index in range(len(ec_numbers)):
-                ec = ec_numbers[index].split(":")[0].strip()  # remove the (":score") from the EC#
+            if ec == "NA":  # used by Hotpep to show no predicated EC number
+                ec_numbers[index] = np.nan
 
-                if ec == "NA":  # used by Hotpep to show no predicated EC number
-                    ec_numbers[index] = np.nan
+            else:  # Hotpep infers it is an EC number
+                # check EC number is formated correctly
+                try:
+                    re.match(r"\d+?\.(\d+?|\-)\.(\d+?|\-)\.(\d+?|\-)", ec).group()
+                    ec_numbers[index] = ec
+                except AttributeError:
+                    logger.warning(
+                            "Non-standardised EC# formate in Hotpep.out for "
+                            f"{line[2]}, {ec} in\n"
+                            f"{hotpep_output_file}\n"
+                            f"Returning no EC number for {ec}"
+                        )
 
-                else:  # Hotpep infers it is an EC number
-                    # check EC number is formated correctly
-                    try:
-                        re.match(r"\d+?\.(\d+?|\-)\.(\d+?|\-)\.(\d+?|\-)", ec).group()
-                        ec_numbers[index] = ec
-                    except AttributeError:
-                        logger.warning(
-                                "Non-standardised EC# formate in Hotpep.out for "
-                                f"{line[2]}, {ec}"
-                            )
-
-            protein_accession = line[2]
-            ec_predictions[protein_accession] = ec_numbers
+        protein_accession = line[2]
+        ec_predictions[protein_accession] = ec_numbers
 
     # Add the predicted EC numbers for their respective protein in the hotpep_df (hotpep dataframe)
 
