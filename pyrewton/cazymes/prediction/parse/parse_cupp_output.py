@@ -121,6 +121,7 @@ def get_cupp_domain_range(prediction_output, log_file_path, logger):
                 "Incorrect parsing to retrieve domain ranges for\n"
                 f"{prediction_output[0]} in\n"
                 f"{log_file_path}"
+                "Retunring no domain range"
             )
             domain_range = np.nan
 
@@ -170,7 +171,6 @@ def get_cupp_ec_number(prediction_output, log_file_path, logger):
         for ec in item:
             # check formating, e.g. somtimes 'Unknown' is written in stead of an EC number
             if (ec == "Unknown") or (ec == "unknown"):
-                print("unknown=", ec)
                 continue
             else:
                 try:
@@ -182,6 +182,7 @@ def get_cupp_ec_number(prediction_output, log_file_path, logger):
                     logger.warning(
                         f"Non-standard EC# for {prediction_output[0]}, {ec} in\n"
                         f"{log_file_path}"
+                        f"Returning no EC number for {ec}"
                     )
 
     # Convert lists into more human readable strings
