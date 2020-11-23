@@ -304,7 +304,7 @@ def write_prediction_report(prediction, args, logger):
 
     # Perform statistical evaluation of performance if CAZy data provided
     # if args.cazy is not None:
-        # pass
+    # pass
 
     # Produce summary report of predictions (number of CAZymes, numbers per class etc.)
 
