@@ -18,6 +18,7 @@
 #
 # MIT License
 
+
 import setuptools
 
 from pathlib import Path
@@ -26,7 +27,6 @@ from pathlib import Path
 # get long description from README.md
 with Path("README.md").open("r") as long_description_handle:
     long_description = long_description_handle.read()
-
 
 setuptools.setup(
     name="pyrewton",
@@ -59,7 +59,7 @@ setuptools.setup(
         ]
     },
     # Ensure all additional requirements are installed
-    install_requires=["biopython>=1.76", "pandas>=1.0.3"],
+    install_requires=["biopython", "bioservices", "numpy", "pandas", "pyyaml", "scipy", "tqdm"],
     # Include conda microenvironment
     # and template input file for Extract_genomes_NCBI.py
     package_data={
@@ -80,3 +80,5 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Bioinformatics",
     ],
 )
+
+
