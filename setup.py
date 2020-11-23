@@ -64,7 +64,9 @@ setuptools.setup(
     # and template input file for Extract_genomes_NCBI.py
     package_data={
         "Conda microenvironment": ["environment.yml"],
-        "Get NCBI genomes input file": ["get_ncbi_genomes_template_input_file.txt"],
+        "get_ncbi_genomes input file": ["get_ncbi_genomes_template_input_file.txt"],
+        "get_uniprot_proteins config file": ["uniprot_config.yaml"],
+        "get_uniprot_proteins ec numbers config file": ["uniprot_cazy_ec_retrieval.yaml"],
     },
     include_package_data=True,
     classifiers=[
