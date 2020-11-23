@@ -1,21 +1,11 @@
-# !/bin/bash
+# !/bin/sh
 
-# Installing pyrewton and all requirements
-# :args $1: name of virutal environment
-
-# build conda virtual environment and install requirements via conda forge
-conda create -n $1 python=3.8 diamond hmmer prodical -c conda-forge -c bioconda
-conda activate $1
-
-# install all other requirements within requirements.txt
-pip3 install -r requirements.txt
-
-# install pyrewton as execurable
-pip3 install -e .
+# Installing the CAZyme prediciton tools dbCAN, eCAMI and CUPP
 
 # install dbCAN
 pip install run-dbcan==2.0.11
-cd pyrewton/cazymes/prediction/tools/dbcan
+mkdir dbcan
+cd dbcan
 test -d db || mkdir
 cd db \
     && wget http://bcb.unl.edu/dbCAN2/download/CAZyDB.07312019.fa.nr && diamond makedb --in CAZyDB.07312019.fa.nr -d CAZy \
@@ -30,14 +20,16 @@ cd db \
 # To check the installtion of dbCAN has worked, navigate to the dbCAN directory and run:
 # run_dbcan.py EscheriaColiK12MG1655.fna prok --out_dir output_EscheriaColiK12MG1655
 
-# install eCAMI
+# download eCAMI
 cd ..
 git clone https://github.com/zhanglabNKU/eCAMI.git
 mv eCAMI ecami
 # requirements for eCAMI were installed via requirements.txt
 
-# install CUPP
-cd cupp
-# go to this address: https://files.dtu.dk/userportal/#/shared/public/hLin6ni4p-SWuKfp/CUPP_program/CUPP_v1.0.14
-# select 'Download Entire Folder'
-# # it's just the how part now
+# download CUPP
+curl -o CUPP_v1.0.14.tar.gz "https://files.dtu.dk/fss/public/link/public/stream/read/CUPP_v1.0.14.tar.gz?linkToken=hLin6ni4p-SWuKfp&itemName=CUPP_program"
+# unpackage
+tar -xzf CUPP_v1.0.14.tar.gz
+# rename dir
+mv CUPP_v1.0.14 cupp
+# requirements for CUPP were installed via requirements.txt
