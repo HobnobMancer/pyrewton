@@ -95,14 +95,14 @@ setuptools.setup(
     },
     # Ensure all additional requirements are installed
     install_requires=[
-        "biopython",
-        "bioservices",
-        "numpy",
-        "pandas",
-        "pyyaml",
+        "biopython>=1.76",
+        "bioservices>=1.7.9",
+        "numpy>=1.19.4",
+        "pandas>=1.0.3",
+        "pyyaml>=5.3.1",
         "run-dbcan==2.0.11",
-        "scipy",
-        "tqdm",
+        "scipy>=1.5.4",
+        "tqdm>=4.53.0",
     ],
     # Include conda microenvironment
     # and template input file for Extract_genomes_NCBI.py
