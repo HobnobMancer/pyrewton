@@ -18,10 +18,34 @@
 #
 # MIT License
 
-
+import os
 import setuptools
 
+import distutils
+from distutils.command.sdist import sdist as SDist
+
 from pathlib import Path
+
+
+class sdist(SDist):
+    """Install CAZyme prediction tools: dbCAN, eCAMI and CUPP."""
+
+    def run(self):
+        """Run shell script that installs CAZyme prediction tools"""
+        self.announce("Installing third party CAZyme prediction tools", level=distutils.log.INFO)
+        setup_path = os.path.abspath(__file__)
+        installation_path = setup_path.replace("setup.py", "installation.sh")
+        tools_dir = setup_path.replace("setup.py", "pyrewton/cazymes/prediction/tools")
+        try:
+            self.spawn([installation_path, tools_dir])
+        except distutils.errors.DistutilsExecError:
+            self.warn(
+                "Failed to install third party CAZyme prediction tools.\n"
+                "Check network connection was not interrupeted.\n"
+                "Retry installtion using pyrewton setup.py file or "
+                "install mannual by following the instructions at:\n"
+                "https://pyrewton.readthedocs.io/en/latest/?badge=latest"
+            )
 
 
 # get long description from README.md
@@ -59,7 +83,17 @@ setuptools.setup(
         ]
     },
     # Ensure all additional requirements are installed
-    install_requires=["biopython", "bioservices", "numpy", "pandas", "pyyaml", "scipy", "tqdm"],
+    install_requires=[
+        "biopython",
+        "bioservices",
+        "numpy",
+        "pandas",
+        "pyyaml",
+        "run-dbcan==2.0.11",
+        "scipy",
+        "tqdm",
+    ],
+    cmdclass={'sdist': sdist},
     # Include conda microenvironment
     # and template input file for Extract_genomes_NCBI.py
     package_data={
@@ -80,5 +114,3 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Bioinformatics",
     ],
 )
-
-
