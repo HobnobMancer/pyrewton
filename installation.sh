@@ -1,12 +1,15 @@
-# !/bin/sh
+#!/bin/bash
+
+# :args $1: absolute path to pyrewton prediction/tools dir
 
 # Installing the CAZyme prediciton tools dbCAN, eCAMI and CUPP
+# Requirements for these tools are installed via requirements.txt
 
 # install dbCAN
-pip install run-dbcan==2.0.11
-mkdir dbcan
+cd $1
 cd dbcan
-test -d db || mkdir
+
+test -d db || mkdir db
 cd db \
     && wget http://bcb.unl.edu/dbCAN2/download/CAZyDB.07312019.fa.nr && diamond makedb --in CAZyDB.07312019.fa.nr -d CAZy \
     && wget http://bcb.unl.edu/dbCAN2/download/Databases/dbCAN-HMMdb-V8.txt && mv dbCAN-HMMdb-V8.txt dbCAN.txt && hmmpress dbCAN.txt \
@@ -21,15 +24,15 @@ cd db \
 # run_dbcan.py EscheriaColiK12MG1655.fna prok --out_dir output_EscheriaColiK12MG1655
 
 # download eCAMI
-cd ..
+cd $1
 git clone https://github.com/zhanglabNKU/eCAMI.git
 mv eCAMI ecami
-# requirements for eCAMI were installed via requirements.txt
 
 # download CUPP
+cd $1
 curl -o CUPP_v1.0.14.tar.gz "https://files.dtu.dk/fss/public/link/public/stream/read/CUPP_v1.0.14.tar.gz?linkToken=hLin6ni4p-SWuKfp&itemName=CUPP_program"
-# unpackage
 tar -xzf CUPP_v1.0.14.tar.gz
-# rename dir
 mv CUPP_v1.0.14 cupp
-# requirements for CUPP were installed via requirements.txt
+# delete old file
+cd $1
+rm CUPP_v1.0.14.tar.gz
