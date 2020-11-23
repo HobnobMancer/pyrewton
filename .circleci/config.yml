@@ -6,7 +6,7 @@ orbs:
 jobs:
   build-and-test:
     docker:
-      - image: circleci/python:3.7.5
+      - image: circleci/python:3.8.5
 
     working_directory: ~/phd_eastbio
 
@@ -23,7 +23,7 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install -r requirements.txt
+            pip3 install -r requirements.txt
 
       - save_cache:
           paths:
@@ -34,7 +34,7 @@ jobs:
           name: install package
           command: |
             . venv/bin/activate
-            pip install -e .
+            pip3 install -e .
 
       - run:
           name: run tests
