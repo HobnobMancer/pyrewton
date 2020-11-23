@@ -1,3 +1,4 @@
+argsparse
 autopep8
 bandit
 biopython
@@ -6,7 +7,9 @@ black
 coverage
 flake8
 mypy
+numpy
 pandas
+psutil
 pydocstyle
 pycodestyle
 pylint
@@ -14,6 +17,7 @@ pytest
 pytest-cov
 pytest-ordering
 pyyaml
+scipy
 sphinx
 sphinx-rtd-theme
 tqdm
