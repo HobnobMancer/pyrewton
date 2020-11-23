@@ -5,8 +5,9 @@
 # Installing the CAZyme prediciton tools dbCAN, eCAMI and CUPP
 # Requirements for these tools are installed via requirements.txt
 
-# install dbCAN
 cd $1
+
+# install dbCAN
 cd dbcan
 
 test -d db || mkdir db
@@ -24,15 +25,14 @@ cd db \
 # run_dbcan.py EscheriaColiK12MG1655.fna prok --out_dir output_EscheriaColiK12MG1655
 
 # download eCAMI
-cd $1
+cd ..
+cd ..
 git clone https://github.com/zhanglabNKU/eCAMI.git
 mv eCAMI ecami
 
 # download CUPP
-cd $1
 curl -o CUPP_v1.0.14.tar.gz "https://files.dtu.dk/fss/public/link/public/stream/read/CUPP_v1.0.14.tar.gz?linkToken=hLin6ni4p-SWuKfp&itemName=CUPP_program"
 tar -xzf CUPP_v1.0.14.tar.gz
 mv CUPP_v1.0.14 cupp
 # delete old file
-cd $1
 rm CUPP_v1.0.14.tar.gz
