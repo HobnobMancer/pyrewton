@@ -20,37 +20,48 @@
 
 import os
 import setuptools
+import subprocess
 
-import distutils
-from distutils.command.sdist import sdist as SDist
+from setuptools import Command
 
 from pathlib import Path
 
 
-class sdist(SDist):
-    """Install CAZyme prediction tools: dbCAN, eCAMI and CUPP."""
+class InstallCPTs(Command):
+    """A custom command to install CAZyme prediction tools (CPTs): dbCAN, eCAMI and CUPP."""
+
+    description = "Install dbCAN, eCAMI and CUPP"
+    user_options = [('pyrewton-dir=', 'p', 'path to dir containing pyrewton setup.py file')]
+
+    def initialize_options(self):
+        self.pyrewton_dir = None
+
+    def finalize_options(self):
+        if self.pyrewton_dir is None:
+            self.pyrewton_dir = __file__
+        elif os.path.isdir(self.pyrewton_dir):
+            self.pyrewton_dir = __file__
+        elif self.pyrewton_dir == ".":
+            self.pyrewton_dir = __file__
 
     def run(self):
-        """Run shell script that installs CAZyme prediction tools"""
-        self.announce("Installing third party CAZyme prediction tools", level=distutils.log.INFO)
-        setup_path = os.path.abspath(__file__)
-        installation_path = setup_path.replace("setup.py", "installation.sh")
-        tools_dir = setup_path.replace("setup.py", "pyrewton/cazymes/prediction/tools")
-        try:
-            self.spawn([installation_path, tools_dir])
-        except distutils.errors.DistutilsExecError:
-            self.warn(
-                "Failed to install third party CAZyme prediction tools.\n"
-                "Check network connection was not interrupeted.\n"
-                "Retry installtion using pyrewton setup.py file or "
-                "install mannual by following the instructions at:\n"
-                "https://pyrewton.readthedocs.io/en/latest/?badge=latest"
-            )
+        """Run command"""
+        installation_path = self.pyrewton_dir.replace("setup.py", "installation.sh")
+        tools_dir = self.pyrewton_dir.replace("setup.py", "pyrewton/cazymes/prediction/tools")
+        subprocess.check_call([installation_path, tools_dir])
 
 
 # get long description from README.md
-with Path("README.md").open("r") as long_description_handle:
-    long_description = long_description_handle.read()
+if __file__ == "setup.py":
+    with Path("README.md").open("r") as long_description_handle:
+        long_description = long_description_handle.read()
+
+else:
+    path = __file__
+    path = path.replace("setup.py", "")
+    path = Path(path) / "README.md"
+    with path.open("r") as long_description_handle:
+        long_description = long_description_handle.read()
 
 setuptools.setup(
     name="pyrewton",
@@ -93,7 +104,6 @@ setuptools.setup(
         "scipy",
         "tqdm",
     ],
-    cmdclass={'sdist': sdist},
     # Include conda microenvironment
     # and template input file for Extract_genomes_NCBI.py
     package_data={
@@ -113,4 +123,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3.7",
         "Topic :: Scientific/Engineering :: Bioinformatics",
     ],
+    cmdclass={'cpt': InstallCPTs},
 )
