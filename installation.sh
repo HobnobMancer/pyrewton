@@ -25,8 +25,7 @@ cd db \
 # run_dbcan.py EscheriaColiK12MG1655.fna prok --out_dir output_EscheriaColiK12MG1655
 
 # download eCAMI
-cd ..
-cd ..
+cd $1
 git clone https://github.com/zhanglabNKU/eCAMI.git
 mv eCAMI ecami
 
