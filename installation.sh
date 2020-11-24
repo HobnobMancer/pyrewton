@@ -8,6 +8,7 @@
 cd $1
 
 # install dbCAN
+test -d dbcan || mkdir dbcan
 cd dbcan
 
 test -d db || mkdir db
@@ -26,8 +27,7 @@ cd db \
 
 # download eCAMI
 cd $1
-git clone https://github.com/zhanglabNKU/eCAMI.git
-mv eCAMI ecami
+git clone https://github.com/zhanglabNKU/eCAMI.git ecami
 
 # download CUPP
 curl -o CUPP_v1.0.14.tar.gz "https://files.dtu.dk/fss/public/link/public/stream/read/CUPP_v1.0.14.tar.gz?linkToken=hLin6ni4p-SWuKfp&itemName=CUPP_program"
