@@ -44,28 +44,24 @@ Development plans are stored within the [Wiki](https://github.com/HobnobMancer/p
 
 ## Installation
 
-1. Navigate the directory you wish to store pyrewton in, then clone this repository.
-`git clone https://github.com/HobnobMancer/pyrewton.git`
+The easiest method is to use pip to install `pyrewton` and all requirements.
 
-1. Create a virtual environment with dependencies, then activate the environment.   
+1. Create a virtual environment with dependencies, then activate the environment - _where venv_name is an chosen name for the virtual environment_
 `conda create -n <venv_name> python=3.8 diamond hmmer prodigal -c conda-forge -c bioconda`   
 `conda activate <venv_name>`
 
-2. Install all requirements from requirements.txt file. The requirements.txt file is stored in the root of this repository.  
-`pip3 install -r <path to requirements.txt file>`   
+2. Clone the repository
+`git clone https://github.com/HobnobMancer/pyrewton.git`
 
-3. Install pyrewton.
+3. Install pyrewton
 `pip3 install -e <path to directory containing setup.py file>`   
 Do not forget to use the **-e** option when install using pip3, otherwise each time pyrewton is invoked a ModuleNotFound error will be raised. Pass the path to the **directory** containign the setup.py file not the path to the setup.py file; if you are currently in the root directory of the repoistory where the file is located, simply use '.' to indicate the current working directory.
 
-4. Install third party tools.   
-Pyrewton invokves 3 third party tools: dbCAN, CUPP and eCAMI.
+4. Install the third party CAZyme prediction tools
+The easiest way to do this, and ensure they are installed into the correct directories is to use:  
+`python3 <path to pyrewton setup.py> cpt -p .`
 
-To install dbCAN follow the instructions within their [GitHub repository](https://github.com/linnabrown/run_dbcan), **BUT ignore** steps 1 and 2 of their installtion guide, becuase the necessary virtual environment was already created in the second step of this installation and it meets all requirements of dbCAN. Install dbCAN within **'pyrewton/cazymes/prediction/tools/dbcan'** directory within the repository, otherwise pyrewton will not be able to find the tool.  
-
-To install eCAMI follow the instructions within their [GitHub respository](https://github.com/yinlabniu/eCAMI). eCAMI must be installed within the directory pyrewton/cazymes/prediction/tools/ecami. Following the method from the eCAMI repository will write eCAMI to 'pyrewton/cazymes/prediction/tools/ecami/**eCAMI**', to avoid this perform the installation within 'pyrewton/cazymes/prediction/tools' and rename 'eCAMI' to 'ecami', thus install eCAMI in **'pyrewton/cazymes/prediction/tools/ecami'**.   
-
-To install CUPP download the CUPP files from the [DTU Bioengineering server](https://www.bioengineering.dtu.dk/english/ResearchNy/Research-Sections/Section-for-Protein-Chemistry-and-Enzyme-Technology/Enzyme-Technology/CUPP), and store the files in **'pyrewton/cazymes/prediction/tools/cupp'**. It is not necessary to download all the files becuase the .tar and .tar.gz directories each contain all the files, therefore, download either the .tar _or_ .tar.gz directories and unpackage them or download all the files located within 'CUPP_v1.0.14'.
+For alternative methods of installation see the full documentation at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/).
 
 <p>&nbsp;</p>
 

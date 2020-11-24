@@ -18,15 +18,50 @@
 #
 # MIT License
 
+import os
 import setuptools
+import subprocess
+
+from setuptools import Command
 
 from pathlib import Path
 
 
-# get long description from README.md
-with Path("README.md").open("r") as long_description_handle:
-    long_description = long_description_handle.read()
+class InstallCPTs(Command):
+    """A custom command to install CAZyme prediction tools (CPTs): dbCAN, eCAMI and CUPP."""
 
+    description = "Install dbCAN, eCAMI and CUPP"
+    user_options = [('pyrewton-dir=', 'p', 'path to dir containing pyrewton setup.py file')]
+
+    def initialize_options(self):
+        self.pyrewton_dir = None
+
+    def finalize_options(self):
+        if self.pyrewton_dir is None:
+            self.pyrewton_dir = os.path.dirname(os.path.abspath(__file__))  # get abspath to dir of setup.py
+        elif os.path.isdir(self.pyrewton_dir):
+            self.pyrewton_dir = os.path.dirname(os.path.abspath(__file__))  # get abspath to dir of setup.py
+        elif self.pyrewton_dir == ".":
+            self.pyrewton_dir = os.path.dirname(os.path.abspath(__file__))  # get abspath to dir of setup.py
+
+    def run(self):
+        """Run command"""
+        installation_path = self.pyrewton_dir + "/installation.sh"
+        tools_dir = self.pyrewton_dir + "/pyrewton/cazymes/prediction/tools"
+        subprocess.check_call([installation_path, tools_dir])
+
+
+# get long description from README.md
+if __file__ == "setup.py":
+    with Path("README.md").open("r") as long_description_handle:
+        long_description = long_description_handle.read()
+
+else:
+    path = __file__
+    path = path.replace("setup.py", "")
+    path = Path(path) / "README.md"
+    with path.open("r") as long_description_handle:
+        long_description = long_description_handle.read()
 
 setuptools.setup(
     name="pyrewton",
@@ -59,12 +94,23 @@ setuptools.setup(
         ]
     },
     # Ensure all additional requirements are installed
-    install_requires=["biopython>=1.76", "pandas>=1.0.3"],
+    install_requires=[
+        "biopython>=1.76",
+        "bioservices>=1.7.9",
+        "numpy>=1.19.4",
+        "pandas>=1.0.3",
+        "pyyaml>=5.3.1",
+        "run-dbcan==2.0.11",
+        "scipy>=1.5.4",
+        "tqdm>=4.53.0",
+    ],
     # Include conda microenvironment
     # and template input file for Extract_genomes_NCBI.py
     package_data={
         "Conda microenvironment": ["environment.yml"],
-        "Get NCBI genomes input file": ["get_ncbi_genomes_template_input_file.txt"],
+        "get_ncbi_genomes input file": ["get_ncbi_genomes_template_input_file.txt"],
+        "get_uniprot_proteins config file": ["uniprot_config.yaml"],
+        "get_uniprot_proteins ec numbers config file": ["uniprot_cazy_ec_retrieval.yaml"],
     },
     include_package_data=True,
     classifiers=[
@@ -77,4 +123,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3.7",
         "Topic :: Scientific/Engineering :: Bioinformatics",
     ],
+    cmdclass={'cpt': InstallCPTs},
 )
