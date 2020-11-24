@@ -53,9 +53,13 @@ The easiest method is to use pip to install `pyrewton` and all requirements.
 2. Clone the repository
 `git clone https://github.com/HobnobMancer/pyrewton.git`
 
-3. Install pyrewton and third-party tools
+3. Install pyrewton
 `pip3 install -e <path to directory containing setup.py file>`   
 Do not forget to use the **-e** option when install using pip3, otherwise each time pyrewton is invoked a ModuleNotFound error will be raised. Pass the path to the **directory** containign the setup.py file not the path to the setup.py file; if you are currently in the root directory of the repoistory where the file is located, simply use '.' to indicate the current working directory.
+
+4. Install the third party CAZyme prediction tools
+The easiest way to do this, and ensure they are installed into the correct directories is to use:  
+`python3 <path to pyrewton setup.py> -p .`
 
 For alternative methods of installation see the full documentation at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/).
 
