@@ -1,4 +1,4 @@
-argsparse
+argparse
 autopep8
 bandit
 biopython
