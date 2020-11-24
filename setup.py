@@ -38,16 +38,16 @@ class InstallCPTs(Command):
 
     def finalize_options(self):
         if self.pyrewton_dir is None:
-            self.pyrewton_dir = __file__
+            self.pyrewton_dir = os.path.dirname(os.path.abspath(__file__))  # get abspath to dir of setup.py
         elif os.path.isdir(self.pyrewton_dir):
-            self.pyrewton_dir = __file__
+            self.pyrewton_dir = os.path.dirname(os.path.abspath(__file__))  # get abspath to dir of setup.py
         elif self.pyrewton_dir == ".":
-            self.pyrewton_dir = __file__
+            self.pyrewton_dir = os.path.dirname(os.path.abspath(__file__))  # get abspath to dir of setup.py
 
     def run(self):
         """Run command"""
-        installation_path = self.pyrewton_dir.replace("setup.py", "installation.sh")
-        tools_dir = self.pyrewton_dir.replace("setup.py", "pyrewton/cazymes/prediction/tools")
+        installation_path = self.pyrewton_dir + "/installation.sh"
+        tools_dir = self.pyrewton_dir + "/pyrewton/cazymes/prediction/tools"
         subprocess.check_call([installation_path, tools_dir])
 
 
