@@ -59,7 +59,7 @@ Do not forget to use the **-e** option when install using pip3, otherwise each t
 
 4. Install the third party CAZyme prediction tools
 The easiest way to do this, and ensure they are installed into the correct directories is to use:  
-`python3 <path to pyrewton setup.py> -p .`
+`python3 <path to pyrewton setup.py> cpt -p .`
 
 For alternative methods of installation see the full documentation at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/).
 
