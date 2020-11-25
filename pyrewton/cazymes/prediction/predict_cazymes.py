@@ -38,6 +38,7 @@ from tqdm import tqdm
 from typing import List, Optional
 
 from pyrewton.cazymes.prediction.parse import (
+    get_cazy_accessions,
     parse_cupp_output,
     parse_dbcan_output,
     parse_ecami_output
@@ -101,11 +102,33 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # invoke prediction tools and build prediciton Query instances
     predictions = get_predictions(args, logger)
 
-    # standardist output, statistical evaluation performance (if CAZy data provided), and write
-    # summary report
-    index = 0
-    for index in tqdm(range(len(predictions)), desc="Standardising tools outputs"):
-        write_prediction_report(predictions[index], args, logger)
+    if args.stats:
+        # get accession numbers of known CAZymes from CAZy
+        cazy_genbank_accessions, cazy_uniprot_accessions = get_cazy_accessions(args, logger)
+
+        if (cazy_genbank_accessions is None) or (cazy_uniprot_accessions is None):
+            # write remote summarising predictions
+            index = 0
+            for index in tqdm(range(len(predictions)), desc="Writing summary reports"):
+                write_prediction_report(predictions[index], args, logger)
+
+        else:
+            # perform statistical evaluation of performance and write summary reports
+            index = 0
+            for index in tqdm(range(len(predictions)), desc="Performing statistical evaluation"):
+                write_stats_prediction_report(
+                    predictions[index],
+                    cazy_genbank_accessions,
+                    cazy_uniprot_accessions,
+                    args,
+                    logger,
+                )
+
+    else:
+        # write remote summarising predictions
+        index = 0
+        for index in tqdm(range(len(predictions)), desc="Writing summary reports"):
+            write_prediction_report(predictions[index], args, logger)
 
     logger.info("Program finished, and no terminating.")
 
@@ -279,11 +302,14 @@ def get_tax_id(file_path, logger):
             return
 
 
-def write_prediction_report(prediction, args, logger):
-    """Coordinate standardising prediction tools outputs and writing summary report.
-
-    If the data from CAZy is provided a statistical evaluation of the prediction tools, by using
-    the data from CAZy as the 'known truth', will be performed.
+def write_stats_prediction_report(
+    prediction,
+    cazy_genbank_accessions,
+    cazy_uniprot_accessions,
+    args,
+    logger,
+):
+    """Coordinate statistical evaluation of predction tools outputs and writing summary report.
 
     :param prediction: Query class object
     :param args: cmd args parser
