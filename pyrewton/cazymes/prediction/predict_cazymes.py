@@ -353,6 +353,9 @@ def standardise_prediction_outputs(out_dir, args, logger):
     # retrieve the paths to prediction tool output files in the output directory for 'prediction'
     raw_output_files = get_output_files(out_dir, logger)  # returns dict
 
+    if raw_output_files is None:
+        return None, None, None, None, None, None  # error was logged in get_output_files()
+
     # Standardise the output from each prediction tool
     dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df = (
         parse_dbcan_output.parse_dbcan_output(raw_output_files["dbcan"], logger)
@@ -387,35 +390,6 @@ def standardise_prediction_outputs(out_dir, args, logger):
         cupp_stnd_df,
         ecami_stnd_df,
     )
-
-
-def write_out_dataframes(df, df_name, out_dir, args, logger):
-    """Coordinate writing out standardise dataframes to disk.
-
-    Performs check and logs if no dataframe was produced for a given CAZyme prediction tool.
-
-    :param df: pandas dataframe
-    :param df_name: path to location where dataframe is to be written (excludes .csv extension)
-    :param args: args parser object
-    :param logger: logger object
-
-    Return nothing.
-    """
-    if df is None:
-        logger.warning(
-            "No standardised dataframe was produced for\n"
-            f"{out_dir} / {df_name}"
-        )
-        return
-
-    if len(df["cazy_family"]) == 0:
-        logger.warning(
-            "Empty standardised dataframe created for\n"
-            f"{out_dir} / {df_name}"
-        )
-
-    write_out_pre_named_dataframe(df, df_name, logger, out_dir, args.force)
-    return
 
 
 def get_output_files(output_dir, logger):
@@ -472,6 +446,35 @@ def get_output_files(output_dir, logger):
             output_dict[tool] = "NA"
 
     return output_dict
+
+
+def write_out_dataframes(df, df_name, out_dir, args, logger):
+    """Coordinate writing out standardise dataframes to disk.
+
+    Performs check and logs if no dataframe was produced for a given CAZyme prediction tool.
+
+    :param df: pandas dataframe
+    :param df_name: path to location where dataframe is to be written (excludes .csv extension)
+    :param args: args parser object
+    :param logger: logger object
+
+    Return nothing.
+    """
+    if df is None:
+        logger.warning(
+            "No standardised dataframe was produced for\n"
+            f"{out_dir} / {df_name}"
+        )
+        return
+
+    if len(df["cazy_family"]) == 0:
+        logger.warning(
+            "Empty standardised dataframe created for\n"
+            f"{out_dir} / {df_name}"
+        )
+
+    write_out_pre_named_dataframe(df, df_name, logger, out_dir, args.force)
+    return
 
 
 if __name__ == "__main__":
