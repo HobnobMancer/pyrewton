@@ -78,21 +78,20 @@ def invoke_dbcan(input_path, out_dir, logger):
         "--out_dir",
         str(out_dir),
     ]
-    print("****DBCAN")
 
-    # # create log of dbCAN run
-    # with open(f"{out_dir}/dbcan.log", "w+") as fh:
-    #     process = subprocess.run(dbcan_args, stdout=fh, text=True)
+    # create log of dbCAN run
+    with open(f"{out_dir}/dbcan.log", "w+") as fh:
+        process = subprocess.run(dbcan_args, stdout=fh, text=True)
 
-    # # check if successul
-    # if process.returncode != 0:  # return code is 0 for successful run
-    #     logger.warning(
-    #         (
-    #             f"dbCAN ran into error for {out_dir}\n."
-    #             "dbCAN error:\n"
-    #             f"{process.stderr}"
-    #         )
-    #     )
+    # check if successul
+    if process.returncode != 0:  # return code is 0 for successful run
+        logger.warning(
+            (
+                f"dbCAN ran into error for {out_dir}\n."
+                "dbCAN error:\n"
+                f"{process.stderr}"
+            )
+        )
 
     return
 
@@ -114,20 +113,20 @@ def invoke_cupp(input_path, out_dir, logger):
         "-output_path",
         f"{out_dir}/cupp_output.fasta",
     ]
-    print("***CUPP")
-    # # create log of CUPP run
-    # with open(f"{out_dir}/cupp.log", "w+") as fh:
-    #     process = subprocess.run(cupp_args, stdout=fh, text=True)
 
-    # # check if successful
-    # if process.returncode != 0:
-    #     logger.warning(
-    #         (
-    #             f"CUPP ran into error for {out_dir}\n."
-    #             "CUPP error:\n"
-    #             f"{process.stderr}"
-    #         )
-    #     )
+    # create log of CUPP run
+    with open(f"{out_dir}/cupp.log", "w+") as fh:
+        process = subprocess.run(cupp_args, stdout=fh, text=True)
+
+    # check if successful
+    if process.returncode != 0:
+        logger.warning(
+            (
+                f"CUPP ran into error for {out_dir}\n."
+                "CUPP error:\n"
+                f"{process.stderr}"
+            )
+        )
 
     return
 
@@ -151,19 +150,19 @@ def invoke_ecami(input_path, out_dir, logger):
         "-output",
         f"{out_dir}/ecami_output.txt",
     ]
-    print("***ECAMI")
-    # # create log of eCAMI run
-    # with open(f"{out_dir}/ecami.log", "w+") as fh:
-    #     process = subprocess.run(ecami_args, stdout=fh, text=True)
 
-    # # check if successful
-    # if process.returncode != 0:
-    #     logger.warning(
-    #         (
-    #             f"eCAMI ran into error for {out_dir}\n."
-    #             "eCAMI error:\n"
-    #             f"{process.stderr}"
-    #         )
-    #     )
+    # create log of eCAMI run
+    with open(f"{out_dir}/ecami.log", "w+") as fh:
+        process = subprocess.run(ecami_args, stdout=fh, text=True)
+
+    # check if successful
+    if process.returncode != 0:
+        logger.warning(
+            (
+                f"eCAMI ran into error for {out_dir}\n."
+                "eCAMI error:\n"
+                f"{process.stderr}"
+            )
+        )
 
     return
