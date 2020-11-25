@@ -294,15 +294,20 @@ def write_prediction_report(prediction, args, logger):
     Return nothing
     """
     # Standardise the output from each prediction tool
-    (
-        dbcan_stnd_df,
-        hmmer_stnd_df,
-        hotpep_stnd_df,
-        diamond_stnd_df,
-        cupp_stnd_df,
-        ecami_stnd_df,
-    ) = standardise_prediction_outputs(prediction.prediction_dir, args, logger)
-
+    dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df, cupp_stnd_df, ecami_stnd_df = standardise_prediction_outputs(
+        prediction.prediction_dir, args, logger
+    )
+    
+    if (
+        (dbcan_stnd_df is None) and
+        (hmmer_stnd_df is None) and
+        (hotpep_stnd_df is None) and
+        (diamond_stnd_df is None) and
+        (cupp_stnd_df is None) and
+        (ecami_stnd_df is None)
+    ):
+        return  # error in retrieving output was logged in get_output_files()
+    
     # Perform statistical evaluation of performance if CAZy data provided
     # if args.cazy is not None:
         # pass
@@ -327,6 +332,9 @@ def standardise_prediction_outputs(out_dir, args, logger):
     """
     # retrieve the paths to prediction tool output files in the output directory for 'prediction'
     raw_output_files = get_output_files(out_dir, logger)  # returns dict
+
+    if raw_output_files is None:
+        return  None, None, None, None, None, None  # error was logged in get_output_files()
 
     # Standardise the output from each prediction tool
     dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df = (
@@ -354,14 +362,7 @@ def standardise_prediction_outputs(out_dir, args, logger):
     write_out_dataframes(cupp_stnd_df, "cupp_stnd_df", out_dir, args, logger)
     write_out_dataframes(ecami_stnd_df, "ecami_stnd_df", out_dir, args, logger)
 
-    return(
-        dbcan_stnd_df,
-        hmmer_stnd_df,
-        hotpep_stnd_df,
-        diamond_stnd_df,
-        cupp_stnd_df,
-        ecami_stnd_df,
-    )
+    return dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df, cupp_stnd_df, ecami_stnd_df
 
 
 def write_out_dataframes(df, df_name, out_dir, args, logger):
@@ -412,16 +413,20 @@ def get_output_files(output_dir, logger):
     )
 
     try:
-        if len(files_in_outdir) == 0:
+        if len(list(files_in_outdir)) == 0:
             logger.error(
                     "Did not retrieve any prediction tool output files in\n"
                     f"{output_dir}\n"
+                    "Not producing and output for this dir"
             )
+            return
     except AttributeError:  # raised if files_in_outdir is None
         logger.error(
                 "Did not retrieve any prediction tool output files in\n"
                 f"{output_dir}\n"
+                "Not producing and output for this dir"
         )
+        return
 
     # Retrieve paths to specific prediction tool's output files
     for entry in files_in_outdir:
