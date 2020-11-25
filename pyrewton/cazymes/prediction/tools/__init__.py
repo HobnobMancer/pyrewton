@@ -29,7 +29,7 @@ def invoke_prediction_tools(query, logger):
     :param query: Query class instance, input fasta file for tools
     :param logger: logger object
 
-    Return full path to directory containing output files for all predictions for input FASTA file.
+    Return full/absolute path to directory containing output files for all predictions for input FASTA file.
     """
     # create complete path to fasta file to negate changing cwd
     current_path = os.getcwd()
@@ -40,23 +40,23 @@ def invoke_prediction_tools(query, logger):
     out_dir = query.prediction_dir
     out_dir = current_path / out_dir
 
+    # change cwd to dbCAN directory to be able to access database files
+    os.chdir('tools/dbcan/')
     invoke_dbcan(input_path, out_dir, logger)
 
     # move to cupp directory so can access CUPP
-    os.chdir('../')  # moves up to pyrewton/cazymes/prediction/tools
+    os.chdir('..')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('cupp')
-
     invoke_cupp(input_path, out_dir, logger)
 
     # move to ecami directory so can access eCAMI
-    os.chdir('../')  # moves up to pyrewton/cazymes/prediction/tools
+    os.chdir('..')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('ecami')
-
     invoke_ecami(input_path, out_dir, logger)
 
     # move back to 'predictions/' directory
-    os.chdir('../')  # moves to 'tools/'
-    os.chdir('../')  # moves to 'predictions/'
+    os.chdir('..')  # moves to 'tools/'
+    os.chdir('..')  # moves to 'predictions/'
 
     return out_dir
 
@@ -78,23 +78,21 @@ def invoke_dbcan(input_path, out_dir, logger):
         "--out_dir",
         str(out_dir),
     ]
+    print("****DBCAN")
 
-    # change cwd to dbCAN directory to be able to access database files
-    os.chdir('tools/dbcan/')
+    # # create log of dbCAN run
+    # with open(f"{out_dir}/dbcan.log", "w+") as fh:
+    #     process = subprocess.run(dbcan_args, stdout=fh, text=True)
 
-    # create log of dbCAN run
-    with open(f"{out_dir}/dbcan.log", "w+") as fh:
-        process = subprocess.run(dbcan_args, stdout=fh, text=True)
-
-    # check if successul
-    if process.returncode != 0:  # return code is 0 for successful run
-        logger.warning(
-            (
-                f"dbCAN ran into error for {out_dir}\n."
-                "dbCAN error:\n"
-                f"{process.stderr}"
-            )
-        )
+    # # check if successul
+    # if process.returncode != 0:  # return code is 0 for successful run
+    #     logger.warning(
+    #         (
+    #             f"dbCAN ran into error for {out_dir}\n."
+    #             "dbCAN error:\n"
+    #             f"{process.stderr}"
+    #         )
+    #     )
 
     return
 
@@ -116,20 +114,20 @@ def invoke_cupp(input_path, out_dir, logger):
         "-output_path",
         f"{out_dir}/cupp_output.fasta",
     ]
+    print("***CUPP")
+    # # create log of CUPP run
+    # with open(f"{out_dir}/cupp.log", "w+") as fh:
+    #     process = subprocess.run(cupp_args, stdout=fh, text=True)
 
-    # create log of CUPP run
-    with open(f"{out_dir}/cupp.log", "w+") as fh:
-        process = subprocess.run(cupp_args, stdout=fh, text=True)
-
-    # check if successful
-    if process.returncode != 0:
-        logger.warning(
-            (
-                f"CUPP ran into error for {out_dir}\n."
-                "CUPP error:\n"
-                f"{process.stderr}"
-            )
-        )
+    # # check if successful
+    # if process.returncode != 0:
+    #     logger.warning(
+    #         (
+    #             f"CUPP ran into error for {out_dir}\n."
+    #             "CUPP error:\n"
+    #             f"{process.stderr}"
+    #         )
+    #     )
 
     return
 
@@ -153,19 +151,19 @@ def invoke_ecami(input_path, out_dir, logger):
         "-output",
         f"{out_dir}/ecami_output.txt",
     ]
+    print("***ECAMI")
+    # # create log of eCAMI run
+    # with open(f"{out_dir}/ecami.log", "w+") as fh:
+    #     process = subprocess.run(ecami_args, stdout=fh, text=True)
 
-    # create log of eCAMI run
-    with open(f"{out_dir}/ecami.log", "w+") as fh:
-        process = subprocess.run(ecami_args, stdout=fh, text=True)
-
-    # check if successful
-    if process.returncode != 0:
-        logger.warning(
-            (
-                f"eCAMI ran into error for {out_dir}\n."
-                "eCAMI error:\n"
-                f"{process.stderr}"
-            )
-        )
+    # # check if successful
+    # if process.returncode != 0:
+    #     logger.warning(
+    #         (
+    #             f"eCAMI ran into error for {out_dir}\n."
+    #             "eCAMI error:\n"
+    #             f"{process.stderr}"
+    #         )
+    #     )
 
     return
