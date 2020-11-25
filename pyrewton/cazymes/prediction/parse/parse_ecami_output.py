@@ -90,6 +90,7 @@ def parse_ecami_output(txt_file_path, logger):
             # build dict to enable easy building of df
             prediction = {
                 "protein_accession": [prediction_output[0][1:]],
+                "cazyme": [1],
                 "cazy_family": [cazy_family],
                 "cazy_subfamily": [cazy_subfam],
                 "ec_number": [ec_number],

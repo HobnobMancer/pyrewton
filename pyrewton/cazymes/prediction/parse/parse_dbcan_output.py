@@ -55,13 +55,29 @@ def parse_dbcan_output(overview_file_path, logger):
     # list dfs store data as lists to build the dbcan_df
     hmmer_df = pd.DataFrame({}, columns=[
         "protein_accession",
+        "cazyme",
         "cazy_family",
         "cazy_subfamily",
         "domain_range"
     ])
-    hotpep_df = pd.DataFrame({}, columns=["protein_accession", "cazy_family", "cazy_subfamily"])
-    diamond_df = pd.DataFrame({}, columns=["protein_accession", "cazy_family", "cazy_subfamily"])
-    dbcan_df = pd.DataFrame({}, columns=["protein_accession", "cazy_family", "cazy_subfamily"])
+    hotpep_df = pd.DataFrame({}, columns=[
+        "protein_accession",
+        "cazyme",
+        "cazy_family",
+        "cazy_subfamily"
+    ])
+    diamond_df = pd.DataFrame({}, columns=[
+        "protein_accession",
+        "cazyme",
+        "cazy_family",
+        "cazy_subfamily",
+    ])
+    dbcan_df = pd.DataFrame({}, columns=[
+        "protein_accession",
+        "cazyme",
+        "cazy_family",
+        "cazy_subfamily",
+    ])
 
     for line in overview_file[1:]:  # skip the first line becuase this is the head titles
         line = line.split("\t")
@@ -81,18 +97,19 @@ def parse_dbcan_output(overview_file_path, logger):
         # retrieve consensus results for dbCAN
         if line[-1] != "1":   # check ''#ofTools', don't include if non-CAZyme prediction
             consensus_cazy_fam = get_dbcan_consensus(
-                hmmer_temp_list_df.iloc[0, 1],
-                hotpep_temp_list_df.iloc[0, 1],
-                diamond_temp_list_df.iloc[0, 1],
-            )
-            consensus_sub_fam = get_dbcan_consensus(
                 hmmer_temp_list_df.iloc[0, 2],
                 hotpep_temp_list_df.iloc[0, 2],
                 diamond_temp_list_df.iloc[0, 2],
             )
+            consensus_sub_fam = get_dbcan_consensus(
+                hmmer_temp_list_df.iloc[0, 3],
+                hotpep_temp_list_df.iloc[0, 3],
+                diamond_temp_list_df.iloc[0, 3],
+            )
 
             consensus_dict = {
                 "protein_accession": [line[0]],
+                "cazyme": [1],
                 "cazy_family": [consensus_cazy_fam],
                 "cazy_subfamily": [consensus_sub_fam],
             }
@@ -228,6 +245,7 @@ def parse_hmmer_output(line, logger):
 
     prediction_dict = {
         "protein_accession": [line[0]],
+        "cazyme": [1],
         "cazy_family": [cazy_family_hr],
         "cazy_subfamily": [cazy_subfamily_hr],
         "domain_range": [domain_ranges_hr],
@@ -235,6 +253,7 @@ def parse_hmmer_output(line, logger):
 
     prediction_list_dict = {
         "protein_accession": [line[0]],
+        "cazyme": [1],
         "cazy_family": [cazy_fams],
         "cazy_subfamily": [cazy_subfams],
         "domain_range": [domain_ranges],
@@ -330,12 +349,14 @@ def parse_hotpep_output(line, logger):
 
     prediction_dict = {
         "protein_accession": [line[0]],
+        "cazyme": [1],
         "cazy_family": [cazy_fams_hr],
         "cazy_subfamily": [cazy_subfams_hr],
     }
 
     prediction_list_dict = {
         "protein_accession": [line[0]],
+        "cazyme": [1],
         "cazy_family": [cazy_fams],
         "cazy_subfamily": [cazy_subfams],
     }
@@ -427,12 +448,14 @@ def parse_diamond_output(line, logger):
 
     prediction_dict = {
         "protein_accession": [line[0]],
+        "cazyme": [1],
         "cazy_family": [cazy_fams_hr],
         "cazy_subfamily": [cazy_subfams_hr],
     }
 
     prediction_list_dict = {
         "protein_accession": [line[0]],
+        "cazyme": [1],
         "cazy_family": [cazy_fams],
         "cazy_subfamily": [cazy_subfams],
     }
