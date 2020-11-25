@@ -31,7 +31,16 @@ def get_cazy_accessions(args, logger):
     Return two lists of accession numbers.
     """
     # open the cazy df
-    cazy_df = 
+    try:
+        cazy_df = pd.read_csv(args.stat, header=0, index_col=0)
+    except FileNotFoundError:
+        logger.error(
+            "Could not find file containing CAZy dataframe.\n"
+            "Check the given path is correct\n."
+            "Statistical evaluation will not be performed."
+            "Only reports summarising the predictions will be produced.\n"
+        )
+        return None, None
 
     # create empty list to store accessions in
     genbank_accessions = []
@@ -44,8 +53,8 @@ def get_cazy_accessions(args, logger):
         cell_content = cell_content.split(",\n")
         i = 0
         for i in range(len(cell_content)):
-                accession = cell_content[i][:(cell_content[1].find(" >
-                genbank_accessions.append(accession)
+            accession = cell_content[i][:(cell_content[1].find(" "))]
+            genbank_accessions.append(accession)
 
     # get uniprot accession numbers
     index = 0
@@ -54,7 +63,7 @@ def get_cazy_accessions(args, logger):
         cell_content = cell_content.split(",\n")
         i = 0
         for i in range(len(cell_content)):
-                accession = cell_content[i][:(cell_content[1].find(" >
-                uniprot_accessions.append(accession)
+            accession = cell_content[i][:(cell_content[1].find(" "))]
+            uniprot_accessions.append(accession)
 
     return genbank_accessions, uniprot_accessions
