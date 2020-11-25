@@ -134,7 +134,7 @@ def check_cwd(logger):
                 "Changed current working directory to pyrewton/cazymes/prediction."
             )
         )
-        os.chdir('../')
+        os.chdir('..')
         return
 
     else:
