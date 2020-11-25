@@ -406,7 +406,7 @@ def get_output_files(output_dir, logger):
     prediction_tools = ["dbcan", "hotpep", "cupp", "ecami"]
 
     # retrieve all files in the output directory for the current working FASTA file
-    files_in_outdir = (entry for entry in output_dir.iterdir if entry.is_file())
+    files_in_outdir = (entry for entry in output_dir.iterdir() if entry.is_file())
 
     try:
         if len(files_in_outdir) == 0:
