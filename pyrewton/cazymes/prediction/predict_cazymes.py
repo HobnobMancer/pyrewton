@@ -183,6 +183,7 @@ def get_predictions(args, logger):
 
         # create Query class object to store data on the query made to the prediction tools
         prediction_tool_query = Query(file_path, tax_id, protein_source, output_path)
+        print("PREDICTION TOOL QUERY=\n", prediction_tool_query)
 
         # invoke prediction tools and retrieve paths to the prediction tools outputs
         full_outdir_path = invoke_prediction_tools(prediction_tool_query, logger)
@@ -264,12 +265,12 @@ def get_tax_id(file_path, logger):
     Return string, taxonomy ID of proteins' host species.
     """
     # search for first taxonomy ID format
-    search_result = re.search(r"ncbi(-|_)txid\d+?\D", str(file_path), re.IGNORECASE)
+    search_result = re.search(r"txid\d+?\D", str(file_path), re.IGNORECASE)
 
     try:
         tax_id = search_result.group()[:-1]
         return tax_id
-    except AttributeError:
+    except AttributeError:      
         # search for other taxonomy ID format
         search_result = re.search(r"taxonomy__\d+?__", str(file_path), re.IGNORECASE)
         try:
