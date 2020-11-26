@@ -42,24 +42,28 @@ def invoke_prediction_tools(query, logger):
 
     # change cwd to dbCAN directory to be able to access database files
     os.chdir('tools/dbcan/')
+    print("*****", os.getcwd())
     print("dbCAN is predicting CAZymes")
     invoke_dbcan(input_path, out_dir, logger)
 
     # move to cupp directory so can access CUPP
     os.chdir('..')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('cupp')
+    print("*****", os.getcwd())
     print("CUPP is predicting CAZymes")
     invoke_cupp(input_path, out_dir, logger)
 
     # move to ecami directory so can access eCAMI
     os.chdir('..')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('ecami')
+    print("*****", os.getcwd())
     print("eCAMI is predicting CAZymes")
     invoke_ecami(input_path, out_dir, logger)
 
     # move back to 'predictions/' directory
     os.chdir('..')  # moves to 'tools/'
     os.chdir('..')  # moves to 'predictions/'
+    print("*****", os.getcwd())
 
     return out_dir
 
@@ -81,20 +85,20 @@ def invoke_dbcan(input_path, out_dir, logger):
         "--out_dir",
         str(out_dir),
     ]
+    print("dbCAN here!!!")
+    # # create log of dbCAN run
+    # with open(f"{out_dir}/dbcan.log", "w+") as fh:
+    #     process = subprocess.run(dbcan_args, stdout=fh, text=True)
 
-    # create log of dbCAN run
-    with open(f"{out_dir}/dbcan.log", "w+") as fh:
-        process = subprocess.run(dbcan_args, stdout=fh, text=True)
-
-    # check if successul
-    if process.returncode != 0:  # return code is 0 for successful run
-        logger.warning(
-            (
-                f"dbCAN ran into error for {out_dir}\n."
-                "dbCAN error:\n"
-                f"{process.stderr}"
-            )
-        )
+    # # check if successul
+    # if process.returncode != 0:  # return code is 0 for successful run
+    #     logger.warning(
+    #         (
+    #             f"dbCAN ran into error for {out_dir}\n."
+    #             "dbCAN error:\n"
+    #             f"{process.stderr}"
+    #         )
+    #     )
 
     return
 
@@ -110,6 +114,7 @@ def invoke_cupp(input_path, out_dir, logger):
     """
     # create list of args to invoke cupp
     cupp_args = [
+        "python3",
         "CUPPprediction.py",
         "-query",
         str(input_path),
@@ -145,6 +150,7 @@ def invoke_ecami(input_path, out_dir, logger):
     """
     # create list of args for ecami
     ecami_args = [
+        "python3",
         "prediction.py",
         "-input",
         str(input_path),
