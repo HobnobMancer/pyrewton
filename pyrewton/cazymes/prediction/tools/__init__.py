@@ -42,28 +42,24 @@ def invoke_prediction_tools(query, logger):
 
     # change cwd to dbCAN directory to be able to access database files
     os.chdir('tools/dbcan/')
-    print("*****", os.getcwd())
     print("dbCAN is predicting CAZymes")
     invoke_dbcan(input_path, out_dir, logger)
 
     # move to cupp directory so can access CUPP
     os.chdir('..')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('cupp')
-    print("*****", os.getcwd())
     print("CUPP is predicting CAZymes")
     invoke_cupp(input_path, out_dir, logger)
 
     # move to ecami directory so can access eCAMI
     os.chdir('..')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('ecami')
-    print("*****", os.getcwd())
     print("eCAMI is predicting CAZymes")
     invoke_ecami(input_path, out_dir, logger)
 
     # move back to 'predictions/' directory
     os.chdir('..')  # moves to 'tools/'
     os.chdir('..')  # moves to 'predictions/'
-    print("*****", os.getcwd())
 
     return out_dir
 

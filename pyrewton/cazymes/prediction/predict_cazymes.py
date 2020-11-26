@@ -183,7 +183,6 @@ def get_predictions(args, logger):
 
         # create Query class object to store data on the query made to the prediction tools
         prediction_tool_query = Query(file_path, tax_id, protein_source, output_path)
-        print("PREDICTION TOOL QUERY=\n", prediction_tool_query)
 
         # invoke prediction tools and retrieve paths to the prediction tools outputs
         full_outdir_path = invoke_prediction_tools(prediction_tool_query, logger)
