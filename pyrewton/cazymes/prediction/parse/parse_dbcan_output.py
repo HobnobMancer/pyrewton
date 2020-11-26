@@ -55,11 +55,15 @@ def parse_dbcan_output(overview_file_path, logger):
     # list dfs store data as lists to build the dbcan_df
     hmmer_df = pd.DataFrame({}, columns=[
         "protein_accession",
+<<<<<<< HEAD
         "cazyme",
+=======
+>>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
         "cazy_family",
         "cazy_subfamily",
         "domain_range"
     ])
+<<<<<<< HEAD
     hotpep_df = pd.DataFrame({}, columns=[
         "protein_accession",
         "cazyme",
@@ -78,6 +82,11 @@ def parse_dbcan_output(overview_file_path, logger):
         "cazy_family",
         "cazy_subfamily",
     ])
+=======
+    hotpep_df = pd.DataFrame({}, columns=["protein_accession", "cazy_family", "cazy_subfamily"])
+    diamond_df = pd.DataFrame({}, columns=["protein_accession", "cazy_family", "cazy_subfamily"])
+    dbcan_df = pd.DataFrame({}, columns=["protein_accession", "cazy_family", "cazy_subfamily"])
+>>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
 
     for line in overview_file[1:]:  # skip the first line becuase this is the head titles
         line = line.split("\t")
@@ -245,7 +254,10 @@ def parse_hmmer_output(line, logger):
 
     prediction_dict = {
         "protein_accession": [line[0]],
+<<<<<<< HEAD
         "cazyme": [1],
+=======
+>>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
         "cazy_family": [cazy_family_hr],
         "cazy_subfamily": [cazy_subfamily_hr],
         "domain_range": [domain_ranges_hr],
@@ -253,7 +265,10 @@ def parse_hmmer_output(line, logger):
 
     prediction_list_dict = {
         "protein_accession": [line[0]],
+<<<<<<< HEAD
         "cazyme": [1],
+=======
+>>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
         "cazy_family": [cazy_fams],
         "cazy_subfamily": [cazy_subfams],
         "domain_range": [domain_ranges],
@@ -349,14 +364,20 @@ def parse_hotpep_output(line, logger):
 
     prediction_dict = {
         "protein_accession": [line[0]],
+<<<<<<< HEAD
         "cazyme": [1],
+=======
+>>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
         "cazy_family": [cazy_fams_hr],
         "cazy_subfamily": [cazy_subfams_hr],
     }
 
     prediction_list_dict = {
         "protein_accession": [line[0]],
+<<<<<<< HEAD
         "cazyme": [1],
+=======
+>>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
         "cazy_family": [cazy_fams],
         "cazy_subfamily": [cazy_subfams],
     }
@@ -448,14 +469,20 @@ def parse_diamond_output(line, logger):
 
     prediction_dict = {
         "protein_accession": [line[0]],
+<<<<<<< HEAD
         "cazyme": [1],
+=======
+>>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
         "cazy_family": [cazy_fams_hr],
         "cazy_subfamily": [cazy_subfams_hr],
     }
 
     prediction_list_dict = {
         "protein_accession": [line[0]],
+<<<<<<< HEAD
         "cazyme": [1],
+=======
+>>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
         "cazy_family": [cazy_fams],
         "cazy_subfamily": [cazy_subfams],
     }

@@ -29,7 +29,7 @@ def invoke_prediction_tools(query, logger):
     :param query: Query class instance, input fasta file for tools
     :param logger: logger object
 
-    Return full path to directory containing output files for all predictions for input FASTA file.
+    Return full/absolute path to directory containing output files for all predictions for input FASTA file.
     """
     # create complete path to fasta file to negate changing cwd
     current_path = os.getcwd()
@@ -40,23 +40,26 @@ def invoke_prediction_tools(query, logger):
     out_dir = query.prediction_dir
     out_dir = current_path / out_dir
 
+    # change cwd to dbCAN directory to be able to access database files
+    os.chdir('tools/dbcan/')
+    print("dbCAN is predicting CAZymes")
     invoke_dbcan(input_path, out_dir, logger)
 
     # move to cupp directory so can access CUPP
-    os.chdir('../')  # moves up to pyrewton/cazymes/prediction/tools
+    os.chdir('..')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('cupp')
-
+    print("CUPP is predicting CAZymes")
     invoke_cupp(input_path, out_dir, logger)
 
     # move to ecami directory so can access eCAMI
-    os.chdir('../')  # moves up to pyrewton/cazymes/prediction/tools
+    os.chdir('..')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('ecami')
-
+    print("eCAMI is predicting CAZymes")
     invoke_ecami(input_path, out_dir, logger)
 
     # move back to 'predictions/' directory
-    os.chdir('../')  # moves to 'tools/'
-    os.chdir('../')  # moves to 'predictions/'
+    os.chdir('..')  # moves to 'tools/'
+    os.chdir('..')  # moves to 'predictions/'
 
     return out_dir
 
@@ -78,23 +81,20 @@ def invoke_dbcan(input_path, out_dir, logger):
         "--out_dir",
         str(out_dir),
     ]
+    print("dbCAN here!!!")
+    # # create log of dbCAN run
+    # with open(f"{out_dir}/dbcan.log", "w+") as fh:
+    #     process = subprocess.run(dbcan_args, stdout=fh, text=True)
 
-    # change cwd to dbCAN directory to be able to access database files
-    os.chdir('tools/dbcan/')
-
-    # create log of dbCAN run
-    with open(f"{out_dir}/dbcan.log", "w+") as fh:
-        process = subprocess.run(dbcan_args, stdout=fh, text=True)
-
-    # check if successul
-    if process.returncode != 0:  # return code is 0 for successful run
-        logger.warning(
-            (
-                f"dbCAN ran into error for {out_dir}\n."
-                "dbCAN error:\n"
-                f"{process.stderr}"
-            )
-        )
+    # # check if successul
+    # if process.returncode != 0:  # return code is 0 for successful run
+    #     logger.warning(
+    #         (
+    #             f"dbCAN ran into error for {out_dir}\n."
+    #             "dbCAN error:\n"
+    #             f"{process.stderr}"
+    #         )
+    #     )
 
     return
 
@@ -110,7 +110,8 @@ def invoke_cupp(input_path, out_dir, logger):
     """
     # create list of args to invoke cupp
     cupp_args = [
-        "prediction.py",
+        "python3",
+        "CUPPprediction.py",
         "-query",
         str(input_path),
         "-output_path",
@@ -145,6 +146,7 @@ def invoke_ecami(input_path, out_dir, logger):
     """
     # create list of args for ecami
     ecami_args = [
+        "python3",
         "prediction.py",
         "-input",
         str(input_path),

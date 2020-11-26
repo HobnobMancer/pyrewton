@@ -55,7 +55,10 @@ def parse_cupp_output(log_file_path, logger):
     # build an empty dataframe to add predication outputs to
     cupp_df = pd.DataFrame(columns=[
         "protein_accession",
+<<<<<<< HEAD
         "cazyme",
+=======
+>>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
         "cazy_family",
         "cazy_subfamily",
         "ec_number",

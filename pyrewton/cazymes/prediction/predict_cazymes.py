@@ -157,7 +157,7 @@ def check_cwd(logger):
                 "Changed current working directory to pyrewton/cazymes/prediction."
             )
         )
-        os.chdir('../')
+        os.chdir('..')
         return
 
     else:
@@ -205,7 +205,7 @@ def get_predictions(args, logger):
         make_output_directory(output_path, logger, args.force, args.nodelete)
 
         # create Query class object to store data on the query made to the prediction tools
-        prediction_tool_query = Query(file_path, tax_id, protein_source, output_path, {})
+        prediction_tool_query = Query(file_path, tax_id, protein_source, output_path)
 
         # invoke prediction tools and retrieve paths to the prediction tools outputs
         full_outdir_path = invoke_prediction_tools(prediction_tool_query, logger)
@@ -287,12 +287,12 @@ def get_tax_id(file_path, logger):
     Return string, taxonomy ID of proteins' host species.
     """
     # search for first taxonomy ID format
-    search_result = re.search(r"ncbi(-|_)txid\d+?\D", str(file_path), re.IGNORECASE)
+    search_result = re.search(r"txid\d+?\D", str(file_path), re.IGNORECASE)
 
     try:
         tax_id = search_result.group()[:-1]
         return tax_id
-    except AttributeError:
+    except AttributeError:      
         # search for other taxonomy ID format
         search_result = re.search(r"taxonomy__\d+?__", str(file_path), re.IGNORECASE)
         try:
@@ -319,20 +319,23 @@ def write_stats_prediction_report(
     Return nothing
     """
     # Standardise the output from each prediction tool
-    # order dataframes are stored: dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df,
-    # cupp_stnd_df, and ecami_stnd_df
-    standardised_dfs = standardise_prediction_outputs(prediction.prediction_dir, args, logger)
-
-    if standardised_dfs is None:
-        return  # failure logged in get_output_files()
-
-    for df in standardised_dfs:
-        # statistically evaluate distinguishing between cazymes and non-cazymes
-        evaluate_cazyme_prediction(df, )
-
+    dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df, cupp_stnd_df, ecami_stnd_df = standardise_prediction_outputs(
+        prediction.prediction_dir, args, logger
+    )
+    
+    if (
+        (dbcan_stnd_df is None) and
+        (hmmer_stnd_df is None) and
+        (hotpep_stnd_df is None) and
+        (diamond_stnd_df is None) and
+        (cupp_stnd_df is None) and
+        (ecami_stnd_df is None)
+    ):
+        return  # error in retrieving output was logged in get_output_files()
+    
     # Perform statistical evaluation of performance if CAZy data provided
     # if args.cazy is not None:
-    # pass
+        # pass
 
     # Produce summary report of predictions (number of CAZymes, numbers per class etc.)
 
@@ -350,13 +353,13 @@ def standardise_prediction_outputs(out_dir, args, logger):
     :param args: cmd args parser
     :param logger: logger object
 
-    Return list of 6 Pandas dataframes.
+    Return 6 Pandas dataframes.
     """
     # retrieve the paths to prediction tool output files in the output directory for 'prediction'
     raw_output_files = get_output_files(out_dir, logger)  # returns dict
 
     if raw_output_files is None:
-        return None  # error was logged in get_output_files()
+        return  None, None, None, None, None, None  # error was logged in get_output_files()
 
     # Standardise the output from each prediction tool
     dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df = (
@@ -384,14 +387,36 @@ def standardise_prediction_outputs(out_dir, args, logger):
     write_out_dataframes(cupp_stnd_df, "cupp_stnd_df", out_dir, args, logger)
     write_out_dataframes(ecami_stnd_df, "ecami_stnd_df", out_dir, args, logger)
 
-    return [
-        dbcan_stnd_df,
-        hmmer_stnd_df,
-        hotpep_stnd_df,
-        diamond_stnd_df,
-        cupp_stnd_df,
-        ecami_stnd_df,
-    ]
+    return dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df, cupp_stnd_df, ecami_stnd_df
+
+
+def write_out_dataframes(df, df_name, out_dir, args, logger):
+    """Coordinate writing out standardise dataframes to disk.
+
+    Performs check and logs if no dataframe was produced for a given CAZyme prediction tool.
+
+    :param df: pandas dataframe
+    :param df_name: path to location where dataframe is to be written (excludes .csv extension)
+    :param args: args parser object
+    :param logger: logger object
+
+    Return nothing.
+    """
+    if df is None:
+        logger.warning(
+            "No standardised dataframe was produced for\n"
+            f"{out_dir} / {df_name}"
+        )
+        return
+
+    if len(df["cazy_family"]) == 0:
+        logger.warning(
+            "Empty standardised dataframe created for\n"
+            f"{out_dir} / {df_name}"
+        )
+
+    write_out_pre_named_dataframe(df, df_name, logger, out_dir, args.force)
+    return
 
 
 def get_output_files(output_dir, logger):
@@ -408,19 +433,25 @@ def get_output_files(output_dir, logger):
     prediction_tools = ["dbcan", "hotpep", "cupp", "ecami"]
 
     # retrieve all files in the output directory for the current working FASTA file
-    files_in_outdir = (entry for entry in output_dir.iterdir() if entry.is_file())
+    files_in_outdir = (
+        entry for entry in output_dir.iterdir() if entry.is_file()
+    )
 
     try:
-        if len(files_in_outdir) == 0:
+        if len(list(files_in_outdir)) == 0:
             logger.error(
                     "Did not retrieve any prediction tool output files in\n"
                     f"{output_dir}\n"
+                    "Not producing and output for this dir"
             )
+            return
     except AttributeError:  # raised if files_in_outdir is None
         logger.error(
                 "Did not retrieve any prediction tool output files in\n"
                 f"{output_dir}\n"
+                "Not producing and output for this dir"
         )
+        return
 
     # Retrieve paths to specific prediction tool's output files
     for entry in files_in_outdir:
