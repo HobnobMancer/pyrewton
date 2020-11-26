@@ -319,14 +319,16 @@ def write_stats_prediction_report(
     Return nothing
     """
     # Standardise the output from each prediction tool
-    (
-        dbcan_stnd_df,
-        hmmer_stnd_df,
-        hotpep_stnd_df,
-        diamond_stnd_df,
-        cupp_stnd_df,
-        ecami_stnd_df,
-    ) = standardise_prediction_outputs(prediction.prediction_dir, args, logger)
+    # order dataframes are stored: dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df,
+    # cupp_stnd_df, and ecami_stnd_df
+    standardised_dfs = standardise_prediction_outputs(prediction.prediction_dir, args, logger)
+
+    if standardised_dfs is None:
+        return  # failure logged in get_output_files()
+
+    for df in standardised_dfs:
+        # statistically evaluate distinguishing between cazymes and non-cazymes
+        evaluate_cazyme_prediction(df, )
 
     # Perform statistical evaluation of performance if CAZy data provided
     # if args.cazy is not None:
@@ -348,13 +350,13 @@ def standardise_prediction_outputs(out_dir, args, logger):
     :param args: cmd args parser
     :param logger: logger object
 
-    Return 6 Pandas dataframes.
+    Return list of 6 Pandas dataframes.
     """
     # retrieve the paths to prediction tool output files in the output directory for 'prediction'
     raw_output_files = get_output_files(out_dir, logger)  # returns dict
 
     if raw_output_files is None:
-        return None, None, None, None, None, None  # error was logged in get_output_files()
+        return None  # error was logged in get_output_files()
 
     # Standardise the output from each prediction tool
     dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df = (
@@ -382,14 +384,14 @@ def standardise_prediction_outputs(out_dir, args, logger):
     write_out_dataframes(cupp_stnd_df, "cupp_stnd_df", out_dir, args, logger)
     write_out_dataframes(ecami_stnd_df, "ecami_stnd_df", out_dir, args, logger)
 
-    return(
+    return [
         dbcan_stnd_df,
         hmmer_stnd_df,
         hotpep_stnd_df,
         diamond_stnd_df,
         cupp_stnd_df,
         ecami_stnd_df,
-    )
+    ]
 
 
 def get_output_files(output_dir, logger):
