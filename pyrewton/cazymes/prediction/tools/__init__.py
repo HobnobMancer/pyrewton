@@ -21,6 +21,7 @@
 
 import os
 import subprocess
+import sys
 
 
 def invoke_prediction_tools(query, logger):
@@ -42,19 +43,16 @@ def invoke_prediction_tools(query, logger):
 
     # change cwd to dbCAN directory to be able to access database files
     os.chdir('tools/dbcan/')
-    print("dbCAN is predicting CAZymes")
     invoke_dbcan(input_path, out_dir, logger)
 
     # move to cupp directory so can access CUPP
     os.chdir('..')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('cupp')
-    print("CUPP is predicting CAZymes")
     invoke_cupp(input_path, out_dir, logger)
 
     # move to ecami directory so can access eCAMI
     os.chdir('..')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('ecami')
-    print("eCAMI is predicting CAZymes")
     invoke_ecami(input_path, out_dir, logger)
 
     # move back to 'predictions/' directory
@@ -81,20 +79,26 @@ def invoke_dbcan(input_path, out_dir, logger):
         "--out_dir",
         str(out_dir),
     ]
-    print("dbCAN here!!!")
-    # # create log of dbCAN run
-    # with open(f"{out_dir}/dbcan.log", "w+") as fh:
-    #     process = subprocess.run(dbcan_args, stdout=fh, text=True)
+    # print("dbCAN here!!!")
+
+
+    # create log of dbCAN run
+    with subprocess.Popen(dbcan_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1) as p:
+        with open(f"{out_dir}/dbcan.log", "wb") as logfile:
+            for line in p.stdout:
+                logfile.write(line)
+                sys.stdout.buffer.write(line)
+                sys.stdout.buffer.flush()
 
     # # check if successul
-    # if process.returncode != 0:  # return code is 0 for successful run
-    #     logger.warning(
-    #         (
-    #             f"dbCAN ran into error for {out_dir}\n."
-    #             "dbCAN error:\n"
-    #             f"{process.stderr}"
-    #         )
-    #     )
+    if process.returncode != 0:  # return code is 0 for successful run
+        logger.warning(
+            (
+                f"dbCAN ran into error for {out_dir}\n."
+                "dbCAN error:\n"
+                f"{process.stderr}"
+            )
+        )
 
     return
 
@@ -119,8 +123,12 @@ def invoke_cupp(input_path, out_dir, logger):
     ]
 
     # create log of CUPP run
-    with open(f"{out_dir}/cupp.log", "w+") as fh:
-        process = subprocess.run(cupp_args, stdout=fh, text=True)
+    with subprocess.Popen(cupp_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1) as p:
+        with open(f"{out_dir}/cupp.log", "wb") as logfile:
+            for line in p.stdout:
+                logfile.write(line)
+                sys.stdout.buffer.write(line)
+                sys.stdout.buffer.flush()
 
     # check if successful
     if process.returncode != 0:
@@ -157,8 +165,12 @@ def invoke_ecami(input_path, out_dir, logger):
     ]
 
     # create log of eCAMI run
-    with open(f"{out_dir}/ecami.log", "w+") as fh:
-        process = subprocess.run(ecami_args, stdout=fh, text=True)
+    with subprocess.Popen(ecami_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1) as p:
+        with open(f"{out_dir}/ecami.log", "wb") as logfile:
+            for line in p.stdout:
+                logfile.write(line)
+                sys.stdout.buffer.write(line)
+                sys.stdout.buffer.flush()
 
     # check if successful
     if process.returncode != 0:
