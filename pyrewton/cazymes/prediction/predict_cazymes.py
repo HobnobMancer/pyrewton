@@ -103,11 +103,13 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     predictions = get_predictions(args, logger)
 
     if args.stats:
-        # get accession numbers of known CAZymes from CAZy
-        cazy_genbank_accessions, cazy_uniprot_accessions = get_cazy_accessions(args, logger)
+        # get dataframe of CAZymes catalogued by CAZy
 
-        if (cazy_genbank_accessions is None) or (cazy_uniprot_accessions is None):
-            # write remote summarising predictions
+        # get accession numbers of known CAZymes from CAZy
+        cazy_df, genbank_synonyms = get_cazy_accessions(args, logger)
+
+        if cazy_df is None:
+            # write remote summarising predictions becuase no gold-standard to compare against
             index = 0
             for index in tqdm(range(len(predictions)), desc="Writing summary reports"):
                 write_prediction_report(predictions[index], args, logger)
@@ -118,8 +120,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
             for index in tqdm(range(len(predictions)), desc="Performing statistical evaluation"):
                 write_stats_prediction_report(
                     predictions[index],
-                    cazy_genbank_accessions,
-                    cazy_uniprot_accessions,
+                    cazy_df,
+                    genbank_synonyms,
                     args,
                     logger,
                 )
@@ -304,17 +306,19 @@ def get_tax_id(file_path, logger):
 
 def write_stats_prediction_report(
     prediction,
-    cazy_genbank_accessions,
-    cazy_uniprot_accessions,
+    cazy_df,
+    genbank_synonyms,
     args,
     logger,
 ):
     """Coordinate statistical evaluation of predction tools outputs and writing summary report.
 
     :param prediction: Query class object
+    :param cazy_df: Pandas df, dataframe of CAZymes retrieved from CAZy
+    :param genbank_synonyms: dict, GenBank accessions of 'identical' proteins to CAZymes in the 
+                            cazy df as catalogued by CAZy
     :param args: cmd args parser
     :param logger: logger object
-
 
     Return nothing
     """
@@ -322,18 +326,19 @@ def write_stats_prediction_report(
     dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df, cupp_stnd_df, ecami_stnd_df = standardise_prediction_outputs(
         prediction.prediction_dir, args, logger
     )
-    
-    if (
-        (dbcan_stnd_df is None) and
-        (hmmer_stnd_df is None) and
-        (hotpep_stnd_df is None) and
-        (diamond_stnd_df is None) and
-        (cupp_stnd_df is None) and
-        (ecami_stnd_df is None)
-    ):
-        return  # error in retrieving output was logged in get_output_files()
-    
-    # Perform statistical evaluation of performance if CAZy data provided
+
+    if (dbcan_stnd_df is None) and \
+        (hmmer_stnd_df is None) and \
+        (hotpep_stnd_df is None) and \
+        (diamond_stnd_df is None) and \
+        (cupp_stnd_df is None) and \
+        (ecami_stnd_df is None):
+            return  # error in retrieving output was logged in get_output_files()
+
+    # Perform statistical evaluation of differentiation between CAZymes and non-CAZymes
+
+
+    performance if CAZy data provided
     # if args.cazy is not None:
         # pass
 
@@ -387,36 +392,14 @@ def standardise_prediction_outputs(out_dir, args, logger):
     write_out_dataframes(cupp_stnd_df, "cupp_stnd_df", out_dir, args, logger)
     write_out_dataframes(ecami_stnd_df, "ecami_stnd_df", out_dir, args, logger)
 
-    return dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df, cupp_stnd_df, ecami_stnd_df
-
-
-def write_out_dataframes(df, df_name, out_dir, args, logger):
-    """Coordinate writing out standardise dataframes to disk.
-
-    Performs check and logs if no dataframe was produced for a given CAZyme prediction tool.
-
-    :param df: pandas dataframe
-    :param df_name: path to location where dataframe is to be written (excludes .csv extension)
-    :param args: args parser object
-    :param logger: logger object
-
-    Return nothing.
-    """
-    if df is None:
-        logger.warning(
-            "No standardised dataframe was produced for\n"
-            f"{out_dir} / {df_name}"
-        )
-        return
-
-    if len(df["cazy_family"]) == 0:
-        logger.warning(
-            "Empty standardised dataframe created for\n"
-            f"{out_dir} / {df_name}"
-        )
-
-    write_out_pre_named_dataframe(df, df_name, logger, out_dir, args.force)
-    return
+    return(
+        dbcan_stnd_df,
+        hmmer_stnd_df,
+        hotpep_stnd_df,
+        diamond_stnd_df,
+        cupp_stnd_df,
+        ecami_stnd_df,
+    )
 
 
 def get_output_files(output_dir, logger):
