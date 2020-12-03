@@ -35,6 +35,7 @@ def build_parser(argv: Optional[List] = None):
     )
 
     # Add positional arguments to parser
+
     # Add path to input fasta files
     parser.add_argument(
         "input",
@@ -44,6 +45,15 @@ def build_parser(argv: Optional[List] = None):
     )
 
     # Add optional arguments to parser
+    # Add option to define F-beta weighting
+    parser.add_argument(
+        "-b",
+        "--beta",
+        dest="beta",
+        type=int,
+        default=1,
+        help="Weighting of Fbeta-stat when calculating Fbeta score of CAZy family prediction",
+    )
     # Add option to force file over writting
     parser.add_argument(
         "-f",
