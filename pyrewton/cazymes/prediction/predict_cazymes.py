@@ -31,6 +31,8 @@ import os
 import re
 import sys
 
+import numpy as np
+
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -323,19 +325,35 @@ def write_stats_prediction_report(
     Return nothing
     """
     # Standardise the output from each prediction tool
-    dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df, cupp_stnd_df, ecami_stnd_df = standardise_prediction_outputs(
-        prediction.prediction_dir, args, logger
-    )
+    # tuple of lists containing df name and standaridsed df
+    stnd_dfs = standardise_prediction_outputs(prediction.prediction_dir, args, logger)
 
-    if (dbcan_stnd_df is None) and \
-        (hmmer_stnd_df is None) and \
-        (hotpep_stnd_df is None) and \
-        (diamond_stnd_df is None) and \
-        (cupp_stnd_df is None) and \
-        (ecami_stnd_df is None):
-            return  # error in retrieving output was logged in get_output_files()
+    if stnd_dfs is None:
+        return  # error in retrieving output was logged in get_output_files()
 
-    # Perform statistical evaluation of differentiation between CAZymes and non-CAZymes
+    # Build empty dict framework to store statistical results for each df
+    results = {
+        "cazyme_non-cazyme_distinction": {
+                "Sn": np.nan,
+                "Sp": np.nan,
+                "F1": np.nan,
+            },
+            "CAZy_family_prediction": {
+                "ARI": np.nan,
+                "Fbeta": np.nan,
+            },
+    }
+
+    # Build empty dict which will hold all stats results
+    stats_results = {}
+
+    for df in stnd_dfs:
+        # df is list of [df_name, standardised_df]
+        stats_results[df[0]] = results
+        # Perform statistical evaluation of differentiation between CAZymes and non-CAZymes
+            # create matrix X
+            # create array y
+            # 
 
 
     performance if CAZy data provided
@@ -358,13 +376,13 @@ def standardise_prediction_outputs(out_dir, args, logger):
     :param args: cmd args parser
     :param logger: logger object
 
-    Return 6 Pandas dataframes.
+    Return tuple of df_name and Pandas df pairs.
     """
     # retrieve the paths to prediction tool output files in the output directory for 'prediction'
     raw_output_files = get_output_files(out_dir, logger)  # returns dict
 
     if raw_output_files is None:
-        return  None, None, None, None, None, None  # error was logged in get_output_files()
+        return  None  # error was logged in get_output_files()
 
     # Standardise the output from each prediction tool
     dbcan_stnd_df, hmmer_stnd_df, hotpep_stnd_df, diamond_stnd_df = (
@@ -392,14 +410,14 @@ def standardise_prediction_outputs(out_dir, args, logger):
     write_out_dataframes(cupp_stnd_df, "cupp_stnd_df", out_dir, args, logger)
     write_out_dataframes(ecami_stnd_df, "ecami_stnd_df", out_dir, args, logger)
 
-    return(
-        dbcan_stnd_df,
-        hmmer_stnd_df,
-        hotpep_stnd_df,
-        diamond_stnd_df,
-        cupp_stnd_df,
-        ecami_stnd_df,
-    )
+    return [
+        ["dbcan", dbcan_stnd_df],
+        ["hmmer", hmmer_stnd_df],
+        ["hotpep", hotpep_stnd_df],
+        ["diamond", diamond_stnd_df],
+        ["cupp", cupp_stnd_df],
+        ["ecami", ecami_stnd_df]
+    ]
 
 
 def get_output_files(output_dir, logger):
