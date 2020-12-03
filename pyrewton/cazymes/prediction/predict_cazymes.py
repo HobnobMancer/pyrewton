@@ -337,11 +337,11 @@ def write_stats_prediction_report(
                 "Sn": np.nan,
                 "Sp": np.nan,
                 "F1": np.nan,
-            },
-            "CAZy_family_prediction": {
-                "ARI": np.nan,
-                "Fbeta": np.nan,
-            },
+        },
+        "CAZy_family_prediction": {
+            "ARI": np.nan,
+            f"F{args.beta}-stat": np.nan,
+        },
     }
 
     # Build empty dict which will hold all stats results
@@ -350,15 +350,54 @@ def write_stats_prediction_report(
     for df in stnd_dfs:
         # df is list of [df_name, standardised_df]
         stats_results[df[0]] = results
+
         # Perform statistical evaluation of differentiation between CAZymes and non-CAZymes
-            # create matrix X
-            # create array y
-            # 
+        logger.info(
+            f"Performing statistical evaluation of {df[0]} "
+            "to distinguish CAZymes and non-CAZymes."
+        )
 
+        logger.info(
+            f"Building feature matrix X and target array y for {df[0]} "
+            "for CAZyme/non-CAZyme prediction"
+        )
 
-    performance if CAZy data provided
-    # if args.cazy is not None:
-        # pass
+        # Create feature matrix X, add non-CAZymes from FASTA to standardised df
+        # and retrieve total number of proteins in FASTA file
+        X, total_proteins = get_feature_matrix_x(df[1], prediction.fasta, logger)
+
+        # Create target array y of known CAZyme/non-CAZyme classification
+        logger.info(f"Building target array y for {df[0]} for CAZyme/non-CAZyme prediction")
+        y = get_target_array_y(X, cazy_df, genbank_synonyms, logger)
+
+        # Calculate sensitivity, specificity, and F1 score
+        sn, sp, f1 = calculate_cazyme_non_cazymes_stats(X, y, logger)
+        stats_results[df[0]]["cazyme_non-cazyme_distinction"]["Sn"] = sn
+        stats_results[df[0]]["cazyme_non-cazyme_distinction"]["Sp"] = sp
+        stats_results[df[0]]["cazyme_non-cazyme_distinction"]["F1"] = f1
+
+        # Perform statstical evaluation of predicting the CAZy family
+        logger.info(
+            f"Performing statistical evaluation of {df[0]} "
+            "to predict the correct CAZy family of correctly predicted CAZymes."
+        )
+
+        logger.info(
+            f"Building feature matrix X and target array y for {df[0]} for CAZy family prediction"
+        )
+
+        # Get feature matrix X, retain only predicated CAZymes which are catalogued in CAZy
+        X = get_cazy_fam_matrix_x(X, cazy_df, genbank_synonyms, logger)
+
+        # Get target array y, known CAZy families
+        y = get_cazy_fam_target_y(X, cazy_df, genbank_synonyms, logger)
+
+        # Calculate adjusted Rand Index (ari) and F-beta stat (beta defined in args, default=1)
+        ari, f-beta = calculate_cazy_fam_predict_stats(X, y, args, logger)
+        stats_results[df[0]]["CAZy_family_prediction"]["ARI"] = ari
+        stats_results[df[0]]["CAZy_family_prediction"][f"F{args.beta}-stat"] = f-beta
+
+        # write report for CAZyme prediction tool
 
     # Produce summary report of predictions (number of CAZymes, numbers per class etc.)
 
