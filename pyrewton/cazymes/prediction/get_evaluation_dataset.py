@@ -26,6 +26,20 @@ Writes out a FASTA per candidate species, containing all the protein sequences t
 CAZymes prediction tools. The datasets contain an equal number of CAZymes to non-CAZymes.
 """
 
+import gzip
+import logging
+import re
+import sys
+
+from pathlib import Path
+from typing import List, Optional
+
+import pandas as pd
+
+from pyrewton.utilities import build_logger
+from pyrewton.utilities.cmd_get_evaluation_dataset import build_parser
+from pyrewton.utilities.file_io import make_output_directory
+
 
 def main():
     """Coordinate preparation for script, and terminating the programme when finished."""
@@ -36,13 +50,14 @@ def get_the_fasta_file_paths():
     """Retrieve the paths to all the FASTA files in the input directory."""
     return
 
+
 def build_protein_dataframe():
     """Build a dataframe containing the protein data for the current working input FASTA file."""
     return
 
 
 def get_cazy_classification():
-    """For each protein check if classified as a CAZyme by CAZy, and its annotatedCAZy families."""
+    """For each protein check if classified as a CAZyme by CAZy, and its annotated CAZy families."""
     return
 
 
