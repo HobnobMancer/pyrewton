@@ -29,6 +29,7 @@ CAZymes prediction tools. The datasets contain an equal number of CAZymes to non
 import gzip
 import logging
 import os
+import random
 import re
 import sys
 
@@ -232,14 +233,14 @@ def get_cazy_classification(protein_df, session, logger):
     return protein_df
 
 
-def get_dataset(protein_df, logger):
+def get_dataset(protein_df, fasta_file_path, args, logger):
     """Retrieve dataset of equal number of CAZymes and non-CAZymes."""
     # create dataframe only of non-CAZymes
-    non_cazyme_rows = protein_df["cazyme_classification"]==0
+    non_cazyme_rows = protein_df["cazyme_classification"] == 0
     non_cazyme_df = protein_df[non_cazyme_rows]
 
     # create dataframe of only CAZymes
-    cazyme_rows = protein_df["cazyme_classification"]==1
+    cazyme_rows = protein_df["cazyme_classification"] == 1
     cazyme_df = protein_df[cazyme_rows]
 
     if args.sample_size == None:
@@ -248,12 +249,27 @@ def get_dataset(protein_df, logger):
         sample_size = (args.sample_size / 2)
 
     # select random rows from non-CAZymes df
+    non_cazyme_df = non_cazyme_df.sample(n=sample_size)
 
     # select random rows from CAZymes df
+    cazyme_df = cazyme_df.sample(n=sample_size)
+
+    # combine the non-CAZyme and CAZyme dfs
+    dfs = [non_cazyme_df, cazyme_df]
+    protein_df = pd.concat(dfs)
+
+    # add the proteins in the new protein dataframe to a FASTA file in a random order
+    protein_order = random.sample(
+        range(0, len(protein_df["protein_data"])),
+        (len(protein_df["protein_data"]))
+    )
+
+    for index in protein_order:
+        add_protein_to_output_fasta(protein_df.iloc[index], fasta_file_path, args, logger)
 
     return
 
 
-def write_out_dataset():
+def add_protein_to_output_fasta(df_row, fasta_file_path, args, logger):
     """Write out the dataset of CAZymes and non-CAZymes to a single FASTA file."""
     return
