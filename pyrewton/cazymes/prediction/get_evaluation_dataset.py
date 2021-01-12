@@ -28,6 +28,7 @@ CAZymes prediction tools. The datasets contain an equal number of CAZymes to non
 
 import gzip
 import logging
+import os
 import re
 import sys
 
@@ -36,9 +37,16 @@ from typing import List, Optional
 
 import pandas as pd
 
+from Bio import SeqIO
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 from pyrewton.utilities import build_logger
 from pyrewton.utilities.cmd_get_evaluation_dataset import build_parser
 from pyrewton.utilities.file_io import make_output_directory
+
+
+Session = sessionmaker()
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
@@ -54,27 +62,74 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     else:
         parser = build_parser(argv)
         args = parser.parse_args()
-    
+
     # build logger
     # Note: log file is only created if specified at cmd-line
     if logger is None:
         logger = build_logger("get_ncbi_genomes", args)
     logger.info("Run initated")
 
+    # open session to local CAZy database (this can be curated by using the
+    # cazy_webscraper, available at https://github.com/HobnobMancer/cazy_webscraper)
+    session = get_cazy_db_session(args, logger)
+
     # retrieve paths to FASTA files
-    fasta_files = get_fasta_file_paths()
+    fasta_files = get_fasta_file_paths(args, logger)
 
     # create dataset per FASTA file
     for fasta in fasta_files:
+        build_protein_dataframe()
+
+    logger.info(
+        "Finished creating a dataset for each input FASTA file.\n"
+        "Terminating Progamme."
+    )
 
 
-    # terminate
+def get_cazy_db_session(args, logger):
+    """Retrieve an open database session to a local CAZy database.
+
+    :param args: cmd-line args parser
+    :param logger: logger object
+
+    Return open database session.
+    """
+    logger.info("Opening session to the local copy of the CAZy database.")
+
+    # check if database file exists
+    if os.path.exists(args.database) is False:
+        logger.error(
+            "Path provided for local CAZy database does not exist.\n"
+            "Cannot proceed without a valid local CAZy database.\n"
+            "Terminating program."
+        )
+        sys.exit(1)
+
+    # build database engine
+    try:
+        engine = create_engine(f"sqlite+pysqlite:///{args.database}", echo=False)
+        Base.metadata.create_all(engine)
+        Session.configure(bind=engine)
+    except Exception:
+        logger.error(
+            (
+                "Was unable to open local CAZy database. The causing error is presented below\n"
+                "Cannot proceed without a valid local CAZy database.\n"
+                "Terminating program."
+            ),
+            exc_info=1,
+        )
+
+    return Session()
+
 
 
 def get_fasta_file_paths(args, logger):
     """Retrieve paths to call FASTA files in input dir.
+
     :param args: parser object
     :param logger: logger object
+
     Returns list of paths to fasta files.
     """
     # create empty list to store the file entries, to allow checking if no files returned
@@ -104,12 +159,29 @@ def get_fasta_file_paths(args, logger):
     return fasta_file_paths
 
 
-def build_protein_dataframe():
+def build_protein_dataframe(fasta_path, args, logger):
     """Build a dataframe containing the protein data for the current working input FASTA file."""
+    # create dictionary to store data that will go in the database
+    protein_dict = {"protein_data": [], "sequence": []}
+
+    # open the current FASTA file and populate dictionary with its data
+    for seq_record in SeqIO.parse(fasta_path, "fasta"):
+        protein_dict["protein_data"].append(seq_record.id)
+        protein_dict["sequence"].append(seq_record.seq)
+
+    # build dataframe of protein sequences
+    protein_df = pd.DataFrame(protein_dict)
+
+    # add new column populate with CAZyme ('1') and non-CAZyme ('0') classification
+    protein_df = get_cazy_classification(protein_df)
+
+    # write out a random dataset
+    get_dataset()
+
     return
 
 
-def get_cazy_classification():
+def get_cazy_classification(protein_df):
     """For each protein check if classified as a CAZyme by CAZy, and its annotated CAZy families."""
     return
 
