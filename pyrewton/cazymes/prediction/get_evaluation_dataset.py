@@ -41,14 +41,67 @@ from pyrewton.utilities.cmd_get_evaluation_dataset import build_parser
 from pyrewton.utilities.file_io import make_output_directory
 
 
-def main():
+def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
     """Coordinate preparation for script, and terminating the programme when finished."""
-    return
+    # programme preparation
+
+    # build cmd-line arguments parser
+    # Check if namepsace isn't passed, if not parse command-line
+    if argv is None:
+        # Parse command-line
+        parser = build_parser()
+        args = parser.parse_args()
+    else:
+        parser = build_parser(argv)
+        args = parser.parse_args()
+    
+    # build logger
+    # Note: log file is only created if specified at cmd-line
+    if logger is None:
+        logger = build_logger("get_ncbi_genomes", args)
+    logger.info("Run initated")
+
+    # retrieve paths to FASTA files
+    fasta_files = get_fasta_file_paths()
+
+    # create dataset per FASTA file
+    for fasta in fasta_files:
 
 
-def get_the_fasta_file_paths():
-    """Retrieve the paths to all the FASTA files in the input directory."""
-    return
+    # terminate
+
+
+def get_fasta_file_paths(args, logger):
+    """Retrieve paths to call FASTA files in input dir.
+    :param args: parser object
+    :param logger: logger object
+    Returns list of paths to fasta files.
+    """
+    # create empty list to store the file entries, to allow checking if no files returned
+    fasta_file_paths = []
+
+    # retrieve all files from input directory
+    files_in_entries = (
+        entry for entry in Path(args.input).iterdir() if entry.is_file()
+    )
+    # retrieve paths to fasta files
+    for item in files_in_entries:
+        # search for fasta file extension
+        if item.name.endswith(".fasta") or item.name.endswith(".fa"):
+            fasta_file_paths.append(item)
+
+    # check files were retrieved from input directory
+    if len(fasta_file_paths) == 0:
+        logger.warning(
+            (
+                "No FASTA files retrieved from input directory.\n"
+                "Check the path to the input directory is correct.\n"
+                "Terminanting program."
+            )
+        )
+        sys.exit(1)
+
+    return fasta_file_paths
 
 
 def build_protein_dataframe():
