@@ -34,18 +34,23 @@ import sys
 
 from pathlib import Path
 from typing import List, Optional
+from tqdm import tqdm
 
+import numpy as np
 import pandas as pd
 
 from Bio import SeqIO
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
 
 from pyrewton.utilities import build_logger
 from pyrewton.utilities.cmd_get_evaluation_dataset import build_parser
 from pyrewton.utilities.file_io import make_output_directory
 
 
+# Use the declarative system
+Base = declarative_base()
 Session = sessionmaker()
 
 
@@ -78,7 +83,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # create dataset per FASTA file
     for fasta in fasta_files:
-        build_protein_dataframe()
+        build_protein_dataframe(fasta, session, args, logger)
 
     logger.info(
         "Finished creating a dataset for each input FASTA file.\n"
@@ -123,7 +128,6 @@ def get_cazy_db_session(args, logger):
     return Session()
 
 
-
 def get_fasta_file_paths(args, logger):
     """Retrieve paths to call FASTA files in input dir.
 
@@ -159,8 +163,10 @@ def get_fasta_file_paths(args, logger):
     return fasta_file_paths
 
 
-def build_protein_dataframe(fasta_path, args, logger):
+def build_protein_dataframe(fasta_path, session, args, logger):
     """Build a dataframe containing the protein data for the current working input FASTA file."""
+    logger.info(f"Create dataset for {fasta_path}")
+
     # create dictionary to store data that will go in the database
     protein_dict = {"protein_data": [], "sequence": []}
 
@@ -173,21 +179,78 @@ def build_protein_dataframe(fasta_path, args, logger):
     protein_df = pd.DataFrame(protein_dict)
 
     # add new column populate with CAZyme ('1') and non-CAZyme ('0') classification
-    protein_df = get_cazy_classification(protein_df)
+    protein_df = get_cazy_classification(protein_df, session, logger)
 
     # write out a random dataset
-    get_dataset()
+    get_dataset(protein_df, args, logger)
 
     return
 
 
-def get_cazy_classification(protein_df):
-    """For each protein check if classified as a CAZyme by CAZy, and its annotated CAZy families."""
-    return
+def get_cazy_classification(protein_df, session, logger):
+    """For each protein check if classified as a CAZyme by CAZy, and its annotated CAZy families.
+
+    Adds two new columnd to the protein dataframe:
+    cazyme_classification: 1=CAZymes, 0=non-CAZymes
+    cazy_families: list of CAZy families of CAZymes, each family is a separate str in the list.
+
+    Return protein dataframe containing CAZyme classification.
+    """
+    logger.info("Adding CAZy data to protein dataframe")
+
+    index = 0
+    for index in tqdm(
+        range(len(protein_df["protein_data"])),
+        desc="Adding CAZy data to protein df"
+    ):
+        df_row = protein_df.iloc[index]
+        genbank_accession = df_row[0].split(" ")[0]
+
+        # query local CAZy database to see if GenBank accession is contained
+        query = session.query(Genbank).filter_by(genbank_accession=genbank_accession).all()
+
+        # if protein is a CAZyme
+        if len(query) != 0:
+            cazyme_classification = 1
+            # Retrieve CAZy families
+
+        # if protein is not a CAZyme
+        else:
+            cazyme_classification = 0
+            cazy_families = np.nan
+
+        # add CAZy classification and families to protein df
+        try:
+            protein_df.insert(3, "cazyme_classification", cazyme_classification)
+            protein_df.insert(4, "cazy_families", cazy_families)
+        except ValueError:
+            logger.warning(
+                "Failed to insert CAZyme classification into the protein dataframe,\n"
+                "column already present"
+            )
+
+    return protein_df
 
 
-def get_dataset():
+def get_dataset(protein_df, logger):
     """Retrieve dataset of equal number of CAZymes and non-CAZymes."""
+    # create dataframe only of non-CAZymes
+    non_cazyme_rows = protein_df["cazyme_classification"]==0
+    non_cazyme_df = protein_df[non_cazyme_rows]
+
+    # create dataframe of only CAZymes
+    cazyme_rows = protein_df["cazyme_classification"]==1
+    cazyme_df = protein_df[cazyme_rows]
+
+    if args.sample_size == None:
+        sample_size = (len(cazyme_df["protein_data"]) / 2)
+    else:
+        sample_size = (args.sample_size / 2)
+
+    # select random rows from non-CAZymes df
+
+    # select random rows from CAZymes df
+
     return
 
 
