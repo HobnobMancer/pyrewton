@@ -243,7 +243,7 @@ def get_dataset(protein_df, fasta_file_path, args, logger):
     cazyme_rows = protein_df["cazyme_classification"] == 1
     cazyme_df = protein_df[cazyme_rows]
 
-    if args.sample_size == None:
+    if args.sample_size is None:
         sample_size = (len(cazyme_df["protein_data"]) / 2)
     else:
         sample_size = (args.sample_size / 2)
