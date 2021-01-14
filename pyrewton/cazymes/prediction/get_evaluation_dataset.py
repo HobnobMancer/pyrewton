@@ -272,4 +272,33 @@ def get_dataset(protein_df, fasta_file_path, args, logger):
 
 def add_protein_to_output_fasta(df_row, fasta_file_path, args, logger):
     """Write out the dataset of CAZymes and non-CAZymes to a single FASTA file."""
+    # create file content
+
+    # FASTA sequences have 60 characters per line, add line breakers into protein sequence
+    # to match FASTA format
+    sequence = df_row["sequence"]
+    sequence = "\n".join([sequence[i : i + 60] for i in range(0, len(sequence), 60)])
+
+    # retrieve the protein data
+    protein_data = df_row["protein_data"]
+
+    file_content = f">{protein_data} \n{sequence}\n"
+
+    # create file name
+    output_path = args.output
+    if fasta_file_path.endswith(".fasta") != -1:
+        output_path = output_path / fasta_file_path.replace(".fasta", "cpt_eval_dataset.fasta")
+    elif fasta_file_path.endswith(".fa") != -1:
+        output_path = output_path / fasta_file_path.replace(".fa", "cpt_eval_dataset.fasta")
+    else:
+        output_path = output_path / f"{fasta_file_path}_cpt_eval_dataset.fasta")
+
+    # remove characters that could make file names invalid
+    invalid_file_name_characters = re.compile(r'[,;./ "*#<>?|\\:]')
+    output_path = re.sub(invalid_file_name_characters, "_", output_path)
+
+    # write out data to FASTA file
+    with open(output_path, "a") as fh:
+        fh.write(file_content)
+        
     return
