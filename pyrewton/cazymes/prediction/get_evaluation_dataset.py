@@ -271,7 +271,15 @@ def get_dataset(protein_df, fasta_file_path, args, logger):
 
 
 def add_protein_to_output_fasta(df_row, fasta_file_path, args, logger):
-    """Write out the dataset of CAZymes and non-CAZymes to a single FASTA file."""
+    """Write out the dataset of CAZymes and non-CAZymes to a single FASTA file.
+    
+    :param df_row: Pandas series, row from a protein dataframe
+    :param fasta_file_path: Path, path to input fasta file
+    :param args: cmd-line arguments parser
+    :param logger: logger object
+    
+    Return nothing.
+    """
     # create file content
 
     # FASTA sequences have 60 characters per line, add line breakers into protein sequence
@@ -284,14 +292,23 @@ def add_protein_to_output_fasta(df_row, fasta_file_path, args, logger):
 
     file_content = f">{protein_data} \n{sequence}\n"
 
+    # get the name of the input fasta file
+    input_fasta_file_name = re.search(r"(/.*\.fasta)?", str(fasta_file_path), re.IGNORECASE)
+
+    try:
+        input_fasta_file_name.group()[:-5]
+    except AttributeError:
+        input_fasta_file_name = re.search(r"(/.*\.fa)?", str(fasta_file_path), re.IGNORECASE)
+        try:
+            input_fasta_file_name.group()[:-3]
+        except AttributeError:
+            input_fasta_file_name = str(fasta_file_path).split("/")[-1]
+            input_fasta_file_name = f"{input_fasta_file_name}_cpt_eval_dataset.fasta"
+            input_fasta_file_name = Path(input_fasta_file_name)
+
     # create file name
     output_path = args.output
-    if fasta_file_path.endswith(".fasta") != -1:
-        output_path = output_path / fasta_file_path.replace(".fasta", "cpt_eval_dataset.fasta")
-    elif fasta_file_path.endswith(".fa") != -1:
-        output_path = output_path / fasta_file_path.replace(".fa", "cpt_eval_dataset.fasta")
-    else:
-        output_path = output_path / f"{fasta_file_path}_cpt_eval_dataset.fasta")
+    output_path = output_path / input_fasta_file_name
 
     # remove characters that could make file names invalid
     invalid_file_name_characters = re.compile(r'[,;./ "*#<>?|\\:]')
