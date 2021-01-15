@@ -55,38 +55,29 @@ def parse_dbcan_output(overview_file_path, logger):
     # list dfs store data as lists to build the dbcan_df
     hmmer_df = pd.DataFrame({}, columns=[
         "protein_accession",
-<<<<<<< HEAD
-        "cazyme",
-=======
->>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
+        "cazyme_classification",
         "cazy_family",
         "cazy_subfamily",
         "domain_range"
     ])
-<<<<<<< HEAD
     hotpep_df = pd.DataFrame({}, columns=[
         "protein_accession",
-        "cazyme",
+        "cazyme_classification",
         "cazy_family",
         "cazy_subfamily"
     ])
     diamond_df = pd.DataFrame({}, columns=[
         "protein_accession",
-        "cazyme",
+        "cazyme_classification",
         "cazy_family",
         "cazy_subfamily",
     ])
     dbcan_df = pd.DataFrame({}, columns=[
         "protein_accession",
-        "cazyme",
+        "cazyme_classification",
         "cazy_family",
         "cazy_subfamily",
     ])
-=======
-    hotpep_df = pd.DataFrame({}, columns=["protein_accession", "cazy_family", "cazy_subfamily"])
-    diamond_df = pd.DataFrame({}, columns=["protein_accession", "cazy_family", "cazy_subfamily"])
-    dbcan_df = pd.DataFrame({}, columns=["protein_accession", "cazy_family", "cazy_subfamily"])
->>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
 
     for line in overview_file[1:]:  # skip the first line becuase this is the head titles
         line = line.split("\t")
@@ -116,12 +107,21 @@ def parse_dbcan_output(overview_file_path, logger):
                 diamond_temp_list_df.iloc[0, 3],
             )
 
-            consensus_dict = {
-                "protein_accession": [line[0]],
-                "cazyme": [1],
-                "cazy_family": [consensus_cazy_fam],
-                "cazy_subfamily": [consensus_sub_fam],
-            }
+            if consensus_cazy_fam == "-":  # consensus was the protein was not a CAZyme
+                consensus_dict = {
+                    "protein_accession": [line[0]],
+                    "cazyme_classification": [0],
+                    "cazy_family": [consensus_cazy_fam],
+                    "cazy_subfamily": [consensus_sub_fam],
+                }
+
+            else:  # consensus was that the protein was a CAZyme
+                consensus_dict = {
+                    "protein_accession": [line[0]],
+                    "cazyme_classification": [1],
+                    "cazy_family": [consensus_cazy_fam],
+                    "cazy_subfamily": [consensus_sub_fam],
+                }
 
             temp_consensus_df = pd.DataFrame(consensus_dict)
 
@@ -179,6 +179,7 @@ def parse_hmmer_output(line, logger):
             except AttributeError:
                 pass
 
+            # Check if a family or subfamily was predicted
             if domain_name.find("_") != -1:  # predicted CAZy subfamily
                 cutoff = domain_name.find("_")
                 fam = domain_name[:cutoff]
@@ -234,50 +235,71 @@ def parse_hmmer_output(line, logger):
                         f"Returning no domain range for {domain_range}"
                     )
 
-    # convert lists to strings for human readability
-    # convert empty lists to null values
-    # _hr suffix denotes variables for building human readable dataframe
-    if len(cazy_fams) == 0:
+        # convert lists to strings for human readability
+        # convert empty lists to null values
+        # _hr suffix denotes variables for building human readable dataframe
+        if len(cazy_fams) == 0:
+            cazy_family_hr, cazy_fams = np.nan, [np.nan]
+        else:
+            cazy_family_hr = ", ".join(cazy_fams)
+
+        if len(cazy_subfams) == 0:
+            cazy_subfamily_hr, cazy_subfams = np.nan, [np.nan]
+        else:
+            cazy_subfamily_hr = ", ".join(cazy_subfams)
+
+        if len(domain_ranges) == 0:
+            domain_ranges_hr, domain_ranges = np.nan, [np.nan]
+        else:
+            domain_ranges_hr = ", ".join(domain_ranges)
+
+        prediction_dict = {
+            "protein_accession": [line[0]],
+            "cazyme_classification": [1],
+            "cazy_family": [cazy_family_hr],
+            "cazy_subfamily": [cazy_subfamily_hr],
+            "domain_range": [domain_ranges_hr],
+        }
+
+        prediction_list_dict = {
+            "protein_accession": [line[0]],
+            "cazyme_classification": [1],
+            "cazy_family": [cazy_fams],
+            "cazy_subfamily": [cazy_subfams],
+            "domain_range": [domain_ranges],
+        }
+
+        prediction_df = pd.DataFrame(prediction_dict)
+        prediction_list_df = pd.DataFrame(prediction_list_dict)
+
+        return prediction_df, prediction_list_df
+
+    else:  # HMMER did not predict the protein was a CAZyme
         cazy_family_hr, cazy_fams = np.nan, [np.nan]
-    else:
-        cazy_family_hr = ", ".join(cazy_fams)
-
-    if len(cazy_subfams) == 0:
         cazy_subfamily_hr, cazy_subfams = np.nan, [np.nan]
-    else:
-        cazy_subfamily_hr = ", ".join(cazy_subfams)
-
-    if len(domain_ranges) == 0:
         domain_ranges_hr, domain_ranges = np.nan, [np.nan]
-    else:
-        domain_ranges_hr = ", ".join(domain_ranges)
 
-    prediction_dict = {
-        "protein_accession": [line[0]],
-<<<<<<< HEAD
-        "cazyme": [1],
-=======
->>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
-        "cazy_family": [cazy_family_hr],
-        "cazy_subfamily": [cazy_subfamily_hr],
-        "domain_range": [domain_ranges_hr],
-    }
+        prediction_dict = {
+            "protein_accession": [line[0]],
+            "cazyme_classification": [0],
+            "cazy_family": [cazy_family_hr],
+            "cazy_subfamily": [cazy_subfamily_hr],
+            "domain_range": [domain_ranges_hr],
+        }
 
-    prediction_list_dict = {
-        "protein_accession": [line[0]],
-<<<<<<< HEAD
-        "cazyme": [1],
-=======
->>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
-        "cazy_family": [cazy_fams],
-        "cazy_subfamily": [cazy_subfams],
-        "domain_range": [domain_ranges],
-    }
+        prediction_list_dict = {
+            "protein_accession": [line[0]],
+            "cazyme_classification": [0],
+            "cazy_family": [cazy_fams],
+            "cazy_subfamily": [cazy_subfams],
+            "domain_range": [domain_ranges],
+        }
 
-    prediction_df = pd.DataFrame(prediction_dict)
-    prediction_list_df = pd.DataFrame(prediction_list_dict)
+        prediction_df = pd.DataFrame(prediction_dict)
+        prediction_list_df = pd.DataFrame(prediction_list_dict)
 
-    return prediction_df, prediction_list_df
+        return prediction_df, prediction_list_df
+
 
 
 def parse_hotpep_output(line, logger):
@@ -310,46 +332,69 @@ def parse_hotpep_output(line, logger):
         prediction = prediction.split("(")[0]  # drop the k-mer group number
 
         if prediction == "-":  # no CAZy family predicted
-            continue
+            cazy_fams_hr, cazy_fams = np.nan, [np.nan]
+            cazy_subfams_hr, cazy_subfams = np.nan, [np.nan]
 
-        elif prediction.find("_") != -1:  # predicted subfamily
-            # separate predicted family and subfamily
-            cutoff = prediction.find("_")
-            fam = prediction[:cutoff]
-            subfam = prediction
+            prediction_dict = {
+                "protein_accession": [line[0]],
+                "cazyme_classification": [0],
+                "cazy_family": [cazy_fams_hr],
+                "cazy_subfamily": [cazy_subfams_hr],
+            }
 
-            # check family and subfamily formats are correct
-            try:
-                re.match(r"\D{2,3}\d+", fam).group()
-                cazy_fams.append(fam)
-            except AttributeError:
-                logger.warning(
-                        "Non-standardised CAZy family name in overview.txt for Hotpep for "
-                        f"{line[0]}, {fam}"
-                        f"Returning no CAZy family for {fam}"
+            prediction_list_dict = {
+                "protein_accession": [line[0]],
+                "cazyme_classification": [0],
+                "cazy_family": [cazy_fams],
+                "cazy_subfamily": [cazy_subfams],
+            }
+
+            prediction_df = pd.DataFrame(prediction_dict)
+            prediction_list_df = pd.DataFrame(prediction_list_dict)
+
+            return prediction_df, prediction_list_df
+        
+        else:  # Protein was predicated to be a CAZyme
+
+            # check if a subfamily was predicated
+            if prediction.find("_") != -1:  # predicted subfamily
+                # separate predicted family and subfamily
+                cutoff = prediction.find("_")
+                fam = prediction[:cutoff]
+                subfam = prediction
+
+                # check family and subfamily formats are correct
+                try:
+                    re.match(r"\D{2,3}\d+", fam).group()
+                    cazy_fams.append(fam)
+                except AttributeError:
+                    logger.warning(
+                            "Non-standardised CAZy family name in overview.txt for Hotpep for "
+                            f"{line[0]}, {fam}"
+                            f"Returning no CAZy family for {fam}"
+                        )
+
+                try:
+                    re.match(r"\D{2,3}\d+_\d+", subfam).group()
+                    cazy_subfams.append(subfam)
+                except AttributeError:
+                    logger.warning(
+                            "Non-standardised CAZy subfamily name in overview.txt for Hotpep for "
+                            f"{line[0]}, {subfam}"
+                            f"Returning no CAZy subfamily for {subfam}"
                     )
 
-            try:
-                re.match(r"\D{2,3}\d+_\d+", subfam).group()
-                cazy_subfams.append(subfam)
-            except AttributeError:
-                logger.warning(
-                        "Non-standardised CAZy subfamily name in overview.txt for Hotpep for "
-                        f"{line[0]}, {subfam}"
-                        f"Returning no CAZy subfamily for {subfam}"
+            else:  # only CAZy family predicted
+                try:
+                    re.match(r"\D{2,3}\d+", prediction).group()
+                    cazy_fams.append(prediction)
+                except AttributeError:
+                    logger.warning(
+                            "Non-standardised CAZy family name in overview.txt for Hotpep for "
+                            f"{line[0]}, {prediction}"
+                            f"Returning no CAZy family for {prediction}"
                     )
-
-        else:  # only CAZy family predicted
-            try:
-                re.match(r"\D{2,3}\d+", prediction).group()
-                cazy_fams.append(prediction)
-            except AttributeError:
-                logger.warning(
-                        "Non-standardised CAZy family name in overview.txt for Hotpep for "
-                        f"{line[0]}, {prediction}"
-                        f"Returning no CAZy family for {prediction}"
-                    )
-
+            
     # Convert lists to strings for human readability, identified by _hr suffix
     # Convert lists to null values
     if len(cazy_fams) == 0:
@@ -364,20 +409,14 @@ def parse_hotpep_output(line, logger):
 
     prediction_dict = {
         "protein_accession": [line[0]],
-<<<<<<< HEAD
-        "cazyme": [1],
-=======
->>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
+        "cazyme_classification": [1],
         "cazy_family": [cazy_fams_hr],
         "cazy_subfamily": [cazy_subfams_hr],
     }
 
     prediction_list_dict = {
         "protein_accession": [line[0]],
-<<<<<<< HEAD
-        "cazyme": [1],
-=======
->>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
+        "cazyme_classification": [1],
         "cazy_family": [cazy_fams],
         "cazy_subfamily": [cazy_subfams],
     }
@@ -415,9 +454,29 @@ def parse_diamond_output(line, logger):
 
     for prediction in diamond_prediction:
         if prediction == '-':  # no CAZy family of subfamily predicted
-            continue
+            cazy_fams_hr, cazy_fams = np.nan, [np.nan]
+            cazy_subfams_hr, cazy_subfams = np.nan, [np.nan]
 
-        elif prediction.find("_") != -1:  # CAZy subfamily predicted
+            prediction_dict = {
+                "protein_accession": [line[0]],
+                "cazyme_classification": [0],
+                "cazy_family": [cazy_fams_hr],
+                "cazy_subfamily": [cazy_subfams_hr],
+            }
+
+            prediction_list_dict = {
+                "protein_accession": [line[0]],
+                "cazyme_classification": [0],
+                "cazy_family": [cazy_fams],
+                "cazy_subfamily": [cazy_subfams],
+            }
+
+            prediction_df = pd.DataFrame(prediction_dict)
+            prediction_list_df = pd.DataFrame(prediction_list_dict)
+
+            return prediction_df, prediction_list_df
+
+        if prediction.find("_") != -1:  # CAZy subfamily predicted
             # separate predicted family and subfamily
             cutoff = prediction.find("_")
             fam = prediction[:cutoff]
@@ -449,11 +508,16 @@ def parse_diamond_output(line, logger):
                 re.match(r"\D{2,3}\d+", prediction).group()
                 cazy_fams.append(prediction)
             except AttributeError:
-                logger.warning(
-                        "Non-standardised CAZy family name in overview.txt for DIAMOND for "
-                        f"{line[0]}, {prediction}"
-                        f"Returning no CAZy family for {prediction}"
-                    )
+                try:
+                    # check if an EC number was predicated
+                    re.match(r"\d+\.(\d+|-)\.(\d+|-)\.(\d+|-)", prediction).group()
+                    ec_numbers.append(prediction)
+                except AttributeError:
+                    logger.warning(
+                            f"Could not determine data type of {line[0]}, {prediction} from "
+                            "DIAMOND\nIn the overview.txt file.\n"
+                            f"Returning no CAZy family for {prediction}"
+                        )
 
     # Convert lists to strings for human readability, identified by _hr suffix
     # Convert lists to null values
@@ -469,20 +533,14 @@ def parse_diamond_output(line, logger):
 
     prediction_dict = {
         "protein_accession": [line[0]],
-<<<<<<< HEAD
-        "cazyme": [1],
-=======
->>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
+        "cazyme_classification": [1],
         "cazy_family": [cazy_fams_hr],
         "cazy_subfamily": [cazy_subfams_hr],
     }
 
     prediction_list_dict = {
         "protein_accession": [line[0]],
-<<<<<<< HEAD
-        "cazyme": [1],
-=======
->>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
+        "cazyme_classification": [1],
         "cazy_family": [cazy_fams],
         "cazy_subfamily": [cazy_subfams],
     }
