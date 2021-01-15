@@ -16,7 +16,7 @@
 # UK
 #
 # The MIT License
-"""Contains function to parse the output from run-dbCAN. Create standarised output.
+"""Contains function to parse the output from CUPP. Create standarised output.
 
 :func parse_cupp_output: Coordinate parsing the CUPP output log file
 :func get_cupp_domain_range: Retrieve the domain ranges of predicted domains
@@ -55,10 +55,7 @@ def parse_cupp_output(log_file_path, logger):
     # build an empty dataframe to add predication outputs to
     cupp_df = pd.DataFrame(columns=[
         "protein_accession",
-<<<<<<< HEAD
-        "cazyme",
-=======
->>>>>>> ad9f0f99daf07e110be1ba3f3376fb36edef38f9
+        "cazyme_classification",
         "cazy_family",
         "cazy_subfamily",
         "ec_number",
@@ -89,7 +86,7 @@ def parse_cupp_output(log_file_path, logger):
         # build dict to enable easy building of df
         prediction = {
             "protein_accession": [prediction_output[0]],
-            "cazyme": [1],
+            "cazyme_classification": [1],
             "cazy_family": [prediction_output[1]],
             "cazy_subfamily": [subfam],
             "ec_number": [ec_number],
