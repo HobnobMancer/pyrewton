@@ -272,12 +272,12 @@ def get_dataset(protein_df, fasta_file_path, args, logger):
 
 def add_protein_to_output_fasta(df_row, fasta_file_path, args, logger):
     """Write out the dataset of CAZymes and non-CAZymes to a single FASTA file.
-    
+
     :param df_row: Pandas series, row from a protein dataframe
     :param fasta_file_path: Path, path to input fasta file
     :param args: cmd-line arguments parser
     :param logger: logger object
-    
+
     Return nothing.
     """
     # create file content
