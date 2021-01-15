@@ -16,7 +16,7 @@
 # UK
 #
 # The MIT License
-"""Contains function to parse the output from run-dbCAN. Create standarised output.
+"""Contains function to parse the output from eCAMI, and create a standarised output.
 
 :func parse_ecami_output: Coordinate parsing the eCAMI output text file
 :func get_ecami_additional_info: Retrieve predicted EC numbers and additional domains
@@ -54,6 +54,7 @@ def parse_ecami_output(txt_file_path, logger):
     # build an empty dataframe to add predication outputs to
     ecami_df = pd.DataFrame(columns=[
         "protein_accession",
+        "cazyme_classification",
         "cazy_family",
         "cazy_subfamily",
         "ec_number",
@@ -70,7 +71,7 @@ def parse_ecami_output(txt_file_path, logger):
 
             # Check CAZy family is formated correctly
             try:
-                re.match(r"\D{2,3}\d+", cazy_family.group())
+                re.match(r"\D{2,3}\d+", cazy_family).group()
             except AttributeError:
                 logger.warning(
                     f"Non-standardised CAZy family name for {line[0][1:]} {cazy_family} in\n"
@@ -90,7 +91,7 @@ def parse_ecami_output(txt_file_path, logger):
             # build dict to enable easy building of df
             prediction = {
                 "protein_accession": [prediction_output[0][1:]],
-                "cazyme": [1],
+                "cazyme_classification": [1],
                 "cazy_family": [cazy_family],
                 "cazy_subfamily": [cazy_subfam],
                 "ec_number": [ec_number],
@@ -138,7 +139,8 @@ def get_ecami_additional_info(prediction_output, cazy_family, txt_file_path, log
             )
             continue
 
-        # Check if subfamily
+        # Passes the family/subfamily check
+        # Check if it is a subfamily
         if item.find("_") != -1:  # predicated CAZy subfamily
             # check format
             try:
