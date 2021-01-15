@@ -194,3 +194,74 @@ def get_cupp_ec_number(prediction_output, log_file_path, logger):
         ec_number = ", ".join(ec_numbers)
 
     return(ec_number)
+
+
+def combine_duplicate_rows(original_cupp_df):
+    """Combine rows that contain the same protein into a single row in the dataframe.
+
+    The original standardised CUPP dataframe can contain multiple rows for the same protein, because
+    if multiple CAZy families are predicated for a protein, each CAZy family is placed in a separate
+    row.
+
+    :param original_cupp_df: Pandas df, original standaridsed dataframe of CUPP output
+
+    Return standardised CUPP dataframe, with a unique protein per row.
+    """
+    # separate the rows that contain duplicate proteins and those that do not
+    duplicated_row_indexes = original_cupp_df.duplicated(keep=False, subset="protein_accession")
+    duplicated_rows = original_cupp_df[duplicated_row_indexes]
+
+    non_duplicated_rows = original_cupp_df.drop_duplicates(keep=False, subset="protein_accession")
+
+    index = 0
+    processed_accessions = []
+    for index in range(len(duplicated_rows["protein_accession"])):
+        # retrieve a row as a Pandas series
+        row = duplicated_rows.iloc[index]
+        accession = row["protein_accession"]
+
+        # check if the protein has been parsed previously
+        if accession in processed_accessions:
+            continue  # protein has already been processed
+
+        # get rows that contain the same protein
+        duplicate_proteins = duplicated_rows.loc[
+            duplicated_rows['protein_accession'] == row['protein_accession']
+        ]
+
+        # combine the data from the duplicate rows into a single dictionary
+        protein_dict = {
+            "protein_accession": [accession],
+            "cazyme_classification": [row["cazyme_classification"]],
+            "cazy_family": [],
+            "cazy_subfamily": [],
+            "ec_number": [],
+            "domain_range": [],
+        }
+
+        row_index = 0
+        for row_index in range(len(duplicate_proteins["protein_accession"])):
+            row = duplicate_proteins.iloc[row_index]
+
+            for field in ["cazy_family", "cazy_subfamily", "ec_number", "domain_range"]:
+                try:
+                    if np.isnan(row[field]):
+                        protein_dict[field].append("-")
+                    else:
+                        protein_dict[field].append(row[field])
+                except TypeError:
+                    protein_dict[field].append(row[field])
+
+        protein_dict["cazy_family"] = ", ".join(protein_dict["cazy_family"])
+        protein_dict["cazy_subfamily"] = ", ".join(protein_dict["cazy_subfamily"])
+        protein_dict["ec_number"] = ", ".join(protein_dict["ec_number"])
+        protein_dict["domain_range"] = ", ".join(protein_dict["domain_range"])
+
+        # create new row containing all data for the current working protein
+        new_row = pd.DataFrame(protein_dict)
+        processed_accessions.append(accession)
+
+        # add new row to the dataframe with a unique protein per row
+        non_duplicated_rows = non_duplicated_rows.append(new_row, ignore_index=True)
+
+    return non_duplicated_rows
