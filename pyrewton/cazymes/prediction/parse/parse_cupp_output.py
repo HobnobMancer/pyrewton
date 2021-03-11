@@ -23,115 +23,146 @@
 :func get_cupp_ec_number: Retrieve the predicted EC numbers of predicted domains
 """
 
+import logging
 import re
 
-import pandas as pd
 import numpy as np
 
+from tqdm import tqdm
 
-def parse_cupp_output(log_file_path, logger):
-    """Parse the output from the output log file from CUPP and write out data to a dataframe.
+from pyrewton.cazymes.prediction.parse import CazymeDomain, CazymeProteinPrediction
 
-    Retrieves the protein accession/name/identifier, predicated CAZy family, predicated CAZy
-    subfamily, predicated EC number and predicated range of domain within the protein sequence
-    (the index of the first and last residues of the domain).
 
-    :param log_file_path: path, path to the output log file
-    :param logger: logger object
+def parse_cupp_output(log_file_path, fasta_path):
+    """Parse the output log file from CUPP and write out a dataframe.
 
-    Return Pandas dataframe containing CUPP output
+    Retrieves the protein accession, predicted CAZy families, CAZy families EC
+    numbers and domain ranges.
+
+    :param log_file_path: Path, path to the output log file
+    :fasta path: Path, path to the FASTA containing the query sequences for CUPP
+
+    Return a list of CUPPprediction instances, where each instance represented one protein.
     """
-    try:
-        with open(log_file_path, "r") as lfh:
-            log_file = lfh.read().splitlines()
-    except FileNotFoundError:
-        logger.warning(
-            "Could not find CUPP output file\n"
-            f"{log_file_path}"
-            "Not producing standardised result for this file"
-        )
-        return None
+    # open the CUPP output log file
+    with open(log_file_path, "r") as lfh:
+        log_file = lfh.read().splitlines()
 
-    # build an empty dataframe to add predication outputs to
-    cupp_df = pd.DataFrame(columns=[
-        "protein_accession",
-        "cazyme_classification",
-        "cazy_family",
-        "cazy_subfamily",
-        "ec_number",
-        "domain_range",
-    ])
+    cupp_predictions = {}  # stores proteins {protein_accession:CUPPprediction_instance}
 
-    # add in predictions from log file to dataframe
-    for line in log_file:
+    for line in tqdm(log_file, desc="parsing cupp output"):
+        # separate the data fields
         prediction_output = line.split("\t")
 
-        # retrieve domain range if given
-        domain_range = get_cupp_domain_range(prediction_output, log_file_path, logger)
+        # retrieve the predicted domain range if given
+        domain_range = get_cupp_domain_range(prediction_output)  # list of strs
 
-        # retrieve EC number if given
-        ec_number = get_cupp_ec_number(prediction_output, log_file_path, logger)
+        # retrieve predicted EC number if given
+        ec_numbers = get_cupp_ec_number(prediction_output)  # list of strs
 
-        # retrieve predicated CAZy subfamily
-        subfam = prediction_output[-1]
-        # change empty string to null value
-        if len(subfam) == 0:
-            subfam = np.nan
+        # retrieve predicted CAZy subfamily if given
+        cazy_subfamily = prediction_output[-1] 
+        # if no CAZy subfamily was predicted, change empty string to null value
+        if len(cazy_subfamily) == 0:
+            cazy_subfamily = np.nan
         else:
-            # When writing the log file sometimes the ':' raw data is not converted to '_'
-            # ensure this change is made to standardise CAZy subfamily naming
-            subfam = subfam.replace(":", "_")
-            subfam = subfam.replace("+", ", ")  # separate subfams ', ' for human readability
+            # write subfamilies using CAZy standard format
+            cazy_subfamily = cazy_subfamily.replace(":","_")
+            cazy_subfamily = cazy_subfamily.replace("+", ", ")  # separate multiple subfams with ', ' not '+'
 
-        # build dict to enable easy building of df
-        prediction = {
-            "protein_accession": [prediction_output[0]],
-            "cazyme_classification": [1],
-            "cazy_family": [prediction_output[1]],
-            "cazy_subfamily": [subfam],
-            "ec_number": [ec_number],
-            "domain_range": [domain_range],
-        }
+        # retrieve the protein accession and check if it already has a corresponding CUPPprediction instance
+        protein_accession = prediction_output[0]
 
-        prediction_df = pd.DataFrame(prediction)
-        cupp_df = cupp_df.append(prediction_df)
+        # retrieve the CAZyme classification and predicted CAZy family
+        cazyme_classification = 1  # all proteins included in the file are identified as CAZymes
+        cazy_family = prediction_output[1]  # This is selected from the CUPP 'Best function'
 
-    return cupp_df
+        # check if a CUPPprediction instance already exists for the protein
+        try:
+            existing_prediction = cupp_predictions[protein_accession]
+
+            # check if the CAZyme domain has been been parsed before
+            existing_cazyme_domains = existing_prediction.cazyme_domains
+
+            existance = False
+            for domain in existing_cazyme_domains:
+                if (domain.cazy_family == cazy_family) and (domain.cazy_subfamily == cazy_subfamily):
+                    for ec in ec_numbers:
+                        domain.ec_numbers.append(ec)
+                    for drange in domain_range:
+                        domain.domain_range.append(drange)
+                    existance = True
+
+            if existance is False:
+                # create new CAZyme domain
+                new_cazyme_domain = CazymeDomain(
+                    protein_accession,
+                    cazy_family,
+                    cazy_subfamily,
+                    ec_numbers,
+                    domain_range,
+                )
+                existing_prediction.cazyme_domains.append(new_cazyme_domain)
+
+        except KeyError:  # raised if there is not instance for the protein
+
+            new_cazyme_domain = CazymeDomain(
+                protein_accession,
+                cazy_family,
+                cazy_subfamily,
+                ec_numbers,
+                domain_range,
+            )
+
+            new_protein = CazymeProteinPrediction(
+                "CUPP",
+                protein_accession,
+                cazyme_classification,
+                [new_cazyme_domain],
+            )
+
+            cupp_predictions[protein_accession] = new_protein
+
+    # add non-CAZymes
+    cupp_predictions = add_non_cazymes(fasta_path, cupp_predictions)
+
+    cupp_predictions = list(cupp_predictions.values())
+
+    return cupp_predictions
 
 
-def get_cupp_domain_range(prediction_output, log_file_path, logger):
-    """Retrieve the amino acid domain_range from CUPP output log file.
+def get_cupp_domain_range(prediction_output):
+    """Retrieve the predicted amino acid range of predicted CAZyme domain from CUPP log file.
 
-    :param prediciton_output: list of items from log file line.
-    :param log_file_path: path to CUPP output log file
-    :param logger: logger object
+    :param prediction_output: list of items from log file line.
 
-    Return string if domain range given, or null value if not.
+    List of predicted domain ranges or null value in a list if not.
     """
+    logger = logging.getLogger(__name__)
+
+    domain_range = []  # store as a list in case multiple domain ranges are given
+
     for item in prediction_output:
         if item.find("..") != -1:
-            domain_range = item
-            break
-        else:
-            domain_range = np.nan
+            domain_range.append(item)
 
-    if type(domain_range) != float:  # if domain_range != np.nan
+    # check retrieved items are definetly the domain ranges
+    for item in domain_range:
         try:
-            re.match(r"\d+?\.\.\d+", domain_range).group()
+            re.match(r"\d+\.\.\d+", item).group()
         except AttributeError:
-            logger.warning(
-                "Incorrect parsing to retrieve domain ranges for\n"
-                f"{prediction_output[0]} in\n"
-                f"{log_file_path}"
-                "Retunring no domain range"
-            )
-            domain_range = np.nan
+            # write as logger in pyrewton
+            logger.warning("{item} misidentified as domain range")
+            domain_range.remove(item)
+
+    if len(domain_range) == 0:
+        domain_range = [np.nan]
 
     return domain_range
 
 
-def get_cupp_ec_number(prediction_output, log_file_path, logger):
-    """Retrieve the predicted EC numbers from the CUPP output log file.
+def get_cupp_ec_number(prediction_output):
+    """Retrieve predicted EC numbers from CUPP log file.
 
     EC numbers are represented as "CAZy_fam:EC_number" in the log file.
     If multiple EC numbers are predicated and the CAZy families of each are
@@ -139,129 +170,83 @@ def get_cupp_ec_number(prediction_output, log_file_path, logger):
     for the same CAZy family, these are separated by '&'.
 
     :param prediciton_output: list of items from log file line.
-    :param log_file_path: path to CUPP output file
-    :param logger: logger object
 
-    Return string if EC numbers are given, or null value if not.
+    List of predicted EC numbers or null value in a list if not.
     """
-    # Separate CAZy families from their respective EC numbers
+    # retrieve the data from the CUPP 'Best function' prediction
     ec_data = prediction_output[-2].split(":")
 
-    # create empty list to store all predicted EC numbers in
-    ec_numbers = []
+    if len(ec_data) == 1:  # Result of ":" not being present, caused by no EC number predictions
+        ec_number = np.nan
+        return ec_number
 
-    # If multiple CAZy families are listed these are separed by '-'
-    # and will appear on the end of an item in ec_data
+    # create empty list to store all predicted EC numbers
+    all_ec_numbers = []
 
     for item in ec_data:
-        item = item.strip()
-
-        # check that it isn't a CAZy family:
+        # check if the item may be an EC number, which start with a digit
         try:
-            re.match(r"\d", item).group()
-        except AttributeError:  # raised if first character is not a digit, thus not an EC number
+            re.match(r"\d.+", item).group()
+        except AttributeError:  # not an EC number
             continue
 
-        # check if CAZy family is appendaged to EC number
-        if item.find("-") != -1:
-            item = item[:(item.find("-"))]  # remove appendaged CAZy family
+        # if multiple best function and/or EC number predictions were made they may
+        # be separated by a dash '-'
+        dash_separated_data = item.split("-")
 
-        # separate out EC numbers if multiple were predicted
-        item = item.split("&")
+        for data in dash_separated_data:
+            # if multiple EC numbers are predicated they are separate by '&
+            split_data = data.split("&")
 
-        # parse each predicted EC number
-        for ec in item:
-            # check formating, e.g. somtimes 'Unknown' is written in stead of an EC number
-            if (ec == "Unknown") or (ec == "unknown"):
-                continue
-            else:
+            for string in split_data:
+                # check if the string is an EC number
                 try:
-                    re.match(r"\d+?\.(\d+?|\*)\.(\d+?|\*)\.(\d+?|\*)", ec).group()
-                    #  standardise missing digits in ec number to '-'
-                    ec = ec.replace("*", "-")
-                    ec_numbers.append(ec)
-                except AttributeError:
-                    logger.warning(
-                        f"Non-standard EC# for {prediction_output[0]}, {ec} in\n"
-                        f"{log_file_path}"
-                        f"Returning no EC number for {ec}"
-                    )
+                    re.match(r"\d+?\.(\d+?|\*)\.(\d+?|\*)\.(\d+?|\*)", string). group()
+                    all_ec_numbers.append(string)
+                except AttributeError:  # not an EC number
+                    continue
 
-    # Convert lists into more human readable strings
-    if len(ec_numbers) == 0:
-        ec_number = np.nan
-    else:
-        ec_number = ", ".join(ec_numbers)
-
-    return(ec_number)
-
-
-def combine_duplicate_rows(original_cupp_df):
-    """Combine rows that contain the same protein into a single row in the dataframe.
-
-    The original standardised CUPP dataframe can contain multiple rows for the same protein, because
-    if multiple CAZy families are predicated for a protein, each CAZy family is placed in a separate
-    row.
-
-    :param original_cupp_df: Pandas df, original standaridsed dataframe of CUPP output
-
-    Return standardised CUPP dataframe, with a unique protein per row.
-    """
-    # separate the rows that contain duplicate proteins and those that do not
-    duplicated_row_indexes = original_cupp_df.duplicated(keep=False, subset="protein_accession")
-    duplicated_rows = original_cupp_df[duplicated_row_indexes]
-
-    non_duplicated_rows = original_cupp_df.drop_duplicates(keep=False, subset="protein_accession")
-
+    # standardise missing digits in the EC numbers from '*' to '-'                
     index = 0
-    processed_accessions = []
-    for index in range(len(duplicated_rows["protein_accession"])):
-        # retrieve a row as a Pandas series
-        row = duplicated_rows.iloc[index]
-        accession = row["protein_accession"]
+    for index in range(len(all_ec_numbers)):
+        all_ec_numbers[index] = all_ec_numbers[index].replace("*","-")
+        # Sometimes 'Unknown' is written out by CUPP, ensure this is removed
+        if all_ec_numbers[index].find("Unknown") != -1:
+            all_ec_numbers.remove(all_ec_numbers[index])
 
-        # check if the protein has been parsed previously
-        if accession in processed_accessions:
-            continue  # protein has already been processed
+    # write out the EC numbers in easy human readable format or create null value if none were predicted
+    if len(all_ec_numbers) == 0:
+        all_ec_numbers = [np.nan]
 
-        # get rows that contain the same protein
-        duplicate_proteins = duplicated_rows.loc[
-            duplicated_rows['protein_accession'] == row['protein_accession']
-        ]
+    return all_ec_numbers
 
-        # combine the data from the duplicate rows into a single dictionary
-        protein_dict = {
-            "protein_accession": [accession],
-            "cazyme_classification": [row["cazyme_classification"]],
-            "cazy_family": [],
-            "cazy_subfamily": [],
-            "ec_number": [],
-            "domain_range": [],
-        }
 
-        row_index = 0
-        for row_index in range(len(duplicate_proteins["protein_accession"])):
-            row = duplicate_proteins.iloc[row_index]
+def add_non_cazymes(fasta_path, cupp_predictions):
+    """Add proteins that CUPP identified as non-CAZymes to the collection of CUPPprediction instances.
 
-            for field in ["cazy_family", "cazy_subfamily", "ec_number", "domain_range"]:
-                try:
-                    if np.isnan(row[field]):
-                        protein_dict[field].append("-")
-                    else:
-                        protein_dict[field].append(row[field])
-                except TypeError:
-                    protein_dict[field].append(row[field])
+    :param fasta_path: Path, FASTA file used as input for CUPP.
+    :param cupp_predictions: dict, key=protein_accession, value=CUPPprediction instance
 
-        protein_dict["cazy_family"] = ", ".join(protein_dict["cazy_family"])
-        protein_dict["cazy_subfamily"] = ", ".join(protein_dict["cazy_subfamily"])
-        protein_dict["ec_number"] = ", ".join(protein_dict["ec_number"])
-        protein_dict["domain_range"] = ", ".join(protein_dict["domain_range"])
+    Return a dictionary valued by protein accessions and keyed by their respective CUPPprediction instance.
+    """
+    # open the FASTA path
+    with open(fasta_path) as fh:
+        fasta = fh.read().splitlines()
 
-        # create new row containing all data for the current working protein
-        new_row = pd.DataFrame(protein_dict)
-        processed_accessions.append(accession)
+    for line in tqdm(fasta, desc="Adding non-CAZymes"):
+        if line.startswith(">"):
+            protein_accession = line[1:].strip()
 
-        # add new row to the dataframe with a unique protein per row
-        non_duplicated_rows = non_duplicated_rows.append(new_row, ignore_index=True)
+            # check if the protein has been listed as a CAZyme by CUPP
+            try:
+                cupp_predictions[protein_accession]
+            except KeyError:
+                # raised if protein not in cupp_predictions, inferring proten was not labelled as CAZyme
+                cazyme_classification = 0
+                cupp_predictions[protein_accession] = CazymeProteinPrediction(
+                    "CUPP",
+                    protein_accession,
+                    cazyme_classification,
+                )
 
-    return non_duplicated_rows
+    return cupp_predictions
