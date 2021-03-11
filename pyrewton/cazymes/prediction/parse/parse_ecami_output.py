@@ -27,163 +27,175 @@ import re
 import pandas as pd
 import numpy as np
 
+from tqdm import tqdm
 
-def parse_ecami_output(txt_file_path, logger):
-    """Parse the output from the output text file from eCAMI and write out data to a dataframe.
-
-    Retrieves the protein accession/name/identifier, predicated CAZy family, predicated CAZy
-    subfamily, predicated EC number and additional/other domains predicated to also be within the
-    protein sequence, indicating prediciton of a multiple module enzymes.
-
-    :param text_file_path: path, path to the output text file
-    :param logger: logger object
-
-    Return Pandas dataframe containing eCAMI output
-    """
-    try:
-        with open(txt_file_path, "r") as fh:
-            ecami_file = fh.read().splitlines()
-    except FileNotFoundError:
-        logger.warning(
-            "Could not find eCAMI output file\n"
-            f"{txt_file_path}"
-            "Not producing standardised result for this file"
-        )
-        return None
-
-    # build an empty dataframe to add predication outputs to
-    ecami_df = pd.DataFrame(columns=[
-        "protein_accession",
-        "cazyme_classification",
-        "cazy_family",
-        "cazy_subfamily",
-        "ec_number",
-        "additional_domains",
-    ])
-
-    # parse the outputs so in format suitable for final dataframe
-    for line in ecami_file:
-        if line.startswith(">"):  # identifies new protein
-            prediction_output = line.split("\t")
-
-            # Retrieve the CAZy family
-            cazy_family = prediction_output[1].split(":")[0]
-
-            # Check CAZy family is formated correctly
-            try:
-                re.match(r"\D{2,3}\d+", cazy_family).group()
-            except AttributeError:
-                logger.warning(
-                    f"Non-standardised CAZy family name for {line[0][1:]} {cazy_family} in\n"
-                    f"{txt_file_path}\n"
-                    f"Returning no predicted CAZy family for {line[0][1:]}"
-                )
-                cazy_family = np.nan
-
-            # Retrieve subfamily, additional domains and EC numbers from the additional info
-            additional_domains, ec_number, cazy_subfam = get_ecami_additional_info(
-                prediction_output,
-                cazy_family,
-                txt_file_path,
-                logger,
-            )
-
-            # build dict to enable easy building of df
-            prediction = {
-                "protein_accession": [prediction_output[0][1:]],
-                "cazyme_classification": [1],
-                "cazy_family": [cazy_family],
-                "cazy_subfamily": [cazy_subfam],
-                "ec_number": [ec_number],
-                "additional_domains": [additional_domains],
-            }
-
-            prediction_df = pd.DataFrame(prediction)
-            ecami_df = ecami_df.append(prediction_df)
-
-    return ecami_df
+from pyrewton.cazymes.prediction.parse import CazymeDomain, CazymeProteinPrediction
 
 
-def get_ecami_additional_info(prediction_output, cazy_family, txt_file_path, logger):
-    """Retrieve additional predicated domains and EC numbers from eCAMI output file.
+def parse_ecami_output(ecami_output_path, fasta_path):
+    """Parse the output from eCAMI, retrieving predicted CAZyme domains, CAZy (sub)families and EC numbers.
 
-    :param prediction_output: list of predicted items for a given protein
-    :param cazy_family: str, predicted CAZy family
+    :param ecami_output_path: Path, output text file from eCAMI
+    :param fasta_path: Path, FASTA file used as input by eCAMI
 
-    Return list of additional domains and list of EC numbers as strings, items separated by ', '.
-    """
-    additional_domains = []
-    ec_numbers = []
-    subfams = []
+    Returns a list of ECAMIprediction instances. One instance per protein in the FASTA file used as eCAMI input"""
+    # Read the output file from eCAMI
+    with open(ecami_output_path, "r") as fh:
+        ecami_file = fh.read().splitlines()
 
-    # separate the data stored in the 'additional' data section of the line in the eCAMI output file
-    additional_info = prediction_output[2].split("|")
+    ecami_predictions = {}  # stores proteins {protein_accession:ECAMIprediction_instance}
 
-    for item in additional_info:
-        item = item.split(":")[0]  # drop the eCAMI group number
-        item = item.strip()
-
-        # check if it is an EC number
-        if item.find(".") != -1:
-            ec_numbers.append(item)
+    for line in tqdm(ecami_file, desc="Parsing eCAMI output"):
+        if not line.startswith('>'):  # only want the first line for a protien not the listed k-mers
             continue
 
-        # check if it is a subfamily or family prediction
+        prediction_output = line.split("\t")
+
+        # retrieve protein accession, removing the '>' prefix and stripping white space
+        protein_accession = prediction_output[0][1:].strip()
+
+        # retrieve the CAZy family
+        cazy_family = prediction_output[1].split(":")[0].strip()
+
+        # retrieve the children CAZy subfamily of the CAZy family and EC number annotations
+        cazy_subfamilies, ec_numbers = get_subfamily_ec_numbers(prediction_output[2], cazy_family)
+
+        # add ECAMIprediction instance to ecami_prediction
+        cazyme_classification = 1  # all proteins included in eCAMI output file are identified as CAZymes
+
         try:
-            re.match(r"(\D{2,3}\d+)|(\D{2,3}\d+_\d+)", item).group()
-        except AttributeError:
-            logger.warning(
-                f"Non-standardised output for {prediction_output[0][1:]} {item} in\n"
-                f"{txt_file_path}"
-                "Returning no CAZy family/subfamily"
+            # add new predicted CAZyme domain to an existing ECAMIprediction instance
+            existing_prediction = ecami_predictions[protein_accession]
+
+            # check if the CAZyme domain has already been passed
+            existing_cazyme_domains = existing_prediction.cazyme_domains
+            existance = False
+            while existance is False:
+                for domain in existing_cazyme_domains:
+                    if (domain.cazy_family == cazy_family) and (domain.cazy_subfamily == cazy_subfamily):
+                        # Domain has been parsed previously, check if additional EC numbers were retrieved
+                        for ec in ec_numbers:
+                            if ec not in domain.ec_numbers:
+                                domain.ec_numbers.append(ec)
+                        existance = True
+                # come to the end of existing domains and none match the new CAZyme domain
+                break
+
+            if existance is False:
+                # create new CAZyme domain
+                new_cazyme_domain = CazymeDomain(
+                    prediction_tool="eCAMI",
+                    protein_accession=protein_accession,
+                    cazy_family=cazy_family,
+                    cazy_subfamily=cazy_subfamilies,
+                    ec_numbers=ec_numbers,
+                )
+                existing_prediction.cazyme_domains.append(new_cazyme_domain)
+
+        except KeyError:  # raised if no corresponding ECAMIprediction instance was found
+            new_cazyme_domain = CazymeDomain(
+                prediction_tool="eCAMI",
+                protein_accession=protein_accession,
+                cazy_family=cazy_family,
+                cazy_subfamily=cazy_subfamilies,
+                ec_numbers=ec_numbers,
             )
-            continue
 
-        # Passes the family/subfamily check
-        # Check if it is a subfamily
-        if item.find("_") != -1:  # predicated CAZy subfamily
-            # check format
+            new_protein = CazymeProteinPrediction(
+                prediction_tool="eCAMI",
+                protein_accession=protein_accession,
+                cazyme_classification=cazyme_classification,
+            )
+
+            new_protein.cazyme_domains.append(new_cazyme_domain)
+
+            ecami_predictions[protein_accession] = new_protein
+
+    ecami_predictions = add_non_cazymes(ecami_predictions, fasta_path)
+
+    return list(ecami_predictions.values())
+
+
+def get_subfamily_ec_numbers(subfam_group, cazy_family):
+    """Retrieve the predicted CAZy subfamily and associated EC numbers.
+
+    Retrieves only the child CAZy subfamilies for the CAZy familiy of the current working
+    CAZyme domain in the protein. Returns the CAZy subfamilies as a string, and EC numbers
+    as a list of string, with each string containing a unique EC number. The 'subfam_group'
+    refers to the 'subfam_name_of_the_group:subfam_name_count' in the eCAMI output file.
+
+    :param subfam_group: string, the 'subfam_name_of_the_group:subfam_name_count'
+    :param cazy_family: string, CAZy family for the current working CAZyme domain
+
+    Return the CAZy subfamily for the CAZyme domain (str) and list of associated EC numbers.
+    """
+    cazy_subfamilies = []  # store all listed predicted CAZy subfamilies
+    ec_numbers = []  # store all predicted EC numbers
+
+    # individual items are separated by "|"
+    subfam_group = subfam_group.split("|")
+
+    # check if the subfam_group contains a predicted CAZy subfamily
+    for item in subfam_group:
+        # remove the group number of the predicted item
+        item = item.split(":")[0]
+
+        # check if the item contains a CAZy subfamily
+        try:
+            re.match(r"\D{2,3}\d+_\d+", item).group()
+            # check if the subfamily belongs to the CAZy family listed for the current CAZyme domain
+            if item[:item.find("_")] == cazy_family:
+                cazy_subfamilies.append(item)
+
+        except AttributeError:  # raised if the item is not a CAZy subfamily
+            pass
+
+        # check if item contains an EC number
+        try:
+            re.match(r"\d+\.(\d+|-)\.(\d+|-)\.(\d+|-)", item).group()
+            ec_numbers.append(item)
+
+        except AttributeError:  # raised if the item is not an EC number
+            pass
+
+    cazy_subfamilies = ", ".join(cazy_subfamilies)  # convert to string
+
+    return cazy_subfamilies, ec_numbers
+
+
+def add_non_cazymes(ecami_predictions, fasta_path):
+    """Add non-CAZymes to the parsed eCAMI output.
+
+    The eCAMI output only includes the protein it predicts are CAZymes. Therefore, this function
+    goes through the FASTA file that was used as input by eCAMI and adds the proteins not
+    classified as CAZymes to the parsed proteins.
+
+    :param ecami_predictions: dict, keyed by protein accession and valued by ECAMIprediction instance
+    :param fasta_path: Path, FASTA file used as input by eCAMI
+
+    Return a dictionary keyed by protein accession and valued by corresponding ECAMIprediction instance.
+    """
+    # Add non-CAZymes
+    # open the FASTA file containing the input protein sequences
+    with open(fasta_path, "r") as fh:
+        fasta = fh.read().splitlines()
+
+    for line in tqdm(fasta, desc="Adding non-CAZymes"):
+        if line.startswith(">"):
+
+            # remove '>' prefix and white space
+            protein_accession = line[1:].strip()
+
+            # check if the protein is already listed in the eCAMI predictions
             try:
-                re.match(r"\D{2,3}\d+_\d+", item).group()
-                # check if it is the subfamily of the predicated CAZy family
-                if cazy_family == item[:item.find("_")]:
-                    subfams.append(item)
-                else:
-                    additional_domains.append(item)
-            except AttributeError:
-                logger.warning(
-                    "Non-standardised CAZy subfamily name for "
-                    f"{prediction_output[0][1:]} {item} in\n"
-                    f"{txt_file_path}"
-                    "Returning subfamily"
+                ecami_predictions[protein_accession]
+
+            except KeyError:  # raised of protein not in ecami_predictions
+                cazyme_classification = 0
+                ecami_predictions[protein_accession] = CazymeProteinPrediction(
+                    "eCAMI",
+                    protein_accession,
+                    cazyme_classification,
                 )
 
-        else:  # predicated CAZy family
-            # check format
-            try:
-                re.match(r"\D{2,3}\d+", item).group()
-                additional_domains.append(item)
-            except AttributeError:
-                logger.warning(
-                    f"Non-standardised CAZy family name for {prediction_output[0][1:]} {item} in\n"
-                    f"{txt_file_path}"
-                    "Returning no CAZy family"
-                )
-
-    # convert empty lists to null values if necessary, or make list more human readable
-    if len(additional_domains) == 0:
-        additional_domains = np.nan
-    else:
-        additional_domains = ", ".join(additional_domains)
-
-    if len(ec_numbers) == 0:
-        ec_numbers = np.nan
-    else:
-        ec_numbers = ", ".join(ec_numbers)
-
-    if len(subfams) == 0:
-        subfams = np.nan
-    else:
-        subfams = ", ".join(subfams)
-
-    return(additional_domains, ec_numbers, subfams)
+    return ecami_predictions
