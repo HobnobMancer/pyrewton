@@ -17,7 +17,7 @@
 
 # The MIT License
 
-"""Tests for building of parsers for pyrewton.
+"""Tests for build for the prediction.parse.__init__.py file pyrewton.
 
 These tests are inteded to be run from the root repository using:
 pytest -v
@@ -25,52 +25,36 @@ pytest -v
 
 import pytest
 
-from pyrewton.utilities import (
-    cmd_parser_predict_cazymes,
-    cmd_parser_get_uniprot_proteins,
-    cmd_parser_get_ncbi_genomes,
-    cmd_parser_get_genbank_annotations
-)
+from pyrewton.cazymes.prediction import parse
 
 
-@pytest.mark.run(order=1)
-def test_parser_gt_ncb_gnms():
-    """Tests building of parser"""
-    cmd_parser_get_ncbi_genomes.build_parser()
+# test building instances of CazymeDomain
 
 
-def test_parser_gt_ncb_gnms_argc():
-    """Tests building of parser for get_ncbi_genomes when argv is not None"""
-    cmd_parser_get_ncbi_genomes.build_parser(["dummy_email"])
+def test_cazyme_domain_no_optionals():
+    """Test building CazymeDomain when no of the options are passed."""
+
+    domain = parse.CazymeDomain(
+        prediction_tool="test_tool",
+        protein_accession="test_accession",
+        cazy_family="test_family",
+    )
+
+    assert "-CazymeDomain in test_accession, fam=test_family, subfam=nan-" == str(domain)
+    domain
 
 
-@pytest.mark.run(order=2)
-def test_parser_gt_gnbnk_anno():
-    """Tests building of parser"""
-    cmd_parser_get_genbank_annotations.build_parser()
+def test_cazyme_domain_with_optionals():
+    """Test building CazymeDomain when options are passed."""
 
+    domain = parse.CazymeDomain(
+        prediction_tool="test_tool",
+        protein_accession="test_accession",
+        cazy_family="test_family",
+        cazy_subfamily="test_subfamily",
+        ec_numbers=["EC1", "EC2"],
+        domain_range=["DR1"],
+    )
 
-def test_parser_gt_gnbnk_anno_argv():
-    """Tests building of parser for get_genbank_annotations when argv is not None"""
-    cmd_parser_get_genbank_annotations.build_parser(["tests", "tests"])
-
-
-@pytest.mark.run(order=3)
-def test_parser_gt_unprt_prtns():
-    """Tests building of parser"""
-    cmd_parser_get_uniprot_proteins.build_parser()
-
-
-def test_parser_gt_unprt_prtns_argv():
-    """Tests building of parser for get_uniprot_proteins when argv is not None"""
-    cmd_parser_get_uniprot_proteins.build_parser(["tests/"])
-
-
-def test_parser_prdct_czyms():
-    """Test building parser for predict_cazymes.py"""
-    cmd_parser_predict_cazymes.build_parser()
-
-
-def test_parser_prdct_czyms_argv():
-    """Test building parser for predict_cazymes.py when argv is not none"""
-    cmd_parser_predict_cazymes.build_parser(["tests/"])
+    assert "-CazymeDomain in test_accession, fam=test_family, subfam=test_subfamily-" == str(domain)
+    domain
