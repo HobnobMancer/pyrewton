@@ -172,6 +172,9 @@ _This module is still in early development, on the branch `new_feature_CPT_evalu
 This submodule is for the prediction if a query protein sequence is a CAZyme or non-CAZyme, and the prediction of the CAZy family if the protein is predicated to be a CAZyme.
 <p>&nbsp;</p>
 
+## Evaluations and publications
+
+For a summary of the inital evaluation of the performance of dbCAN, CUPP and eCAMI (March 2021), see the [poster](https://hobnobmancer.github.io/pyrewton/pyrewton_2021_03_31_dbcancuppecami_evaluation.pdf) we presented at the Microbiology Society Annual Conference 2021.
 
 ## Repository renamed 2020-10-05
 **Note:** This repository was renamed from 'PhD_project_scripts' to 'pyrewton'.
