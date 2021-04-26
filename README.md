@@ -16,6 +16,7 @@ _Please find more detailed documentation for operation and troubleshooting at [R
 1. [Overview](#Overview)
 2. [Installation](#Installation)
     - [Requirements](#Requirements)
+3. [Current Developments](#Current)
 3. [Directories](#Directories)
 4. [Modules](#Modules)
     - [genbank](#genbank)
@@ -76,6 +77,17 @@ Miniconda3 environment file is also available in the GitHub repository: 'environ
 For all required Python libraries please read 'requirements.txt'.   
 
 <p>&nbsp;</p>
+
+
+## Current Developments
+
+This section of the README lists the areas that are currently being worked upon and expanded:
+- update unit tests to cover the newly added scripts, and match the last repo restructuring
+- continue indepth evaluation of the CAZyme prediction tools, visualising the data in an Rnotebook
+- writing documentation to be hosted at ReadTheDocs for detailed instructions on invoking `pyrewton`
+
+<p>&nbsp;</p>
+
 
 ## Directories
 
