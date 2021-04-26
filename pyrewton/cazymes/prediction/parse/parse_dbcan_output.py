@@ -320,7 +320,7 @@ def get_hotpep_cazyme_domains(predicted_domains, protein_accession):
                 # check if its a CAZy subfamily
                 re.match(r"\D{2,3}\d+?_\d+", domain).group()
                 cazy_family = domain[:domain.find("_")]
-                cazy_subfamily = np.nan
+                cazy_subfamily = domain
 
             except AttributeError:  # raised if it doesn't match the expected CAZy subfamily format
                 logger.warning(
@@ -345,15 +345,19 @@ def get_hotpep_cazyme_domains(predicted_domains, protein_accession):
         new_domain = CazymeDomain("Hotpep", protein_accession, cazy_family, cazy_subfamily)
 
         try:
-            cazyme_domains[f"{cazy_family}-{cazy_subfamily}"]
-            logger.warning(
-                f"Duplicate CAZyme domain predictions for CAZy family {cazy_family}, CAZy "
-                f"subfamily {CAZy_subfamily}, in protein {protein_accession}\n"
-                "Only one CazymeDomain instance being added to the respective "
-                "CazymeProteinPrediction instance"
-            )
-        except KeyError:
-            cazyme_domains[f"{cazy_family}-{cazy_subfamily}"] = new_domain
+            try:
+                cazyme_domains[f"{cazy_family}-{cazy_subfamily}"]
+                logger.warning(
+                    f"Duplicate CAZyme domain predictions for CAZy family {cazy_family}, CAZy "
+                    f"subfamily {str(cazy_subfamily)}, in protein {protein_accession}\n"
+                    "Only one CazymeDomain instance being added to the respective "
+                    "CazymeProteinPrediction instance"
+                )
+            except KeyError:
+                cazyme_domains[f"{cazy_family}-{cazy_subfamily}"] = new_domain
+        except NameError:
+            print("**************************************************domain=", domain)
+            continue
 
     return list(cazyme_domains.values())
 
