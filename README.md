@@ -1,6 +1,6 @@
 # pyrewton
 
-[![DOI](https://zenodo.org/badge/243783792.svg)](https://zenodo.org/badge/latestdoi/243783792)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3876218.svg)](https://doi.org/10.5281/zenodo.3876218)
 [![Funding](https://img.shields.io/badge/Funding-EASTBio-blue)](http://www.eastscotbiodtp.ac.uk/)
 [![PhD licence](https://img.shields.io/badge/Licence-MIT-green)](https://github.com/HobnobMancer/PhD_Project_Scripts/blob/master/LICENSE)
 [![CircleCI](https://circleci.com/gh/HobnobMancer/pyrewton.svg?style=shield)](https://circleci.com/gh/HobnobMancer/PhD_Project_Scripts)
@@ -41,6 +41,8 @@ Features currently in development:
 
 Development plans are stored within the [Wiki](https://github.com/HobnobMancer/pyrewton/wiki).
 <p>&nbsp;</p>
+
+If you're coming from the [Microbiology Society Conference poster](https://doi.org/10.6084/m9.figshare.14370836.v1), and want to see how to repeat the analysis, please navigate to `pyrewton/cazymes/precition`. This directory contains an additional README specifically for the independent evaluation of the CAZyme predictiont tools dbCAN, CUPP and eCAMI.
 
 ## Installation
 
@@ -167,9 +169,10 @@ All command options can be viewed by using `python3 get_uniprot_proteins -h` or 
 
 #### **prediction**
 
-_This module is still in early development, on the branch `new_feature_CPT_evaluation`, more detailed documentation will be added post development._
+_Detailed documentation for hosting at ReadTheDocs is still in development._
 
-This submodule is for the prediction if a query protein sequence is a CAZyme or non-CAZyme, and the prediction of the CAZy family if the protein is predicated to be a CAZyme.
+This submodule is for the prediction if a query protein sequence is a CAZyme or non-CAZyme, and the prediction of the CAZy family if the protein is predicated to be a CAZyme.  
+This directory contains an additional README specifically for the independent evaluation of the CAZyme predictiont tools dbCAN, CUPP and eCAMI.
 <p>&nbsp;</p>
 
 
