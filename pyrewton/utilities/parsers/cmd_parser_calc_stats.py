@@ -29,7 +29,7 @@ def build_parser(argv: Optional[List] = None):
     """Return ArgumentParser parser for script."""
     # Create parser object
     parser = argparse.ArgumentParser(
-        prog="alculate_stats.py",
+        prog="calculate_stats.py",
         description="Programme to evaluate third-party CAZyme prediction tools",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
