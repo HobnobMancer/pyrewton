@@ -18,9 +18,21 @@
 # The MIT License
 """Predict CAZymes from protein sequences and evaluate prediction accuracy.
 
-:cmd_args   :
+:cmd_args input: directory containing all prediction output to be parse
+:cmd --beta: change the value of beta used when calculating Fbeta-score (default = 1)
+:cmd --force: force writing out to existing output directory
+:cmd --log: path to file to write out log to
+:cmd --nodelete: do not delete data in an existing output directory
+:cmd --output: path to output directory
+:cmd --bs_sample_size: number of test sets included in bootstrap evaluation
+:cmd --bs_resampling: number of times to perform bootstrap resampling
+:cmd --verbose: enable verbose logging
 
-:func    :
+:class TestSet: represents a single test parsed by the prediction tools
+
+:func main: co-ordinate entire module function
+:func get_cazy_dict: retrieve dictionary of CAZy classifications of proteins
+:func get_predictions: retrieve the paths to the directories contain the prediction tool predictions
 
 Creates dataframes of CAZyme predictions and report
 summarising statistical analsis of prediction accuracy.
