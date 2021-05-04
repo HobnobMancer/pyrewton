@@ -55,7 +55,7 @@ from typing import List, Optional
 from pyrewton.cazymes.prediction import stats
 from pyrewton.utilities import config_logger
 from pyrewton.utilities.file_io import make_output_directory
-from pyrewton.utilities.parsers.cmd_parse_stat_evaluate_tools import build_parser
+from pyrewton.utilities.parsers.cmd_parser_calc_stats import build_parser
 
 
 @dataclass
