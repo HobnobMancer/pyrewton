@@ -18,8 +18,6 @@
 # The MIT License
 """Module for statistical evaluation of CAZyme prediction tools
 
-:cmd :
-
 :class ClassificationDF: Represents a CAZyme/non-CAZyme annotation/classification df for a test set
 
 :func evaluate_performance: Co-ordinates overall evaluation of prediction tools
