@@ -28,8 +28,8 @@ from sklearn.metrics import confusion_matrix, fbeta_score, precision_score, reca
 from sklearn.utils import resample
 
 
-def get_predicted_classifications(tool_predictions, prediction_tool, classifications):
-    """Retrieve dict of CAZyme prediction tool predictions of CAZyme/non-CAZyme classification.
+def get_cazyme_noncazyme_predictions(tool_predictions, prediction_tool, classifications):
+    """Add CAZyme/non-CAZyme predictions to list of all CAZyme/non-CAZyme predictions.
 
     :param tool_predictions: list of CazymeProteinPrediction instances
     :param prediction_tool: str, name of the prediction tool being passed
@@ -42,7 +42,13 @@ def get_predicted_classifications(tool_predictions, prediction_tool, classificat
     if (prediction_tool == "eCAMI") or (prediction_tool == "CUPP"):
         for prediction in tqdm(tool_predictions, desc=f"Retreiving {prediction_tool} predictions"):
             accession = prediction.protein_accession.split(" ")[0]
-            classifications.append([accession, prediction_tool, prediction.cazyme_classification])
+            classifications.append(
+                [
+                    accession,
+                    prediction_tool,
+                    prediction.cazyme_classification,
+                ],
+            )
         return classifications
 
     for prediction in tqdm(tool_predictions, desc=f"Retreiving {prediction_tool} predictions"):

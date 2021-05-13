@@ -73,67 +73,81 @@ def evaluate_performance(predictions, cazy_dict, args):
     """
     time_stamp = datetime.now().strftime("%Y_%m_%d")
 
-    fam_dict = multilabel_classification.foundation_dict()
-    # fam_dict used to form foundation of multilabel classification
-
+    # build dataframes of predictions
     (
         all_binary_c_nc_dfs,
         binary_c_nc_statistics,
-        mlc_predictions,
-        mlc_ground_truths,
-    ) = parse_predictions(
-        predictions, time_stamp, cazy_dict,
+        all_family_predictions,
+        all_family_ground_truths,
+    ) = build_prediction_dataframes(
+        predictions,
+        time_stamp,
+        cazy_dict,
     )
 
+    # statistical evaluation of binary CAZyme/non-CAZyme classifications stored in a dataframe
+    # in long form, and write to disk
     binary_stat_df = pd.DataFrame(
         binary_c_nc_statistics,
-        columns=['Statistic parameter', 'Genomic assembly', 'Prediction tool', 'Statistic value'],
+        columns=['Statistic parameter', 'Genomic assembly', 'Prediction tool'],
     )
     binary_stat_df.to_csv(f'binary_classification_evaluation_{time_stamp}.csv')  # USED FOR EVALUATION IN R
 
+    # bootstrap resample binary CAZyme/non-CAZyme classifications, to evaluate performance range
     binary_classification.bootstrap_binary_c_nc_classifications(all_binary_c_nc_dfs, args)
 
+    # define the columns names for the CAZy family known and predicted annotations dataframes
+    fam_dict = multilabel_classification.foundation_dict() # for cataloguing family predictions
     column_names = ["Genomic_accession", "Protein_accession", "Prediction_tool"]
     column_names += list(fam_dict.keys())
-    mlc_predictions = pd.DataFrame(mlc_predictions, columns=column_names)
-    mlc_predictions.to_csv(f"mlc_evaluation_{time_stamp}.csv")   # USED FOR EVALUATION IN R
 
-    mlc_ground_truths = pd.DataFrame(mlc_ground_truths, columns=column_names)
-    mlc_ground_truths.to_csv(f"mlc_ground_truths_{time_stamp}.csv")   # USED FOR EVALUATION IN R
+    all_family_predictions = pd.DataFrame(all_family_predictions, columns=column_names)
+    all_family_predictions.to_csv(f"cazy_family_predictions_{time_stamp}.csv")   # USED FOR EVALUATION IN R
+
+    all_family_ground_truths = pd.DataFrame(all_family_ground_truths, columns=column_names)
+    all_family_ground_truths.to_csv(f"cazy_family_ground_truths_{time_stamp}.csv")   # USED FOR EVALUATION IN R
+
+    # build dataframes of CAZy class predictions
+
+    # evaluate the performance of CAZy class predictions
 
     # evaluate the performance of predicting the correct CAZy family
     multilabel_classification.calc_fam_fbeta_score(
-        mlc_predictions,
-        mlc_ground_truths,
+        all_family_predictions,
+        all_family_ground_truths,
         time_stamp,
         args,
-    )  # USED FOR EVALUATION IN R
+    )
+      # USED FOR EVALUATION IN R
     multilabel_classification.calc_fam_fbeta_score_per_testset(
-        mlc_predictions,
-        mlc_ground_truths,
+        all_family_predictions,
+        all_family_ground_truths,
         time_stamp,
         predictions,
         args,
-    )  # USED FOR EVALUATION IN R
+    )
+      # USED FOR EVALUATION IN R
     multilabel_classification.calc_fam_stats(
-        mlc_predictions,
-        mlc_ground_truths,
+        all_family_predictions,
+        all_family_ground_truths,
         time_stamp,
         args,
-    )  # USED FOR EVALUATION IN R
+    )
+      # USED FOR EVALUATION IN R
 
     # evaluate the performance of predicting the correct CAZy class
     multilabel_classification.build_class_dataframes(
-        mlc_predictions,
-        mlc_ground_truths,
+        all_family_predictions,
+        all_family_ground_truths,
         args,
         time_stamp,
-    )  # USED FOR EVALUATION IN R
+    )
+      # USED FOR EVALUATION IN R
 
     return
 
 
-def parse_predictions(predictions, time_stamp, cazy_dict):
+def build_prediction_dataframes(predictions, time_stamp, cazy_dict):
     """Parse prediction outputs from prediction tools and create dataframes for the stats eval.
 
     :param predictions: list of TestSet class instances
@@ -146,14 +160,14 @@ def parse_predictions(predictions, time_stamp, cazy_dict):
         and the ground truths from CAZy. This is used for bootstrapping the accuracy.
     binary_c_nc_statistics - list of lists of statistical parameter values for each test set, for
         each prediction tool, evaluating CAZymes and non-CAZyme predictions (written in long form)
-    mlc_predictions - list of CAZy family predictions, written in tidy/long form
-    mlc_ground_truths - list of known CAZy family, written in tidy/long form
+    all_family_predictions - list of CAZy family predictions, written in tidy/long form
+    all_family_ground_truths - list of known CAZy family, written in tidy/long form
     """
     all_binary_c_nc_dfs = []  # used for bootstrapping accuracy
     binary_c_nc_statistics = []  # [[stat, genomic assembly, prediction tool, value]]
 
-    mlc_predictions = []  # [[assembly, protein, prediction tool, fam1, fam2, fam3...]]
-    mlc_ground_truths = []  # [[assembly, protein, prediction tool, fam1, fam2, fam3...]]
+    all_family_predictions = []  # [[assembly, protein, prediction tool, fam1, fam2, fam3...]]
+    all_family_ground_truths = []  # [[assembly, protein, prediction tool, fam1, fam2, fam3...]]
 
     for test_set in tqdm(predictions, desc="Standardising outputs"):
         # create paths to the raw prediction tool output files to be parsed
@@ -201,16 +215,19 @@ def parse_predictions(predictions, time_stamp, cazy_dict):
         for tool in tqdm(standardised_outputs, "Adding raw predictions to cumlative dfs"):
 
             # parse binary CAZyme/non-CAZyme predictions for the prediction tool
-            all_binary_classifications = binary_classification.get_predicted_classifications(
+            # retrieves list of nested lists [accession, tool, prediction (0 or 1)]
+            all_binary_classifications = binary_classification.get_cazyme_noncazyme_predictions(
                 standardised_outputs[tool],
                 tool,
                 all_binary_classifications,
             )
 
-            # parse multilabel classficiation (mlc) of CAZy family predictions
+            # parse multilabel CAZy family predictions, and build lists of nested lists of all
+            # predicted and ground truth CAZy family annotations
             (
-                mlc_prediction, mlc_ground_truth,
-            ) = multilabel_classification.get_multilable_classifications(
+                family_predictions,
+                family_ground_truths,
+            ) = multilabel_classification.get_family_classifications(
                 tool[0],
                 tool[1],
                 cazy_dict,
@@ -220,8 +237,8 @@ def parse_predictions(predictions, time_stamp, cazy_dict):
             # parse multilabel classficiation (mlc) of CAZy class predictions ???
             ???
 
-            mlc_predictions += mlc_prediction
-            mlc_ground_truths += mlc_ground_truth
+            all_family_predictions += mlc_prediction
+            all_family_ground_truths += mlc_ground_truth
 
         # build a datafame of containing all binary C/NC classifications from all prediction
         # tools for this test set
@@ -245,4 +262,9 @@ def parse_predictions(predictions, time_stamp, cazy_dict):
             classifications_df, test_set.source, args,
         )
 
-    return all_binary_c_nc_dfs, binary_c_nc_statistics, mlc_predictions, mlc_ground_truths
+    return(
+        all_binary_c_nc_dfs,
+        binary_c_nc_statistics,
+        all_family_predictions,
+        all_family_ground_truths,
+    )

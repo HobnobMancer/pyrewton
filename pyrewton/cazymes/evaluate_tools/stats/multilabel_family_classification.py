@@ -29,25 +29,39 @@ from sklearn.metrics import fbeta_score, confusion_matrix, recall_score, precisi
 from sklearn.metrics.cluster import rand_score, adjusted_rand_score
 
 
-def get_multilable_classifications(predictions, prediciton_tool, cazy_dict, genomic_accession):
-    """Return two nested lists, one of predicted results, one of ground truths."""
+def get_family_classifications(predictions, prediciton_tool, cazy_dict, genomic_accession):
+    """Retrieve the predicted  and ground truth (CAZy determined) CAZy family annotations.
+    
+    :param predictions:
+    :param prediction_tools:
+    :param cazy_dict:
+    :param genomic_accession:
+
+    Return two lists, one of predicted results, one of ground truths.
+    Each list is a list of nested lists. Each nested list contains:
+    [genomic_accession, protein_accession, prediction_tool, one column for each fam with 
+    its 0 (not predicted) / 1 (predicted) prediction].
+    """
     logger = logging.getLogger(__name__)
 
-    predicted_annotations = []  # [[assembly, protein_accession, prediciton_tool, fam1, fam2 ...]]
-    ground_truths = []  # [[assembly, protein_accession, prediciton_tool, fam1, fam2 ...]]
+    all_predicted_annotations = []  # [[assembly, protein_accession, prediciton_tool, fam1, fam2..]]
+    all_ground_truths = []  # [[assembly, protein_accession, prediciton_tool, fam1, fam2, ...]]
 
     for protein in predictions:
+        # retrieve dicts of {cazy_family_name: 0} for storing CAZy family annotation predictions
         fam_predictions = foundation_dict()
         known_fams = foundation_dict()
 
-        new_prediction = [genomic_accession, protein.protein_accession, prediciton_tool]
+        new_predictions = [genomic_accession, protein.protein_accession, prediciton_tool]
         new_ground_truths = [genomic_accession, protein.protein_accession, prediciton_tool]
 
         for domain in protein.cazyme_domains:
             try:
                 fam_predictions[domain.cazy_family]
-                fam_predictions[domain.cazy_family] = 1
+                fam_predictions[domain.cazy_family] = 1  # add one to cazy family 
             except KeyError:
+                # check if cazy family annotation for the domain is a subfamily. If it is, mark the
+                # parent family in the fam_predictions dict as being predicted
                 if type(domain.cazy_family) is str:
                     if (domain.cazy_family).find("_") != -1:
                         fam = domain.cazy_family[:(domain.cazy_family).find("_")]
@@ -57,23 +71,32 @@ def get_multilable_classifications(predictions, prediciton_tool, cazy_dict, geno
                         except KeyError:
                             logger.warning(
                                 f"Did not recognise {fam} as a CAZy family "
-                                f"from prediction {domain}"
+                                f"from prediction {domain}, from {prediciton_tool}"
                             )
                     else:
                         logger.warning(
                             f"Did not recognise {fam} as a CAZy family "
-                            f"from prediction {domain}"
+                            f"from prediction {domain}, from {prediciton_tool}"
                         )
+
                 elif np.isnan(domain.cazy_family):
+                    # cazy family set as null value for the CAZy domain
+                    logger.warning(
+                        f"CAZy family set as null value for {domain}, from {prediciton_tool}"
+                    )
                     continue
+
                 else:
                     logger.warning(
                         f"Did not recognise {fam} as a CAZy family "
-                        f"from prediction {domain}"
+                        f"from prediction {domain}, from {prediciton_tool}"
                     )
 
+        # add cazy family (0/1) predictions to list representing CAZy family predictions
+        # for the current working protein
         new_prediction += list(fam_predictions.values())
 
+        # retrieve the ground thruth (CAZy determined) CAZy family annotations for the protein
         try:
             cazy_annotations = cazy_dict[protein.protein_accession]
             try:
@@ -88,12 +111,14 @@ def get_multilable_classifications(predictions, prediciton_tool, cazy_dict, geno
         except KeyError:
             pass
 
+        # add cazy family (0/1) ground truth annotations to list representing all 
+        # CAZy family ground truth annotations for the current working protein
         new_ground_truths += list(known_fams.values())
 
-        predicted_annotations.append(new_prediction)
-        ground_truths.append(new_ground_truths)
+        all_predicted_annotations.append(new_prediction)
+        all_ground_truths.append(new_ground_truths)
 
-    return predicted_annotations, ground_truths
+    return all_predicted_annotations, all_ground_truths
 
 
 def calc_fam_fbeta_score(predictions_df, ground_truths_df, time_stamp, args):
