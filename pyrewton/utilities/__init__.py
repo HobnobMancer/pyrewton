@@ -52,3 +52,31 @@ def config_logger(args) -> logging.Logger:
         logger.addHandler(file_log_handler)
 
     return
+
+
+def build_logger(output, file_name):
+    """Build loggers with pre-defined parameters for writing out errors and failed scrapes.
+
+    :param output: Path to output dir or None
+    :param file_name: str, name of output log file
+
+    Return logger object.
+    """
+    logger = logging.getLogger(file_name[:-4])
+
+    if output is None:
+        output = os.getcwd()
+        path_ = Path(f"{output}/{file_name}")
+    else:
+        path_ = output / f"{file_name}"
+
+    # Set format of loglines
+    log_formatter = logging.Formatter(file_name + ": {} - {}".format("%(asctime)s", "%(message)s"))
+
+    # Setup file handler to log to a file
+    file_log_handler = logging.FileHandler(path_)
+    file_log_handler.setLevel(logging.WARNING)
+    file_log_handler.setFormatter(log_formatter)
+    logger.addHandler(file_log_handler)
+
+    return logger
