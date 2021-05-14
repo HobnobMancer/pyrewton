@@ -186,28 +186,46 @@ def calculate_class_stats(
         tool_class_ground_truths = ground_truth_df.loc[ground_truth_df["Prediction_tool"] == tool]
         tool_class_predictions = prediction_df.loc[prediction_df["Prediction_tool"] == tool]
 
-        # remove true negative non-CAZyme predictions from the dataframe
+        # build an empty dataframe to store all predictions EXCEPT true negative non-CAZymes
+        tp_fp_fn_ground_truths = pd.DataFrame(columns=list(tool_class_ground_truths.columns))
+        tp_fp_fn_predictions = pd.DataFrame(columns=list(tool_class_predictions.columns))
+
         index = 0
         for index in range(len(tool_class_ground_truths["Prediction_tool"])):
             y_true = tool_class_ground_truths.iloc[index]
-            y_true = y_true[class_list]
+            y_true = list(y_true[class_list])  # retrieve only the cazy class 0/1 annotations
             
             y_pred = tool_class_predictions.iloc[index]
-            y_pred = y_pred[class_list]
+            y_pred = list(y_pred[class_list])  # retrieve only the cazy class 0/1 annotations
 
             if (1 not in y_true) and (1 not in y_pred):
                 # if y_true and y_pred are all 0s, this is a true negative non-CAZyme prediction
                 # do not include true negative non-CAZyme predictions
-                tool_class_ground_truths = tool_class_ground_truths.drop(index)
-                tool_class_predictions = tool_class_predictions.drop(index)
-            # else: continue
+                continue
+            else:
+                # add TP, FP or FN result to the dataframes
+                tp_fp_fn_ground_truths = tp_fp_fn_ground_truths.append(
+                    tool_class_ground_truths.iloc[index],
+                )
+                tp_fp_fn_predictions = tp_fp_fn_predictions.append(
+                    tool_class_predictions.iloc[index],
+                )
 
         # calculate statistics
         for cazy_class in tqdm(class_list, desc=f"Calc CAZy class stats for {tool}"):
             data = [tool, cazy_class]
 
-            y_true = tool_class_ground_truths[cazy_class]
-            y_pred = tool_class_predictions[cazy_class]
+            y_true = list(tp_fp_fn_ground_truths[cazy_class])
+            y_pred = list(tp_fp_fn_predictions[cazy_class])
+
+            recall = recall_score(y_true, y_pred)
+            data.append(recall)
+
+            precision = precision_score(y_true, y_pred)
+            data.append(precision)
+
+            fbeta = fbeta_score(y_true, y_pred, beta=args.beta)
+            data.append(fbeta)
 
             cm = confusion_matrix(y_true, y_pred)
             try:
@@ -217,12 +235,9 @@ def calculate_class_stats(
                 fp = cm[0][1]
 
             except IndexError:  # cannot build confusion matrix if true negative, or 
-                data.append(np.nan)
-                data.append(np.nan)
-                data.append(np.nan)
-                data.append(np.nan)
-                data.append(np.nan)
-                across_all_test_sets_data.append(data)
+                data.append(np.nan)  # add specificity
+                data.append(np.nan)  # add acuracy
+
                 indx_err_logger.warning(
                     f"Prediction Tool: {tool}\tCAZy class: {cazy_class}\n"
                     f"y_true: {y_true}\ny_pred: {y_pred}\n"
@@ -231,19 +246,9 @@ def calculate_class_stats(
                 continue
 
             specificity = tn / (tn + fp)
-
-            recall = recall_score(y_true, y_pred)
-
-            precision = precision_score(y_true, y_pred)
-
-            fbeta = fbeta_score(y_true, y_pred, beta=args.beta)
+            data.append(specificity)
 
             accuracy = (tp + tn)/(tp + fp + fn + tn)
-
-            data.append(specificity)
-            data.append(recall)
-            data.append(precision)
-            data.append(fbeta)
             data.append(accuracy)
 
             across_all_test_sets_data.append(data)
@@ -284,6 +289,10 @@ def calculate_class_stats_by_testsets(
 
     Return predictions_df including calculated CAZy class statistics.
     """
+    indx_err_logger = build_logger(
+        args.output,
+        "cazy_class_confusion_matrix_errors_per_testset.log",
+    )
     logger = logging.getLogger(__name__)
 
     # get the names of the genomic accessions, one accession = one test set
@@ -293,30 +302,48 @@ def calculate_class_stats_by_testsets(
     class_stats_data = []  # Genomic_accession, Prediction_tool, Statistic_parameter, Stat_value
 
     for tool in ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]:
-        # retrieve the rows of interest from from predictions and ground truths df
-        tool_class_ground_truths = ground_truth_df.loc[ground_truth_df["Prediction_tool"] == tool]
-        tool_class_predictions = prediction_df.loc[prediction_df["Prediction_tool"] == tool]
+        # retrieve the rows of interest from dataframes with the current working prediction tool
+        tool_ground_truths = ground_truth_df.loc[ground_truth_df["Prediction_tool"] == tool]
+        tool_predictions = prediction_df.loc[prediction_df["Prediction_tool"] == tool]
 
+        # one accession is one test set
         for accession in tqdm(all_genomic_accessions, desc="Evaluate Class prediction by test set"):
-            test_set_tool_class_ground_truths = tool_class_ground_truths.loc[tool_class_ground_truths["Genomic_accession"] == accession]
-            test_set_tool_class_predictions = tool_class_predictions.loc[tool_class_predictions["Genomic_accession"] == accession]
+            testset_tool_ground_truths = tool_ground_truths.loc[
+                tool_ground_truths["Genomic_accession"] == accession
+            ]
+            testset_tool_predictions = tool_predictions.loc[
+                tool_predictions["Genomic_accession"] == accession
+            ]
+
+            # build empty dataframes to store all results EXCEPT true negative non-CAZymes
+            tp_fp_fn_ground_truths = pd.DataFrame(columns=list(testset_tool_ground_truths.columns))
+            tp_fp_fn_predictions = pd.DataFrame(columns=list(testset_tool_predictions.columns))
+           
+            # exclude true negative non-CAZyme predictions
+            index = 0
+            for index in range(len(testset_tool_predictions["Genomic_accession"])):
+                y_true = testset_tool_ground_truths.iloc[index]
+                y_true = list(y_true[class_list])  # retrieve only the cazy class 0/1 annotations
+
+                y_pred = testset_tool_predictions.iloc[index]
+                y_pred = list(y_pred[class_list])  # retrieve only the cazy class 0/1 annotations
+
+                if (1 not in y_true) and (1 not in y_pred):
+                    # if y_true and y_pred are all 0s, this is a true negative non-CAZyme prediction
+                    # do not include true negative non-CAZyme predictions
+                    continue
+
+                else:
+                    tp_fp_fn_ground_truths = tp_fp_fn_ground_truths.append(
+                        testset_tool_ground_truths.iloc[index],
+                    )
+                    tp_fp_fn_predictions = tp_fp_fn_predictions.append(
+                        testset_tool_predictions.iloc[index],
+                    )
 
             for cazy_class in class_list:
-                y_true = test_set_tool_class_ground_truths[cazy_class]
-                y_pred = test_set_tool_class_predictions[cazy_class]
-
-                # exclude true negatives
-                # (where protein is predicted to be a non-CAZyme and the protein
-                # is not included in CAZy)
-                pred = (y_true == 0).all()
-                known = (y_true == 0).all()
-                if pred and known:
-                    class_stats_data.append([accession, tool, cazy_class, "Specificity", np.nan])
-                    class_stats_data.append([accession, tool, cazy_class, "Recall", np.nan])
-                    class_stats_data.append([accession, tool, cazy_class, "Precision", np.nan])
-                    class_stats_data.append([accession, tool, cazy_class, "Fbeta_score", np.nan])
-                    class_stats_data.append([accession, tool, cazy_class, "Accuracy", np.nan])
-                    continue
+                y_true = list(tp_fp_fn_ground_truths[cazy_class])
+                y_pred = list(tp_fp_fn_predictions[cazy_class])
 
                 recall = recall_score(y_true, y_pred)
                 class_stats_data.append([accession, tool, cazy_class, "Recall", recall])
@@ -333,6 +360,7 @@ def calculate_class_stats_by_testsets(
                     fn = cm[1][0]
                     tp = cm[1][1]
                     fp = cm[0][1]
+
                     accuracy = (tp + tn)/(tp + fp + fn + tn)
                     class_stats_data.append([accession, tool, cazy_class, "Accuracy", accuracy])
 
@@ -342,11 +370,16 @@ def calculate_class_stats_by_testsets(
                         f"Error raised when creating confusion matrix for protein {accession}, "
                         f"{tool}, {cazy_class}, when calculating accuracy.\nError raised:\n{e}"
                     )
+                    indx_err_logger.warning(
+                        f"Prediction Tool: {tool}\tClass: {cazy_class}\tAccession: {accession}\t"
+                        f"Stat: Specificity\ny_true: {y_true}\ny_pred: {y_pred}\n"
+                    )
 
                 try:
                     tn = cm[0][0]
                     fp = cm[0][1]
                     specificity = tn / (tn + fp)
+
                     class_stats_data.append(
                         [
                             accession,
@@ -362,6 +395,10 @@ def calculate_class_stats_by_testsets(
                     logger.warning(
                         f"Error raised when creating confusion matrix for protein {accession}, "
                         f"{tool}, {cazy_class}, when calculating specificity.\nError raised:\n{e}"
+                    )
+                    indx_err_logger.warning(
+                        f"Prediction Tool: {tool}\tClass: {cazy_class}\tAccession: {accession}\t"
+                        f"Stat: Specificity\ny_true: {y_true}\ny_pred: {y_pred}\n"
                     )
 
     # build dataframe using class_stats_data
