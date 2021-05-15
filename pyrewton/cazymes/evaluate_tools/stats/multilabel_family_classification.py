@@ -135,7 +135,7 @@ def calculate_family_ari_ri(prediction_df, ground_truth_df, time_stamp):
     ari_scores = []
 
     family_names = foundation_dict()
-    family_names list(family_names.keys())
+    family_names = list(family_names.keys())
 
     row_index = 0
     for row_index in tqdm(
@@ -177,7 +177,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
     long_dataframe_data = []  # [[CAZyFam, StatParameter, PredicitonTool, StatValue]]
 
     family_names = foundation_dict()
-    family_names list(family_names.keys())
+    family_names = list(family_names.keys())
 
     for tool in ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]:
         # retrieve the relevant rows for the prediction tool
@@ -364,7 +364,7 @@ def calc_fam_stats_per_testset(predictions_df, ground_truths_df, time_stamp, arg
     long_dataframe_data = []  # [[CAZyFam, StatParameter, PredicitonTool, StatValue]]
 
     family_names = foundation_dict()
-    family_names list(family_names.keys())
+    family_names = list(family_names.keys())
 
     # get the names of the genomic accessions, one accession = one test set
     all_genomic_accessions = ground_truths_df["Genomic_accession"]
