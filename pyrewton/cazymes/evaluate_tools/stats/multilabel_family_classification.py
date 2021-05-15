@@ -16,6 +16,7 @@
 # UK
 #
 # The MIT License
+"""This script is for evaluating the prediction of CAZy family annotations."""
 
 
 import logging
@@ -31,11 +32,11 @@ from sklearn.metrics.cluster import rand_score, adjusted_rand_score
 
 def get_family_classifications(predictions, prediciton_tool, cazy_dict, genomic_accession):
     """Retrieve the predicted  and ground truth (CAZy determined) CAZy family annotations.
-    
-    :param predictions:
-    :param prediction_tools:
-    :param cazy_dict:
-    :param genomic_accession:
+
+    :param predictions: list of CazymeProteinPrediction instances 
+    :param prediction_tools: str, name of the prediction tool being passed
+    :param cazy_dict: dict of CAZyme/non-CAZyme predicted classifications
+    :param genomic_accession: str, genomic accession of genomic assembly from which proteins are sourced
 
     Return two lists, one of predicted results, one of ground truths.
     Each list is a list of nested lists. Each nested list contains:
@@ -94,7 +95,7 @@ def get_family_classifications(predictions, prediciton_tool, cazy_dict, genomic_
 
         # add cazy family (0/1) predictions to list representing CAZy family predictions
         # for the current working protein
-        new_prediction += list(fam_predictions.values())
+        new_predictions += list(fam_predictions.values())
 
         # retrieve the ground thruth (CAZy determined) CAZy family annotations for the protein
         try:
@@ -115,402 +116,37 @@ def get_family_classifications(predictions, prediciton_tool, cazy_dict, genomic_
         # CAZy family ground truth annotations for the current working protein
         new_ground_truths += list(known_fams.values())
 
-        all_predicted_annotations.append(new_prediction)
+        all_predicted_annotations.append(new_predictions)
         all_ground_truths.append(new_ground_truths)
 
     return all_predicted_annotations, all_ground_truths
 
 
-def calc_fam_fbeta_score(predictions_df, ground_truths_df, time_stamp, args):
-    """Calculate the Fbeta score per CAZy family, per prediction tool and write out to csv file.
+def calculate_family_ari_ri(prediction_df, ground_truth_df, time_stamp):
+    """Calculate the adjusted rand index (ARI) and rand index (RI) for every protein.
 
-    :param predictions_df: df of predicted CAZy family annotations from all prediction tools
-    :param ground_truths_df: df of CAZy annotations of proteins
-    :param time_stamp: str, time evaluation was started
-    :param args: cmd-line args parser
+    :param prediction_df: pandas df of predicted CAZy family annotations
+    :param ground_truth_df: pandas df of CAZy determined CAZy family annotations
+    :param time_stamp: str, used to create file names
 
-    Return nothing.
-    """
-    for tool in ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]:
-        # retrieve the rows of interest from from predictions and ground truths df
-        pred_df = predictions_df.loc[predictions_df["Prediction_tool"] == tool]
-        grnd_trth_df = ground_truths_df.loc[ground_truths_df["Prediction_tool"] == tool]
-
-        # list will form the row of calc fbeta scores that is later added to the dataframe
-        fbeta_scores = [np.nan, np.nan, np.nan, np.nan]  # Nas reflect non-CAZy family cols in df
-
-        # iterate through the columns
-        # each column contains a unique CAZy family, except the first few columns
-        for fam in tqdm(pred_df.columns[4:], desc=f"Calc fam Fbeta scores for {tool}"):
-
-            # check if true negative, these are not taken into consideration by the Fbeta score
-            pred = (pred_df[fam] == 0).all()
-            known = (grnd_trth_df[fam] == 0).all()
-            if pred and known:
-                fbeta = np.nan
-                fbeta_scores.append(fbeta)
-                continue
-
-            fbeta = fbeta_score(grnd_trth_df[fam], pred_df[fam], beta=args.beta)
-            fbeta_scores.append(fbeta)
-
-        # build df out of fbeta scores and add to the predicted df
-        df = pd.DataFrame([fbeta_scores], columns=pred_df.columns)
-        pred_df = pred_df.append(df)
-
-        pred_df.to_csv(f"{tool}_fam_prediction_df_{time_stamp}.csv")
-
-    return
-
-
-def calc_fam_fbeta_score_per_testset(
-    predictions_df,
-    ground_truths_df,
-    time_stamp,
-    predictions,
-    args,
-):
-    """Calculate the Fbeta score per CAZy family, per prediction tool, per test set and write out
-    to csv file.
-
-    :param predictions_df: df of predicted CAZy family annotations from all prediction tools
-    :param ground_truths_df: df of CAZy annotations of proteins
-    :param time_stramp: str, time statistical evaluation was initated, used for naming files
-    :param predictions: list of Prediction instances, used for retrieving genomic accession of each
-    test set
-    :param args: cmd-line args parser
-
-    Return nothing.
-    """
-    df_data = []  # [[CAZy_family, Prediction_tool, Genomic_accession, Fbeta_score]]
-
-    for testset in tqdm(predictions, desc="Calc CAZy Fam Fbeta-score per test set"):
-        # retrieve all rows containing proteins from the current working test set
-        # test sets identified by genomic accession
-        genomic_accession = testset.source
-        pred_df = predictions_df.loc[predictions_df["Genomic_accession"] == genomic_accession]
-        grnd_trth_df = ground_truths_df.loc[ground_truths_df["Genomic_accession"] == genomic_accession]
-
-        for tool in ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]:
-            # retrieve the rows of interest from from predictions and ground truths df
-            pred_df = pred_df.loc[pred_df["Prediction_tool"] == tool]
-            grnd_trth_df = grnd_trth_df.loc[grnd_trth_df["Prediction_tool"] == tool]
-
-            # iterate through the columns, each column contains a unique CAZy family,
-            # except the first few columns
-            for fam in tqdm(pred_df.columns[4:], desc=f"Calc fam Fbeta scores for {tool}"):
-
-                # check if true negative, these are not taken into consideration by the Fbeta score
-                pred = (pred_df[fam] == 0).all()
-                known = (grnd_trth_df[fam] == 0).all()
-                if pred and known:
-                    fbeta = np.nan
-                    results = [fam, tool, genomic_accession, fbeta]
-                    df_data.append(results)
-                    continue
-
-                # calculate the Fbeta score for the CAZy fam, for current working prediction tool,
-                # for the current working test set (identified by its source genomic accession)
-                fbeta = fbeta_score(grnd_trth_df[fam], pred_df[fam], beta=args.beta)
-
-                results = [fam, tool, genomic_accession, fbeta]
-                df_data.append(results)
-
-    # build df out of fbeta scores and add to the predicted df
-    column_names = ["CAZy_family", "Prediction_tool", "Genomic_accession", "Fbeta_score"]
-    df = pd.DataFrame(df_data, columns=column_names)
-    df.to_csv(f"cazy_fam_fbeta_scores_{time_stamp}.csv")
-
-    return
-
-
-def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
-    """Calculate the Fbeta score, accuracy, recall and specificity per CAZy family, per prediction
-    tool and write out to csv file.
-
-    :param predictions_df: df of predicted CAZy family annotations from all prediction tools
-    :param ground_truths_df: df of CAZy annotations of proteins
-    :param time_stamp: str, time evaluation was started
-    :param args: cmd_line args parser
-
-    Return nothing.
-    """
-    logger = logging.getLogger(__name__)
-    stats_orientated_df = []  # [[CAZyFam, Prediction_Tool, Specificity, Recall, Fbeta, Accuracy]]
-    long_dataframe = []  # [[CAZyFam, StatParameter, PredicitonTool, StatValue]]
-
-    for tool in ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]:
-        # retrieve the rows of interest from from predictions and ground truths df
-        pred_df = predictions_df.loc[predictions_df["Prediction_tool"] == tool]
-        grnd_trth_df = ground_truths_df.loc[ground_truths_df["Prediction_tool"] == tool]
-
-        # iterate through the columns, each column contains a unique CAZy family,
-        # except the first few columns
-        for fam in tqdm(pred_df.columns[4:], desc=f"Calc stats for fams for {tool}"):
-
-            y_true = grnd_trth_df[fam]
-            y_pred = pred_df[fam]
-
-            # check if true negative, these are not taken into consideration by the Fbeta score
-            pred = (pred_df[fam] == 0).all()
-            known = (grnd_trth_df[fam] == 0).all()
-            if pred and known:
-                stats_orientated_df.append(
-                    [
-                        fam,
-                        tool,
-                        np.nan,
-                        np.nan,
-                        np.nan,
-                        np.nan,
-                        np.nan,
-                        np.nan,
-                        np.nan,
-                        np.nan,
-                        np.nan,
-                    ],
-                )
-                long_dataframe.append([fam, "specificity", tool, np.nan])
-                long_dataframe.append([fam, "recall", tool, np.nan])
-                long_dataframe.append([fam, "fbeta", tool, np.nan])
-                long_dataframe.append([fam, "accuracy", tool, np.nan])
-                long_dataframe.append([fam, "TNs", tool, np.nan])
-                long_dataframe.append([fam, "FNs", tool, np.nan])
-                long_dataframe.append([fam, "TPs", tool, np.nan])
-                long_dataframe.append([fam, "FPs", tool, np.nan])
-                long_dataframe.append([fam, "recall_sample_size", tool, np.nan])
-                continue
-
-            cm = confusion_matrix(y_true, y_pred)
-            try:
-                tn = cm[0][0]
-                fn = cm[1][0]
-                tp = cm[1][1]
-                fp = cm[0][1]
-
-                specificity = tn / (tn + fp)
-                long_dataframe.append([fam, "specificity", tool, specificity])
-
-                recall = recall_score(y_true, y_pred)
-                long_dataframe.append([fam, "recall", tool, recall])
-
-                fbeta = fbeta_score(grnd_trth_df[fam], pred_df[fam], beta=args.beta)
-                long_dataframe.append([fam, "fbeta", tool, fbeta])
-
-                accuracy = (tp + tn)/(tp + fp + fn + tn)
-                long_dataframe.append([fam, "accuracy", tool, accuracy])
-
-                # find the sample size
-                long_dataframe.append([fam, "TNs", tool, tn])
-                long_dataframe.append([fam, "FNs", tool, fn])
-                long_dataframe.append([fam, "TPs", tool, tp])
-                long_dataframe.append([fam, "FPs", tool, fp])
-                long_dataframe.append([fam, "recall_sample_size", tool, (tp+fn)])
-                stats_orientated_df.append(
-                    [
-                        fam,
-                        tool,
-                        specificity,
-                        recall,
-                        fbeta,
-                        accuracy,
-                        tn,
-                        fn,
-                        tp,
-                        fp,
-                        (tp+fn),
-                    ],
-                )
-
-            except IndexError:  # no idea why
-                stats_orientated_df.append(
-                    [
-                        fam,
-                        tool,
-                        np.nan,
-                        np.nan,
-                        np.nan,
-                        np.nan,
-                        np.nan,
-                        np.nan,
-                        np.nan,
-                        np.nan,
-                        np.nan,
-                    ],
-                )
-                long_dataframe.append([fam, "specificity", tool, np.nan])
-                long_dataframe.append([fam, "recall", tool, np.nan])
-                long_dataframe.append([fam, "fbeta", tool, np.nan])
-                long_dataframe.append([fam, "accuracy", tool, np.nan])
-                long_dataframe.append([fam, "TNs", tool, np.nan])
-                long_dataframe.append([fam, "FNs", tool, np.nan])
-                long_dataframe.append([fam, "TPs", tool, np.nan])
-                long_dataframe.append([fam, "FPs", tool, np.nan])
-                long_dataframe.append([fam, "recall_sample_size", tool, np.nan])
-                logger.warning(
-                    "Error raised when creating confusion matrix for:\n"
-                    f"{tool}\t{fam}"
-                )
-
-    # build df out of fbeta scores and add to the predicted df
-    df = pd.DataFrame(
-        long_dataframe,
-        columns=["CAZy_family", "Stat_parameter", "Prediction_tool", "Stat_value"],
-    )
-    df.to_csv(f"fam_stats_df_{time_stamp}.csv")
-
-    df1 = pd.DataFrame(
-        stats_orientated_df,
-        columns=[
-            "CAZy_family",
-            "Prediction_tool",
-            "Specificity",
-            "Recall",
-            "Fbeta_score",
-            "Accuracy",
-            "#TN",
-            "#FN",
-            "#TP",
-            "#FP",
-            "Recall_sample_size",
-        ],
-    )
-    df1.to_csv(f"fam_stats_df_single_{time_stamp}.csv")
-
-    return
-
-
-def build_class_dataframes(predictions_df, ground_truths_df, args, time_stamp):
-    """Build dataframe of CAZy class annotation predictions.
-
-    :param predictions_df: df of predicted CAZy family annotations from all prediction tools
-    :param ground_truths_df: df of CAZy annotations of proteins
-    :param args: cmd-line args parser
-    :param time_stramp: str, time evaluation was started
-
-    Return nothing.
-    """
-    class_ground_truths = []  # genomic_accession, protein_accession, prediction_tool, cazy_class
-    class_predictions = []  # genomic_accession, protein_accession, prediction_tool, cazy_class
-
-    row_index = 0
-    for row_index in tqdm(range(len(ground_truths_df["Prediction_tool"])), desc="Getting CAZy class predictions"):
-        row_ground_truths = ground_truths_df.iloc[row_index]
-        row_predictions = predictions_df.iloc[row_index]
-
-        ground_truth_row_data = [
-            row_ground_truths["Genomic_accession"],
-            row_ground_truths["Protein_accession"],
-            row_ground_truths["Prediction_tool"],
-        ]
-        pred_row_data = [
-            row_predictions["Genomic_accession"],
-            row_predictions["Protein_accession"],
-            row_predictions["Prediction_tool"],
-        ]
-
-        # get the prediction and ground truth for each CAZy class
-        for cazy_class in ["GH", "GT", "PL", "CE", "AA", "CBM"]:
-            # retrieve names of CAZy families in the CAZy class
-            fam_names = [col_name for col_name in ground_truths_df.columns if col_name.startswith(cazy_class)]
-
-            class_fam_ground_truths = row_ground_truths[fam_names]
-            class_fam_predictions = row_predictions[fam_names]
-
-            if (class_fam_ground_truths == 1).any():
-                ground_truth_class_classification = 1
-            else:
-                ground_truth_class_classification = 0
-            ground_truth_row_data.append(ground_truth_class_classification)
-
-            if (class_fam_predictions == 1).any():
-                predicted_class_classification = 1
-            else:
-                predicted_class_classification = 0
-            pred_row_data.append(predicted_class_classification)
-
-        class_ground_truths.append(ground_truth_row_data)
-        class_predictions.append(pred_row_data)
-
-    # build dataframes
-    class_ground_truths_df = pd.DataFrame(
-        class_ground_truths,
-        columns=[
-            "Genomic_accession",
-            "Protein_accession",
-            "Prediction_tool",
-            "GH",
-            "GT",
-            "PL",
-            "CE",
-            "AA",
-            "CBM",
-        ],
-    )
-    class_predictions_df = pd.DataFrame(
-        class_predictions,
-        columns=[
-            "Genomic_accession",
-            "Protein_accession",
-            "Prediction_tool",
-            "GH",
-            "GT",
-            "PL",
-            "CE",
-            "AA",
-            "CBM",
-        ],
-    )
-
-    # write out dataframe
-    class_ground_truths_df.to_csv(f"class_ground_truths_classifications_{time_stamp}.csv")
-
-    # calculate ARI and RI for multilabel evaluation
-    class_predictions_df = calculate_class_ari(
-        class_ground_truths_df,
-        class_predictions_df,
-        time_stamp,
-    )
-    class_predictions_df.to_csv(f"class_predictions_classifications_{time_stamp}.csv")
-
-    # calculate the fbeta_score, sensitivity(recall), specificity and accuracy per CAZy class
-    calculate_class_stats(class_ground_truths_df, class_predictions_df, time_stamp, args)
-    calculate_class_stats_by_testsets(
-        class_ground_truths_df,
-        class_predictions_df,
-        time_stamp,
-        args,
-    )
-
-    return
-
-
-def calculate_class_ari(
-    ground_truth_df,
-    prediction_df,
-    time_stamp,
-    class_list=["GH", "GT", "PL", "CE", "AA", "CBM"],
-):
-    """Calculate the adjusted rand index and rand index of CAZy class annotation predictions.
-
-    :param predictions_df: df of predicted CAZy family annotations from all prediction tools
-    :param ground_truths_df: df of CAZy annotations of proteins
-    :param time_stamp: str
-    :param class_list: list of CAZy class names
-
-    Return predictions_df with the calc ARI and RI added in as new columns (ARI and RI calc
-    per protein, and each protein is a separate row).
+    Return predictions_df with RI and ARI added in.
     """
     ri_scores = []
     ari_scores = []
 
+    family_names = foundation_dict()
+    family_names list(family_names.keys())
+
     row_index = 0
-    for row_index in tqdm(range(len(prediction_df["Prediction_tool"])), desc="Calculating CAZy class ARI and RI"):
+    for row_index in tqdm(
+        range(len(predictions_df["Prediction_tool"])), desc="Calculating CAZy family ARI and RI",
+    ):
+
         ground_truths_row = ground_truth_df.iloc[row_index]
         predictions_row = prediction_df.iloc[row_index]
 
-        y_true = ground_truths_row[class_list]
-        y_pred = predictions_row[class_list]
+        y_true = list(ground_truths_row[family_names])
+        y_pred = list(predictions_row[family_names])
 
         ri = rand_score(y_true, y_pred)
         ri_scores.append(ri)
@@ -524,196 +160,391 @@ def calculate_class_ari(
     return prediction_df
 
 
-def calculate_class_stats(
-    ground_truth_df,
-    prediction_df,
-    time_stamp,
-    args,
-    class_list=["GH", "GT", "PL", "CE", "AA", "CBM"],
-):
-    """Calculate the adjusted rand index and rand index of CAZy class annotation predictions.
+def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
+    """Calculate the Specificity, Sensitivity, Precision, Fbeta, and accuracy for each CAZy family.
 
     :param predictions_df: df of predicted CAZy family annotations from all prediction tools
     :param ground_truths_df: df of CAZy annotations of proteins
-    :param time_stamp: str
-    :param args: cmd-line parser
-    :param class_list: list of CAZy class names
+    :param time_stamp: str, time evaluation was started
+    :param args: cmd_line args parser
 
-    Return predictions_df including calculated CAZy class statistics.
+    Return nothing, instead write out the created dataframes to disk.
     """
-    across_all_test_sets_data = []
+    specific_logger = build_logger(args.output, "cazy_family_performance.log")
+    logger = logging.getLogger(__name__)
 
-    # evaluate performance across all test sets and all proteins
+    stats_orientated_df_data = []  # [[CAZyFam, Prediction_Tool, Specificity, Recall, Fbeta, Accuracy]]
+    long_dataframe_data = []  # [[CAZyFam, StatParameter, PredicitonTool, StatValue]]
+
+    family_names = foundation_dict()
+    family_names list(family_names.keys())
+
     for tool in ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]:
-        # retrieve the rows of interest from from predictions and ground truths df
-        tool_class_ground_truths = ground_truth_df.loc[ground_truth_df["Prediction_tool"] == tool]
-        tool_class_predictions = prediction_df.loc[prediction_df["Prediction_tool"] == tool]
+        # retrieve the relevant rows for the prediction tool
+        grnd_trth_df = ground_truths_df.loc[ground_truths_df["Prediction_tool"] == tool]
+        pred_df = predictions_df.loc[predictions_df["Prediction_tool"] == tool]
 
-        for cazy_class in tqdm(class_list, desc=f"Calc CAZy class stats for {tool}"):
-            data = [tool, cazy_class]
+        # build an empty dataframe to store all predictions EXCEPT true negative non-CAZymes
+        tp_fp_fn_ground_truths = pd.DataFrame(columns=list(grnd_trth_df.columns))
+        tp_fp_fn_predictions = pd.DataFrame(columns=list(pred_df.columns))
 
-            y_true = tool_class_ground_truths[cazy_class]
-            y_pred = tool_class_predictions[cazy_class]
+        # exclude true negative non-CAZyme predictions
+        index = 0
+        for index in range(len(grnd_trth_df["Prediction_tool"])):
+            y_true = grnd_trth_df.iloc[index]
+            y_true = list(y_true[family_names])  # retrieve only the cazy family 0/1 annotations
+            
+            y_pred = pred_df.iloc[index]
+            y_pred = list(y_pred[family_names])  # retrieve only the cazy family 0/1 annotations
 
+            if (1 not in y_true) and (1 not in y_pred):
+                # if y_true and y_pred are all 0s, this is a true negative non-CAZyme prediction
+                # do not include true negative non-CAZyme predictions
+                continue
+            else:
+                # add TP, FP or FN result to the dataframes
+                tp_fp_fn_ground_truths = tp_fp_fn_ground_truths.append(grnd_trth_df.iloc[index])
+                tp_fp_fn_predictions = tp_fp_fn_predictions.append(pred_df.iloc[index])
+
+        # iterate through the families and evaluate the CAZy family performance
+        for fam in tqdm(family_names, desc=f"Evaluating performance per CAZy family for {tool}"):
+            y_true = list(tp_fp_fn_ground_truths[fam])
+            y_pred = list(tp_fp_fn_predictions)
+
+            # check if family was predicted and was included in test set as a known annotations
+            if (1 not in y_true) and (1 not in y_pred):
+                # do not include in statistics
+                logger.warning(
+                    f"{fam} not predicted by {tool} and not in known annotations\n"
+                    f"Excluding {fam} from evaluation by setting all stats results as NaN"
+                )
+                specific_logger.warning(
+                    f"{fam} not predicted by {tool} and not in known annotations. "
+                    f"Excluding {fam} from evaluation by setting all stats results as NaN"
+                )
+                specificity = np.nan
+                sensitivity = np.nan
+                precision = np.nan
+                fbeta = np.nan
+                accuracy = np.nan
+
+                # [[CAZyFam, Prediction_Tool, Specificity, Recall, Fbeta, Accuracy]]
+                stats_orientated_row = [
+                    fam,
+                    tool,
+                    specificity,
+                    sensitivity,
+                    precision,
+                    fbeta,
+                    accuracy,
+                ]
+                stats_orientated_df_data.append(stats_orientated_row)
+
+                for stat in [
+                    [specificity, "Specificity"],
+                    [sensitivity, "Recall"],
+                    [precision, "Precision"],
+                    [fbeta, "Fbeta_score"],
+                    [accuracy, "Accuracy"],
+                ]:
+                    # [[CAZyFam, StatParameter, PredicitonTool, StatValue]]
+                    longform_row = [fam, stat[1], tool, stat[0]]
+                    long_dataframe_data.append(longform_row)
+
+                continue
+
+            # else: calculate performance for the CAZy family
+
+            # recall aka sensitivity
+            recall = recall_score(y_true, y_pred)
+            long_dataframe_data.append([fam, "Recall", tool, recall])
+
+            precision = precision_score(y_true, y_pred)
+            long_dataframe_data.append([fam, "Precision", tool, recall])
+
+            fbeta = fbeta_score(y_true, y_pred, beta=args.beta)
+            long_dataframe_data.append([fam, "Fbeta_score", tool, fbeta])
+
+            # create confusion matrix for calculating Specificty and Accuracy
             cm = confusion_matrix(y_true, y_pred)
             try:
                 tn = cm[0][0]
                 fn = cm[1][0]
                 tp = cm[1][1]
                 fp = cm[0][1]
+            except IndexError as e:
+                logger.warning(
+                    f"Error raised when creating confusion matrix for {tool}: {fam},\n"
+                    f"Error raised:\n{e}"
+                )
+                specific_logger.warning(
+                    f"Error raised when creating confusion matrix for {tool}: {fam},\n"
+                    f"Error raised:\n{e}\n"
+                    f"Prediction Tool: {tool}\tFamily: {fam}\tStat: building confusion matrix\n"
+                    f"y_true: {y_true}\ny_pred: {y_pred}\n"
+                )
 
-                specificity = tn / (tn + fp)
+                specificity = np.nan
+                long_dataframe_data.append([fam, "Specificity", tool, specificity])
 
-                recall = recall_score(y_true, y_pred)
+                accuracy = np.nan
+                long_dataframe_data.append([fam, "Accuracy", tool, accuracy])
 
-                precision = precision_score(y_true, y_pred)
+                # [[CAZyFam, Prediction_Tool, Specificity, Recall, Fbeta, Accuracy]]
+                stats_orientated_row = [
+                    fam,
+                    tool,
+                    specificity,
+                    sensitivity,
+                    precision,
+                    fbeta,
+                    accuracy,
+                ]
+                stats_orientated_df_data.append(stats_orientated_row)
 
-                fbeta = fbeta_score(y_true, y_pred, beta=args.beta)
+            # calculate specificity and accuracy
+            specificity = tn / (tn + fp)
+            long_dataframe_data.append([fam, "Specificity", tool, specificity])
 
-                accuracy = (tp + tn)/(tp + fp + fn + tn)
+            accuracy = (tp + tn)/(tp + fp + fn + tn)
+            long_dataframe_data.append([fam, "Accuracy", tool, accuracy])
 
-                data.append(specificity)
-                data.append(recall)
-                data.append(precision)
-                data.append(fbeta)
-                data.append(accuracy)
+            # [[CAZyFam, Prediction_Tool, Specificity, Recall, Fbeta, Accuracy]]
+            stats_orientated_row = [
+                fam,
+                tool,
+                specificity,
+                sensitivity,
+                precision,
+                fbeta,
+                accuracy,
+            ]
+            stats_orientated_df_data.append(stats_orientated_row)
 
-            except IndexError:
-                data.append(np.nan)
-                data.append(np.nan)
-                data.append(np.nan)
-                data.append(np.nan)
-                data.append(np.nan)
-
-            across_all_test_sets_data.append(data)
-
-    # build dataframe using across_all_test_sets_data
-    class_stats_df = pd.DataFrame(
-        across_all_test_sets_data,
+    # build statistics orientated datafrae
+    stats_df = pd.DataFrame(
+        stats_orientated_df,
         columns=[
+            "CAZy_family",
             "Prediction_tool",
-            "CAZy_class",
             "Specificity",
             "Recall",
-            "Precision",
             "Fbeta_score",
             "Accuracy",
         ],
     )
-    class_stats_df.to_csv(f"class_stats_across_all_test_sets_{time_stamp}.csv")
+    stats_df.to_csv(f"cazy_fam_stats_fam_per_row_{time_stamp}.csv")
+
+    # build long form dataframe
+    longform_df = pd.DataFrame(
+        long_dataframe_data,
+        columns=["CAZy_family", "Stat_parameter", "Prediction_tool", "Stat_value"],
+    )
+    longform_df.to_csv(f"cazy_fam_long_form_stats_df_{time_stamp}.csv")
+
     return
 
 
-def calculate_class_stats_by_testsets(
-    ground_truth_df,
-    prediction_df,
-    time_stamp,
-    args,
-    class_list=["GH", "GT", "PL", "CE", "AA", "CBM"],
-):
-    """Calculate statistical parameters for evaluating performance of CAZy clas prediction for each
-    test set and each prediction tool.
+def calc_fam_stats_per_testset(predictions_df, ground_truths_df, time_stamp, args):
+    """Calculate the Specificity, Sensitivity, Precision, Fbeta, and accuracy for each CAZy family.
+    
+    Calculate the performance per test set.
 
     :param predictions_df: df of predicted CAZy family annotations from all prediction tools
     :param ground_truths_df: df of CAZy annotations of proteins
-    :param time_stamp: str
-    :param args: cmd-line args parser
-    :param class_list: list of CAZy class names
+    :param time_stamp: str, time evaluation was started
+    :param args: cmd_line args parser
 
-    Return predictions_df including calculated CAZy class statistics.
+    Return nothing, instead write out the created dataframes to disk.
     """
+    specific_logger = build_logger(args.output, "cazy_family_performance_per_testset.log")
     logger = logging.getLogger(__name__)
 
+    stats_orientated_df_data = []  # [[CAZyFam, Prediction_Tool, Specificity, Recall, Fbeta, Acc]]
+    long_dataframe_data = []  # [[CAZyFam, StatParameter, PredicitonTool, StatValue]]
+
+    family_names = foundation_dict()
+    family_names list(family_names.keys())
+
     # get the names of the genomic accessions, one accession = one test set
-    all_genomic_accessions = ground_truth_df["Genomic_accession"]
+    all_genomic_accessions = ground_truths_df["Genomic_accession"]
     all_genomic_accessions = set(all_genomic_accessions)
 
-    class_stats_data = []  # Genomic_accession, Prediction_tool, Statistic_parameter, Stat_value
-
     for tool in ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]:
-        # retrieve the rows of interest from from predictions and ground truths df
-        tool_class_ground_truths = ground_truth_df.loc[ground_truth_df["Prediction_tool"] == tool]
-        tool_class_predictions = prediction_df.loc[prediction_df["Prediction_tool"] == tool]
+        # retrieve the relevant rows for the prediction tool
+        grnd_trth_df = ground_truths_df.loc[ground_truths_df["Prediction_tool"] == tool]
+        pred_df = predictions_df.loc[predictions_df["Prediction_tool"] == tool]
 
-        for accession in tqdm(all_genomic_accessions, desc="Evaluate Class prediction by test set"):
-            test_set_tool_class_ground_truths = tool_class_ground_truths.loc[tool_class_ground_truths["Genomic_accession"] == accession]
-            test_set_tool_class_predictions = tool_class_predictions.loc[tool_class_predictions["Genomic_accession"] == accession]
+        # evaluate the performance for each genomic accession, 1 genomic accession = 1 test set
+        # one accession is one test set
+        for accession in tqdm(
+            all_genomic_accessions,
+            desc=f"Evaluate family prediction by test set for {tool}",
+        ):
+            testset_tool_ground_truths = tool_ground_truths.loc[
+                grnd_trth_df["Genomic_accession"] == accession
+            ]
+            testset_tool_predictions = tool_predictions.loc[
+                pred_df["Genomic_accession"] == accession
+            ]
 
-            for cazy_class in class_list:
-                y_true = test_set_tool_class_ground_truths[cazy_class]
-                y_pred = test_set_tool_class_predictions[cazy_class]
+            # build an empty dataframe to store all predictions EXCEPT true negative non-CAZymes
+            tp_fp_fn_ground_truths = pd.DataFrame(columns=list(testset_tool_ground_truths.columns))
+            tp_fp_fn_predictions = pd.DataFrame(columns=list(testset_tool_predictions.columns))
 
-                # exclude true negatives
-                # (where protein is predicted to be a non-CAZyme and the protein
-                # is not included in CAZy)
-                pred = (y_true == 0).all()
-                known = (y_true == 0).all()
-                if pred and known:
-                    class_stats_data.append([accession, tool, cazy_class, "Specificity", np.nan])
-                    class_stats_data.append([accession, tool, cazy_class, "Recall", np.nan])
-                    class_stats_data.append([accession, tool, cazy_class, "Precision", np.nan])
-                    class_stats_data.append([accession, tool, cazy_class, "Fbeta_score", np.nan])
-                    class_stats_data.append([accession, tool, cazy_class, "Accuracy", np.nan])
+            # exclude true negative non-CAZyme predictions
+            index = 0
+            for index in range(len(grnd_trth_df["Prediction_tool"])):
+                y_true = testset_tool_ground_truths.iloc[index]
+                y_true = list(y_true[family_names])  # retrieve only the cazy family 0/1 annotations
+                
+                y_pred = testset_tool_predictions.iloc[index]
+                y_pred = list(y_pred[family_names])  # retrieve only the cazy family 0/1 annotations
+
+                if (1 not in y_true) and (1 not in y_pred):
+                    # if y_true and y_pred are all 0s, this is a true negative non-CAZyme prediction
+                    # do not include true negative non-CAZyme predictions
+                    continue
+                else:
+                    # add TP, FP or FN result to the dataframes
+                    tp_fp_fn_ground_truths = tp_fp_fn_ground_truths.append(grnd_trth_df.iloc[index])
+                    tp_fp_fn_predictions = tp_fp_fn_predictions.append(pred_df.iloc[index])
+
+            # iterate through the families and evaluate the CAZy family performance
+            for fam in family_names:
+                y_true = list(tp_fp_fn_ground_truths[fam])
+                y_pred = list(tp_fp_fn_predictions)
+
+                # check if family was predicted and was included in test set as a known annotations
+                if (1 not in y_true) and (1 not in y_pred):
+                    # do not include in statistics
+                    logger.warning(
+                        f"{fam} not predicted by {tool} and not in known annotations\n"
+                        f"Excluding {fam} from evaluation by setting all stats results as NaN"
+                    )
+                    specific_logger.warning(
+                        f"{fam} not predicted by {tool} and not in known annotations. "
+                        f"Excluding {fam} from evaluation by setting all stats results as NaN"
+                    )
+                    specificity = np.nan
+                    sensitivity = np.nan
+                    precision = np.nan
+                    fbeta = np.nan
+                    accuracy = np.nan
+
+                    # [[CAZyFam, Prediction_Tool, Specificity, Recall, Fbeta, Accuracy]]
+                    stats_orientated_row = [
+                        fam,
+                        tool,
+                        specificity,
+                        sensitivity,
+                        precision,
+                        fbeta,
+                        accuracy,
+                    ]
+                    stats_orientated_df_data.append(stats_orientated_row)
+
+                    for stat in [
+                        [specificity, "Specificity"],
+                        [sensitivity, "Recall"],
+                        [precision, "Precision"],
+                        [fbeta, "Fbeta_score"],
+                        [accuracy, "Accuracy"],
+                    ]:
+                        # [[CAZyFam, StatParameter, PredicitonTool, StatValue]]
+                        longform_row = [fam, stat[1], tool, stat[0]]
+                        long_dataframe_data.append(longform_row)
+
                     continue
 
+                # else: calculate performance for the CAZy family
+
+                # recall aka sensitivity
                 recall = recall_score(y_true, y_pred)
-                class_stats_data.append([accession, tool, cazy_class, "Recall", recall])
+                long_dataframe_data.append([fam, "Recall", tool, recall])
 
                 precision = precision_score(y_true, y_pred)
-                class_stats_data.append([accession, tool, cazy_class, "Precision", precision])
+                long_dataframe_data.append([fam, "Precision", tool, recall])
 
                 fbeta = fbeta_score(y_true, y_pred, beta=args.beta)
-                class_stats_data.append([accession, tool, cazy_class, "Fbeta_score", fbeta])
+                long_dataframe_data.append([fam, "Fbeta_score", tool, fbeta])
 
+                # create confusion matrix for calculating Specificty and Accuracy
                 cm = confusion_matrix(y_true, y_pred)
                 try:
                     tn = cm[0][0]
                     fn = cm[1][0]
                     tp = cm[1][1]
                     fp = cm[0][1]
-                    accuracy = (tp + tn)/(tp + fp + fn + tn)
-                    class_stats_data.append([accession, tool, cazy_class, "Accuracy", accuracy])
-
                 except IndexError as e:
-                    class_stats_data.append([accession, tool, cazy_class, "Accuracy", np.nan])
                     logger.warning(
-                        f"Error raised when creating confusion matrix for protein {accession}, "
-                        f"{tool}, {cazy_class}, when calculating accuracy.\nError raised:\n{e}"
+                        f"Error raised when creating confusion matrix for {tool}: {fam},\n"
+                        f"Error raised:\n{e}"
+                    )
+                    specific_logger.warning(
+                        f"Error raised when creating confusion matrix for {tool}: {fam},\n"
+                        f"Error raised:\n{e}\n"
+                        f"Prediction Tool: {tool}\tFamily: {fam}\tStat: building confusion matrix\n"
+                        f"y_true: {y_true}\ny_pred: {y_pred}\n"
                     )
 
-                try:
-                    tn = cm[0][0]
-                    fp = cm[0][1]
-                    specificity = tn / (tn + fp)
-                    class_stats_data.append(
-                        [
-                            accession,
-                            tool,
-                            cazy_class,
-                            "Specificity",
-                            specificity,
-                        ],
-                    )
+                    specificity = np.nan
+                    long_dataframe_data.append([fam, "Specificity", tool, specificity])
 
-                except IndexError as e:
-                    class_stats_data.append([accession, tool, cazy_class, "Specificity", np.nan])
-                    logger.warning(
-                        f"Error raised when creating confusion matrix for protein {accession}, "
-                        f"{tool}, {cazy_class}, when calculating specificity.\nError raised:\n{e}"
-                    )
+                    accuracy = np.nan
+                    long_dataframe_data.append([fam, "Accuracy", tool, accuracy])
 
-    # build dataframe using class_stats_data
-    class_stats_df = pd.DataFrame(
-        class_stats_data,
-        columns = [
-            "Genomic_accession",
+                    # [[CAZyFam, Prediction_Tool, Specificity, Recall, Fbeta, Accuracy]]
+                    stats_orientated_row = [
+                        fam,
+                        tool,
+                        specificity,
+                        sensitivity,
+                        precision,
+                        fbeta,
+                        accuracy,
+                    ]
+                    stats_orientated_df_data.append(stats_orientated_row)
+
+                # calculate specificity and accuracy
+                specificity = tn / (tn + fp)
+                long_dataframe_data.append([fam, "Specificity", tool, specificity])
+
+                accuracy = (tp + tn)/(tp + fp + fn + tn)
+                long_dataframe_data.append([fam, "Accuracy", tool, accuracy])
+
+                # [[CAZyFam, Prediction_Tool, Specificity, Recall, Fbeta, Accuracy]]
+                stats_orientated_row = [
+                    fam,
+                    tool,
+                    specificity,
+                    sensitivity,
+                    precision,
+                    fbeta,
+                    accuracy,
+                ]
+                stats_orientated_df_data.append(stats_orientated_row)
+
+    # build statistics orientated datafrae
+    stats_df = pd.DataFrame(
+        stats_orientated_df,
+        columns=[
+            "CAZy_family",
             "Prediction_tool",
-            "CAZy_class",
-            "Statistic_parameter",
-            "Statistic_value",
+            "Specificity",
+            "Recall",
+            "Fbeta_score",
+            "Accuracy",
         ],
     )
-    class_stats_df.to_csv(f"class_stats_per_test_set_{time_stamp}.csv")
+    stats_df.to_csv(f"cazy_fam_stats_per_testset_fam_per_row_{time_stamp}.csv")
+
+    # build long form dataframe
+    longform_df = pd.DataFrame(
+        long_dataframe_data,
+        columns=["CAZy_family", "Stat_parameter", "Prediction_tool", "Stat_value"],
+    )
+    longform_df.to_csv(f"cazy_fam_long_form_stats_per_testset_df_{time_stamp}.csv")
 
     return
 

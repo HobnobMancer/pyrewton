@@ -65,7 +65,7 @@ def build_class_annotation_dataframes(fam_predictions_df, fam_ground_truths_df, 
         # get the prediction and ground truth for each CAZy class
         for cazy_class in ["GH", "GT", "PL", "CE", "AA", "CBM"]:
             # retrieve names of CAZy families in the CAZy class
-            fam_names = [col_name for col_name in ground_truths_df.columns if col_name.startswith(cazy_class)]
+            fam_names = [col_name for col_name in fam_ground_truths_df.columns if col_name.startswith(cazy_class)]
 
             class_fam_ground_truths = row_ground_truths[fam_names]
             class_fam_predictions = row_predictions[fam_names]
@@ -115,7 +115,7 @@ def build_class_annotation_dataframes(fam_predictions_df, fam_ground_truths_df, 
         ],
     )
 
-    return class_predictions_df
+    return class_predictions_df, class_ground_truths_df
 
 
 def calculate_class_ari_ri(
@@ -176,7 +176,8 @@ def calculate_class_stats(
 
     Return predictions_df including calculated CAZy class statistics.
     """
-    indx_err_logger = build_logger(args.output, "cazy_class_confusion_matrix_errors.log")
+    logger = logging.getLogger(__name__)
+    specific_logger = build_logger(args.output, "cazy_class_confusion_matrix_errors.log")
 
     across_all_test_sets_data = []
 
@@ -218,6 +219,40 @@ def calculate_class_stats(
             y_true = list(tp_fp_fn_ground_truths[cazy_class])
             y_pred = list(tp_fp_fn_predictions[cazy_class])
 
+            # check if the CAZy class was included in predictions and ground truths
+            # if not exclude the class from the evaluation
+            if (1 not in y_true) and (1 not in y_pred):
+                # do not include in statistics
+                logger.warning(
+                    f"{cazy_class} not predicted by {tool} in {accession} and not in known "
+                    f"annotations\nExcluding {cazy_class} from evaluation by setting all "
+                    "stats results as NaN"
+                )
+                specific_logger.warning(
+                    f"{cazy_class} not predicted by {tool} in {accession} and not in known "
+                    f"annotations\nExcluding {cazy_class} from evaluation by setting all "
+                    "stats results as NaN"
+                )
+
+                specificity = np.nan
+                class_stats_data.append(
+                    [accession, tool, cazy_class, "Specificity", specificity],
+                )
+
+                sensitivity = np.nan
+                class_stats_data.append([accession, tool, cazy_class, "Recall", recall])
+                
+                precision = np.nan
+                class_stats_data.append([accession, tool, cazy_class, "Precision", precision])
+                
+                fbeta = np.nan
+                class_stats_data.append([accession, tool, cazy_class, "Fbeta_score", fbeta])
+                
+                accuracy = np.nan
+                class_stats_data.append([accession, tool, cazy_class, "Accuracy", accuracy])
+
+                continue
+
             recall = recall_score(y_true, y_pred)
             data.append(recall)
 
@@ -238,7 +273,7 @@ def calculate_class_stats(
                 data.append(np.nan)  # add specificity
                 data.append(np.nan)  # add acuracy
 
-                indx_err_logger.warning(
+                specific_logger.warning(
                     f"Prediction Tool: {tool}\tCAZy class: {cazy_class}\n"
                     f"y_true: {y_true}\ny_pred: {y_pred}\n"
                 )
@@ -289,7 +324,7 @@ def calculate_class_stats_by_testsets(
 
     Return predictions_df including calculated CAZy class statistics.
     """
-    indx_err_logger = build_logger(
+    specific_logger = build_logger(
         args.output,
         "cazy_class_confusion_matrix_errors_per_testset.log",
     )
@@ -307,7 +342,10 @@ def calculate_class_stats_by_testsets(
         tool_predictions = prediction_df.loc[prediction_df["Prediction_tool"] == tool]
 
         # one accession is one test set
-        for accession in tqdm(all_genomic_accessions, desc="Evaluate Class prediction by test set"):
+        for accession in tqdm(
+            all_genomic_accessions,
+            desc=f"Evaluate Class prediction by test set for {tool}:",
+        ):
             testset_tool_ground_truths = tool_ground_truths.loc[
                 tool_ground_truths["Genomic_accession"] == accession
             ]
@@ -345,6 +383,40 @@ def calculate_class_stats_by_testsets(
                 y_true = list(tp_fp_fn_ground_truths[cazy_class])
                 y_pred = list(tp_fp_fn_predictions[cazy_class])
 
+                # check if the CAZy class was included in predictions and ground truths
+                # if not exclude the class from the evaluation
+                if (1 not in y_true) and (1 not in y_pred):
+                    # do not include in statistics
+                    logger.warning(
+                        f"{cazy_class} not predicted by {tool} in {accession} and not in known "
+                        f"annotations\nExcluding {cazy_class} from evaluation by setting all "
+                        "stats results as NaN"
+                    )
+                    specific_logger.warning(
+                        f"{cazy_class} not predicted by {tool} in {accession} and not in known "
+                        f"annotations\nExcluding {cazy_class} from evaluation by setting all "
+                        "stats results as NaN"
+                    )
+
+                    specificity = np.nan
+                    class_stats_data.append(
+                        [accession, tool, cazy_class, "Specificity", specificity],
+                    )
+
+                    sensitivity = np.nan
+                    class_stats_data.append([accession, tool, cazy_class, "Recall", recall])
+                    
+                    precision = np.nan
+                    class_stats_data.append([accession, tool, cazy_class, "Precision", precision])
+                    
+                    fbeta = np.nan
+                    class_stats_data.append([accession, tool, cazy_class, "Fbeta_score", fbeta])
+                    
+                    accuracy = np.nan
+                    class_stats_data.append([accession, tool, cazy_class, "Accuracy", accuracy])
+
+                    continue
+
                 recall = recall_score(y_true, y_pred)
                 class_stats_data.append([accession, tool, cazy_class, "Recall", recall])
 
@@ -370,7 +442,7 @@ def calculate_class_stats_by_testsets(
                         f"Error raised when creating confusion matrix for protein {accession}, "
                         f"{tool}, {cazy_class}, when calculating accuracy.\nError raised:\n{e}"
                     )
-                    indx_err_logger.warning(
+                    specific_logger.warning(
                         f"Prediction Tool: {tool}\tClass: {cazy_class}\tAccession: {accession}\t"
                         f"Stat: Specificity\ny_true: {y_true}\ny_pred: {y_pred}\n"
                     )
@@ -396,7 +468,7 @@ def calculate_class_stats_by_testsets(
                         f"Error raised when creating confusion matrix for protein {accession}, "
                         f"{tool}, {cazy_class}, when calculating specificity.\nError raised:\n{e}"
                     )
-                    indx_err_logger.warning(
+                    specific_logger.warning(
                         f"Prediction Tool: {tool}\tClass: {cazy_class}\tAccession: {accession}\t"
                         f"Stat: Specificity\ny_true: {y_true}\ny_pred: {y_pred}\n"
                     )

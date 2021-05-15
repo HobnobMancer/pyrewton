@@ -24,7 +24,7 @@
 :func parse_predictions: Parses the raw output files from the CAZyme prediction tools
 
 """
-
+import sys
 
 import pandas as pd
 
@@ -84,19 +84,19 @@ def evaluate_performance(predictions, cazy_dict, args):
         class_ground_truths_df,
         all_family_predictions,
         all_family_ground_truths,
-    ) = build_prediction_dataframes(
-        predictions,
-        time_stamp,
-        cazy_dict,
-    )
+    ) = build_prediction_dataframes(predictions, time_stamp, cazy_dict, args)
 
     binary_c_nc_statistics.to_csv(f'binary_classification_evaluation_{time_stamp}.csv')  # USED FOR EVALUATION IN R
 
     # bootstrap resample binary CAZyme/non-CAZyme classifications, to evaluate performance range
-    binary_classification.bootstrap_binary_c_nc_classifications(all_binary_c_nc_dfs, args)
+    binary_classification.bootstrap_binary_c_nc_classifications(
+        all_binary_c_nc_dfs,
+        time_stamp,
+        args,
+    )
 
     # write out ground truth CAZy class annotations to disk
-    all_class_ground_truths.to_csv(f"cazy_class_ground_truths_{time_stamp}.csv")
+    class_ground_truths_df.to_csv(f"cazy_class_ground_truths_{time_stamp}.csv")
 
     # write out ground truth CAZy family annotations to disk
     all_family_ground_truths.to_csv(f"cazy_family_ground_truths_{time_stamp}.csv")
@@ -112,76 +112,60 @@ def evaluate_performance(predictions, cazy_dict, args):
 
     # Calculate Fbeta, Sens, Spec and Acc for predicting each CAZy class
     # calculate the fbeta_score, sensitivity(recall), specificity and accuracy per CAZy class
-    calculate_class_stats(class_ground_truths_df, class_predictions_df, time_stamp, args)
-
-    calculate_class_stats_by_testsets(
+    class_classifications.calculate_class_stats(
         class_ground_truths_df,
         class_predictions_df,
         time_stamp,
         args,
     )
+
+    class_classifications.calculate_class_stats_by_testsets(
+        class_ground_truths_df,
+        class_predictions_df,
+        time_stamp,
+        args,
+    )
+
+    # write out predicted CAZy class annotations and RI and ARI to disk
+    class_predictions_df.to_csv(f"cazy_class_predictions_{time_stamp}.csv") 
+    # USED FOR EVALUATION IN R
 
     # Evaluate the performance of CAZy Family predictions
     # Calculate ARI and RI for multilabel evaluation, and add to CAZy family prediction dataframe
-    class_predictions_df = calculate_family_ari(
-        class_ground_truths_df,
-        class_predictions_df,
+    all_family_predictions = family_classifications.calculate_family_ari_ri(
+        all_family_predictions,
+        all_family_ground_truths,
         time_stamp,
     )
     # write out predicted CAZy class annotations and RI and ARI to disk
-    all_class_predictions.to_csv(f"cazy_class_predictions_{time_stamp}.csv")   # USED FOR EVALUATION IN R
+    all_family_predictions.to_csv(f"cazy_family_predictions_{time_stamp}.csv")   # USED FOR EVALUATION IN R
 
-    # Calculate Fbeta, Sens, Spec and Acc for predicting each CAZy class
-    # calculate the fbeta_score, sensitivity(recall), specificity and accuracy per CAZy class
-    calculate_class_stats(class_ground_truths_df, class_predictions_df, time_stamp, args)
-
-    calculate_class_stats_by_testsets(
-        class_ground_truths_df,
-        class_predictions_df,
-        time_stamp,
-        args,
-    )
-
-
-
-
-    # evaluate the performance of predicting the correct CAZy family
-    family_classifications.calc_fam_fbeta_score(
-        all_family_predictions,
-        all_family_ground_truths,
-        time_stamp,
-        args,
-    )
-      # USED FOR EVALUATION IN R
-    family_classifications.calc_fam_fbeta_score_per_testset(
-        all_family_predictions,
-        all_family_ground_truths,
-        time_stamp,
-        predictions,
-        args,
-    )
-      # USED FOR EVALUATION IN R
+    # evaluate the performance of predicting the correct CAZy family ACROSS ALL test sets
     family_classifications.calc_fam_stats(
         all_family_predictions,
         all_family_ground_truths,
         time_stamp,
         args,
-    )
-      # USED FOR EVALUATION IN R
+    )  # creates a dataframe USED FOR EVALUATION IN R
 
-    # evaluate the performance of predicting the correct CAZy class
-
-      # USED FOR EVALUATION IN R
+    # evaluate the performance of predicting the correct CAZy family PER test sets
+    family_classifications.calc_fam_stats_per_testset(
+        all_family_predictions,
+        all_family_ground_truths,
+        time_stamp,
+        args,
+    )  # creates a dataframe USED FOR EVALUATION IN R
 
     return
 
 
-def build_prediction_dataframes(predictions, time_stamp, cazy_dict):
+def build_prediction_dataframes(predictions, time_stamp, cazy_dict, args):
     """Parse prediction outputs from prediction tools and create dataframes for the stats eval.
 
     :param predictions: list of TestSet class instances
     :param time_stamp: str, data and time when evaluation started, used for naming files
     :param cazy_dict: dict keyed by GenBank protein accession, valued by CAZy family classifications
+    :param args: cmd-line arguments parser
 
     Return:
     all_binary_c_nc_dfs - list of pandas dfs of binary CAZyme/non-CAZyme predicitons, one df is
@@ -241,7 +225,8 @@ def build_prediction_dataframes(predictions, time_stamp, cazy_dict):
             "eCAMI": ecami_predictions,
         }
 
-        binary_classifications = []  # store all binary C/NC classifications for this test set
+        all_binary_classifications = []  # store all binary C/NC classifications for this test set
+        # all_binary_classifications = [[protien_accession, tool, cazyme classification],]
 
         for tool in tqdm(standardised_outputs, "Adding raw predictions to cumlative dfs"):
 
@@ -259,10 +244,10 @@ def build_prediction_dataframes(predictions, time_stamp, cazy_dict):
                 family_predictions,
                 family_ground_truths,
             ) = family_classifications.get_family_classifications(
-                tool[0],
-                tool[1],
-                cazy_dict,
-                test_set.source,
+                predictions=standardised_outputs[tool],
+                prediciton_tool=tool,
+                cazy_dict=cazy_dict,
+                genomic_accession=test_set.source,
             )
 
             all_family_predictions += family_predictions
@@ -318,9 +303,10 @@ def build_prediction_dataframes(predictions, time_stamp, cazy_dict):
     binary_c_nc_statistics = pd.DataFrame(
         binary_c_nc_statistics,
         columns=[
-            'Statistic parameter',
-            'Genomic assembly',
-            'Prediction tool',
+            'Statistic_parameter',
+            'Genomic_assembly',
+            'Prediction_tool',
+            'Statistic_value',
         ],
     )
 
