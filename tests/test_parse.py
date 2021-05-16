@@ -25,7 +25,7 @@ pytest -v
 
 import pytest
 
-from pyrewton.cazymes.prediction import parse
+from pyrewton.cazymes.evaluate_tools import parse
 
 
 # test building instances of CazymeDomain

@@ -18,10 +18,12 @@
 # The MIT License
 """Manage input and output directory handling."""
 
+
+import logging
 import shutil
 
 
-def make_output_directory(output, logger, force, nodelete):
+def make_output_directory(output, force, nodelete):
     """Create output directory for genomic files.
 
     :param args: Namespace with cmd-line arguments
@@ -34,6 +36,7 @@ def make_output_directory(output, logger, force, nodelete):
     Raises FileExistsError if an attempt is made to create a directory that already
     exists, without a suitable args.force/args.nodelete combination
     """
+    logger = logging.getLogger(__name__)
     if force is True:
         logger.warning(
             "Output directory %s exists, nodelete is %s", output, nodelete,
@@ -61,6 +64,7 @@ def write_out_dataframe(dataframe, logger, outdir, force):
     :param outdir: cmd-args, Path, output directory
     :param force: booleon, cmd-line argument to enable/disable over writing of existing files
     """
+    logger = logging.getLogger(__name__)
     # Check if overwrite of existing directory will occur
     logger.info("Checking if output directory for dataframe already exists")
     if outdir.exists():
@@ -87,6 +91,7 @@ def write_out_pre_named_dataframe(dataframe, df_name, logger, outdir, force):
     :param outdir: cmd-args, Path, output directory
     :param force: booleon, cmd-line argument to enable/disable over writing of existing files
     """
+    logger = logging.getLogger(__name__)
     if dataframe is None:
         logger.warning(
             f"Dataframe for {df_name} does not exist\n"

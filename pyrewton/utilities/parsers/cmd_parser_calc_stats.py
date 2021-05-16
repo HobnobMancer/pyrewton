@@ -43,6 +43,12 @@ def build_parser(argv: Optional[List] = None):
         metavar="input directory",
         help="Path to directory containing outputs from prediction tools",
     )
+    parser.add_argument(
+        "cazy",
+        type=Path,
+        metavar="cazy annotations dict",
+        help="Path to JSON file of CAZy annotations of proteins (ground truths)",
+    )
 
     # Add optional arguments to parser
     # Add option to define F-beta weighting
@@ -95,7 +101,14 @@ def build_parser(argv: Optional[List] = None):
         default=sys.stdout,
         help="Directory to which all outputs are written",
     )
-
+    # Add option to change the number rounds of bootstrapping
+    parser.add_argument(
+        "-r",
+        "--bs_resampling",
+        type=int,
+        default=100,
+        help="Number of rounds of bootstrap resampling",
+    )
     # Add option to change the number of test sets used for bootstrapping
     parser.add_argument(
         "-s",
@@ -104,15 +117,6 @@ def build_parser(argv: Optional[List] = None):
         default=6,
         help="Number of test sets used for bootstrapping CAZyme/non-CAZyme predictions",
     )
-    # Add option to change the number rounds of bootstrapping
-    parser.add_argument(
-        "-s",
-        "--bs_resampling",
-        type=int,
-        default=100,
-        help="Number of rounds of bootstrap resampling",
-    )
-
     # Add option for more detail (verbose) logging
     parser.add_argument(
         "-v",

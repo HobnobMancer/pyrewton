@@ -63,7 +63,7 @@ from pandas.errors import EmptyDataError
 from tqdm import tqdm
 from urllib.error import HTTPError
 
-from pyrewton.utilities import build_logger
+from pyrewton.utilities import config_logger
 from pyrewton.utilities.cmd_parser_get_uniprot_proteins import build_parser
 from pyrewton.utilities.file_io import make_output_directory, write_out_pre_named_dataframe
 
@@ -82,7 +82,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Initate logger
     # Note: log file only created if specificied at cmdline
     if logger is None:
-        logger = build_logger("get_cazyme_annotations", args)
+        logger = config_logger(args)
 
     # Check config is present
     if (args.input is None) or (os.path.exists(args.input) is False):
