@@ -24,16 +24,17 @@ pytest -v
 """
 
 from argparse import Namespace
+from pathlib import Path
 
 import pytest
 
-from pyrewton.utilities import build_logger
+from pyrewton.utilities import build_logger, config_logger
 
 
 @pytest.fixture
 def logger_output(test_dir):
     logger_output = (
-        test_dir / "test_targets" / "bld_lggr_test_targets" / "test_bld_logger.log"
+        test_dir / "test_targets" / "bld_lggr_test_targets"
     )
     return logger_output
 
@@ -41,24 +42,32 @@ def logger_output(test_dir):
 # create fixture to test when args.verbose is false
 @pytest.fixture
 def logger_args_false(logger_output):
-    argsdict = {"args": Namespace(verbose=False, log=logger_output)}
+    argsdict = {"args": Namespace(verbose=False, log=(logger_output / "test_logger.log"))}
     return argsdict
 
 
 # create fixture to test when args.verbose is true
 @pytest.fixture
 def logger_args_true(logger_output):
-    argsdict = {"args": Namespace(verbose=True, log=logger_output)}
+    argsdict = {"args": Namespace(verbose=True, log=(logger_output / "test_logger.log"))}
     return argsdict
 
 
-@pytest.mark.run(order=4)
-def test_build_logger_v_false(null_logger, logger_args_false):
+def test_build_logger_v_false(logger_output):
     """Tests building of logger"""
-    build_logger("test_logger", logger_args_false["args"])
+    build_logger(logger_output, "test_logger.log")
 
 
-@pytest.mark.run(order=5)
-def test_build_logger_v_true(null_logger, logger_args_true):
+def test_build_logger_v_true(logger_output):
     """Tests building of logger"""
-    build_logger("test_logger", logger_args_true["args"])
+    build_logger(None, "test_logger")
+
+
+def test_config_logger_v_false(logger_args_false):
+    """Tests building of logger"""
+    config_logger(logger_args_false["args"])
+
+
+def test_config_logger_v_true(logger_args_true):
+    """Tests building of logger"""
+    config_logger(logger_args_true["args"])
