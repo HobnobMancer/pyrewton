@@ -29,7 +29,7 @@ import numpy as np
 
 from tqdm import tqdm
 
-from pyrewton.cazymes.prediction.parse import CazymeDomain, CazymeProteinPrediction
+from pyrewton.cazymes.evaluate_tools.parse import CazymeDomain, CazymeProteinPrediction
 
 
 def parse_ecami_output(ecami_output_path, fasta_path):
@@ -72,7 +72,7 @@ def parse_ecami_output(ecami_output_path, fasta_path):
             existance = False
             while existance is False:
                 for domain in existing_cazyme_domains:
-                    if (domain.cazy_family == cazy_family) and (domain.cazy_subfamily == cazy_subfamily):
+                    if (domain.cazy_family == cazy_family) and (domain.cazy_subfamily == cazy_subfamilies):
                         # Domain has been parsed previously, check if additional EC numbers were retrieved
                         for ec in ec_numbers:
                             if ec not in domain.ec_numbers:

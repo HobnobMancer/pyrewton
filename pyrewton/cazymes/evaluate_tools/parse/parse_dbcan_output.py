@@ -33,7 +33,7 @@ import numpy as np
 
 from tqdm import tqdm
 
-from pyrewton.cazymes.prediction.parse import CazymeDomain, CazymeProteinPrediction
+from pyrewton.cazymes.evaluate_tools.parse import CazymeDomain, CazymeProteinPrediction
 
 
 def parse_dbcan_output(overview_path, hotpep_file, fasta_file):
@@ -473,6 +473,8 @@ def get_diamond_predicted_domains(predicted_domains, protein_accession):
     cazyme_domains = {}  # store CazymeDomain instances, keyed by CAZyme domain "fam-subfam"
 
     for predicted_domain in predicted_domains:
+        ec_numbers = []
+
         # check if a subfamily was predicted
         try:
             re.match(r"\D{2,3}\d+?_\d+", predicted_domain).group()
@@ -486,14 +488,32 @@ def get_diamond_predicted_domains(predicted_domains, protein_accession):
                 cazy_family = predicted_domain
                 cazy_subfamily = np.nan
 
-            except AttributeError:  # raised if not a CAZy family
-                logger.warning(
-                    f"Unexpected data format of '{predicted_domain}' for protein "
-                    f"{protein_accession}, for DIAMOND.\nNot adding domain to the CAZyme"
-                )
-            continue
-
-        new_domain = CazymeDomain("DIAMOND", protein_accession, cazy_family, cazy_subfamily)
+            except AttributeError:  # check if an EC number
+                try:
+                    re.match(r"\d+?\.(\d+?|\*)\.(\d+?|\*)\.(\d+?|\*)", predicted_domain). group()
+                    ec_numbers.append(predicted_domain)
+                except AttributeError:
+                    logger.warning(
+                        f"Unexpected data format of '{predicted_domain}' for protein "
+                        f"{protein_accession}, for DIAMOND.\nNot adding domain to the CAZyme"
+                    )
+                    continue
+        
+        if len(ec_numbers) == 0:
+            new_domain = CazymeDomain(
+                "DIAMOND",
+                protein_accession,
+                cazy_family,
+                cazy_subfamily,
+            )
+        else:
+            new_domain = CazymeDomain(
+                "DIAMOND",
+                protein_accession,
+                cazy_family,
+                cazy_subfamily,
+                ec_numbers,
+            )
 
         # check if the domain has been parsed before
         try:

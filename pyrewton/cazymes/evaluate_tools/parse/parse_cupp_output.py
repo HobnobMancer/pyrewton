@@ -30,7 +30,7 @@ import numpy as np
 
 from tqdm import tqdm
 
-from pyrewton.cazymes.prediction.parse import CazymeDomain, CazymeProteinPrediction
+from pyrewton.cazymes.evaluate_tools.parse import CazymeDomain, CazymeProteinPrediction
 
 
 def parse_cupp_output(log_file_path, fasta_path):
@@ -54,6 +54,11 @@ def parse_cupp_output(log_file_path, fasta_path):
         # separate the data fields
         prediction_output = line.split("\t")
 
+        # retrieve the CAZyme classification and predicted CAZy family
+        cazyme_classification = 1  # all proteins included in the file are identified as CAZymes
+        protein_accession = prediction_output[0]
+        cazy_family = prediction_output[1]  # This is selected from the CUPP 'Best function'
+    
         # retrieve the predicted domain range if given
         domain_range = get_cupp_domain_range(prediction_output)  # list of strs
 
@@ -61,27 +66,14 @@ def parse_cupp_output(log_file_path, fasta_path):
         ec_numbers = get_cupp_ec_number(prediction_output)  # list of strs
 
         # retrieve predicted CAZy subfamily if given
-        cazy_subfamily = prediction_output[-1] 
-        # if no CAZy subfamily was predicted, change empty string to null value
-        if len(cazy_subfamily) == 0:
-            cazy_subfamily = np.nan
-        else:
-            # write subfamilies using CAZy standard format
-            cazy_subfamily = cazy_subfamily.replace(":","_")
-            cazy_subfamily = cazy_subfamily.replace("+", ", ")  # separate multiple subfams with ', ' not '+'
-
-        # retrieve the protein accession and check if it already has a corresponding CUPPprediction instance
-        protein_accession = prediction_output[0]
-
-        # retrieve the CAZyme classification and predicted CAZy family
-        cazyme_classification = 1  # all proteins included in the file are identified as CAZymes
-        cazy_family = prediction_output[1]  # This is selected from the CUPP 'Best function'
+        cazy_subfamily = get_cazy_subfamilies(cazy_family, prediction_output)
 
         # check if a CUPPprediction instance already exists for the protein
         try:
             existing_prediction = cupp_predictions[protein_accession]
 
             # check if the CAZyme domain has been been parsed before
+            # if so retrieve the CAZyme domains created previously (already existing)
             existing_cazyme_domains = existing_prediction.cazyme_domains
 
             existance = False
@@ -96,22 +88,24 @@ def parse_cupp_output(log_file_path, fasta_path):
             if existance is False:
                 # create new CAZyme domain
                 new_cazyme_domain = CazymeDomain(
-                    protein_accession,
-                    cazy_family,
-                    cazy_subfamily,
-                    ec_numbers,
-                    domain_range,
+                    prediction_tool="CUPP",
+                    protein_accession=protein_accession,
+                    cazy_family=cazy_family,
+                    cazy_subfamily=cazy_subfamily,
+                    ec_numbers=ec_numbers,
+                    domain_range=domain_range,
                 )
                 existing_prediction.cazyme_domains.append(new_cazyme_domain)
 
         except KeyError:  # raised if there is not instance for the protein
 
             new_cazyme_domain = CazymeDomain(
-                protein_accession,
-                cazy_family,
-                cazy_subfamily,
-                ec_numbers,
-                domain_range,
+                prediction_tool="CUPP",
+                protein_accession=protein_accession,
+                cazy_family=cazy_family,
+                cazy_subfamily=cazy_subfamily,
+                ec_numbers=ec_numbers,
+                domain_range=domain_range,
             )
 
             new_protein = CazymeProteinPrediction(
@@ -152,7 +146,7 @@ def get_cupp_domain_range(prediction_output):
             re.match(r"\d+\.\.\d+", item).group()
         except AttributeError:
             # write as logger in pyrewton
-            logger.warning("{item} misidentified as domain range")
+            logger.warning(f"{item} misidentified as domain range")
             domain_range.remove(item)
 
     if len(domain_range) == 0:
@@ -173,52 +167,80 @@ def get_cupp_ec_number(prediction_output):
 
     List of predicted EC numbers or null value in a list if not.
     """
-    # retrieve the data from the CUPP 'Best function' prediction
-    ec_data = prediction_output[-2].split(":")
-
-    if len(ec_data) == 1:  # Result of ":" not being present, caused by no EC number predictions
-        ec_number = np.nan
-        return ec_number
+    # separate out all data in the row from the CUPP output file
+    all_data = []
+    for item in prediction_output:
+        all_data += re.split(r"[:&-]", item)
 
     # create empty list to store all predicted EC numbers
     all_ec_numbers = []
 
-    for item in ec_data:
-        # check if the item may be an EC number, which start with a digit
-        try:
+    for item in all_data:
+        # check if starts with a digit, and thus may be an EC number
+        try:  # check removes when 'Unknown' is written for the EC number
             re.match(r"\d.+", item).group()
         except AttributeError:  # not an EC number
             continue
 
-        # if multiple best function and/or EC number predictions were made they may
-        # be separated by a dash '-'
-        dash_separated_data = item.split("-")
-
-        for data in dash_separated_data:
-            # if multiple EC numbers are predicated they are separate by '&
-            split_data = data.split("&")
-
-            for string in split_data:
-                # check if the string is an EC number
-                try:
-                    re.match(r"\d+?\.(\d+?|\*)\.(\d+?|\*)\.(\d+?|\*)", string). group()
-                    all_ec_numbers.append(string)
-                except AttributeError:  # not an EC number
-                    continue
+        # check if the string is an EC number
+        try:
+            re.match(r"\d+?\.(\d+?|\*)\.(\d+?|\*)\.(\d+?|\*)", item). group()
+            all_ec_numbers.append(item)
+        except AttributeError:  # not an EC number
+            continue
 
     # standardise missing digits in the EC numbers from '*' to '-'                
     index = 0
     for index in range(len(all_ec_numbers)):
         all_ec_numbers[index] = all_ec_numbers[index].replace("*","-")
         # Sometimes 'Unknown' is written out by CUPP, ensure this is removed
-        if all_ec_numbers[index].find("Unknown") != -1:
-            all_ec_numbers.remove(all_ec_numbers[index])
 
-    # write out the EC numbers in easy human readable format or create null value if none were predicted
     if len(all_ec_numbers) == 0:
         all_ec_numbers = [np.nan]
 
     return all_ec_numbers
+
+
+def get_cazy_subfamilies(parent_family, prediction_output):
+    """Get the predicted CAZy subfamily annotations.
+
+    Retrieves only the predicted CAZy subfamilies that are the children of the parent family.
+
+    :param parnet_family: str, name of the predicted parent CAZy family
+    :param prediction_output: list of items from the line in the CUPP output file
+
+    Return a string of predicted CAZy subfamilies.
+    """
+    logger = logging.getLogger(__name__)
+
+    # retrieve items from the prediction_output that may contain predicted CAZy subfamilies
+    potential_subfam_data = []
+    for item in prediction_output:
+        if item.find("_") != -1:
+            potential_subfam_data.append(item)
+    
+    if len(potential_subfam_data) == 0:
+        return np.nan
+    
+    subfamilies = []
+    # separate out all items of data
+    for item in potential_subfam_data:
+        separated_items = re.split(r"[:&-]", item)
+        for sep_item in separated_items:
+            # check if the item contains a CAZy subfamily
+            try:
+                re.match(r"\D{2,3}\d+_\d+", sep_item).group()
+                # check if the subfamily belongs to parent CAZy family for the current CAZyme domain
+                if item[:item.find("_")] == parent_family:
+                    subfamilies.append(item)
+
+            except AttributeError:  # raised if the item is not a CAZy subfamily
+                pass
+    
+    if len(subfamilies) == 0:
+        return np.nan
+    
+    return ",".join(subfamilies)
 
 
 def add_non_cazymes(fasta_path, cupp_predictions):
