@@ -29,6 +29,8 @@ from tqdm import tqdm
 from sklearn.metrics import fbeta_score, confusion_matrix, recall_score, precision_score
 from sklearn.metrics.cluster import rand_score, adjusted_rand_score
 
+from pyrewton.utilities import build_logger
+
 
 def get_family_classifications(predictions, prediciton_tool, cazy_dict, genomic_accession):
     """Retrieve the predicted  and ground truth (CAZy determined) CAZy family annotations.
@@ -139,7 +141,7 @@ def calculate_family_ari_ri(prediction_df, ground_truth_df, time_stamp):
 
     row_index = 0
     for row_index in tqdm(
-        range(len(predictions_df["Prediction_tool"])), desc="Calculating CAZy family ARI and RI",
+        range(len(prediction_df["Prediction_tool"])), desc="Calculating CAZy family ARI and RI",
     ):
 
         ground_truths_row = ground_truth_df.iloc[row_index]
@@ -190,7 +192,10 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
 
         # exclude true negative non-CAZyme predictions
         index = 0
-        for index in range(len(grnd_trth_df["Prediction_tool"])):
+        for index in tqdm(
+            range(len(grnd_trth_df["Prediction_tool"])),
+            desc=f"Removing TN non-CAZyme predictions from CAZy fam predictions for {tool}",
+        ):
             y_true = grnd_trth_df.iloc[index]
             y_true = list(y_true[family_names])  # retrieve only the cazy family 0/1 annotations
             
@@ -209,7 +214,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
         # iterate through the families and evaluate the CAZy family performance
         for fam in tqdm(family_names, desc=f"Evaluating performance per CAZy family for {tool}"):
             y_true = list(tp_fp_fn_ground_truths[fam])
-            y_pred = list(tp_fp_fn_predictions)
+            y_pred = list(tp_fp_fn_predictions[fam])
 
             # check if family was predicted and was included in test set as a known annotations
             if (1 not in y_true) and (1 not in y_pred):
@@ -223,7 +228,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
                     f"Excluding {fam} from evaluation by setting all stats results as NaN"
                 )
                 specificity = np.nan
-                sensitivity = np.nan
+                recall = np.nan
                 precision = np.nan
                 fbeta = np.nan
                 accuracy = np.nan
@@ -233,7 +238,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
                     fam,
                     tool,
                     specificity,
-                    sensitivity,
+                    recall,
                     precision,
                     fbeta,
                     accuracy,
@@ -242,7 +247,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
 
                 for stat in [
                     [specificity, "Specificity"],
-                    [sensitivity, "Recall"],
+                    [recall, "Recall"],
                     [precision, "Precision"],
                     [fbeta, "Fbeta_score"],
                     [accuracy, "Accuracy"],
@@ -295,7 +300,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
                     fam,
                     tool,
                     specificity,
-                    sensitivity,
+                    recall,
                     precision,
                     fbeta,
                     accuracy,
@@ -314,7 +319,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
                 fam,
                 tool,
                 specificity,
-                sensitivity,
+                recall,
                 precision,
                 fbeta,
                 accuracy,
@@ -323,7 +328,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
 
     # build statistics orientated datafrae
     stats_df = pd.DataFrame(
-        stats_orientated_df,
+        stats_orientated_df_data,
         columns=[
             "CAZy_family",
             "Prediction_tool",
@@ -381,10 +386,10 @@ def calc_fam_stats_per_testset(predictions_df, ground_truths_df, time_stamp, arg
             all_genomic_accessions,
             desc=f"Evaluate family prediction by test set for {tool}",
         ):
-            testset_tool_ground_truths = tool_ground_truths.loc[
+            testset_tool_ground_truths = grnd_trth_df.loc[
                 grnd_trth_df["Genomic_accession"] == accession
             ]
-            testset_tool_predictions = tool_predictions.loc[
+            testset_tool_predictions = pred_df.loc[
                 pred_df["Genomic_accession"] == accession
             ]
 
@@ -394,7 +399,10 @@ def calc_fam_stats_per_testset(predictions_df, ground_truths_df, time_stamp, arg
 
             # exclude true negative non-CAZyme predictions
             index = 0
-            for index in range(len(grnd_trth_df["Prediction_tool"])):
+            for index in tqdm(
+                range(len(grnd_trth_df["Prediction_tool"])),
+                desc=f"Removing TN non-CAZyme predictions from CAZy fam predictions for {tool}",
+            ):
                 y_true = testset_tool_ground_truths.iloc[index]
                 y_true = list(y_true[family_names])  # retrieve only the cazy family 0/1 annotations
                 
@@ -413,7 +421,7 @@ def calc_fam_stats_per_testset(predictions_df, ground_truths_df, time_stamp, arg
             # iterate through the families and evaluate the CAZy family performance
             for fam in family_names:
                 y_true = list(tp_fp_fn_ground_truths[fam])
-                y_pred = list(tp_fp_fn_predictions)
+                y_pred = list(tp_fp_fn_predictions[fam])
 
                 # check if family was predicted and was included in test set as a known annotations
                 if (1 not in y_true) and (1 not in y_pred):
@@ -427,7 +435,7 @@ def calc_fam_stats_per_testset(predictions_df, ground_truths_df, time_stamp, arg
                         f"Excluding {fam} from evaluation by setting all stats results as NaN"
                     )
                     specificity = np.nan
-                    sensitivity = np.nan
+                    recall = np.nan
                     precision = np.nan
                     fbeta = np.nan
                     accuracy = np.nan
@@ -437,7 +445,7 @@ def calc_fam_stats_per_testset(predictions_df, ground_truths_df, time_stamp, arg
                         fam,
                         tool,
                         specificity,
-                        sensitivity,
+                        recall,
                         precision,
                         fbeta,
                         accuracy,
@@ -446,7 +454,7 @@ def calc_fam_stats_per_testset(predictions_df, ground_truths_df, time_stamp, arg
 
                     for stat in [
                         [specificity, "Specificity"],
-                        [sensitivity, "Recall"],
+                        [recall, "Recall"],
                         [precision, "Precision"],
                         [fbeta, "Fbeta_score"],
                         [accuracy, "Accuracy"],
@@ -499,7 +507,7 @@ def calc_fam_stats_per_testset(predictions_df, ground_truths_df, time_stamp, arg
                         fam,
                         tool,
                         specificity,
-                        sensitivity,
+                        recall,
                         precision,
                         fbeta,
                         accuracy,
@@ -518,7 +526,7 @@ def calc_fam_stats_per_testset(predictions_df, ground_truths_df, time_stamp, arg
                     fam,
                     tool,
                     specificity,
-                    sensitivity,
+                    recall,
                     precision,
                     fbeta,
                     accuracy,
@@ -527,7 +535,7 @@ def calc_fam_stats_per_testset(predictions_df, ground_truths_df, time_stamp, arg
 
     # build statistics orientated datafrae
     stats_df = pd.DataFrame(
-        stats_orientated_df,
+        stats_orientated_df_data,
         columns=[
             "CAZy_family",
             "Prediction_tool",
