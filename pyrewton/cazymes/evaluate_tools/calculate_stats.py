@@ -52,7 +52,7 @@ from pathlib import Path
 from tqdm import tqdm
 from typing import List, Optional
 
-from pyrewton.cazymes.prediction import stats
+from pyrewton.cazymes.evaluate_tools import stats
 from pyrewton.utilities import config_logger
 from pyrewton.utilities.file_io import make_output_directory
 from pyrewton.utilities.parsers.cmd_parser_calc_stats import build_parser
@@ -120,7 +120,8 @@ def get_cazy_dict(cazy_path):
             cazy_dict = json.load(fh)
     except FileNotFoundError:
         logger.error(
-            "Did not find the configuration file. Check the path is correct.\n"
+            "Did not find the local CAZy dict (JSON) file.\n"
+            "Check the path is correct.\n"
             "Terminating programme"
         )
         sys.exit(1)
