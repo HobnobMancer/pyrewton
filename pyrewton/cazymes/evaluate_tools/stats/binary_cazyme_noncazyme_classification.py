@@ -38,7 +38,7 @@ def get_cazyme_noncazyme_predictions(tool_predictions, prediction_tool, classifi
     Return list of CAZyme/non-CAZymes classifications, written in long form to match TidyData
     requirements and recommendations in R.
     """
-    # classifications  # [protien_accession, tool, cazyme classification]
+    # classifications  = [[protien_accession, tool, cazyme classification],]
     if (prediction_tool == "eCAMI") or (prediction_tool == "CUPP"):
         for prediction in tqdm(tool_predictions, desc=f"Retreiving {prediction_tool} predictions"):
             accession = prediction.protein_accession.split(" ")[0]
@@ -99,7 +99,8 @@ def build_classification_df(predicted_classifications):
     # build a series of lists
     data = []  # [Protein_accession, dbcan, hmmer, hotpep, diamond, cupp, ecami]
     for protein_accession in classification_dict:
-        for i in range(len(classification_dict[protein_accession]["dbCAN"])):  # this is included in case of duplicate proteins in the test set
+        for i in range(len(classification_dict[protein_accession]["dbCAN"])): 
+            # for loop is included in case of duplicate proteins in the test set
             # create a unique row for each instance of a protein in the test set
             new_data = [protein_accession]
             for tool in ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]:
@@ -150,7 +151,7 @@ def add_ground_truths(classifications_df, cazy_dict):
     return classifications_df
 
 
-def evaluate_binary_classifications(classifications_df, genomic_accession, args):
+def evaluate_binary_cazyme_noncazyme_predictions(classifications_df, genomic_accession, args):
     """Calculate the Fbeta-score, recall (sensitivity), precision and specificity for
     CAZyme/non-CAZyme prediction.
 
@@ -166,7 +167,7 @@ def evaluate_binary_classifications(classifications_df, genomic_accession, args)
     """
     y_true = classifications_df['CAZy'].to_numpy()  # convert to numpy array
 
-   stats_results = []  # [[stat, genome, tool, value]]
+    stats_results = []  # [[stat, genome, tool, value]]
 
     # build a dict to store statistical parameters
     for tool in ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]:
