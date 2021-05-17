@@ -19,6 +19,9 @@
 """Module for building loggers and cmd-line args parsers for pyrewton modules."""
 
 import logging
+import os
+
+from pathlib import Path
 
 
 def config_logger(args) -> logging.Logger:
@@ -57,7 +60,7 @@ def config_logger(args) -> logging.Logger:
 def build_logger(output, file_name):
     """Build loggers with pre-defined parameters for writing out errors and failed scrapes.
 
-    :param output: Path to output dir or None
+    :param output: Path to output dir to write log file to or None
     :param file_name: str, name of output log file
 
     Return logger object.
