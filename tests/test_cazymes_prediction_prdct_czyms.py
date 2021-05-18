@@ -32,7 +32,7 @@ import pandas as pd
 from argparse import Namespace, ArgumentParser
 from pathlib import Path
 
-from pyrewton.cazymes.prediction import predict_cazymes, tools
+from pyrewton.cazymes.evaluate_tools import predict_cazymes, tools
 
 
 # create pytest fixtures for tests
