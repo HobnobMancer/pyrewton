@@ -207,7 +207,7 @@ def args_fasta_alt():
 
 
 def test_main(
-    null_logger, output_dir, coordination_args, test_input_df, protein_df, monkeypatch
+    output_dir, coordination_args, test_input_df, protein_df, monkeypatch
 ):
     """Test coordination of GenBank protein annotation retrieval by main()."""
 
@@ -233,7 +233,7 @@ def test_main(
         return parser
 
     def mock_build_logger(*args, **kwargs):
-        return null_logger
+        return
 
     def mock_create_out_dir(*args, **kwargs):
         return
@@ -253,7 +253,7 @@ def test_main(
 
     monkeypatch.setattr(get_genbank_annotations, "build_parser", mock_built_parser)
     monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
-    monkeypatch.setattr(get_genbank_annotations, "build_logger", mock_build_logger)
+    monkeypatch.setattr(get_genbank_annotations, "config_logger", mock_build_logger)
     monkeypatch.setattr(pd, "read_csv", mock_df_reading)
     monkeypatch.setattr(
         get_genbank_annotations, "create_dataframe", mock_create_dataframe
@@ -270,7 +270,7 @@ def test_main(
 
 
 def test_main_argv(
-    null_logger, output_dir, coordination_args, test_input_df, protein_df, monkeypatch
+    output_dir, coordination_args, test_input_df, protein_df, monkeypatch
 ):
     """Test coordination of GenBank protein annotation retrieval by main()."""
 
@@ -296,7 +296,7 @@ def test_main_argv(
         return parser
 
     def mock_build_logger(*args, **kwargs):
-        return null_logger
+        return
 
     def mock_create_out_dir(*args, **kwargs):
         return
@@ -316,7 +316,7 @@ def test_main_argv(
 
     monkeypatch.setattr(get_genbank_annotations, "build_parser", mock_built_parser)
     monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
-    monkeypatch.setattr(get_genbank_annotations, "build_logger", mock_build_logger)
+    monkeypatch.setattr(get_genbank_annotations, "config_logger", mock_build_logger)
     monkeypatch.setattr(pd, "read_csv", mock_df_reading)
     monkeypatch.setattr(
         get_genbank_annotations, "create_dataframe", mock_create_dataframe
@@ -336,7 +336,7 @@ def test_main_argv(
 
 
 def test_dataframe_creation(
-    test_input_df, null_logger, coordination_args, annotation_df, monkeypatch
+    test_input_df, coordination_args, annotation_df, monkeypatch
 ):
     """Test creation of dataframe."""
 
@@ -349,7 +349,7 @@ def test_dataframe_creation(
     )
 
     get_genbank_annotations.create_dataframe(
-        test_input_df, coordination_args["args"], null_logger
+        test_input_df, coordination_args["args"],
     )
 
 
@@ -357,7 +357,7 @@ def test_dataframe_creation(
 
 
 def test_get_annotations_no_data(
-    pandas_series, null_logger, coordination_args, monkeypatch
+    pandas_series, coordination_args, monkeypatch
 ):
     """Test coordination of annotation retrieval when no data retrieved for a given protein."""
 
@@ -368,12 +368,12 @@ def test_get_annotations_no_data(
     monkeypatch.setattr(get_genbank_annotations, "get_annotations", mock_get_anno)
 
     get_genbank_annotations.get_genbank_annotations(
-        pandas_series, coordination_args["args"], null_logger
+        pandas_series, coordination_args["args"],
     )
 
 
 def test_get_annotations_data_returned(
-    pandas_series, null_logger, coordination_args, monkeypatch
+    pandas_series, coordination_args, monkeypatch
 ):
     """Test coordination of annotation retrieval for a given protein."""
 
@@ -384,23 +384,23 @@ def test_get_annotations_data_returned(
     monkeypatch.setattr(get_genbank_annotations, "get_annotations", mock_get_anno)
 
     get_genbank_annotations.get_genbank_annotations(
-        pandas_series, coordination_args["args"], null_logger
+        pandas_series, coordination_args["args"],
     )
 
 
 # Test retrieval of accessions
 
 
-def test_get_annotations_na(null_logger, coordination_args):
+def test_get_annotations_na(coordination_args):
     """Test get_annotations when accession number is 'NA'."""
     accession = "NA"
     get_genbank_annotations.get_annotations(
-        accession, coordination_args["args"], null_logger
+        accession, coordination_args["args"],
     )
 
 
 def test_get_annotations_file_none(
-    test_accession, null_logger, coordination_args, monkeypatch
+    test_accession, coordination_args, monkeypatch
 ):
     """Test get_annotations when gb_file is None."""
 
@@ -410,12 +410,12 @@ def test_get_annotations_file_none(
     monkeypatch.setattr(get_genbank_annotations, "get_genbank_file", mock_get_gb_file)
 
     get_genbank_annotations.get_annotations(
-        test_accession, coordination_args["args"], null_logger
+        test_accession, coordination_args["args"],
     )
 
 
 def test_get_annotations_all_data_na(
-    test_gb_file, test_accession, null_logger, coordination_args, monkeypatch
+    test_gb_file, test_accession, coordination_args, monkeypatch
 ):
     """Test get_annotations when all returned protein data is 'NA'."""
 
@@ -431,12 +431,12 @@ def test_get_annotations_all_data_na(
     monkeypatch.setattr(get_genbank_annotations, "get_record_feature", mock_get_record)
 
     get_genbank_annotations.get_annotations(
-        test_accession, coordination_args["args"], null_logger
+        test_accession, coordination_args["args"],
     )
 
 
 def test_get_annotations_successful(
-    test_gb_file, test_accession, null_logger, coordination_args, monkeypatch
+    test_gb_file, test_accession, coordination_args, monkeypatch
 ):
     """Test get_annotations when all returned protein data is 'NA'."""
 
@@ -447,12 +447,12 @@ def test_get_annotations_successful(
     monkeypatch.setattr(get_genbank_annotations, "get_genbank_file", mock_get_gb_file)
 
     get_genbank_annotations.get_annotations(
-        test_accession, coordination_args["args"], null_logger
+        test_accession, coordination_args["args"],
     )
 
 
 def test_get_annotations_not_5(
-    test_gb_file, test_accession, null_logger, coordination_args, monkeypatch
+    test_gb_file, test_accession, coordination_args, monkeypatch
 ):
     """Test get_annotations when length of protein data is not 5."""
 
@@ -467,7 +467,7 @@ def test_get_annotations_not_5(
     monkeypatch.setattr(get_genbank_annotations, "get_record_feature", mock_get_record)
 
     get_genbank_annotations.get_annotations(
-        test_accession, coordination_args["args"], null_logger
+        test_accession, coordination_args["args"],
     )
 
 
@@ -477,7 +477,6 @@ def test_get_annotations_not_5(
 def test_anno_retrieval_no_location(
     test_gb_file_no_location,
     test_accession,
-    null_logger,
     coordination_args,
     monkeypatch,
 ):
@@ -490,14 +489,13 @@ def test_anno_retrieval_no_location(
     monkeypatch.setattr(get_genbank_annotations, "get_genbank_file", mock_get_gb_file)
 
     get_genbank_annotations.get_annotations(
-        test_accession, coordination_args["args"], null_logger
+        test_accession, coordination_args["args"],
     )
 
 
 def test_anno_retrieval_no_qualifier(
     test_gb_file_no_translation,
     test_accession,
-    null_logger,
     coordination_args,
     monkeypatch,
 ):
@@ -510,48 +508,48 @@ def test_anno_retrieval_no_qualifier(
     monkeypatch.setattr(get_genbank_annotations, "get_genbank_file", mock_get_gb_file)
 
     get_genbank_annotations.get_annotations(
-        test_accession, coordination_args["args"], null_logger
+        test_accession, coordination_args["args"],
     )
 
 
 # Test gb_file retrieval
 
 
-def test_get_file_success(coordination_args, null_logger, gb_file_dir):
+def test_get_file_success(coordination_args, gb_file_dir):
     """Test successful retrieval of single gb_file using get_gb_file."""
     accession = "GCA_test####_genomic"
     result = gb_file_dir / "GCA_test####_genomic.gbff.gz"
 
-    assert result == get_genbank_annotations.get_genbank_file(accession, coordination_args["args"], null_logger)
+    assert result == get_genbank_annotations.get_genbank_file(accession, coordination_args["args"])
 
 
-def test_get_file_no_file(no_gb_args, null_logger):
+def test_get_file_no_file(no_gb_args):
     """Test get_gb_file when no files were retrieved."""
     accession = "GCA_test####"
-    get_genbank_annotations.get_genbank_file(accession, no_gb_args["args"], null_logger)
+    get_genbank_annotations.get_genbank_file(accession, no_gb_args["args"])
 
 
-def test_get_file_multiple(coordination_args, null_logger):
+def test_get_file_multiple(coordination_args):
     """Test get_gb_file when multiple files are retrieved."""
     accession = "GCA_testmultiple"
     get_genbank_annotations.get_genbank_file(
-        accession, coordination_args["args"], null_logger
+        accession, coordination_args["args"],
     )
 
 
-def test_get_file_empty(coordination_args, null_logger):
+def test_get_file_empty(coordination_args,):
     """Test get_gb_file when the returned file is empty."""
     accession = "GCA_testempty"
     get_genbank_annotations.get_genbank_file(
-        accession, coordination_args["args"], null_logger
+        accession, coordination_args["args"],
     )
 
 
-def test_write_proteins_to_fasta(df_series, null_logger, args_fasta):
+def test_write_proteins_to_fasta(df_series, args_fasta):
     """Test writing fasta file."""
-    get_genbank_annotations.write_fasta(df_series, null_logger, args_fasta["args"])
+    get_genbank_annotations.write_fasta(df_series, args_fasta["args"])
 
 
-def test_write_proteins_to_fasta_alter(df_series_alt, null_logger, args_fasta_alt):
+def test_write_proteins_to_fasta_alter(df_series_alt, args_fasta_alt):
     """Test writing fasta file, tax id doesn't start with NCBI prefix and output is sys.stdout"""
-    get_genbank_annotations.write_fasta(df_series_alt, null_logger, args_fasta_alt["args"])
+    get_genbank_annotations.write_fasta(df_series_alt, args_fasta_alt["args"])
