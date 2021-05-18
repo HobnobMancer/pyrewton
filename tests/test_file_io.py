@@ -78,8 +78,15 @@ def test_output_dir_creation_nd_true(making_output_dir):
 
 def test_output_dir_creation_nd_false(making_output_dir):
     """Test creation of output dir when nodelete is true"""
-
     file_io.make_output_directory(making_output_dir, True, True)
+
+
+def test_make_existing_dir(testing_output_dir):
+    """Test creation of output dir when it already exists."""
+    path_ = testing_output_dir / "test_dir"
+    # run twice to ensure directory exists
+    file_io.make_output_directory(path_, True, True)
+    file_io.make_output_directory(path_, True, True)
 
 
 # Test write_out_dataframe
@@ -93,6 +100,11 @@ def test_writing_df_f_true(testing_df, df_output_file):
 def test_writing_df_f_false(testing_df,  df_output_file):
     """Tests function for writing out created dataframe when force is false"""
     file_io.write_out_dataframe(testing_df, df_output_file, False)
+
+
+def test_writing_df_no_df(df_output_file):
+    """Tests function for writing out created dataframe when no df is given"""
+    file_io.write_out_dataframe(None, df_output_file, False)
 
 
 # Test write_out_pre_named_dataframe
@@ -110,3 +122,7 @@ def test_writing_named_df_f_false(testing_df, making_output_dir):
     file_io.write_out_pre_named_dataframe(
         testing_df, "test_writing_df.csv", making_output_dir, False
     )
+
+def test_writing_named_df_no_df(df_output_file):
+    """Tests function for writing out created dataframe when no df is given"""
+    file_io.write_out_pre_named_dataframe(None, "df_name.csv", df_output_file, False)
