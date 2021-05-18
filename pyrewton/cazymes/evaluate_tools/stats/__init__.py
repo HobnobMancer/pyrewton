@@ -86,7 +86,8 @@ def evaluate_performance(predictions, cazy_dict, args):
         all_family_ground_truths,
     ) = build_prediction_dataframes(predictions, time_stamp, cazy_dict, args)
 
-    binary_c_nc_statistics.to_csv(f'binary_classification_evaluation_{time_stamp}.csv')  # USED FOR EVALUATION IN R
+    output_path = args.output / f'binary_classification_evaluation_{time_stamp}.csv'
+    binary_c_nc_statistics.to_csv(output_path)  # USED FOR EVALUATION IN R
 
     # bootstrap resample binary CAZyme/non-CAZyme classifications, to evaluate performance range
     binary_classification.bootstrap_binary_c_nc_classifications(
@@ -96,10 +97,12 @@ def evaluate_performance(predictions, cazy_dict, args):
     )
 
     # write out ground truth CAZy class annotations to disk
-    class_ground_truths_df.to_csv(f"cazy_class_ground_truths_{time_stamp}.csv")
+    output_path = args.output / f"cazy_class_ground_truths_{time_stamp}.csv"
+    class_ground_truths_df.to_csv(output_path)
 
     # write out ground truth CAZy family annotations to disk
-    all_family_ground_truths.to_csv(f"cazy_family_ground_truths_{time_stamp}.csv")
+    output_path = args.output / f"cazy_family_ground_truths_{time_stamp}.csv"
+    all_family_ground_truths.to_csv(output_path)
 
     # Evaluate the performance of CAZy class predictions
     # Calculate ARI and RI for multilabel evaluation, and add to CAZy class prediction dataframe
@@ -107,8 +110,10 @@ def evaluate_performance(predictions, cazy_dict, args):
         class_ground_truths_df,
         class_predictions_df,
         time_stamp)
+
     # write out predicted CAZy class annotations and RI and ARI to disk
-    class_predictions_df.to_csv(f"cazy_class_predictions_{time_stamp}.csv")   # USED FOR EVALUATION IN R
+    output_path = args.output / f"cazy_class_predictions_{time_stamp}.csv"
+    class_predictions_df.to_csv(output_path)   # USED FOR EVALUATION IN R
 
     # Calculate Fbeta, Sens, Spec and Acc for predicting each CAZy class
     # calculate the fbeta_score, sensitivity(recall), specificity and accuracy per CAZy class
@@ -126,10 +131,6 @@ def evaluate_performance(predictions, cazy_dict, args):
         args,
     )
 
-    # write out predicted CAZy class annotations and RI and ARI to disk
-    class_predictions_df.to_csv(f"cazy_class_predictions_{time_stamp}.csv") 
-    # USED FOR EVALUATION IN R
-
     # Evaluate the performance of CAZy Family predictions
     # Calculate ARI and RI for multilabel evaluation, and add to CAZy family prediction dataframe
     all_family_predictions = family_classifications.calculate_family_ari_ri(
@@ -138,18 +139,11 @@ def evaluate_performance(predictions, cazy_dict, args):
         time_stamp,
     )
     # write out predicted CAZy class annotations and RI and ARI to disk
-    all_family_predictions.to_csv(f"cazy_family_predictions_{time_stamp}.csv")   # USED FOR EVALUATION IN R
+    output_path = args.output / f"cazy_family_predictions_{time_stamp}.csv"
+    all_family_predictions.to_csv(output_path)   # USED FOR EVALUATION IN R
 
     # evaluate the performance of predicting the correct CAZy family ACROSS ALL test sets
     family_classifications.calc_fam_stats(
-        all_family_predictions,
-        all_family_ground_truths,
-        time_stamp,
-        args,
-    )  # creates a dataframe USED FOR EVALUATION IN R
-
-    # evaluate the performance of predicting the correct CAZy family PER test sets
-    family_classifications.calc_fam_stats_per_testset(
         all_family_predictions,
         all_family_ground_truths,
         time_stamp,
@@ -266,7 +260,8 @@ def build_prediction_dataframes(predictions, time_stamp, cazy_dict, args):
 
         # write out binary CAZyme/non-CAZyme predictions and ground truth annotations for test set
         # for documentation
-        classifications_df.to_csv(f"binary_classifications_{time_stamp}_{test_set.source}.csv")
+        output_path = args.output / f"binary_classifications_{time_stamp}_{test_set.source}.csv"
+        classifications_df.to_csv(output_path)
 
         all_binary_c_nc_dfs.append(ClassificationDF(test_set.source, classifications_df))
         # all_binary_c_nc_dfs used for bootstrapping accuracy of binary predictions
