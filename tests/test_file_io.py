@@ -71,13 +71,11 @@ def df_output_file(test_dir):
 # Test make_output_directory
 
 
-@pytest.mark.run(order=6)
 def test_output_dir_creation_nd_true(making_output_dir, null_logger):
     """Test creation of output dir when nodelete is false"""
     file_io.make_output_directory(making_output_dir, null_logger, True, False)
 
 
-@pytest.mark.run(order=7)
 def test_output_dir_creation_nd_false(making_output_dir, null_logger):
     """Test creation of output dir when nodelete is true"""
 
@@ -87,13 +85,11 @@ def test_output_dir_creation_nd_false(making_output_dir, null_logger):
 # Test write_out_dataframe
 
 
-@pytest.mark.run(order=8)
 def test_writing_df_f_true(testing_df, null_logger, df_output_file):
     """Tests function for writing out created dataframe when force is true"""
     file_io.write_out_dataframe(testing_df, null_logger, df_output_file, True)
 
 
-@pytest.mark.run(order=9)
 def test_writing_df_f_false(testing_df, null_logger, df_output_file):
     """Tests function for writing out created dataframe when force is false"""
     file_io.write_out_dataframe(testing_df, null_logger, df_output_file, False)
@@ -102,7 +98,6 @@ def test_writing_df_f_false(testing_df, null_logger, df_output_file):
 # Test write_out_pre_named_dataframe
 
 
-@pytest.mark.run(order=10)
 def test_writing_named_df_f_true(testing_df, null_logger, making_output_dir):
     """Tests function for writing out a prenamed dataframe"""
     file_io.write_out_pre_named_dataframe(
@@ -110,7 +105,6 @@ def test_writing_named_df_f_true(testing_df, null_logger, making_output_dir):
     )
 
 
-@pytest.mark.run(order=11)
 def test_writing_named_df_f_false(testing_df, null_logger, making_output_dir):
     """Tests function for writing out a prenamed dataframe"""
     file_io.write_out_pre_named_dataframe(
