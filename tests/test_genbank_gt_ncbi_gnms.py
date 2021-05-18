@@ -943,6 +943,16 @@ def test_entrez_retry_none():
     assert get_ncbi_genomes.entrez_retry(0, mock_record) is None
 
 
+def test_entrez_retry_IOError():
+    """Test entrez_retry when an IOError is raised."""
+
+    def mock_record(*args, **kwargs):
+        raise IOError
+
+    get_ncbi_genomes.entrez_retry(0, mock_record)
+
+
+
 # test main()
 
 
