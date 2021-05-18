@@ -37,6 +37,7 @@ import sys
 import pandas as pd
 
 from argparse import Namespace, ArgumentParser
+from datetime import datetime
 from urllib.error import URLError
 
 from Bio import Entrez
@@ -193,6 +194,23 @@ def ncbi_args_ioerror(test_dir, test_ncbi_species_file):
 def ncbi_args_file_exists(test_dir, test_ncbi_species_file):
     path = test_dir / "test_targets" / "gt_ncbi_gnms_test_targets2"
     path = path / "GCA_001599495_1_JCM_2005_assembly_v001_genomic.gbff.gz"
+    argsdict = {
+        "args": Namespace(
+            genbank=True,
+            retries=10,
+            timeout=10,
+            output=path,
+            input_file=test_ncbi_species_file,
+        )
+    }
+    return argsdict
+
+
+@pytest.fixture
+def ncbi_args_file_exists_unique(test_dir, test_ncbi_species_file):
+    time_stamp = datetime.now().strftime("%Y_%m_%d")
+    path = test_dir / "test_targets" / "gt_ncbi_gnms_test_targets2"
+    path = path / f"GCA_001599495_1_JCM_2005_assembly_v001_genomic{time_stamp}.gbff.gz"
     argsdict = {
         "args": Namespace(
             genbank=True,
@@ -862,6 +880,20 @@ def test_download_file_exists(ncbi_args_file_exists, test_dir, monkeypatch):
     get_ncbi_genomes.download_file(
         "http://foo", ncbi_args_file_exists["args"], test_dir, "accession", "GenBank"
     )
+
+
+def test_download_file_successful(ncbi_args_file_exists_unique, test_dir, monkeypatch):
+    """Tests downloading of GenBank file"""
+
+    def mock_url_open(*args, **kwargs):
+        return
+
+    monkeypatch.setattr("urllib3.connectionpool.HTTPConnectionPool.urlopen", mock_url_open)
+
+    get_ncbi_genomes.download_file(
+        "http://foo", ncbi_args_file_exists_unique["args"], test_dir, "accession", "GenBank"
+    )
+
 
 
 # Test function main()
