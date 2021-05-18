@@ -206,7 +206,6 @@ def args_fasta_alt():
 # Test coordination of script
 
 
-@pytest.mark.run(order=36)
 def test_main(
     null_logger, output_dir, coordination_args, test_input_df, protein_df, monkeypatch
 ):
@@ -336,7 +335,6 @@ def test_main_argv(
 # Test the creation of the dataframe
 
 
-@pytest.mark.run(order=37)
 def test_dataframe_creation(
     test_input_df, null_logger, coordination_args, annotation_df, monkeypatch
 ):
@@ -358,7 +356,6 @@ def test_dataframe_creation(
 # Test retrieval of genbank annotations
 
 
-@pytest.mark.run(order=38)
 def test_get_annotations_no_data(
     pandas_series, null_logger, coordination_args, monkeypatch
 ):
@@ -375,7 +372,6 @@ def test_get_annotations_no_data(
     )
 
 
-@pytest.mark.run(order=39)
 def test_get_annotations_data_returned(
     pandas_series, null_logger, coordination_args, monkeypatch
 ):
@@ -395,7 +391,6 @@ def test_get_annotations_data_returned(
 # Test retrieval of accessions
 
 
-@pytest.mark.run(order=40)
 def test_get_annotations_na(null_logger, coordination_args):
     """Test get_annotations when accession number is 'NA'."""
     accession = "NA"
@@ -404,7 +399,6 @@ def test_get_annotations_na(null_logger, coordination_args):
     )
 
 
-@pytest.mark.run(order=41)
 def test_get_annotations_file_none(
     test_accession, null_logger, coordination_args, monkeypatch
 ):
@@ -420,7 +414,6 @@ def test_get_annotations_file_none(
     )
 
 
-@pytest.mark.run(order=42)
 def test_get_annotations_all_data_na(
     test_gb_file, test_accession, null_logger, coordination_args, monkeypatch
 ):
@@ -442,7 +435,6 @@ def test_get_annotations_all_data_na(
     )
 
 
-@pytest.mark.run(order=43)
 def test_get_annotations_successful(
     test_gb_file, test_accession, null_logger, coordination_args, monkeypatch
 ):
@@ -459,7 +451,6 @@ def test_get_annotations_successful(
     )
 
 
-@pytest.mark.run(order=44)
 def test_get_annotations_not_5(
     test_gb_file, test_accession, null_logger, coordination_args, monkeypatch
 ):
@@ -483,7 +474,6 @@ def test_get_annotations_not_5(
 # Test when retrieval of location data fails
 
 
-@pytest.mark.run(order=45)
 def test_anno_retrieval_no_location(
     test_gb_file_no_location,
     test_accession,
@@ -504,7 +494,6 @@ def test_anno_retrieval_no_location(
     )
 
 
-@pytest.mark.run(order=46)
 def test_anno_retrieval_no_qualifier(
     test_gb_file_no_translation,
     test_accession,
@@ -528,7 +517,6 @@ def test_anno_retrieval_no_qualifier(
 # Test gb_file retrieval
 
 
-@pytest.mark.run(order=47)
 def test_get_file_success(coordination_args, null_logger, gb_file_dir):
     """Test successful retrieval of single gb_file using get_gb_file."""
     accession = "GCA_test####_genomic"
@@ -537,14 +525,12 @@ def test_get_file_success(coordination_args, null_logger, gb_file_dir):
     assert result == get_genbank_annotations.get_genbank_file(accession, coordination_args["args"], null_logger)
 
 
-@pytest.mark.run(order=48)
 def test_get_file_no_file(no_gb_args, null_logger):
     """Test get_gb_file when no files were retrieved."""
     accession = "GCA_test####"
     get_genbank_annotations.get_genbank_file(accession, no_gb_args["args"], null_logger)
 
 
-@pytest.mark.run(order=49)
 def test_get_file_multiple(coordination_args, null_logger):
     """Test get_gb_file when multiple files are retrieved."""
     accession = "GCA_testmultiple"
@@ -553,7 +539,6 @@ def test_get_file_multiple(coordination_args, null_logger):
     )
 
 
-@pytest.mark.run(order=50)
 def test_get_file_empty(coordination_args, null_logger):
     """Test get_gb_file when the returned file is empty."""
     accession = "GCA_testempty"
@@ -562,7 +547,6 @@ def test_get_file_empty(coordination_args, null_logger):
     )
 
 
-@pytest.mark.run(order=51)
 def test_write_proteins_to_fasta(df_series, null_logger, args_fasta):
     """Test writing fasta file."""
     get_genbank_annotations.write_fasta(df_series, null_logger, args_fasta["args"])

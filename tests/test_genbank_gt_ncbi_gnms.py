@@ -327,7 +327,6 @@ def output_dir(test_dir):
 # Test parsing of input file
 
 
-@pytest.mark.run(order=8)
 def test_reading_input_file(
     test_ncbi_species_file, null_logger, gt_ncbi_gnms_test_inputs, monkeypatch
 ):
@@ -343,7 +342,6 @@ def test_reading_input_file(
     )
 
 
-@pytest.mark.run(order=9)
 def test_input_file_check(test_dir, null_logger, gt_ncbi_gnms_test_inputs):
     """Test get_ncbi_genomes ability to detect when no input file available."""
     with pytest.raises(SystemExit) as pytest_wrapped_e:
@@ -353,7 +351,6 @@ def test_input_file_check(test_dir, null_logger, gt_ncbi_gnms_test_inputs):
     assert pytest_wrapped_e.type == SystemExit
 
 
-@pytest.mark.run(order=10)
 def test_line_parsing(tax_id_line, species_line, null_logger, monkeypatch):
     """Test function parse_line ability to parse lines of input file."""
 
@@ -373,7 +370,6 @@ def test_line_parsing(tax_id_line, species_line, null_logger, monkeypatch):
 # Test called to Entrez to retrieve scientific name
 
 
-@pytest.mark.run(order=11)
 def test_scientific_name_retrieval(
     gt_ncbi_gnms_test_inputs,
     gt_ncbi_gnms_targets,
@@ -402,7 +398,6 @@ def test_scientific_name_retrieval(
         )
 
 
-@pytest.mark.run(order=12)
 def test_scientific_name_retrieval_indexerror_catch(
     gt_ncbi_gnms_test_inputs,
     null_logger,
@@ -453,7 +448,6 @@ def test_scientific_name_retrieval_typeerror_catch(
 # Test retrieval of taxonomy ID
 
 
-@pytest.mark.run(order=13)
 def test_taxonomy_id_retrieval(
     gt_ncbi_gnms_test_inputs,
     gt_ncbi_gnms_targets,
@@ -479,13 +473,11 @@ def test_taxonomy_id_retrieval(
         )
 
 
-@pytest.mark.run(order=14)
 def test_tax_id_check(null_logger):
     """Tests searching of input scientific name for digits"""
     get_ncbi_genomes.get_tax_id("5061", null_logger, 1, 1)
 
 
-@pytest.mark.run(order=15)
 def test_tax_id_retrieval_indexerror_catch(
     gt_ncbi_gnms_test_inputs,
     null_logger,
@@ -533,13 +525,11 @@ def test_tax_id_retrieval_typeerror_catch(
 # Test retrieval of accession numbers from NCBI
 
 
-@pytest.mark.run(order=16)
 def test_df_cell_content_check(na_df_row, null_logger):
     """Test get_accession_numbers ability to catch "NA" content of cell."""
     get_ncbi_genomes.get_accession_numbers(na_df_row, null_logger, "args")
 
 
-@pytest.mark.run(order=17)
 def test_catch_failed_assembly_id(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
     """Test catching failed retrieval of assembly IDs."""
 
@@ -553,7 +543,6 @@ def test_catch_failed_assembly_id(input_ncbi_df, null_logger, ncbi_args, monkeyp
     )
 
 
-@pytest.mark.run(order=18)
 def test_catch_failed_posting(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
     """Test catching failed retrieval of posting assembly IDs."""
 
@@ -572,7 +561,6 @@ def test_catch_failed_posting(input_ncbi_df, null_logger, ncbi_args, monkeypatch
     )
 
 
-@pytest.mark.run(order=19)
 def test_catch_failed_accession_retrieval(
     input_ncbi_df, null_logger, ncbi_args, monkeypatch
 ):
@@ -602,7 +590,6 @@ def test_catch_failed_accession_retrieval(
     )
 
 
-@pytest.mark.run(order=20)
 def test_successful_accession_retrieval(
     input_ncbi_df, null_logger, ncbi_args, monkeypatch
 ):
@@ -635,7 +622,6 @@ def test_successful_accession_retrieval(
 # Test retrieval of assembly IDs using Entrez.elink
 
 
-@pytest.mark.run(order=21)
 def test_failed_elink(
     input_ncbi_df, null_logger, ncbi_args, monkeypatch, elink_result_empty
 ):
@@ -670,7 +656,6 @@ def test_no_elink(
     )
 
 
-@pytest.mark.run(order=22)
 def test_successful_elink(
     input_ncbi_df, null_logger, ncbi_args, elink_result, monkeypatch
 ):
@@ -690,7 +675,6 @@ def test_successful_elink(
 # Test posting of assembly IDs using Enrez.epost
 
 
-@pytest.mark.run(order=23)
 def test_failed_epost(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
     """Test catching when nothing returned from Entrez.epost."""
 
@@ -704,7 +688,6 @@ def test_failed_epost(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
     )
 
 
-@pytest.mark.run(order=24)
 def test_successful_epost(
     input_ncbi_df, null_logger, ncbi_args, monkeypatch, epost_result, expected_web_env
 ):
@@ -725,7 +708,6 @@ def test_successful_epost(
 # Test retrieval of accession numbers using WebEnv data
 
 
-@pytest.mark.run(order=25)
 def test_failed_accession_retrieval(
     input_ncbi_df,
     null_logger,
@@ -767,7 +749,6 @@ def test_no_accession_retrieval(
     )
 
 
-@pytest.mark.run(order=26)
 def test_successful_accession_number_retrieval(
     input_ncbi_df,
     null_logger,
@@ -800,7 +781,6 @@ def test_successful_accession_number_retrieval(
 # Test coordination of downloading GenBank files
 
 
-@pytest.mark.run(order=27)
 def test_coordinating_genbank_download_stdout(
     null_logger, ncbi_args_stdout, monkeypatch
 ):
@@ -821,7 +801,6 @@ def test_coordinating_genbank_download_stdout(
     )
 
 
-@pytest.mark.run(order=28)
 def test_coordinating_genbank_download(null_logger, ncbi_args, monkeypatch):
     """Test coordination of GenBank file download, when output is not stdout"""
 
@@ -843,7 +822,6 @@ def test_coordinating_genbank_download(null_logger, ncbi_args, monkeypatch):
 # Test creaction of URL for GenBank download
 
 
-@pytest.mark.run(order=29)
 def test_compiling_url(null_logger):
     """Test generation of URL for downloading GenBank files."""
     get_ncbi_genomes.compile_url("test_accession", "test_name", null_logger, "suffix")
@@ -852,7 +830,6 @@ def test_compiling_url(null_logger):
 # Test downloading of a GenBank file
 
 
-@pytest.mark.run(order=30)
 def test_download(null_logger, ncbi_args, test_dir, monkeypatch):
     """Tests downloading of GenBank file"""
 
@@ -900,7 +877,6 @@ def test_download_file_exists(null_logger, ncbi_args_file_exists, test_dir, monk
 # Test function main()
 
 
-@pytest.mark.run(order=31)
 def test_main(output_dir, accession_df, null_logger, monkeypatch):
     """Test function main()."""
 
@@ -981,7 +957,6 @@ def test_entrez_retry_none(null_logger):
 # test main()
 
 
-@pytest.mark.run(order=32)
 def test_main_no_email(output_dir, accession_df, null_logger, monkeypatch):
     """Test function main() when no email is given."""
 
