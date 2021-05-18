@@ -105,7 +105,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # Pull down accession numbers and GenBank files (if not disabled)
     species_table["NCBI Accession Numbers"] = species_table.apply(
-        get_accession_numbers, args=(args), axis=1
+        get_accession_numbers, args=(args,), axis=1
     )
     logger.info("Generated species table")
 
