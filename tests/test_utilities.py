@@ -97,6 +97,16 @@ def test_parser_get_eval_dict_argv():
     cmd_parser_get_evaluation_dataset_from_dict.build_parser(["tests/", "yaml", "cazy", "output"])
 
 
+def test_parser_get_eval_db():
+    """Test building parser for building evaluation test sets from a dict"""
+    cmd_parser_get_evaluation_dataset.build_parser()
+
+
+def test_parser_get_eval_db_argv():
+    """Test building parser for building evaluation test sets from a dict, when argv is not none"""
+    cmd_parser_get_evaluation_dataset.build_parser(["tests/", "yaml"])
+
+
 def test_parser_eval_testsets():
     """Test building parser for building evaluation test sets from a db"""
     cmd_parser_calc_stats.build_parser()
