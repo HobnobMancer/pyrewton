@@ -29,7 +29,7 @@ import numpy as np
 
 from pathlib import Path
 
-from pyrewton.cazymes.prediction.parse import(
+from pyrewton.cazymes.evaluate_tools.parse import(
     parse_dbcan_output,
     CazymeProteinPrediction,
     CazymeDomain,

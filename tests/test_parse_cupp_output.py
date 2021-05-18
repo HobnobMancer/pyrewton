@@ -29,7 +29,7 @@ import numpy as np
 
 from pathlib import Path
 
-from pyrewton.cazymes.prediction.parse import parse_cupp_output
+from pyrewton.cazymes.evaluate_tools.parse import parse_cupp_output
 
 
 @pytest.fixture
