@@ -19,6 +19,7 @@
 """Build parser for 'calculate_stats.py'"""
 
 import argparse
+import os
 import sys
 
 from pathlib import Path
@@ -98,7 +99,7 @@ def build_parser(argv: Optional[List] = None):
         "--output",
         type=Path,
         metavar="output directory",
-        default=sys.stdout,
+        default=Path(os.getcwd()),
         help="Directory to which all outputs are written",
     )
     # Add option to change the number rounds of bootstrapping
