@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 # Author:
 # Emma E. M. Hobbs
-
+#
 # Contact
 # eemh1@st-andrews.ac.uk
-
+#
 # Emma E. M. Hobbs,
 # Biomolecular Sciences Building,
 # University of St Andrews,
@@ -14,7 +14,7 @@
 # KY16 9ST
 # Scotland,
 # UK
-
+#
 # The MIT License
 
 """Tests for pyrewton genbank:get_ncbi_genomes submodule units.
@@ -324,11 +324,17 @@ def output_dir(test_dir):
     return path
 
 
+@pytest.fixture
+def species_table():
+    data = {"Genus": ["g1", "g2"], "Species": ["s1", "s2"], "NCBI_taxid": ["123", "456"]}
+    df = pd.DataFrame(data)
+    return df
+
 # Test parsing of input file
 
 
 def test_reading_input_file(
-    test_ncbi_species_file, null_logger, gt_ncbi_gnms_test_inputs, monkeypatch
+    test_ncbi_species_file, gt_ncbi_gnms_test_inputs, monkeypatch
 ):
     def mock_line_parsing(*args, **kwargs):
         """Mock results from the function parse_link."""
@@ -338,20 +344,20 @@ def test_reading_input_file(
 
     """Tests script can open and read supplied input file."""
     get_ncbi_genomes.parse_input_file(
-        test_ncbi_species_file, null_logger, gt_ncbi_gnms_test_inputs[1]
+        test_ncbi_species_file, gt_ncbi_gnms_test_inputs[1]
     )
 
 
-def test_input_file_check(test_dir, null_logger, gt_ncbi_gnms_test_inputs):
+def test_input_file_check(test_dir, gt_ncbi_gnms_test_inputs):
     """Test get_ncbi_genomes ability to detect when no input file available."""
     with pytest.raises(SystemExit) as pytest_wrapped_e:
         get_ncbi_genomes.parse_input_file(
-            test_dir, null_logger, gt_ncbi_gnms_test_inputs
+            test_dir, gt_ncbi_gnms_test_inputs
         )
     assert pytest_wrapped_e.type == SystemExit
 
 
-def test_line_parsing(tax_id_line, species_line, null_logger, monkeypatch):
+def test_line_parsing(tax_id_line, species_line, monkeypatch):
     """Test function parse_line ability to parse lines of input file."""
 
     def mock_ncbi_data_retrieval(*args, **kwargs):
@@ -363,8 +369,8 @@ def test_line_parsing(tax_id_line, species_line, null_logger, monkeypatch):
     )
     monkeypatch.setattr(get_ncbi_genomes, "get_tax_id", mock_ncbi_data_retrieval)
 
-    get_ncbi_genomes.parse_line(tax_id_line, null_logger, 1, 1)
-    get_ncbi_genomes.parse_line(species_line, null_logger, 1, 1)
+    get_ncbi_genomes.parse_line(tax_id_line, 1, 1)
+    get_ncbi_genomes.parse_line(species_line, 1, 1)
 
 
 # Test called to Entrez to retrieve scientific name
@@ -373,7 +379,6 @@ def test_line_parsing(tax_id_line, species_line, null_logger, monkeypatch):
 def test_scientific_name_retrieval(
     gt_ncbi_gnms_test_inputs,
     gt_ncbi_gnms_targets,
-    null_logger,
     efetch_result,
     monkeypatch,
 ):
@@ -392,7 +397,6 @@ def test_scientific_name_retrieval(
 
         assert gt_ncbi_gnms_targets[0] == get_ncbi_genomes.get_genus_species_name(
             gt_ncbi_gnms_test_inputs[1],
-            null_logger,
             gt_ncbi_gnms_test_inputs[3],
             gt_ncbi_gnms_test_inputs[0],
         )
@@ -400,7 +404,6 @@ def test_scientific_name_retrieval(
 
 def test_scientific_name_retrieval_indexerror_catch(
     gt_ncbi_gnms_test_inputs,
-    null_logger,
     efetch_result_empty,
     monkeypatch,
 ):
@@ -417,7 +420,6 @@ def test_scientific_name_retrieval_indexerror_catch(
 
         assert "NA" == get_ncbi_genomes.get_genus_species_name(
             gt_ncbi_gnms_test_inputs[1],
-            null_logger,
             gt_ncbi_gnms_test_inputs[3],
             gt_ncbi_gnms_test_inputs[0],
         )
@@ -425,7 +427,6 @@ def test_scientific_name_retrieval_indexerror_catch(
 
 def test_scientific_name_retrieval_typeerror_catch(
     gt_ncbi_gnms_test_inputs,
-    null_logger,
     monkeypatch,
 ):
     """Tests get_scientific name retrieval handling when no entry with the
@@ -439,7 +440,6 @@ def test_scientific_name_retrieval_typeerror_catch(
 
     assert "NA" == get_ncbi_genomes.get_genus_species_name(
         gt_ncbi_gnms_test_inputs[1],
-        null_logger,
         gt_ncbi_gnms_test_inputs[3],
         gt_ncbi_gnms_test_inputs[0],
     )
@@ -451,7 +451,6 @@ def test_scientific_name_retrieval_typeerror_catch(
 def test_taxonomy_id_retrieval(
     gt_ncbi_gnms_test_inputs,
     gt_ncbi_gnms_targets,
-    null_logger,
     monkeypatch,
     esearch_result,
 ):
@@ -467,20 +466,18 @@ def test_taxonomy_id_retrieval(
 
         assert gt_ncbi_gnms_targets[1] == get_ncbi_genomes.get_tax_id(
             gt_ncbi_gnms_test_inputs[2],
-            null_logger,
             1,
             gt_ncbi_gnms_test_inputs[0],
         )
 
 
-def test_tax_id_check(null_logger):
+def test_tax_id_check():
     """Tests searching of input scientific name for digits"""
-    get_ncbi_genomes.get_tax_id("5061", null_logger, 1, 1)
+    get_ncbi_genomes.get_tax_id("5061", 1, 1)
 
 
 def test_tax_id_retrieval_indexerror_catch(
     gt_ncbi_gnms_test_inputs,
-    null_logger,
     monkeypatch,
     esearch_result_empty,
 ):
@@ -496,7 +493,6 @@ def test_tax_id_retrieval_indexerror_catch(
 
         assert "NA" == get_ncbi_genomes.get_genus_species_name(
             gt_ncbi_gnms_test_inputs[2],
-            null_logger,
             gt_ncbi_gnms_test_inputs[3],
             gt_ncbi_gnms_test_inputs[0],
         )
@@ -504,7 +500,6 @@ def test_tax_id_retrieval_indexerror_catch(
 
 def test_tax_id_retrieval_typeerror_catch(
     gt_ncbi_gnms_test_inputs,
-    null_logger,
     monkeypatch,
 ):
     """Tests handling index Error when retrieving tax ID"""
@@ -517,7 +512,6 @@ def test_tax_id_retrieval_typeerror_catch(
 
     assert "NA" == get_ncbi_genomes.get_genus_species_name(
         gt_ncbi_gnms_test_inputs[2],
-        null_logger,
         gt_ncbi_gnms_test_inputs[3],
         gt_ncbi_gnms_test_inputs[0],
     )
@@ -525,12 +519,12 @@ def test_tax_id_retrieval_typeerror_catch(
 # Test retrieval of accession numbers from NCBI
 
 
-def test_df_cell_content_check(na_df_row, null_logger):
+def test_df_cell_content_check(na_df_row):
     """Test get_accession_numbers ability to catch "NA" content of cell."""
-    get_ncbi_genomes.get_accession_numbers(na_df_row, null_logger, "args")
+    get_ncbi_genomes.get_accession_numbers(na_df_row, "args")
 
 
-def test_catch_failed_assembly_id(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
+def test_catch_failed_assembly_id(input_ncbi_df, ncbi_args, monkeypatch):
     """Test catching failed retrieval of assembly IDs."""
 
     def mock_assembly_ids(*args, **kwargs):
@@ -539,11 +533,11 @@ def test_catch_failed_assembly_id(input_ncbi_df, null_logger, ncbi_args, monkeyp
     monkeypatch.setattr(get_ncbi_genomes, "get_assembly_ids", mock_assembly_ids)
 
     assert "NA" == get_ncbi_genomes.get_accession_numbers(
-        input_ncbi_df, null_logger, ncbi_args["args"]
+        input_ncbi_df, ncbi_args["args"]
     )
 
 
-def test_catch_failed_posting(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
+def test_catch_failed_posting(input_ncbi_df, ncbi_args, monkeypatch):
     """Test catching failed retrieval of posting assembly IDs."""
 
     def mock_assembly_ids(*args, **kwargs):
@@ -557,12 +551,12 @@ def test_catch_failed_posting(input_ncbi_df, null_logger, ncbi_args, monkeypatch
     monkeypatch.setattr(get_ncbi_genomes, "post_assembly_ids", mock_posting_result)
 
     assert "NA" == get_ncbi_genomes.get_accession_numbers(
-        input_ncbi_df, null_logger, ncbi_args["args"]
+        input_ncbi_df, ncbi_args["args"]
     )
 
 
 def test_catch_failed_accession_retrieval(
-    input_ncbi_df, null_logger, ncbi_args, monkeypatch
+    input_ncbi_df, ncbi_args, monkeypatch
 ):
     """Test catching failed retrieval of accession numbers."""
 
@@ -586,12 +580,12 @@ def test_catch_failed_accession_retrieval(
     )
 
     assert "NA" == get_ncbi_genomes.get_accession_numbers(
-        input_ncbi_df, null_logger, ncbi_args["args"]
+        input_ncbi_df, ncbi_args["args"]
     )
 
 
 def test_successful_accession_retrieval(
-    input_ncbi_df, null_logger, ncbi_args, monkeypatch
+    input_ncbi_df, ncbi_args, monkeypatch
 ):
     """Test successful retrieval of accession numbers."""
 
@@ -615,7 +609,7 @@ def test_successful_accession_retrieval(
     )
 
     assert ["abc", "def"] == get_ncbi_genomes.get_accession_numbers(
-        input_ncbi_df, null_logger, ncbi_args["args"]
+        input_ncbi_df, ncbi_args["args"]
     )
 
 
@@ -623,7 +617,7 @@ def test_successful_accession_retrieval(
 
 
 def test_failed_elink(
-    input_ncbi_df, null_logger, ncbi_args, monkeypatch, elink_result_empty
+    input_ncbi_df, ncbi_args, monkeypatch, elink_result_empty
 ):
     """Test catching of when no aseembly IDs retrieved from Entrez.elink"""
     with open(elink_result_empty, "rb") as fh:
@@ -636,12 +630,12 @@ def test_failed_elink(
         monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_elink)
 
         assert "NA" == get_ncbi_genomes.get_assembly_ids(
-            input_ncbi_df, null_logger, ncbi_args["args"]
+            input_ncbi_df, ncbi_args["args"]
         )
 
 
 def test_no_elink(
-    input_ncbi_df, null_logger, ncbi_args, monkeypatch, elink_result_empty
+    input_ncbi_df, ncbi_args, monkeypatch, elink_result_empty
 ):
     """Test catching of when nothing returned from Entrez.elink"""
 
@@ -652,12 +646,12 @@ def test_no_elink(
     monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_elink)
 
     assert "NA" == get_ncbi_genomes.get_assembly_ids(
-        input_ncbi_df, null_logger, ncbi_args["args"]
+        input_ncbi_df, ncbi_args["args"]
     )
 
 
 def test_successful_elink(
-    input_ncbi_df, null_logger, ncbi_args, elink_result, monkeypatch
+    input_ncbi_df, ncbi_args, elink_result, monkeypatch
 ):
     """Test processing of succesful elink retrieval of accession numbers."""
     with open(elink_result, "rb") as fh:
@@ -669,13 +663,13 @@ def test_successful_elink(
 
         monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_elink)
 
-        get_ncbi_genomes.get_assembly_ids(input_ncbi_df, null_logger, ncbi_args["args"])
+        get_ncbi_genomes.get_assembly_ids(input_ncbi_df, ncbi_args["args"])
 
 
 # Test posting of assembly IDs using Enrez.epost
 
 
-def test_failed_epost(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
+def test_failed_epost(input_ncbi_df, ncbi_args, monkeypatch):
     """Test catching when nothing returned from Entrez.epost."""
 
     def mock_epost(*args, **kwargs):
@@ -684,12 +678,12 @@ def test_failed_epost(input_ncbi_df, null_logger, ncbi_args, monkeypatch):
     monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_epost)
 
     assert "NA" == get_ncbi_genomes.post_assembly_ids(
-        ["123", "456"], input_ncbi_df, null_logger, ncbi_args["args"]
+        ["123", "456"], input_ncbi_df, ncbi_args["args"]
     )
 
 
 def test_successful_epost(
-    input_ncbi_df, null_logger, ncbi_args, monkeypatch, epost_result, expected_web_env
+    input_ncbi_df, ncbi_args, monkeypatch, epost_result, expected_web_env
 ):
     """Test successful posting of assembly IDs using Entrez.epost."""
     with open(epost_result, "rb") as fh:
@@ -701,7 +695,7 @@ def test_successful_epost(
         monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_epost)
 
         assert expected_web_env == get_ncbi_genomes.post_assembly_ids(
-            ["123", "456"], input_ncbi_df, null_logger, ncbi_args["args"]
+            ["123", "456"], input_ncbi_df, ncbi_args["args"]
         )
 
 
@@ -710,7 +704,6 @@ def test_successful_epost(
 
 def test_failed_accession_retrieval(
     input_ncbi_df,
-    null_logger,
     ncbi_args,
     monkeypatch,
     efetch_accession_result_empty,
@@ -726,16 +719,14 @@ def test_failed_accession_retrieval(
         monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_efetch)
 
         "NA" == get_ncbi_genomes.retrieve_accession_numbers(
-            mocked_webenv, input_ncbi_df, null_logger, ncbi_args["args"]
+            mocked_webenv, input_ncbi_df, ncbi_args["args"]
         )
 
 
 def test_no_accession_retrieval(
     input_ncbi_df,
-    null_logger,
     ncbi_args,
     monkeypatch,
-    efetch_accession_result_empty,
     mocked_webenv,
 ):
     """Test handling data when nothing is returned from Entrez.efetch."""
@@ -745,13 +736,12 @@ def test_no_accession_retrieval(
     monkeypatch.setattr(get_ncbi_genomes, "entrez_retry", mock_efetch)
 
     "NA" == get_ncbi_genomes.retrieve_accession_numbers(
-        mocked_webenv, input_ncbi_df, null_logger, ncbi_args["args"]
+        mocked_webenv, input_ncbi_df, ncbi_args["args"]
     )
 
 
 def test_successful_accession_number_retrieval(
     input_ncbi_df,
-    null_logger,
     ncbi_args,
     monkeypatch,
     efetch_accession_result,
@@ -774,7 +764,7 @@ def test_successful_accession_number_retrieval(
         )
 
         assert expected_accesions == get_ncbi_genomes.retrieve_accession_numbers(
-            mocked_webenv, input_ncbi_df, null_logger, ncbi_args["args"]
+            mocked_webenv, input_ncbi_df, ncbi_args["args"]
         )
 
 
@@ -782,7 +772,7 @@ def test_successful_accession_number_retrieval(
 
 
 def test_coordinating_genbank_download_stdout(
-    null_logger, ncbi_args_stdout, monkeypatch
+    ncbi_args_stdout, monkeypatch
 ):
     """Test coordination of GenBank file download, when output is stdout"""
 
@@ -797,11 +787,11 @@ def test_coordinating_genbank_download_stdout(
     monkeypatch.setattr(get_ncbi_genomes, "download_file", mocK_download)
 
     get_ncbi_genomes.get_genbank_files(
-        "accession", "name", null_logger, ncbi_args_stdout["args"], suffix=".gbff"
+        "accession", "name", ncbi_args_stdout["args"], suffix=".gbff"
     )
 
 
-def test_coordinating_genbank_download(null_logger, ncbi_args, monkeypatch):
+def test_coordinating_genbank_download(ncbi_args, monkeypatch):
     """Test coordination of GenBank file download, when output is not stdout"""
 
     def mock_compile_url(*args, **kwargs):
@@ -815,22 +805,22 @@ def test_coordinating_genbank_download(null_logger, ncbi_args, monkeypatch):
     monkeypatch.setattr(get_ncbi_genomes, "download_file", mocK_download)
 
     get_ncbi_genomes.get_genbank_files(
-        "accession", "name", null_logger, ncbi_args["args"], suffix=".gbff"
+        "accession", "name", ncbi_args["args"], suffix=".gbff"
     )
 
 
 # Test creaction of URL for GenBank download
 
 
-def test_compiling_url(null_logger):
+def test_compiling_url():
     """Test generation of URL for downloading GenBank files."""
-    get_ncbi_genomes.compile_url("test_accession", "test_name", null_logger, "suffix")
+    get_ncbi_genomes.compile_url("test_accession", "test_name", "suffix")
 
 
 # Test downloading of a GenBank file
 
 
-def test_download(null_logger, ncbi_args, test_dir, monkeypatch):
+def test_download(ncbi_args, test_dir, monkeypatch):
     """Tests downloading of GenBank file"""
 
     def mock_url_open(*args, **kwargs):
@@ -844,11 +834,11 @@ def test_download(null_logger, ncbi_args, test_dir, monkeypatch):
     monkeypatch.setattr("urllib3.response.HTTPResponse.read", mock_reading_response)
 
     get_ncbi_genomes.download_file(
-        "http://www.google.com", ncbi_args["args"], test_dir, null_logger, "accession", "GenBank"
+        "http://www.google.com", ncbi_args["args"], test_dir, "accession", "GenBank"
     )
 
 
-def test_download_raise_urlerror(null_logger, ncbi_args, test_dir, monkeypatch):
+def test_download_raise_urlerror(ncbi_args, test_dir, monkeypatch):
     """Test file download when HTTP error is raised."""
 
     def mock_urlopen(*args, **kwargs):
@@ -857,11 +847,11 @@ def test_download_raise_urlerror(null_logger, ncbi_args, test_dir, monkeypatch):
     monkeypatch.setattr("urllib3.connectionpool.HTTPConnectionPool.urlopen", mock_urlopen)
 
     get_ncbi_genomes.download_file(
-        "http://foo", ncbi_args["args"], test_dir, null_logger, "accession", "GenBank"
+        "http://foo", ncbi_args["args"], test_dir, "accession", "GenBank"
     )
 
 
-def test_download_file_exists(null_logger, ncbi_args_file_exists, test_dir, monkeypatch):
+def test_download_file_exists(ncbi_args_file_exists, test_dir, monkeypatch):
     """Tests downloading of GenBank file"""
 
     def mock_url_open(*args, **kwargs):
@@ -870,14 +860,14 @@ def test_download_file_exists(null_logger, ncbi_args_file_exists, test_dir, monk
     monkeypatch.setattr("urllib3.connectionpool.HTTPConnectionPool.urlopen", mock_url_open)
 
     get_ncbi_genomes.download_file(
-        "http://foo", ncbi_args_file_exists["args"], test_dir, null_logger, "accession", "GenBank"
+        "http://foo", ncbi_args_file_exists["args"], test_dir, "accession", "GenBank"
     )
 
 
 # Test function main()
 
 
-def test_main(output_dir, accession_df, null_logger, monkeypatch):
+def test_main(output_dir, species_table, monkeypatch):
     """Test function main()."""
 
     def mock_built_parser(*args, **kwargs):
@@ -903,18 +893,17 @@ def test_main(output_dir, accession_df, null_logger, monkeypatch):
         return parser
 
     def mock_build_logger(*args, **kwargs):
-        return null_logger
+        return
 
     def mock_parsed_inputfile(*args, **kwargs):
         # retrn dataframe when initially parsing input file
-        df = accession_df
-        return df
+        return species_table
 
     def mock_making_dir(*args, **kwargs):
         return
 
     def mock_accession_retrieval(*args, **kwargs):
-        accessions = [["123456"]]
+        accessions = [["123456"], ["456"]]
         return accessions
 
     def mock_writing_out_df(*args, **kwargs):
@@ -922,7 +911,7 @@ def test_main(output_dir, accession_df, null_logger, monkeypatch):
 
     monkeypatch.setattr(get_ncbi_genomes, "build_parser", mock_built_parser)
     monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
-    monkeypatch.setattr(get_ncbi_genomes, "build_logger", mock_build_logger)
+    monkeypatch.setattr(get_ncbi_genomes, "config_logger", mock_build_logger)
     monkeypatch.setattr(get_ncbi_genomes, "make_output_directory", mock_making_dir)
     monkeypatch.setattr(get_ncbi_genomes, "parse_input_file", mock_parsed_inputfile)
     monkeypatch.setattr(
@@ -936,28 +925,28 @@ def test_main(output_dir, accession_df, null_logger, monkeypatch):
 # test entrez_retry
 
 
-def test_entry_retry(null_logger):
+def test_entry_retry():
     """Test entrez_retry."""
 
     def mock_record(*args, **kwargs):
         return "test_record"
 
-    assert "test_record" == get_ncbi_genomes.entrez_retry(null_logger, 1, mock_record)
+    assert "test_record" == get_ncbi_genomes.entrez_retry(1, mock_record)
 
 
-def test_entrez_retry_none(null_logger):
+def test_entrez_retry_none():
     """Test entrez_retry when nothing is returned."""
 
     def mock_record(*args, **kwargs):
         return
 
-    assert get_ncbi_genomes.entrez_retry(null_logger, 0, mock_record) is None
+    assert get_ncbi_genomes.entrez_retry(0, mock_record) is None
 
 
 # test main()
 
 
-def test_main_no_email(output_dir, accession_df, null_logger, monkeypatch):
+def test_main_no_email(output_dir, accession_df, monkeypatch):
     """Test function main() when no email is given."""
 
     def mock_built_parser(*args, **kwargs):
@@ -977,7 +966,7 @@ def test_main_no_email(output_dir, accession_df, null_logger, monkeypatch):
         return parser
 
     def mock_build_logger(*args, **kwargs):
-        return null_logger
+        return
 
     def mock_parsed_inputfile(*args, **kwargs):
         # retrn dataframe when initially parsing input file
@@ -996,7 +985,7 @@ def test_main_no_email(output_dir, accession_df, null_logger, monkeypatch):
 
     monkeypatch.setattr(get_ncbi_genomes, "build_parser", mock_built_parser)
     monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
-    monkeypatch.setattr(get_ncbi_genomes, "build_logger", mock_build_logger)
+    monkeypatch.setattr(get_ncbi_genomes, "config_logger", mock_build_logger)
     monkeypatch.setattr(get_ncbi_genomes, "make_output_directory", mock_making_dir)
     monkeypatch.setattr(get_ncbi_genomes, "parse_input_file", mock_parsed_inputfile)
     monkeypatch.setattr(
@@ -1009,7 +998,7 @@ def test_main_no_email(output_dir, accession_df, null_logger, monkeypatch):
     assert pytest_wrapped_e.type == SystemExit
 
 
-def test_main_argv(output_dir, accession_df, null_logger, monkeypatch):
+def test_main_argv(output_dir, accession_df, monkeypatch):
     """Test function main() when argv is not None."""
 
     def mock_built_parser(*args, **kwargs):
@@ -1035,7 +1024,7 @@ def test_main_argv(output_dir, accession_df, null_logger, monkeypatch):
         return parser
 
     def mock_build_logger(*args, **kwargs):
-        return null_logger
+        return
 
     def mock_parsed_inputfile(*args, **kwargs):
         # retrn dataframe when initially parsing input file
@@ -1054,7 +1043,7 @@ def test_main_argv(output_dir, accession_df, null_logger, monkeypatch):
 
     monkeypatch.setattr(get_ncbi_genomes, "build_parser", mock_built_parser)
     monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
-    monkeypatch.setattr(get_ncbi_genomes, "build_logger", mock_build_logger)
+    monkeypatch.setattr(get_ncbi_genomes, "config_logger", mock_build_logger)
     monkeypatch.setattr(get_ncbi_genomes, "make_output_directory", mock_making_dir)
     monkeypatch.setattr(get_ncbi_genomes, "parse_input_file", mock_parsed_inputfile)
     monkeypatch.setattr(
@@ -1065,7 +1054,7 @@ def test_main_argv(output_dir, accession_df, null_logger, monkeypatch):
     get_ncbi_genomes.main(["argv"])
 
 
-def test_main_stdout(accession_df, null_logger, monkeypatch):
+def test_main_stdout(accession_df, monkeypatch):
     """Test function main() when writing to stdout."""
 
     def mock_built_parser(*args, **kwargs):
@@ -1091,7 +1080,7 @@ def test_main_stdout(accession_df, null_logger, monkeypatch):
         return parser
 
     def mock_build_logger(*args, **kwargs):
-        return null_logger
+        return
 
     def mock_parsed_inputfile(*args, **kwargs):
         # retrn dataframe when initially parsing input file
@@ -1102,6 +1091,7 @@ def test_main_stdout(accession_df, null_logger, monkeypatch):
         return
 
     def mock_accession_retrieval(*args, **kwargs):
+
         accessions = [["123456"]]
         return accessions
 
@@ -1110,7 +1100,7 @@ def test_main_stdout(accession_df, null_logger, monkeypatch):
 
     monkeypatch.setattr(get_ncbi_genomes, "build_parser", mock_built_parser)
     monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
-    monkeypatch.setattr(get_ncbi_genomes, "build_logger", mock_build_logger)
+    monkeypatch.setattr(get_ncbi_genomes, "config_logger", mock_build_logger)
     monkeypatch.setattr(get_ncbi_genomes, "make_output_directory", mock_making_dir)
     monkeypatch.setattr(get_ncbi_genomes, "parse_input_file", mock_parsed_inputfile)
     monkeypatch.setattr(
