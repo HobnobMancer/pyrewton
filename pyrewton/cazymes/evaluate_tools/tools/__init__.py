@@ -42,19 +42,19 @@ def invoke_prediction_tools(query):
     # change cwd to dbCAN directory to be able to access database files
     os.chdir('tools/dbcan/')
     print("dbCAN is predicting CAZymes")
-    invoke_dbcan(input_path, out_dir, logger)
+    invoke_dbcan(input_path, out_dir)
 
     # move to cupp directory so can access CUPP
     os.chdir('..')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('cupp')
     print("CUPP is predicting CAZymes")
-    invoke_cupp(input_path, out_dir, logger)
+    invoke_cupp(input_path, out_dir)
 
     # move to ecami directory so can access eCAMI
     os.chdir('..')  # moves up to pyrewton/cazymes/prediction/tools
     os.chdir('ecami')
     print("eCAMI is predicting CAZymes")
-    invoke_ecami(input_path, out_dir, logger)
+    invoke_ecami(input_path, out_dir)
 
     # move back to 'predictions/' directory
     os.chdir('..')  # moves to 'tools/'
@@ -63,12 +63,11 @@ def invoke_prediction_tools(query):
     return out_dir
 
 
-def invoke_dbcan(input_path, out_dir, logger):
+def invoke_dbcan(input_path, out_dir):
     """Invoke the prediction tool (run-)dbCAN.
 
     :param input_path: path to input FASTA file
     :param out_dir: path to output directory for input FASTA file query
-    :param logger: logger object
 
     Return nothing
     """
@@ -87,12 +86,11 @@ def invoke_dbcan(input_path, out_dir, logger):
     return
 
 
-def invoke_cupp(input_path, out_dir, logger):
+def invoke_cupp(input_path, out_dir):
     """Invoke the prediction tool CUPP.
 
     :param input_path: path to input FASTA file
     :param out_dir: path to output directory for input FASTA file query
-    :param logger: logger object
 
     Return nothing
     """
@@ -113,12 +111,11 @@ def invoke_cupp(input_path, out_dir, logger):
     return
 
 
-def invoke_ecami(input_path, out_dir, logger):
+def invoke_ecami(input_path, out_dir):
     """Invoke the prediction tool eCAMI.
 
     :param input_path: path to input FASTA file
     :param out_dir: path to output directory for input FASTA file query
-    :param logger: logger object
 
     Return nothing
     """
