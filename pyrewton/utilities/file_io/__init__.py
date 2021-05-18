@@ -56,11 +56,10 @@ def make_output_directory(output, force, nodelete):
         )
 
 
-def write_out_dataframe(dataframe, logger, outdir, force):
+def write_out_dataframe(dataframe, outdir, force):
     """Write out dataframe to output directory.
 
     :param species_table: pandas dataframe
-    :param logger: logger object
     :param outdir: cmd-args, Path, output directory
     :param force: booleon, cmd-line argument to enable/disable over writing of existing files
     """
@@ -82,7 +81,7 @@ def write_out_dataframe(dataframe, logger, outdir, force):
     dataframe.to_csv(outdir)
 
 
-def write_out_pre_named_dataframe(dataframe, df_name, logger, outdir, force):
+def write_out_pre_named_dataframe(dataframe, df_name, outdir, force):
     """Write out dataframe to output directory.
 
     :param dataframe: pandas dataframe

@@ -66,10 +66,18 @@ def fasta_args_fail(input_dir):
 @pytest.fixture
 def prediction_query(input_dir):
     in_path = input_dir / "input_fasta" / "genbank_proteins_txid73501_GCA_003332165_1.fasta"
+
     out_path = Path("test_targets")
     out_path = out_path / "prdct_czyms_test_targets"
-    query = Namespace(fasta=in_path, prediction_dir=out_path)
-    return query
+
+    class_instance = predict_cazymes.Proteome(
+        fasta=in_path,
+        tax_id="NCBI:txid1234",
+        source="Source Organism",
+        prediction_paths={"dir": out_path}
+    )
+
+    return class_instance
 
 
 @pytest.fixture
@@ -81,7 +89,7 @@ def subprocess_returncode_1():
 # test function 'main'
 
 
-def test_main(output_dir, null_logger, input_dir, monkeypatch):
+def test_main(output_dir, input_dir, monkeypatch):
     """Test function 'main'."""
 
     def mock_built_parser(*args, **kwargs):
@@ -101,7 +109,7 @@ def test_main(output_dir, null_logger, input_dir, monkeypatch):
         return parser
 
     def mock_build_logger(*args, **kwargs):
-        return null_logger
+        return
 
     def mock_cwd_check(*args, **kwargs):
         return
@@ -123,7 +131,7 @@ def test_main(output_dir, null_logger, input_dir, monkeypatch):
 
     monkeypatch.setattr(predict_cazymes, "build_parser", mock_built_parser)
     monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
-    monkeypatch.setattr(predict_cazymes, "build_logger", mock_build_logger)
+    monkeypatch.setattr(predict_cazymes, "config_logger", mock_build_logger)
     monkeypatch.setattr(predict_cazymes, "check_cwd", mock_cwd_check)
     monkeypatch.setattr(predict_cazymes, "make_output_directory", mock_making_dir)
     monkeypatch.setattr(predict_cazymes, "get_fasta_paths", mock_fasta_retrieval)
@@ -134,7 +142,7 @@ def test_main(output_dir, null_logger, input_dir, monkeypatch):
     predict_cazymes.main()
 
 
-def test_main_argv_tax_id_none(output_dir, null_logger, input_dir, monkeypatch):
+def test_main_argv_tax_id_none(output_dir, input_dir, monkeypatch):
     """Test function 'main', when argv is not None and Tax ID is None."""
 
     def mock_built_parser(*args, **kwargs):
@@ -154,7 +162,7 @@ def test_main_argv_tax_id_none(output_dir, null_logger, input_dir, monkeypatch):
         return parser
 
     def mock_build_logger(*args, **kwargs):
-        return null_logger
+        return
 
     def mock_cwd_check(*args, **kwargs):
         return
@@ -176,7 +184,7 @@ def test_main_argv_tax_id_none(output_dir, null_logger, input_dir, monkeypatch):
 
     monkeypatch.setattr(predict_cazymes, "build_parser", mock_built_parser)
     monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
-    monkeypatch.setattr(predict_cazymes, "build_logger", mock_build_logger)
+    monkeypatch.setattr(predict_cazymes, "config_logger", mock_build_logger)
     monkeypatch.setattr(predict_cazymes, "check_cwd", mock_cwd_check)
     monkeypatch.setattr(predict_cazymes, "make_output_directory", mock_making_dir)
     monkeypatch.setattr(predict_cazymes, "get_fasta_paths", mock_fasta_retrieval)
@@ -190,7 +198,7 @@ def test_main_argv_tax_id_none(output_dir, null_logger, input_dir, monkeypatch):
 # test check_cwd()
 
 
-def test_check_cwd_pass(null_logger, monkeypatch):
+def test_check_cwd_pass(monkeypatch):
     """Test check_cwd() when it should fully pass."""
 
     def mock_getcwd(*args, **kwargs):
@@ -198,10 +206,10 @@ def test_check_cwd_pass(null_logger, monkeypatch):
 
     monkeypatch.setattr(os, "getcwd", mock_getcwd)
 
-    predict_cazymes.check_cwd(null_logger)
+    predict_cazymes.check_cwd()
 
 
-def test_check_cwd_move_dir(null_logger, monkeypatch):
+def test_check_cwd_move_dir(monkeypatch):
     """Test check_cwd() when invokved in tools/ dir."""
 
     def mock_getcwd(*args, **kwargs):
@@ -213,10 +221,10 @@ def test_check_cwd_move_dir(null_logger, monkeypatch):
     monkeypatch.setattr(os, "getcwd", mock_getcwd)
     monkeypatch.setattr(os, "chdir", mock_chdir)
 
-    predict_cazymes.check_cwd(null_logger)
+    predict_cazymes.check_cwd()
 
 
-def test_check_cwd_fail(null_logger, monkeypatch):
+def test_check_cwd_fail(monkeypatch):
     """Test check_cwd() when script should be terminated because in incorrect dir."""
 
     def mock_getcwd(*args, **kwargs):
@@ -225,73 +233,73 @@ def test_check_cwd_fail(null_logger, monkeypatch):
     monkeypatch.setattr(os, "getcwd", mock_getcwd)
 
     with pytest.raises(SystemExit) as pytest_wrapped_e:
-        predict_cazymes.check_cwd(null_logger)
+        predict_cazymes.check_cwd()
     assert pytest_wrapped_e.type == SystemExit
 
 
 # test get_fasta_paths()
 
 
-def test_get_fasta_paths(fasta_args, null_logger):
+def test_get_fasta_paths(fasta_args):
     """Test retrieval of fasta files by get_fasta_paths."""
 
-    assert len(predict_cazymes.get_fasta_paths(fasta_args, null_logger)) == 3
+    assert len(predict_cazymes.get_fasta_paths(fasta_args)) == 3
 
 
-def test_get_fasta_paths_sysexit(fasta_args_fail, null_logger):
+def test_get_fasta_paths_sysexit(fasta_args_fail):
     """Test get_fasta_paths when no fasta files returned and sys.exit should be raised."""
 
     with pytest.raises(SystemExit) as pytest_wrapped_e:
-        predict_cazymes.get_fasta_paths(fasta_args_fail, null_logger)
+        predict_cazymes.get_fasta_paths(fasta_args_fail)
     assert pytest_wrapped_e.type == SystemExit
 
 
 # test get_protein_source()
 
 
-def test_protein_source_genomic_accession(null_logger):
+def test_protein_source_genomic_accession():
     """Test get_protein_source() when the protein source is a genomic accession number."""
 
     file_path = "GCA_123_1.fasta"
-    assert predict_cazymes.get_protein_source(file_path, null_logger) == "GCA_123_1"
+    assert predict_cazymes.get_protein_source(file_path) == "GCA_123_1"
 
 
-def test_get_protein_source_uniprot(null_logger):
+def test_get_protein_source_uniprot():
     """Test get_protein_source() when the protein source is UniProtKB."""
 
     file_path = "UniProt_fasta.fasta"
-    assert predict_cazymes.get_protein_source(file_path, null_logger) == "UniProt_fasta"
+    assert predict_cazymes.get_protein_source(file_path) == "UniProt_fasta"
 
 
-def test_get_protein_source_unknown(null_logger):
+def test_get_protein_source_unknown():
     """Test get_protein_source() when the protein source is unknown."""
 
     file_path = "test_test_test.fasta"
-    assert predict_cazymes.get_protein_source(file_path, null_logger) == "unknown_source"
+    assert predict_cazymes.get_protein_source(file_path) == "unknown_source"
 
 
 # test get_tax_id()
 
 
-def test_get_tax_id(null_logger):
+def test_get_tax_id():
     """Test get_tax_id when retrieved with ncbi-txid prefix."""
 
     file_path = "ncbi_txid123.fasta"
-    assert predict_cazymes.get_tax_id(file_path, null_logger) == "ncbi_txid123"
+    assert predict_cazymes.get_tax_id(file_path) == "txid123"
 
 
-def test_get_tax_id_taxonomy(null_logger):
+def test_get_tax_id_taxonomy():
     """Test get_tax_id when retrieved with taxonomy prefix."""
 
     file_path = "taxonomy__123__.fasta"
-    assert predict_cazymes.get_tax_id(file_path, null_logger) == "taxonomy__123"
+    assert predict_cazymes.get_tax_id(file_path) == "taxonomy__123"
 
 
-def test_get_tax_id_fail(null_logger):
+def test_get_tax_id_fail():
     """Test get_tax_id when no tax ID is returned."""
 
     file_path = "test_test_test.fasta"
-    assert predict_cazymes.get_tax_id(file_path, null_logger) == None
+    assert predict_cazymes.get_tax_id(file_path) == None
 
 
 # test invoking prediction tools
@@ -299,7 +307,6 @@ def test_get_tax_id_fail(null_logger):
 
 def test_invoking_prediction_tools(
     prediction_query,
-    null_logger,
     test_dir,
     subprocess_returncode_1,
     monkeypatch,
@@ -319,4 +326,4 @@ def test_invoking_prediction_tools(
     monkeypatch.setattr(os, "chdir", mock_changing_dir)
     monkeypatch.setattr(subprocess, "run", mock_invoking_tools)
 
-    tools.invoke_prediction_tools(prediction_query, null_logger)
+    tools.invoke_prediction_tools(prediction_query)

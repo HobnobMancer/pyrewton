@@ -71,42 +71,42 @@ def df_output_file(test_dir):
 # Test make_output_directory
 
 
-def test_output_dir_creation_nd_true(making_output_dir, null_logger):
+def test_output_dir_creation_nd_true(making_output_dir):
     """Test creation of output dir when nodelete is false"""
-    file_io.make_output_directory(making_output_dir, null_logger, True, False)
+    file_io.make_output_directory(making_output_dir, True, False)
 
 
-def test_output_dir_creation_nd_false(making_output_dir, null_logger):
+def test_output_dir_creation_nd_false(making_output_dir):
     """Test creation of output dir when nodelete is true"""
 
-    file_io.make_output_directory(making_output_dir, null_logger, True, True)
+    file_io.make_output_directory(making_output_dir, True, True)
 
 
 # Test write_out_dataframe
 
 
-def test_writing_df_f_true(testing_df, null_logger, df_output_file):
+def test_writing_df_f_true(testing_df, df_output_file):
     """Tests function for writing out created dataframe when force is true"""
-    file_io.write_out_dataframe(testing_df, null_logger, df_output_file, True)
+    file_io.write_out_dataframe(testing_df, df_output_file, True)
 
 
-def test_writing_df_f_false(testing_df, null_logger, df_output_file):
+def test_writing_df_f_false(testing_df,  df_output_file):
     """Tests function for writing out created dataframe when force is false"""
-    file_io.write_out_dataframe(testing_df, null_logger, df_output_file, False)
+    file_io.write_out_dataframe(testing_df, df_output_file, False)
 
 
 # Test write_out_pre_named_dataframe
 
 
-def test_writing_named_df_f_true(testing_df, null_logger, making_output_dir):
+def test_writing_named_df_f_true(testing_df, making_output_dir):
     """Tests function for writing out a prenamed dataframe"""
     file_io.write_out_pre_named_dataframe(
-        testing_df, "test_writing_df.csv", null_logger, making_output_dir, True
+        testing_df, "test_writing_df.csv", making_output_dir, True
     )
 
 
-def test_writing_named_df_f_false(testing_df, null_logger, making_output_dir):
+def test_writing_named_df_f_false(testing_df, making_output_dir):
     """Tests function for writing out a prenamed dataframe"""
     file_io.write_out_pre_named_dataframe(
-        testing_df, "test_writing_df.csv", null_logger, making_output_dir, False
+        testing_df, "test_writing_df.csv", making_output_dir, False
     )
