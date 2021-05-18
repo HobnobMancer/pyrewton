@@ -64,7 +64,7 @@ from tqdm import tqdm
 from urllib.error import HTTPError
 
 from pyrewton.utilities import config_logger
-from pyrewton.utilities.cmd_parser_get_uniprot_proteins import build_parser
+from pyrewton.utilities.parsers.cmd_parser_get_uniprot_proteins import build_parser
 from pyrewton.utilities.file_io import make_output_directory, write_out_pre_named_dataframe
 
 
