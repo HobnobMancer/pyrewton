@@ -466,7 +466,7 @@ def test_main(output_dir, null_logger, args_config_path, monkeypatch):
         )
         return parser
 
-    def mock_build_logger(*args, **kwargs):
+    def mock_config_logger(*args, **kwargs):
         return null_logger
 
     def mock_making_dir(*args, **kwargs):
@@ -477,7 +477,7 @@ def test_main(output_dir, null_logger, args_config_path, monkeypatch):
 
     monkeypatch.setattr(get_uniprot_proteins, "build_parser", mock_built_parser)
     monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
-    monkeypatch.setattr(get_uniprot_proteins, "build_logger", mock_build_logger)
+    monkeypatch.setattr(get_uniprot_proteins, "config_logger", mock_config_logger)
     monkeypatch.setattr(get_uniprot_proteins, "make_output_directory", mock_making_dir)
     monkeypatch.setattr(get_uniprot_proteins, "read_configuration", mock_configuration)
 
@@ -503,7 +503,7 @@ def test_main_argv(output_dir, null_logger, args_config_path, monkeypatch):
         )
         return parser
 
-    def mock_build_logger(*args, **kwargs):
+    def mock_config_logger(*args, **kwargs):
         return null_logger
 
     def mock_making_dir(*args, **kwargs):
@@ -514,7 +514,7 @@ def test_main_argv(output_dir, null_logger, args_config_path, monkeypatch):
 
     monkeypatch.setattr(get_uniprot_proteins, "build_parser", mock_built_parser)
     monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
-    monkeypatch.setattr(get_uniprot_proteins, "build_logger", mock_build_logger)
+    monkeypatch.setattr(get_uniprot_proteins, "config_logger", mock_config_logger)
     monkeypatch.setattr(get_uniprot_proteins, "make_output_directory", mock_making_dir)
     monkeypatch.setattr(get_uniprot_proteins, "read_configuration", mock_configuration)
 
@@ -538,7 +538,7 @@ def test_main_no_config(output_dir, null_logger, monkeypatch):
         parser = Namespace(force=True, outdir=output_dir, nodelete=True, input=None)
         return parser
 
-    def mock_build_logger(*args, **kwargs):
+    def mock_config_logger(*args, **kwargs):
         return null_logger
 
     def mock_making_dir(*args, **kwargs):
@@ -549,7 +549,7 @@ def test_main_no_config(output_dir, null_logger, monkeypatch):
 
     monkeypatch.setattr(get_uniprot_proteins, "build_parser", mock_built_parser)
     monkeypatch.setattr(ArgumentParser, "parse_args", mock_parser)
-    monkeypatch.setattr(get_uniprot_proteins, "build_logger", mock_build_logger)
+    monkeypatch.setattr(get_uniprot_proteins, "config_logger", mock_config_logger)
     monkeypatch.setattr(get_uniprot_proteins, "make_output_directory", mock_making_dir)
     monkeypatch.setattr(get_uniprot_proteins, "read_configuration", mock_configuration)
 
