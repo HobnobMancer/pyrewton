@@ -71,6 +71,18 @@ def build_parser(argv: Optional[List] = None):
         help="Force file over writting",
     )
 
+    # Add option to force file over writting
+    parser.add_argument(
+        "--fam_freq",
+        dest="fam_freq",
+        type=Path,
+        default=None,
+        help=(
+            "Path to directory containing test sets to build dict of CAZy family "
+            "frequencies across all test sets"
+        ),
+    )
+
     # Add log file name option
     # If not given, no log file will be written out
     parser.add_argument(

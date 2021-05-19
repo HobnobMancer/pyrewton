@@ -24,11 +24,15 @@
 :func parse_predictions: Parses the raw output files from the CAZyme prediction tools
 
 """
+
+import json
+import logging
 import sys
 
 import pandas as pd
 
 from datetime import datetime
+from pathlib import Path
 
 from tqdm import tqdm
 
@@ -46,6 +50,7 @@ from pyrewton.cazymes.evaluate_tools.stats import (
 from pyrewton.cazymes.evaluate_tools.stats import (
     multilabel_class_classifications as class_classifications
 )
+from pyrewton.cazymes.evaluate_tools.stats.multilabel_family_classification import foundation_dict
 
 
 class ClassificationDF:
@@ -313,3 +318,88 @@ def build_prediction_dataframes(predictions, time_stamp, cazy_dict, args):
         all_family_predictions,
         all_family_ground_truths,
     )
+
+
+def get_fam_freq(args, cazy_dict, timestamp):
+    logger = logging.getLogger(__name__)
+
+    # get the paths to all test sets
+    all_test_sets = get_test_set_paths(args)
+
+    logger.warning(f"Found {len(all_test_sets)} test sets in {args.fam_freq}")
+
+    # build a dictionary to add frequency data to, key by CAZy fam, value by frequency
+    freq_dict = foundation_dict()
+
+    for testset in tqdm(all_test_sets, desc="Retrieving CAZy family freqs"):
+        freq_dict = add_fam_freq(testset, freq_dict, cazy_dict)
+
+    # write out freq_dict
+    output_path = args.output / f"CAZy_fam_testset_freq_{timestamp}.json"
+    with open(output_path, "w") as fh:
+        json.dump(freq_dict, fh)
+
+    return
+
+
+def get_test_set_paths(args):
+    logger = logging.getLogger(__name__)
+
+    # create empty list to store the file entries, to allow checking if no files returned
+    all_test_sets = []
+
+    # retrieve all files from input directory
+    files_in_entries = (
+        entry for entry in Path(args.fam_freq).iterdir() if entry.is_file()
+    )
+    # retrieve paths to fasta files, 1 fasta file = 1 test set
+    for item in files_in_entries:
+        # search for fasta file extension
+        if item.name.endswith("._test_set.fasta") or item.name.endswith(".fa"):
+            all_test_sets.append(item)
+
+    # check files were retrieved from input directory
+    if len(all_test_sets) == 0:
+        logger.warning(
+            (
+                f"No FASTA test set files retrieved from {args.fam_freq}.\n"
+                "Check the path to the input directory is correct.\n"
+                "Terminanting program."
+            )
+        )
+        sys.exit(1)
+
+    return all_test_sets
+
+
+def add_fam_freq(testset, freq_dict, cazy_dict):
+
+    logger = logging.getLogger(__name__)
+
+    filename = str(testset).split("/")[-1]
+
+    # open the FASTA file (FASTA file is the test set)
+    with open(testset, "r") as fh:
+        lines = fh.read().splitlines()
+    
+    for line in tqdm(lines, desc=f"Parsing {filename}"):
+        if line.startswith(">"):
+            # retrieve protein GenBank accession
+            protein_accession = line.replace(">", "")
+            
+            # check if protein is a CAZy classified CAZyme
+            try:
+                fam_annotations = cazy_dict[protein_accession]
+            except KeyError:
+                continue
+                
+            for fam in fam_annotations:
+                try:
+                    freq_dict[fam] += 1
+                except KeyError:
+                    logger.warning(
+                        f"Retrieved '{fam}' from CAZy dict, but not included "
+                        "in this modules foundation CAZy family dict"
+                    )
+
+    return freq_dict

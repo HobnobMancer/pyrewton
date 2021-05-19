@@ -107,10 +107,14 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     cazy_dict = get_cazy_dict(args.cazy)
 
     # retrieve paths to all dirs
-    predictions = get_predictions(args.input)
+    predictions = get_predictions(args.input)  # USED IN R EVALUATION
 
     # perform stats evaluations
     stats.evaluate_performance(predictions, cazy_dict, args)
+
+    if args.fam_freq is not None:  # retrieve the frequency of each CAZy family across all test sets
+        time_stamp = datetime.now().strftime("%Y_%m_%d")
+        stats.get_fam_freq(args, cazy_dict, time_stamp)  # USED IN R EVALUATION
 
 
 def get_cazy_dict(cazy_path):
