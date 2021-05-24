@@ -1,0 +1,2600 @@
+---
+title: 'Evaluation of the CAZyme Prediction Tools: dbCAN, CUPP and eCAMI'
+author: "Emma E. M. Hobbs"
+date: "2021 March"
+output:
+  bookdown::html_document2:
+    toc: yes
+    toc_float:
+      toc_collapsed: no
+    number_sections: yes
+    css: css/rmd_style.css
+    theme: lumen
+  html_document:
+    toc: yes
+    df_print: paged
+---
+
+```{r, setup, include=FALSE}
+# The code in this chunk is for setting up the Rnotebook, always run this chunk first
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(viridis)
+library('kableExtra')
+library(magrittr) 
+library('ggplot2')
+library("DT")
+library("datasets")
+library("dplyr")
+library("GGally")
+library("ggridges")
+library("readr")
+library(knitr)
+library(tidyverse)
+library("MLmetrics")
+library('mclust')  # adjusted rand index
+library('Metrics')  # Fbeta score
+library("devtools")
+library(ggpubr)
+library(RColorBrewer)
+library(cowplot)
+library(scales)
+library("MASS")
+library("interp")
+library('reshape2')
+library(htmlwidgets)
+library(plotly)
+
+# BG color for plots - should match .figure and .caption classes in rmd_style.css
+figbg = "whitesmoke"
+
+# Colour schemes for data
+colour_set <- c("#0a7a6d", "#d4af37", "#7844b8", "#acbf1b", "#c22176", "#3888e0")
+colour_grad <- c("#4a1b00", "#620021", "#ba2922", "#D73027", "#F38345", "#FDBA67", "#FEE168", "#fff966", "#BCF9FC", "#98D0E4", "#66A5CC", "#3D7A99", "#2f5b61", "#2e5c39", "#328544", "#22b348", "#40c740", "#80e831", "#a5f200")
+
+# these colour schemes are for when a lot of different colours are required in a plot
+n <- 60
+qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+
+qual_col = qual_col_pals[c(TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE, TRUE), ]
+large_colour_set = unlist(mapply(brewer.pal, qual_col$maxcolors, rownames(qual_col)))
+```
+
+<div id="summary">
+The CAZyme prediction tools or classifiers dbCAN, CUPP and eCAMI were independently evaluated against a high quality benchmark test set. The performances were evaluated upon the CAZyme/non-CAZyme differentiation, multilabel CAZy class classification, and multilabel classification of CAZy family annotations.  
+
+Results summary:    
+- dbCAN and DIAMOND showed the strongest performances in CAZyme/non-CAZyme differentiation  
+- dbCAN was the strongest performing tool across all categories, Hotpep (a tool invoked by dbCAN) was the weakest  
+- The performances between CUPP and eCAMI were similar, although CUPP showed a marginally better performance when comparing the multilabel classification of CAZy family annotations  
+- The performance of dbCAN may be optimised by substituting Hotpep with CUPP and/or eCAMI  
+</div>
+
+
+# Introduction
+
+The CAZyme prediction tools or classifiers classifiers dbCAN ([Zhange et al. 2018](https://academic.oup.com/nar/article/46/W1/W95/4996582)), CUPP ([Barrett and Lange, 2019](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6489277/)) and eCAMI ([Xu et al. 2019](https://academic.oup.com/bioinformatics/article/36/7/2068/5651014)) use different methods to predict if a protein is a CAZyme or non-CAZyme, and predict the CAZy family annotations for predicted CAZymes. These classifiers have not been independently, comprehensively or reproducibly evaluated against a high quality benchmark test set.
+
+The Python package `pyrewton` was used to create the test sets for the evaluation, invoke the CAZyme classifiers, and perform the statistical evaluations of the performances (using the `sklearn` library).
+
+This notebook layouts out the independent, reproducible and comprehensive evaluation of dbCAN, CUPP and eCAMI against a high quality benchmark test set. The tools were evaluated at three levels of CAZyme classification: CAZyme/non-CAZyme, CAZy class and CAZy family classification. Specifically, this evaluation evaluates the performance of:  
+- Binary CAZyme / non-CAzyme classifications
+- Multilabel classification of CAZy class classifications
+- Binary CAZy class classification of each CAZy class indpendent of all other CAZy classes
+- Multilabel classification of CAZy family classifications
+- Binary CAZy family classification of each CAZy class indpendent of all other CAZy families
+
+dbCAN incorporates the three protein function classifiers HMMER ([Potter et al. 2018](https://pubmed.ncbi.nlm.nih.gov/29905871/)), Hotpep ([Busk et al. 2017](https://pubmed.ncbi.nlm.nih.gov/28403817/)), and DIAMOND ([Buchfink et al. 2015](https://www.nature.com/articles/nmeth.3176)). In order to comprehensively evaluate the preformance of dbCAN, the predictions from HMMER, Hotpep and DIAMOND were evaluated independently of each other, and the consensus prediction (a prediction which at least two of the tools agree upon) was defined as the dbCAN result.
+
+
+# Test sets
+
+70 test sets containing 100 CAZymes and 100 non-CAZymes each, were used in the evaluation. The CAZyme classifiers parsed the same 70 test sets.
+
+Each test set was created from a unique genomic assembly. From each genomic assmembly, 100 CAZymes were selected at random, and the 100 non-CAZymes with the highest sequence similarity to 100 selected CAZymes were included in the test set.Choosing the 100 non-CAZymes with the highest sequence similarity was increased probability of causing confusion. Therefore, the performance of the CAZyme classifiers were evaluated test sets designed to cause the classifiers the greatest confusion, and this produce a baseline of each classifiers performance and avoid providing an overoptimisic evaluation of their perforamnce. An equal number of CAZymes to non-CAZymes was selected to prevent over representation of one population over the other.
+
+For inclusion of a genomic assembly for the creation of a test set, the assembly had to meet of all the following criteria:
+
+* Contains at least 100 CAZymes  
+* Contains at least 100 non-CAZymes  
+* Has an 'Assembly level' of 'Complete Genome' in the NCBI Assembly database
+* Protein records are still present in NCBI
+* Not listed as an 'Anomalous assembly' in the NCBI Assembly database
+
+The genomic assemblies were also chosen from a range of taxonomies to provide as comprehensive understanding of the performance of the classifiers over a range of datasets.
+
+Table \@ref(tab:gassembly) contains the genomic assemblies used to create the test sets for the evaluation. In total 70 assemblies were chosen:
+
+* 1 Oomycete
+* 19 Fungi
+* 9 Yeast
+* 2 Eukaryotes
+* 20 Gram Positive Bacteria
+* 19 Gram Negative Bacteria
+
+```{r gassembly, echo=FALSE, results='asis' ,fig.cap="Genomic assembiles selected for creation of high quality benchmarking test sets for the evaluation of the CAZyme classifiers dbCAN, CUPP and eCAMI."}
+# load in the species table
+gassemblies <- read.csv("genomic_sources_of_test_sets.csv")
+# rename the columns
+names(gassemblies)[names(gassemblies) == "ï..Group"] <- "Phylogeny"
+names(gassemblies)[names(gassemblies) == "NCBI.Taxonomy.ID"] <- "NCBI Taxonomy ID"
+names(gassemblies)[names(gassemblies) == "GenBank.Accession"] <- "GenBank Assembly Accession"
+names(gassemblies)[names(gassemblies) == "Number.of.CAZymes.in.CAZy"] <- "Number of CAZymes in CAZy"
+# print the table with formating
+kable(gassemblies[1:5], caption="Genomic assembiles selected for creation of high quality benchmarking test sets for the evaluation of the CAZyme classifiers dbCAN, CUPP and eCAMI", align='llccc')  %>% kable_styling(full_width = F)
+
+# write.csv(gassemblies[1:5], "test_sets_dataframe.csv", row.names=FALSE)
+```
+
+
+# The Binary CAZyme/non-CAZyme classification
+
+The assignment of CAZy family annotations to proteins by a CAZyme classifier, identifies the protein as a CAZyme. If no CAZy family annotations are assigned to a protein by a CAZyme classifier, the protein is identified as a non-CAZyme. This section of notebook evaluates the performance of the CAZyme classifiers dbCAN (which incorporates HMMER, Hotpep and DIAMOND), CUPP and eCAMI for this binary CAZyme/non-CAZyme classification.
+
+## Summary statistics
+
+For each classifier, for each test set the specificity, sensitivity (recall), precision, F1-score and accuracy were calculated. The mean of each statistical parameter was calculated for each classifier across all tests, to represent the overall performance of each CAZyme classifier. These results are presented in table \@ref(tab:sumstats). The performances of the classifiers for each statistical parameters are discussed in separate sections below.
+
+```{r sumstats, echo=FALSE, fig.cap="Summary statistics of CAZyme classifiers performances of binary CAZyme/non-CAZyme prediction. Data collected is the mean of call calculated statistical parameters across all test sets, plus and minus the standard devliation. All figures are rounded to 4 decimal places."}
+# Loads in the data for the binary classification evaluation
+all_stat_data <- read.csv("binary_classification_evaluation_2021_03_31.csv")
+
+# Calculate statistics
+subset <- all_stat_data[which(all_stat_data$Statistic.parameter == "Specificity"), ]
+specificity <- subset %>% group_by(Prediction.tool) %>% summarise("Mean Specificity"=mean(Statistic.value), "Specificity Standard Deviation"=sd(Statistic.value))
+
+subset <- all_stat_data[which(all_stat_data$Statistic.parameter == "Recall"), ]
+recall_set <- subset %>% group_by(Prediction.tool) %>% summarise("Mean Recall"=mean(Statistic.value), "Recall Standard Deviation"=sd(Statistic.value))
+
+subset <- all_stat_data[which(all_stat_data$Statistic.parameter == "Precision"), ]
+precision <- subset %>% group_by(Prediction.tool) %>% summarise("Mean Precision"=mean(Statistic.value), "Precision Standard Deviation"=sd(Statistic.value))
+
+subset <- all_stat_data[which(all_stat_data$Statistic.parameter == "F1-score"), ]
+f1_score <- subset %>% group_by(Prediction.tool) %>% summarise("Mean F1-score"=mean(Statistic.value), "F1-score Standard Deviation"=sd(Statistic.value))
+
+subset <- all_stat_data[which(all_stat_data$Statistic.parameter == "Accuracy"), ]
+accuracy <- subset %>% group_by(Prediction.tool) %>% summarise("Mean Accuracy"=mean(Statistic.value), "Accuracy Standard Deviation"=sd(Statistic.value))
+
+# combine data and build a dataframe
+binary_summary_df <- merge(specificity, recall_set)
+binary_summary_df <- merge(binary_summary_df, precision)
+binary_summary_df <- merge(binary_summary_df, f1_score)
+binary_summary_df <- merge(binary_summary_df, accuracy)
+
+# make it clear we are evaluating HMMER, DIAMOND and Hotpep that are reliant upon and built into dbCAN, not a generic eval of these tools
+binary_summary_df[binary_summary_df=="HMMER"]<-"dbCAN-HMMER"
+binary_summary_df[binary_summary_df=="DIAMOND"]<-"dbCAN-DIAMOND"
+binary_summary_df[binary_summary_df=="Hotpep"]<-"dbCAN-Hotpep"
+
+binary_summary_df$Prediction.tool <- factor(binary_summary_df$Prediction.tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+names(binary_summary_df)[names(binary_summary_df) == "Prediction.tool"] <- "Prediction Tool"
+# reorder the rows
+binary_summary_df <- binary_summary_df[c(2,5,6,3,1,4), ]
+row.names(binary_summary_df) = NULL  # hides row names which are added by reordering the rows
+
+kable(binary_summary_df, caption="Overall performance of CAZyme classifiers differentiation between CAZymes and non-CAZymes", align='c', digits = 4) %>% kable_styling(full_width = F)
+
+# write.csv(binary_summary_df[1:5], "binary_summary_dataframe.csv", row.names=FALSE)
+```
+
+### Specificity
+
+Specificity is the proportion of known negatives (in this case known non-CAZymes) which are correctly classified as negatives/non-CAZymes. Figure \@ref(fig:spec) is a graphical representation of the results calculated in table \@ref(tab:sumstats).
+
+```{r spec, echo=FALSE, fig.cap="One-dimensional scatter plot of specificity scores of CAZyme and non-CAZyme predictions per test set, overlaying a box plot of interquartile ranges to represent the distribution of specificities across all test sets."}
+# retrieve all rows containing data for the stat of interest
+subset.spec <- all_stat_data[which(all_stat_data$Statistic.parameter == "Specificity"), ]
+
+# make it clear we are evaluating HMMER, DIAMOND and Hotpep that are reliant upon and built into dbCAN, not a generic eval of these tools
+subset.spec[subset.spec=="HMMER"]<-"dbCAN-HMMER"
+subset.spec[subset.spec=="DIAMOND"]<-"dbCAN-DIAMOND"
+subset.spec[subset.spec=="Hotpep"]<-"dbCAN-Hotpep"
+
+subset.spec$Prediction.tool <- factor(subset.spec$Prediction.tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# pdf(file = "binarySpec.pdf", width = 8.58, height = 4.8)
+p.spec = ggplot(subset.spec %>% group_by(Prediction.tool), aes(x=Prediction.tool, y=Statistic.value, fill=Prediction.tool)) +
+  geom_boxplot(outlier.shape=NA) +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=11),
+        axis.title=element_text(size=12,face="bold")) +
+  xlab("Prediction Tool") + 
+  ylab("Specificity") +
+  scale_y_continuous(breaks = seq(0.7,1, by = 0.05)) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+p.spec
+# dev.off()
+```
+
+All tools showed a low probability of misclassifying non-CAZymes as CAZymes, inferring CAZyme predictions by these tools showed be treated as confident predictions. The weakest tools in this catagory were the k-mer methods Hotpep and eCAMI. The third k-mer method, CUPP, showed a similar performance to dbCAN.
+
+
+### Sensitivity
+
+Sensitivity (recall) is the proportion of known CAZymes that are correctly identified as CAZymes. Figure \@ref(fig:recallbc) shows the sensitivity for each test set for each classifier.
+
+
+```{r recallbc, echo=FALSE, fig.cap="One-dimensional scatter plot of sensitivity (recall) of CAZyme and non-CAZyme predictions per test set, overlaying a box plot of interquartile ranges to represent the distribution of sensitivities across all test sets."}
+subset.recall <- all_stat_data[which(all_stat_data$Statistic.parameter == "Recall"), ]
+
+# make it clear we are evaluating HMMER, DIAMOND and Hotpep that are reliant upon and built into dbCAN, not a generic eval of these tools
+subset.recall[subset.recall=="HMMER"]<-"dbCAN-HMMER"
+subset.recall[subset.recall=="DIAMOND"]<-"dbCAN-DIAMOND"
+subset.recall[subset.recall=="Hotpep"]<-"dbCAN-Hotpep"
+
+subset.recall$Prediction.tool <- factor(subset.recall$Prediction.tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# pdf(file = "binaryRecallSens.pdf", width = 8.58, height = 4.8)
+p.recall = ggplot(subset.recall %>% group_by(Prediction.tool), aes(x=Prediction.tool, y=Statistic.value, fill=Prediction.tool)) +
+  geom_boxplot(outlier.shape=NA) +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=11),
+        axis.title=element_text(size=12,face="bold")) +
+  xlab("Prediction Tool") + 
+  ylab("Sensitivity") +  # or change to sensitivity depending on preferencer
+  scale_y_continuous(breaks = seq(0.2,1, by = 0.1)) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+p.recall
+# dev.off()
+```
+
+DIAMOND and dbCAN demonstrated the stongest performances with the highest mean sensitivities, and highest quartile values. Hotpep showed the weakest performance with the lowest mean and greatest interquartile range, showing poor consistency in performance.
+
+The mean sensitivity across all test sets for eCAMI (0.8580 to 4 d.p.) was greater than that of CUPP (0.8541 to 4 d.p.). However, the standard deviation for eCAMI was greater than CUPP, and so was the interquartile range. Therefore, eCAMI potentially has a higher probability of correctly identifying a known CAZyme as a CAZyme, but the range in performance is less consistent than CUPP.
+
+The sensitivities of all the classifiers infers that it is unlikely they will identify the complete CAZome from a candidate species, although the classifiers will identify the majority of CAZymes within the CAZyome. dbCAN and DIAMOND will identify at least 90% of CAZymes within the CAZome, eCAMI and Hotpep will tend to identify 80-90% of a species CAZome.
+
+
+### Precision
+
+Precision is the proportion of positive predictions by the classifiers that are correct. In this case, precision represents the fraction of CAZyme predictions by the classifiers that are correct, specifically the proportion of predicted CAZymes that are known CAZymes. Figure \@ref(fig:precbc) depicts the precision of classifer for each test set \@ref(tab:sumstats).
+
+```{r precbc, echo=FALSE, fig.cap="One-dimensional scatter plot of precision scores of CAZyme and non-CAZyme predictions per test set, overlaying a box plot of interquartile ranges to represent the distribution of precisions across all test sets."}
+subset.prec <- all_stat_data[which(all_stat_data$Statistic.parameter == "Precision"), ]
+
+# make it clear we are evaluating HMMER, DIAMOND and Hotpep that are reliant upon and built into dbCAN, not a generic eval of these tools
+subset.prec[subset.prec=="HMMER"]<-"dbCAN-HMMER"
+subset.prec[subset.prec=="DIAMOND"]<-"dbCAN-DIAMOND"
+subset.prec[subset.prec=="Hotpep"]<-"dbCAN-Hotpep"
+
+subset.prec$Prediction.tool <- factor(subset.prec$Prediction.tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# pdf(file = "binaryPrec.pdf", width = 8.58, height = 4.8)
+p.prec = ggplot(subset.prec %>% group_by(Prediction.tool), aes(x=Prediction.tool, y=Statistic.value, fill=Prediction.tool)) +
+  geom_boxplot(outlier.shape=NA) +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=11),
+        axis.title=element_text(size=12,face="bold")) +
+  xlab("Prediction Tool") + 
+  ylab("Precision") +
+  scale_y_continuous(breaks = seq(0.7,1, by = 0.05)) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+p.prec
+# dev.off()
+```
+
+All tools demonstrated that a vast majoirty of CAZyme (positive) predictions are correct, and the tools generate few false positives. This infers high confidence can be assigned to CAZyme (positive) predictions generated by the CAZyme classifiers, however, taking into consideration, recall, the classifiers will not identify all CAZymes within a CAZome.
+
+Again, all tools demonstrated a similar strength in performance, except the the k-mer based methods Hotpep and eCAMI.Based upon the standard deviation of prediction scores acros all test sets, Hotpep and eCAMI are highly likely to generate a larger proportion of false positives than all other CAZyme classifiers evaluated, with approximately 3-5% of CAZyme predictions being false positives from Hotpep and eCAMI.
+
+
+### F1-score
+
+The F1-score is a harmonic (or weighted) average of recall and precision and provides an idea of the overall performance of the tool, 0 being the lowest and 1 being the best performance. Figure \@ref(fig:f1bc) shows the F1-score from each test set, for each classifier.
+
+```{r f1bc, echo=FALSE, fig.cap="One-dimensional scatter plot of the F1-score of CAZyme and non-CAZyme predictions per test set, overlaying boxplot of interquartile ranges to represent the distribution of F1-scores across all test sets."}
+subset.f1 <- all_stat_data[which(all_stat_data$Statistic.parameter == "F1-score"), ]
+
+# make it clear we are evaluating HMMER, DIAMOND and Hotpep that are reliant upon and built into dbCAN, not a generic eval of these tools
+subset.f1[subset.f1=="HMMER"]<-"dbCAN-HMMER"
+subset.f1[subset.f1=="DIAMOND"]<-"dbCAN-DIAMOND"
+subset.f1[subset.f1=="Hotpep"]<-"dbCAN-Hotpep"
+
+subset.f1$Prediction.tool <- factor(subset.f1$Prediction.tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+
+# pdf(file = "binaryF1.pdf", width = 8.58, height = 4.8)
+p.f1 = ggplot(subset.f1 %>% group_by(Prediction.tool), aes(x=Prediction.tool, y=Statistic.value, fill=Prediction.tool)) +
+  geom_boxplot(outlier.shape=NA) +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=11),
+        axis.title=element_text(size=12,face="bold")) +
+  xlab("Prediction Tool") + 
+  ylab("F1-score") +
+  scale_y_continuous(breaks = seq(0.3,1, by = 0.1)) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+p.f1
+# dev.off()
+```
+
+dbCAN and DIAMONd had the highest quartile values but HMMER produced a higher mean F1-score and smaller interquarile range than DIAMOND. Therefore, dbCAN, HMMER and DIAMONd demonstrated the strongest performances.
+
+Hotpep showed the weakest performance with the lowest mean F1-score and greatest interquartile range, inferring poor performance consistency.
+
+CUPP demonstrated a stronger performance than eCAMI with a higher mean F1-score, smaller standard deviation and interquartile ranging inferring in general CUPP will produce a higher F1-score and has a more consistent performance than eCAMI.
+
+### Accuracy
+
+Accuarcy (calculated using (TP + TN) / (TP + TN + FP + FN) ) provides an idea of the overall performance of the classifiers as a measure of the degree to which their CAZyme/non-CAZyme predictions conforms to the correct result. Figure \@ref(fig:accbc) is a plot of respective data from table \@ref(tab:sumstats).
+
+
+```{r accbc, echo=FALSE, fig.cap="One-dimensional scatter plot of accuracies of CAZyme and non-CAZyme predictions per test set, overlaying a boxplot of interquartile ranges to represent the distribution of accuracies across all test sets."}
+subset.acc <- all_stat_data[which(all_stat_data$Statistic.parameter == "Accuracy"), ]
+
+# make it clear we are evaluating HMMER, DIAMOND and Hotpep that are reliant upon and built into dbCAN, not a generic eval of these tools
+subset.acc[subset.acc=="HMMER"]<-"dbCAN-HMMER"
+subset.acc[subset.acc=="DIAMOND"]<-"dbCAN-DIAMOND"
+subset.acc[subset.acc=="Hotpep"]<-"dbCAN-Hotpep"
+
+subset.acc$Prediction.tool <- factor(subset.acc$Prediction.tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# pdf(file = "binaryAcc.pdf", width = 8.58, height = 4.8)
+p.acc = ggplot(subset.acc %>% group_by(Prediction.tool), aes(x=Prediction.tool, y=Statistic.value, fill=Prediction.tool)) +
+  geom_boxplot(outlier.shape=NA) +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=11),
+        axis.title=element_text(size=12,face="bold")) +
+  xlab("Classifier") + 
+  ylab("Accuracy") +
+  scale_y_continuous(breaks = seq(0.6,1, by = 0.05)) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+p.acc
+# dev.off()
+```
+
+Similar to the F1-scores, dbCAN and DIAMOND showed the best performance. Arguably, Hotpep demonstrated the worst performance although it was similar to that of the other k-mer methods, CUPP and eCAMI. This infers that alone, the k-mer methods are not as efficient at differentiating between CAZymes and non-CAZymes as methods that rely on a more global sequence similarity, such as HMMER and DIAMOND.
+
+```{r, include=FALSE}
+# build used to multi-plot of all the plots shown above
+# tiff(file = "multibinary.tiff", units="cm", width = 33.66, height = 17.23, res=600)
+# ggarrange(p.spec + rremove("x.text") + rremove("x.title"), p.recall  + rremove("x.text") + rremove("x.title"), p.prec, p.f1, labels = c("A", "B", "C", "D"), ncol=2, nrow=2)
+# dev.off()
+```
+
+## Expected Range of Accruacy
+
+The statistics evaluated above provide an idea of the general performance of the tools, but they do not provide an idea of the expect range of performance. Specifically, the data does not provide a clear image of the best and worse performance a user can expect when using these tools.
+
+To compare the expected typical range in accuracies for each classifier, 6 test sets (identified by the source genomic assemblies) were selected at random. The CAZyme/non-CAZyme predictions for each classifier, for each test set, were bootstrap resampled 100 times each, and for each bootstrap sample the accuracy calculated. The accuracies of the bootstrap samples for each classifier were plotted on stacked histograms, shown in figure \@ref(fig:bsacc).
+
+```{r bsacc, echo=FALSE, fig.cap="Stacked histograms of bootstrap sample accuracies of CAZyme classifiers' differentiation between CAZymes and non-CAZymes. 6 test sets (identified by their source genomic assembly) were selected at random. The CAZyme/non-CAZyme predictions for each classifier, for each test set, were bootstrap resampled 100 times. The accuracy of each of the 600 bootstrap samples per test set were plotted as a stacked histogram."}
+bootstrap.results <- read.csv("bootstrap_accuracy_evaluation_2021_04_04.csv")
+
+# make it clear we are evaluating HMMER, DIAMOND and Hotpep that are reliant upon and built into dbCAN, not a generic eval of these tools
+bootstrap.results[bootstrap.results=="HMMER"]<-"dbCAN-HMMER"
+bootstrap.results[bootstrap.results=="DIAMOND"]<-"dbCAN-DIAMOND"
+bootstrap.results[bootstrap.results=="Hotpep"]<-"dbCAN-Hotpep"
+
+bootstrap.results$Prediction_tool <- factor(bootstrap.results$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# tiff(file = "binaryBootstrapAcc.tiff", units="cm", height = 25, width = 21, res=600)
+p.bsbs = ggplot(bootstrap.results %>% group_by(Genomic_accession), aes(x=accuracy)) +
+  geom_histogram(alpha=0.7, color="black", binwidth = 0.01, aes(fill=Genomic_accession), position = ) +
+  geom_boxplot(outlier.shape=NA, width = 10, data=bootstrap.results, aes(x=accuracy, y=100), alpha=0.5) +
+  scale_fill_brewer(palette="Set1") +
+  # stat_bin(aes(y=..count.. + 5, label=..count..), geom="text", binwidth = 0.01, size=3.5, angle=90) +
+  theme(plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold"),
+        strip.text = element_text(size=12),
+        legend.position="bottom") +
+  labs(x = "Accuracy", y = "Number of bootstrap samples", fill="Test set key") +
+  scale_y_continuous(breaks = seq(0,125, by = 25)) +
+  scale_x_continuous(breaks = seq(0.75,1, by = 0.05)) +
+  facet_wrap(~ Prediction_tool, ncol=2)
+p.bsbs
+# dev.off()
+```
+
+
+## Investigation of Non-CAZymes classified as CAZymes (False positives)
+
+Few of the known non-CAZymes were classified as CAZymes by the CAZyme classifiers. The cause of the non-CAZymes being classified as CAZymes may be because:  
+- of a very high sequence similarity between the non-CAZyme and known CAZymes
+- CAZy incorrectly classifying the non-CAZyme as a CAZyme
+- Exclusion of a protein from CAZy is not a strong enough method to definiatively define a protein as a non-CAZyme
+
+The latter two points maybe true if all 6 classifiers classify the non-CAZyme as a CAZyme.
+
+To explore the first point the Blast Score ratios of all false positive CAZyme predictions were plotted on a boxplot.
+
+```{r fp.cor, echo=FALSE, fig.cap="BLAST Score ratio of all CAZy classified non-CAZymes falsely classified as CAZymes by at least 5 of the CAZyme prediction tools dbCAN, HMMER, Hotpep, DIAMOND, CUPP and eCAMI"}
+false_positive <- read.csv("false_positive_binary_predictions.csv")
+# drop any duplicate rows
+false_positive_dfs <- false_positive[!duplicated(false_positive), ]
+
+# convert the number of tools to characters
+false_positive_dfs$Number_of_tools <- as.character(false_positive_dfs$Number_of_tools)
+
+# filter for rows were Number_of_tools >= 5
+fp_more_than_5_tools <- false_positive_dfs[which(false_positive_dfs$Number_of_tools >= 5), ]
+
+# plot boxplot of BLAST Score Ratio
+# pdf(file = "binaryFalsePositives.pdf", width = 8.25, height = 3.5)
+p.bsr = ggplot(false_positive_dfs, aes(x=Number_of_tools, y=BLAST_score_ratio, colour=Number_of_tools)) +
+  geom_boxplot() +
+  geom_jitter(width=0.1, height=0) +
+  scale_color_brewer(palette="Dark2")+ 
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold"),
+        strip.text = element_text(size=12)) +
+  labs(y = "BLAST Score Ratio", x = "Number of tools")
+p.bsr
+# dev.off()
+```
+
+Figure \@ref(fig:fp.cor) demonstrates that there is no correlation between the probability of protein not being classified in CAZy and being clasified by the CAZyme prediction tools as a CAZyme.
+
+This leave the latter two reasons for cause of false positive classification of proteins not included in CAZy being classified by the CAZyme prediction tools as CAZymes:
+- CAZy incorrectly classifying the non-CAZyme as a CAZyme
+- Exclusion of a protein from CAZy is not a strong enough method to definitively define a protein as a non-CAZyme
+
+These two points both allude to the concept that CAZy maybe the most comprehensive CAZyme database, but it is not comprehensive. This is a very likely possibility owing to out sequencing capcity far exceeding our capcity to accuractly annotate protein functions, therefore, it is very likely there are CAZymes that have not yet been analysed by CAZy. Consequently, exclusion from CAZy should maybe not be interrpreted as definitive identification of a non-CAZyme annotation.
+
+...add in table to potential of 'non-CAZymes' being CAZymes...
+...
+...
+...
+
+## Conclusions of binary CAZyme and non-CAZyme classifications
+
+
+
+# CAZy Class Prediction
+
+The CAZyme prediction tools predict the CAZy family annotations of CAZymes. CAZy families are catalogued into one of size CAZy classes (definitions taken from www.cazy.org):  
+
+- Glycoside Hydrolases (GHs) : hydrolysis and/or rearrangement of glycosidic bonds (see CAZypedia definition)  
+- GlycosylTransferases (GTs) : formation of glycosidic bonds (see definition)  
+- Polysaccharide Lyases (PLs) : non-hydrolytic cleavage of glycosidic bonds  
+- Carbohydrate Esterases (CEs) : hydrolysis of carbohydrate esters  
+- Auxiliary Activities (AAs) : redox enzymes that act in conjunction with CAZymes.  
+
+It may be that a prediction tool is unable to accurately to predict the specific CAZy family for a protein but can accurately predict the correct CAZy class. This section of the notebook evaluates the performance of each of the prediction tools to predict the correct CAZy class, irrespective if the child CAZy family prediction is correct. No previous evaluations of the CAZyme prediction tools have evaluated the performance the tools at the level of CAZy class prediction. 
+
+## Multilabel CAZy Class Prediction Performance
+
+A single CAZyme can be included in multiple CAZy classes leading to the multilabel classification of CAZymes. To address this and evaluate the multilabel classification of CAZy classes the Rand Index (RI) and Adjusted Rand Index (ARI) were calculated.
+
+The RI is the measure of agreemment across all potential classifications of a protein. The RI ranges from 0 (no correct annotations) to 1 (all annotations correct) \@ref(fig:classRI). The ARI is the RI adjusted for chance, where 0 is the equivalent to assigning the CAZy class annotations randomly, -1 where the annotations are systematically handed out incorrectly and 1 where the annotations are all correct \@ref(fig:classARI).
+
+```{r classRI, echo=FALSE, fig.cap="Violin plot of Rand Index (RI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy classes."}
+# load in the data
+class_ri_ari_raw_df <- read.csv("cazy_class_predictions_2021_05_16.csv")
+
+# make it clear we are evaluating HMMER, DIAMOND and Hotpep that are reliant upon and built into dbCAN, not a generic eval of these tools
+class_ri_ari_raw_df[class_ri_ari_raw_df=="HMMER"]<-"dbCAN-HMMER"
+class_ri_ari_raw_df[class_ri_ari_raw_df=="DIAMOND"]<-"dbCAN-DIAMOND"
+class_ri_ari_raw_df[class_ri_ari_raw_df=="Hotpep"]<-"dbCAN-Hotpep"
+
+class_ri_ari_raw_df$Prediction_tool <- factor(class_ri_ari_raw_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# plot RI
+p.ri.class = ggplot(class_ri_ari_raw_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Rand_index, fill=Prediction_tool)) +
+  geom_violin() +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  xlab("Prediction Tool") + 
+  ylab("Rand Index") +
+  scale_y_continuous(breaks = seq(0,1, by = 0.1))
+p.ri.class
+```
+
+
+```{r classARI, echo=FALSE, fig.cap="Violin plot of Adjusted Rand Index (ARI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy classes."}
+# plot ARI
+# pdf(file = "mlcClassARI.pdf", width = 8.58, height = 6.75)
+p.ari.class = ggplot(class_ri_ari_raw_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Adjusted_Rand_index, fill=Prediction_tool)) +
+  geom_violin() +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  xlab("Prediction Tool") + 
+  ylab("Adjusted Rand Index") +
+  scale_y_continuous(breaks = c(-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1))
+p.ari.class
+# dev.off()
+```
+
+## CAZy class Prediction Performance
+
+
+Evaluate the performance of each prediction for each CAZy class, independent of the performance of the other CAZy classes.
+Excluded true negative non-CAZyme predictions.
+
+figure \@ref(fig:classSummaryFbetaScore)
+
+```{r classSummaryFbetaScore, echo=FALSE, fig.cap="Proportional area plot shaded to represent the distribution of Fbeta-score for each CAZy class for each test set parsed by CAZyme prediction tools."}
+# load in the data
+cazy_class_long_df <- read.csv("class_stats_per_test_set_2021_05_16.csv")
+
+# retrieve the Fbeta scores
+cazy_class_fbeta_df <- cazy_class_long_df[which(cazy_class_long_df$Statistic_parameter == "Fbeta_score"), ]
+
+# make it clear we are evaluating HMMER, DIAMOND and Hotpep that are reliant upon and built into dbCAN, not a generic eval of these tools
+cazy_class_fbeta_df[cazy_class_fbeta_df=="HMMER"]<-"dbCAN-HMMER"
+cazy_class_fbeta_df[cazy_class_fbeta_df=="DIAMOND"]<-"dbCAN-DIAMOND"
+cazy_class_fbeta_df[cazy_class_fbeta_df=="Hotpep"]<-"dbCAN-Hotpep"
+
+cazy_class_fbeta_df$Prediction_tool <- factor(cazy_class_fbeta_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+cazy_class_fbeta_df  <- cazy_class_fbeta_df[complete.cases(cazy_class_fbeta_df), ]
+
+# classify the Fbeta-scores into bins
+val.class <- vector()
+
+for(i in 1:nrow(cazy_class_fbeta_df)) {
+  if(cazy_class_fbeta_df[i, 6] == 1){val.class <- append(val.class, '[1.00]')} 
+  else if (cazy_class_fbeta_df[i, 6] == 0){val.class <- append(val.class, '[0.00]')}
+  else if (cazy_class_fbeta_df[i, 6] < 1 && cazy_class_fbeta_df[i, 6] >= 0.95){val.class <- append(val.class, '(0.95, 1.00]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.95 && cazy_class_fbeta_df[i, 6] >= 0.9){val.class <- append(val.class, '(0.90, 0.95]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.90 && cazy_class_fbeta_df[i, 6] >= 0.85){val.class <- append(val.class, '(0.85, 0.90]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.85 && cazy_class_fbeta_df[i, 6] >= 0.80){val.class <- append(val.class, '(0.80, 0.85]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.80 && cazy_class_fbeta_df[i, 6] >= 0.75){val.class <- append(val.class, '(0.75, 0.80]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.75 && cazy_class_fbeta_df[i, 6] >= 0.70){val.class <- append(val.class, '(0.70, 0.75]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.70 && cazy_class_fbeta_df[i, 6] >= 0.65){val.class <- append(val.class, '(0.65, 0.70]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.65 && cazy_class_fbeta_df[i, 6] >= 0.60){val.class <- append(val.class, '(0.60, 0.65]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.60 && cazy_class_fbeta_df[i, 6] >= 0.55){val.class <- append(val.class, '(0.55, 0.60]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.55 && cazy_class_fbeta_df[i, 6] >= 0.50){val.class <- append(val.class, '(0.50, 0.55]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.50 && cazy_class_fbeta_df[i, 6] >= 0.45){val.class <- append(val.class, '(0.45, 0.50]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.45 && cazy_class_fbeta_df[i, 6] >= 0.40){val.class <- append(val.class, '(0.40, 0.45]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.40 && cazy_class_fbeta_df[i, 6] >= 0.35){val.class <- append(val.class, '(0.35, 0.40]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.35 && cazy_class_fbeta_df[i, 6] >= 0.30){val.class <- append(val.class, '(0.30, 0.35]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.30 && cazy_class_fbeta_df[i, 6] >= 0.25){val.class <- append(val.class, '(0.25, 0.30]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.25 && cazy_class_fbeta_df[i, 6] >= 0.20){val.class <- append(val.class, '(0.20, 0.25]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.20 && cazy_class_fbeta_df[i, 6] >= 0.15){val.class <- append(val.class, '(0.15, 0.20]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.15 && cazy_class_fbeta_df[i, 6] >= 0.10){val.class <- append(val.class, '(0.10, 0.15]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.10 && cazy_class_fbeta_df[i, 6] >= 0.05){val.class <- append(val.class, '(0.05, 0.10]')}
+  else if (cazy_class_fbeta_df[i, 6] < 0.05 && cazy_class_fbeta_df[i, 6] > 0){val.class <- append(val.class, '(0.00, 0.05]')}
+  else {val.class <- append(val.class, '< 0')}
+}
+cazy_class_fbeta_df$val.class <- val.class
+
+# set order data is presented
+cazy_class_fbeta_df$Prediction_tool <- factor(cazy_class_fbeta_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+cazy_class_fbeta_df$val.class <- factor(cazy_class_fbeta_df$val.class, levels = c('< 0', '[0.00]', '(0.00, 0.05]', '(0.05, 0.10]', '(0.10, 0.15]', '(0.15, 0.20]', '(0.20, 0.25]', '(0.25, 0.30]', '(0.30, 0.35]', '(0.35, 0.40]', '(0.40, 0.45]', '(0.45, 0.50]', '(0.50, 0.55]', '(0.55, 0.60]', '(0.60, 0.65]', '(0.65, 0.70]', '(0.75, 0.80]', '(0.85, 0.90]', '(0.90, 0.95]', '(0.95, 1.00]', '[1.00]'))
+
+# pdf(file = "classFbetaSummary.pdf", width = 8.25, height = 10)
+# tiff(file="classfbeta.tiff", units="cm", height = 25, width = 21, res=600)
+# svg(file = "mlcClassF1.svg",  width = 8.25, height = 11)
+p.classF1 = ggally_count(cazy_class_fbeta_df, mapping=ggplot2::aes(x=Prediction_tool, y=CAZy_class, fill=val.class)) +
+  scale_fill_manual(values = colour_grad) +
+  xlab("Prediction Tool") + 
+  ylab("CAZy class") +
+  theme(legend.background = element_rect(fill = figbg, color = figbg),
+        plot.background = element_rect(fill = figbg, color = figbg),
+        legend.text=element_text(size=12),
+        legend.title=element_text(size=12),
+        axis.text=element_text(size=11),
+        axis.title=element_text(size=12,face="bold")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
+  labs(fill = expression(paste("F", beta, "-score"))) +
+  guides(fill = guide_legend(reverse = TRUE))
+p.classF1
+#dev.off()
+```
+
+```{r calculate_sample_sizes, include=FALSE}
+# work out the sample sizes for each prediction tool for each CAZy class (because the all true negative non-CAZyme predictions were excluded)
+calc.cazy.class.sample.size <- function (df, tool, cazy_class) {
+  tool_df <- df[which(df$Prediction_tool == tool), ]
+  tool_class_df <- tool_df[which(tool_df$CAZy_class == cazy_class), ] 
+  tool_class_df  <- tool_class_df[complete.cases(tool_class_df), ]
+  return(nrow(tool_class_df))
+}
+
+dbcan.gh.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN", "GH")
+dbcan.gt.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN", "GT")
+dbcan.pl.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN", "PL")
+dbcan.ce.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN", "CE")
+dbcan.aa.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN", "AA")
+dbcan.cbm.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN", "CBM")
+
+hmmer.gh.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-HMMER", "GH")
+hmmer.gt.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-HMMER", "GT")
+hmmer.pl.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-HMMER", "PL")
+hmmer.ce.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-HMMER", "CE")
+hmmer.aa.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-HMMER", "AA")
+hmmer.cbm.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-HMMER", "CBM")
+
+hotpep.gh.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-Hotpep", "GH")
+hotpep.gt.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-Hotpep", "GT")
+hotpep.pl.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-Hotpep", "PL")
+hotpep.ce.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-Hotpep", "CE")
+hotpep.aa.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-Hotpep", "AA")
+hotpep.cbm.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-Hotpep", "CBM")
+
+diamond.gh.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-DIAMOND", "GH")
+diamond.gt.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-DIAMOND", "GT")
+diamond.pl.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-DIAMOND", "PL")
+diamond.ce.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-DIAMOND", "CE")
+diamond.aa.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-DIAMOND", "AA")
+diamond.cbm.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "dbCAN-DIAMOND", "CBM")
+
+cupp.gh.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "CUPP", "GH")
+cupp.gt.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "CUPP", "GT")
+cupp.pl.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "CUPP", "PL")
+cupp.ce.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "CUPP", "CE")
+cupp.aa.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "CUPP", "AA")
+cupp.cbm.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "CUPP", "CBM")
+
+ecami.gh.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "eCAMI", "GH")
+ecami.gt.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "eCAMI", "GT")
+ecami.pl.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "eCAMI", "PL")
+ecami.ce.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "eCAMI", "CE")
+ecami.aa.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "eCAMI", "AA")
+ecami.cbm.sample.size = calc.cazy.class.sample.size(cazy_class_fbeta_df, "eCAMI", "CBM")
+
+gh.class.sample.sizes = c(as.integer(dbcan.gh.sample.size), as.integer(hmmer.gh.sample.size), as.integer(hotpep.gh.sample.size), as.integer(diamond.gh.sample.size), as.integer(cupp.gh.sample.size), as.integer(ecami.gh.sample.size))
+gt.class.sample.sizes = c(dbcan.gt.sample.size, hmmer.gt.sample.size, hotpep.gt.sample.size, diamond.gt.sample.size, cupp.gt.sample.size, ecami.gt.sample.size)
+pl.class.sample.sizes = c(dbcan.pl.sample.size, hmmer.pl.sample.size, hotpep.pl.sample.size, diamond.pl.sample.size, cupp.pl.sample.size, ecami.pl.sample.size)
+ce.class.sample.sizes = c(dbcan.ce.sample.size, hmmer.ce.sample.size, hotpep.ce.sample.size, diamond.ce.sample.size, cupp.ce.sample.size, ecami.ce.sample.size)
+aa.class.sample.sizes = c(dbcan.aa.sample.size, hmmer.aa.sample.size, hotpep.aa.sample.size, diamond.aa.sample.size, cupp.aa.sample.size, ecami.aa.sample.size)
+cbm.class.sample.sizes = c(dbcan.cbm.sample.size, hmmer.cbm.sample.size, hotpep.cbm.sample.size, diamond.cbm.sample.size, cupp.cbm.sample.size, ecami.cbm.sample.size)
+prediction_tool_names = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')
+
+prediction_tool_names
+pl.class.sample.sizes
+gt.class.sample.sizes
+gh.class.sample.sizes
+ce.class.sample.sizes
+cbm.class.sample.sizes
+aa.class.sample.sizes
+
+```
+
+
+## Prediction of Each CAZy Class
+
+```{r, echo=FALSE}
+# subset the data for only specificity and recall
+cazy_class_spec_df <- cazy_class_long_df[which(cazy_class_long_df$Statistic_parameter == "Specificity"), ]
+cazy_class_recall_df <- cazy_class_long_df[which(cazy_class_long_df$Statistic_parameter == "Recall"), ]
+
+# drop Statistic value column
+names(cazy_class_spec_df)[names(cazy_class_spec_df) == "Statistic_value"] <- "Specificity"
+names(cazy_class_recall_df)[names(cazy_class_recall_df) == "Statistic_value"] <- "Recall"
+
+cazy_class_spec_df <- cazy_class_spec_df[c("Genomic_accession", "Prediction_tool", "CAZy_class", "Specificity")]
+cazy_class_recall_df <- cazy_class_recall_df[c("Genomic_accession", "Prediction_tool", "CAZy_class", "Recall")]
+
+# merge dataframes
+cazy_class_spec_recall_df <- merge(cazy_class_spec_df, cazy_class_recall_df, by=c("Genomic_accession", "Prediction_tool", "CAZy_class"))
+
+# make it clear we are evaluating HMMER, DIAMOND and Hotpep that are reliant upon and built into dbCAN, not a generic eval of these tools
+cazy_class_spec_recall_df[cazy_class_spec_recall_df=="HMMER"]<-"dbCAN-HMMER"
+cazy_class_spec_recall_df[cazy_class_spec_recall_df=="DIAMOND"]<-"dbCAN-DIAMOND"
+cazy_class_spec_recall_df[cazy_class_spec_recall_df=="Hotpep"]<-"dbCAN-Hotpep"
+
+# cazy_class_spec_recall_df  <- cazy_class_spec_recall_df[complete.cases(cazy_class_spec_recall_df), ]
+
+cazy_class_spec_recall_df$Prediction_tool <- factor(cazy_class_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# this figure shows there is to much data to visualise on a single plot. Therefore, one plot per class with be made using facet_wrap by Prediciton_tool.
+p.class.spec.recall = ggplot(cazy_class_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity, color=Prediction_tool)) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity", color="Prediction Tool") +
+  facet_wrap(~ CAZy_class)
+p.class.spec.recall
+# combine dataframes
+
+```
+
+
+### Glycoside Hydrolases Class Prediction Performance
+
+
+```{r, echo=FALSE}
+cazy_class_GH_spec_recall_df <- cazy_class_spec_recall_df[which(cazy_class_spec_recall_df$CAZy_class == "GH"), ]
+cazy_class_GH_spec_recall_df$Recall_percentage = cazy_class_GH_spec_recall_df$Recall * 100
+cazy_class_GH_spec_recall_df$Specificity_percentage = cazy_class_GH_spec_recall_df$Specificity * 100
+
+cazy_class_GH_spec_recall_df$Prediction_tool <- factor(cazy_class_GH_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+recall.results <- cazy_class_GH_spec_recall_df$Recall
+noisy.recall = c()
+for(i in recall.results){
+  i <- i - rnorm(1, mean=0, sd=0.2)
+  noisy.recall <- append(noisy.recall, i)
+}
+cazy_class_GH_spec_recall_df$Recall_Noise <- noisy.recall
+
+p.class.gh.spec.recall = ggplot(cazy_class_GH_spec_recall_df %>% group_by(Prediction_tool), aes(x=as.numeric(Recall), y=as.numeric(Specificity))) +
+  geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity", fill="Count") +
+  geom_boxplot(aes(x=Recall, y=0.8875), alpha=0.5, width=0.01, outlier.shape = NA) +
+  facet_wrap(~ Prediction_tool)
+p.class.gh.spec.recall
+
+# why is the contour only hotpep + eCAMI (this is not position specific), try with an isolated prediction tool
+# becuase of Error in seq_len(n) : argument must be coercible to non-negative integer
+```
+
+
+
+
+### GlycosylTransferases Class Prediction Performance
+
+
+```{r, echo=FALSE}
+cazy_class_GT_spec_recall_df <- cazy_class_spec_recall_df[which(cazy_class_spec_recall_df$CAZy_class == "GT"), ]
+cazy_class_GT_spec_recall_df$Recall_percentage = cazy_class_GT_spec_recall_df$Recall * 100
+cazy_class_GT_spec_recall_df$Specificity_percentage = cazy_class_GT_spec_recall_df$Specificity * 100
+
+cazy_class_GT_spec_recall_df$Prediction_tool <- factor(cazy_class_GT_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# cazy_class_GT_spec_recall_df <- cazy_class_GT_spec_recall_df[complete.cases(cazy_class_GT_spec_recall_df), ]
+
+p.class.gt.spec.recall = ggplot(cazy_class_GT_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity)) +
+  # geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity", fill="Count") +
+  geom_boxplot(aes(x=Recall, y=0.9125), alpha=0.5, width=0.01, outlier.shape = NA) +
+  facet_wrap(~ Prediction_tool)
+p.class.gt.spec.recall
+
+# why is the contour only hotpep + eCAMI (this is not position specific), try with an isolated prediction tool
+# becuase of Error in seq_len(n) : argument must be coercible to non-negative integer
+```
+
+
+
+### Polysaccharide Lyases Class Prediction Performance
+
+
+```{r, echo=FALSE}
+cazy_class_PL_spec_recall_df <- cazy_class_spec_recall_df[which(cazy_class_spec_recall_df$CAZy_class == "PL"), ]
+
+cazy_class_PL_spec_recall_df$Prediction_tool <- factor(cazy_class_PL_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# recall.results <- cazy_class_PL_spec_recall_df$Recall
+# noisy.recall = c()
+# for(i in recall.results){
+#   i - rnorm(sum(recall.results), mean=0, sd=0.2)
+#   noisy.recall <- append(noisy.recall, i)
+# }
+# cazy_class_PL_spec_recall_df$Recall_Noise <- noisy.recall
+
+p.class.pl.spec.recall = ggplot(cazy_class_PL_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity)) +
+  # geom_density_2d_filled(alpha = 0.5) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity", fill="Count") +
+  geom_boxplot(aes(x=Recall, y=0.9825), alpha=0.5, width=0.002, outlier.shape = NA) +
+  facet_wrap(~ Prediction_tool)
+p.class.pl.spec.recall
+
+# why is the contour only hotpep + eCAMI (this is not position specific), try with an isolated prediction tool
+# becuase of Error in seq_len(n) : argument must be coercible to non-negative integer
+```
+
+
+### Carbohydrate Esterases Class Prediction Performance
+
+
+```{r, echo=FALSE}
+cazy_class_CE_spec_recall_df <- cazy_class_spec_recall_df[which(cazy_class_spec_recall_df$CAZy_class == "CE"), ]
+
+cazy_class_CE_spec_recall_df$Prediction_tool <- factor(cazy_class_CE_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# recall.results <- cazy_class_CE_spec_recall_df$Recall
+# noisy.recall = c()
+# for(i in recall.results){
+#   i - rnorm(sum(recall.results), mean=0, sd=0.2)
+#   noisy.recall <- append(noisy.recall, i)
+# }
+# cazy_class_CE_spec_recall_df$Recall_Noise <- noisy.recall
+
+p.class.ce.spec.recall = ggplot(cazy_class_CE_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity)) +
+  geom_density_2d_filled(alpha = 0.5) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity", fill="Count") +
+  geom_boxplot(aes(x=Recall, y=0.94), alpha=0.5, width=0.006, outlier.shape = NA) +
+  facet_wrap(~ Prediction_tool)
+p.class.ce.spec.recall
+
+# why is the contour only hotpep + eCAMI (this is not position specific), try with an isolated prediction tool
+# becuase of Error in seq_len(n) : argument must be coercible to non-negative integer
+```
+
+
+### Auxiliary Activities Class Prediction Performance
+
+
+```{r, echo=FALSE}
+cazy_class_AA_spec_recall_df <- cazy_class_spec_recall_df[which(cazy_class_spec_recall_df$CAZy_class == "AA"), ]
+
+cazy_class_AA_spec_recall_df$Prediction_tool <- factor(cazy_class_AA_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# recall.results <- cazy_class_AA_spec_recall_df$Recall
+# noisy.recall = c()
+# for(i in recall.results){
+#   i - rnorm(sum(recall.results), mean=0, sd=0.2)
+#   noisy.recall <- append(noisy.recall, i)
+# }
+# cazy_class_AA_spec_recall_df$Recall_Noise <- noisy.recall
+
+p.class.aa.spec.recall = ggplot(cazy_class_AA_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity)) +
+  # geom_density_2d_filled(alpha = 0.5) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity", fill="Count") +
+  geom_boxplot(aes(x=Recall, y=0.93), alpha=0.5, width=0.007, outlier.shape = NA) +
+  facet_wrap(~ Prediction_tool)
+p.class.aa.spec.recall
+
+# why is the contour only hotpep + eCAMI (this is not position specific), try with an isolated prediction tool
+# becuase of Error in seq_len(n) : argument must be coercible to non-negative integer
+```
+
+
+### Carbohydrate-Binding Modules Class Prediction Performance
+
+
+```{r, echo=FALSE}
+cazy_class_CBM_spec_recall_df <- cazy_class_spec_recall_df[which(cazy_class_spec_recall_df$CAZy_class == "CBM"), ]
+
+cazy_class_CBM_spec_recall_df$Prediction_tool <- factor(cazy_class_CBM_spec_recall_df$Prediction_tool, levels =c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# recall.results <- cazy_class_CBM_spec_recall_df$Recall
+# noisy.recall = c()
+# for(i in recall.results){
+#   i - rnorm(sum(recall.results), mean=0, sd=0.2)
+#   noisy.recall <- append(noisy.recall, i)
+# }
+# cazy_class_CBM_spec_recall_df$Recall_Noise <- noisy.recall
+
+p.class.cbm.spec.recall = ggplot(cazy_class_CBM_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity)) +
+  geom_density_2d_filled(alpha = 0.5) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity", fill="Count") +
+  geom_boxplot(aes(x=Recall, y=0.69), alpha=0.5, width=0.02, outlier.shape = NA) +
+  facet_wrap(~ Prediction_tool)
+p.class.cbm.spec.recall
+
+# why is the contour only hotpep + eCAMI (this is not position specific), try with an isolated prediction tool
+# becuase of Error in seq_len(n) : argument must be coercible to non-negative integer
+```
+
+
+# CAZy Family Prediction
+
+## Multilabel CAZy Family Prediction Performance
+
+```{r familyRIARI, include=FALSE}
+# load in the data
+family_ri_ari_raw_df <- read.csv("cazy_family_predictions_2021_05_17.csv")
+```
+
+A single CAZyme can be included in multiple CAZy families, from multiple different CAZy classes, resulting in the multilabel classification of CAZymes. To address this and evaluate the multilabel classification of CAZy families the Rand Index (RI) and Adjusted Rand Index (ARI) were calculated.
+
+The RI is the measure of agreemment across all potential classifications of a protein. The RI ranges from 0 (no correct annotations) to 1 (all annotations correct) \@ref(fig:famRI). The ARI is the RI adjusted for chance, where 0 is the equivalent to assigning the CAZy family annotations randomly, -1 where the annotations are systematically handed out incorrectly and 1 where the annotations are all correct \@ref(fig:famRI).
+
+```{r famRI, echo=FALSE, fig.cap="Violin plot of Rand Index (RI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy families."}
+# make it clear we are evaluating HMMER, DIAMOND and Hotpep that are reliant upon and built into dbCAN, not a generic eval of these tools
+family_ri_ari_raw_df[family_ri_ari_raw_df=="HMMER"]<-"dbCAN-HMMER"
+family_ri_ari_raw_df[family_ri_ari_raw_df=="DIAMOND"]<-"dbCAN-DIAMOND"
+family_ri_ari_raw_df[family_ri_ari_raw_df=="Hotpep"]<-"dbCAN-Hotpep"
+
+family_ri_ari_raw_df$Prediction_tool <- factor(family_ri_ari_raw_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# plot RI
+p.ri.fam = ggplot(family_ri_ari_raw_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Rand_index, fill=Prediction_tool)) +
+  geom_violin() +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  xlab("Prediction Tool") + 
+  ylab("Rand Index") +
+  scale_y_continuous(breaks = c(0.965, 0.970, 0.975, 0.980, 0.985, 0.990, 0.995, 1.00))
+p.ri.fam
+```
+
+
+```{r famARI, echo=FALSE, fig.cap="Violin plot of Adjusted Rand Index (ARI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy families."}
+# plot ARI
+# pdf(file = "mlcClassARI.pdf", width = 8.58, height = 6.75)
+p.ari.fam = ggplot(family_ri_ari_raw_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Adjusted_Rand_index, fill=Prediction_tool)) +
+  geom_violin() +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  xlab("Prediction Tool") + 
+  ylab("Adjusted Rand Index") + 
+  scale_y_continuous(breaks = c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0))
+p.ari.fam
+# dev.off()
+```
+
+## CAZy Family Prediction Performance
+
+```{r familyStats, include=FALSE}
+# load in the data
+family_all_stats_df <- read.csv("cazy_fam_long_form_stats_df_2021_05_17.csv")
+
+# Add CAZy class column
+fam.names <- colnames(family_ri_ari_raw_df[5:458])  # retrieve names of CAZy families
+# separate the names by CAZy class
+gh.names = fam.names[1:172]
+gt.names = fam.names[173:287]
+pl.names = fam.names[288:329]
+ce.names = fam.names[330:348]
+aa.names = fam.names[349:365]
+cbm.names = fam.names[366:454]
+
+# create subsets by CAZy class and associated each data set with the name of its CAZy class
+gh.subset <- family_all_stats_df[which(family_all_stats_df$CAZy_family %in% gh.names), ]
+cazy.class <- rep('Glycoside Hydrolases', nrow(gh.subset))
+gh.subset$cazy.class <- cazy.class
+
+gt.subset <- family_all_stats_df[which(family_all_stats_df$CAZy_family %in% gt.names), ]
+cazy.class <- rep('GlycosylTransferases', nrow(gt.subset))
+gt.subset$cazy.class <- cazy.class
+
+pl.subset <- family_all_stats_df[which(family_all_stats_df$CAZy_family %in% pl.names), ]
+cazy.class <- rep('Polysaccharide Lyases', nrow(pl.subset))
+pl.subset$cazy.class <- cazy.class
+
+ce.subset <- family_all_stats_df[which(family_all_stats_df$CAZy_family %in% ce.names), ]
+cazy.class <- rep('Carbohydrate Esterases', nrow(ce.subset))
+ce.subset$cazy.class <- cazy.class
+
+aa.subset <- family_all_stats_df[which(family_all_stats_df$CAZy_family %in% aa.names), ]
+cazy.class <- rep('Auxiliary Activities', nrow(aa.subset))
+aa.subset$cazy.class <- cazy.class
+
+cbm.subset <- family_all_stats_df[which(family_all_stats_df$CAZy_family %in% cbm.names), ]
+cazy.class <- rep('Carbohydrate-Binding Modules', nrow(cbm.subset))
+cbm.subset$cazy.class <- cazy.class
+
+# combine the dataframes
+family_stats_df <- gh.subset
+family_stats_df <- rbind(family_stats_df, gt.subset)
+family_stats_df <- rbind(family_stats_df, pl.subset)
+family_stats_df <- rbind(family_stats_df, ce.subset)
+family_stats_df <- rbind(family_stats_df, aa.subset)
+family_stats_df <- rbind(family_stats_df, cbm.subset)
+# family_stats_df <- family_stats_df[complete.cases(family_stats_df), ]
+
+family_stats_df$cazy.class <- factor(family_stats_df$cazy.class, levels = c('Glycoside Hydrolases','GlycosylTransferases','Polysaccharide Lyases','Carbohydrate Esterases','Auxiliary Activities','Carbohydrate-Binding Modules'))
+
+# make it clear we are evaluating HMMER, DIAMOND and Hotpep that are reliant upon and built into dbCAN, not a generic eval of these tools
+family_stats_df[family_stats_df=="HMMER"]<-"dbCAN-HMMER"
+family_stats_df[family_stats_df=="DIAMOND"]<-"dbCAN-DIAMOND"
+family_stats_df[family_stats_df=="Hotpep"]<-"dbCAN-Hotpep"
+```
+
+Evaluate the performance of each prediction for each CAZy family, independent of the performance of the other CAZy families.
+Excluded true negative non-CAZyme predictions.
+
+figure \@ref(fig:familSummaryFbetaScore)
+
+```{r familSummaryFbetaScore, echo=FALSE, fig.cap="Proportional area plot shaded to represent the distribution of Fbeta-score for each CAZy family for each test set parsed by CAZyme prediction tools."}
+# retrieve the Fbeta scores
+cazy_fam_fbeta_df <- family_stats_df[which(family_stats_df$Stat_parameter == "Fbeta_score"), ]
+
+cazy_fam_fbeta_df  <- cazy_fam_fbeta_df[complete.cases(cazy_fam_fbeta_df), ]
+
+# classify the Fbeta-scores into bins
+val.class <- vector()
+
+for(i in 1:nrow(cazy_fam_fbeta_df)) {
+  if(cazy_fam_fbeta_df[i, 5] == 1){val.class <- append(val.class, '[1.00]')} 
+  else if (cazy_fam_fbeta_df[i, 5] == 0){val.class <- append(val.class, '[0.00]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 1 && cazy_fam_fbeta_df[i, 5] >= 0.95){val.class <- append(val.class, '(0.95, 1.00]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.95 && cazy_fam_fbeta_df[i, 5] >= 0.9){val.class <- append(val.class, '(0.90, 0.95]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.90 && cazy_fam_fbeta_df[i, 5] >= 0.85){val.class <- append(val.class, '(0.85, 0.90]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.85 && cazy_fam_fbeta_df[i, 5] >= 0.80){val.class <- append(val.class, '(0.80, 0.85]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.80 && cazy_fam_fbeta_df[i, 5] >= 0.75){val.class <- append(val.class, '(0.75, 0.80]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.75 && cazy_fam_fbeta_df[i, 5] >= 0.70){val.class <- append(val.class, '(0.70, 0.75]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.70 && cazy_fam_fbeta_df[i, 5] >= 0.65){val.class <- append(val.class, '(0.65, 0.70]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.65 && cazy_fam_fbeta_df[i, 5] >= 0.60){val.class <- append(val.class, '(0.60, 0.65]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.60 && cazy_fam_fbeta_df[i, 5] >= 0.55){val.class <- append(val.class, '(0.55, 0.60]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.55 && cazy_fam_fbeta_df[i, 5] >= 0.50){val.class <- append(val.class, '(0.50, 0.55]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.50 && cazy_fam_fbeta_df[i, 5] >= 0.45){val.class <- append(val.class, '(0.45, 0.50]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.45 && cazy_fam_fbeta_df[i, 5] >= 0.40){val.class <- append(val.class, '(0.40, 0.45]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.40 && cazy_fam_fbeta_df[i, 5] >= 0.35){val.class <- append(val.class, '(0.35, 0.40]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.35 && cazy_fam_fbeta_df[i, 5] >= 0.30){val.class <- append(val.class, '(0.30, 0.35]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.30 && cazy_fam_fbeta_df[i, 5] >= 0.25){val.class <- append(val.class, '(0.25, 0.30]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.25 && cazy_fam_fbeta_df[i, 5] >= 0.20){val.class <- append(val.class, '(0.20, 0.25]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.20 && cazy_fam_fbeta_df[i, 5] >= 0.15){val.class <- append(val.class, '(0.15, 0.20]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.15 && cazy_fam_fbeta_df[i, 5] >= 0.10){val.class <- append(val.class, '(0.10, 0.15]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.10 && cazy_fam_fbeta_df[i, 5] >= 0.05){val.class <- append(val.class, '(0.05, 0.10]')}
+  else if (cazy_fam_fbeta_df[i, 5] < 0.05 && cazy_fam_fbeta_df[i, 5] > 0){val.class <- append(val.class, '(0.00, 0.05]')}
+  else {val.class <- append(val.class, '< 0')}
+}
+cazy_fam_fbeta_df$val.class <- val.class
+
+# set order data is presented
+cazy_fam_fbeta_df$Prediction_tool <- factor(cazy_fam_fbeta_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+cazy_fam_fbeta_df$val.class <- factor(cazy_fam_fbeta_df$val.class, levels = c('< 0', '[0.00]', '(0.00, 0.05]', '(0.05, 0.10]', '(0.10, 0.15]', '(0.15, 0.20]', '(0.20, 0.25]', '(0.25, 0.30]', '(0.30, 0.35]', '(0.35, 0.40]', '(0.40, 0.45]', '(0.45, 0.50]', '(0.50, 0.55]', '(0.55, 0.60]', '(0.60, 0.65]', '(0.65, 0.70]', '(0.75, 0.80]', '(0.85, 0.90]', '(0.90, 0.95]', '(0.95, 1.00]', '[1.00]'))
+
+cazy_fam_fbeta_df$cazy.class <- factor(cazy_fam_fbeta_df$cazy.class, levels = c('Auxiliary Activities', 'Carbohydrate-Binding Modules',  'Carbohydrate Esterases', 'Glycoside Hydrolases', 'GlycosylTransferases', 'Polysaccharide Lyases'))
+
+# pdf(file = "classFbetaSummary.pdf", width = 8.25, height = 10)
+# tiff(file="classfbeta.tiff", units="cm", height = 25, width = 21, res=600)
+# svg(file = "mlcClassF1.svg",  width = 8.25, height = 11)
+p.famF1 = ggally_count(cazy_fam_fbeta_df, mapping=ggplot2::aes(x=Prediction_tool, y=cazy.class, fill=val.class)) +
+  scale_fill_manual(values = colour_grad) +
+  xlab("Prediction Tool") + 
+  ylab("CAZy class") +
+  theme(legend.background = element_rect(fill = figbg, color = figbg),
+        plot.background = element_rect(fill = figbg, color = figbg),
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=12),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
+  labs(fill = expression(paste("F", beta, "-score"))) +
+  guides(fill = guide_legend(reverse = TRUE))
+p.famF1
+# dev.off()
+```
+
+## Prediction of Each CAZy Family
+
+To evaluate the performance of each prediction tool for each CAZy family, the families were grouped by their CAZy class and the specificity for each prediction tool was plotted against the sensitivity for each CAZy family. To find families that most tools showed a poor performance (defined as a expression(paste("F", beta, "-score"))-score less than 0.75), heatmaps of the expression(paste("F", beta, "-score")) for CAZy families for which at least 3 tools produced a expression(paste("F", beta, "-score")) less than 0.75, also comparing the size of the number of CAzyme records in family in CAZy and the number of family members included across all test sets.
+
+### Predicting Families From Glycoside Hydrolases
+
+Figure \@ref(fig:famGHSpecSense) shows the specificity and sensitivity of each prediction tool for each Glycoside Hydrolase family. All prediction tools showed a very strong performance for specificity, with no tool producing a specificity score less than 0.995.
+
+dbCAN had the most families with a sensitivity greater than or equal to 0.9 (99 families), closely followed by HMMER and CUPP (with 97 families each). However, dbCAN and HMMER had more families with a sensitivity greater than or equal to 0.75 than CUPP (114, 113 and 103 families respectively). Therefore, dbCAN and HMMER showed the strongest performances for GH families.
+
+dbCAN-Hotpep, CUPP and eCAMI showed the weakest performances, with the most families producing a sensitivity score less than 0.75. However, eCAMI and dbCAN-Hotpep had the most families with a specificity score less than 0.995, although the specificity scores from Hotpep were lower than that of eCAMI. Therefore, dbCAN-Hotpep showed the weakest performance, although overall the performances between the tools were similar. dbCAN demonstrated the strongest performance with the most families with a sensitivity greater than 0.75 and specificity of 1.
+
+```{r famGHSpecSense, echo=FALSE, fig.cap="Scatter plot of specificity against sensitivity for each CAZy family within the Glycoside Hydrolase class. Hover cursor over each point to see the specific sensitivity and specificity."}
+gh.fam.subset <- family_stats_df[which(family_stats_df$CAZy_family %in% gh.names), ]
+
+# set order data is presented
+gh.fam.subset$Prediction_tool <- factor(gh.fam.subset$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# subset the data for only specificity and recall
+gh_cazy_fam_spec_df <- gh.fam.subset[which(gh.fam.subset$Stat_parameter == "Specificity"), ]
+gh_cazy_fam_recall_df <- gh.fam.subset[which(gh.fam.subset$Stat_parameter == "Recall"), ]
+
+# drop Statistic value column
+names(gh_cazy_fam_spec_df)[names(gh_cazy_fam_spec_df) == "Stat_value"] <- "Specificity"
+names(gh_cazy_fam_recall_df)[names(gh_cazy_fam_recall_df) == "Stat_value"] <- "Recall"
+
+gh_cazy_fam_spec_df <- gh_cazy_fam_spec_df[c("CAZy_family", "Prediction_tool", "cazy.class", "Specificity")]
+gh_cazy_fam_recall_df <- gh_cazy_fam_recall_df[c("CAZy_family", "Prediction_tool", "cazy.class", "Recall")]
+
+# merge dataframes
+gh_cazy_fam_spec_recall_df <- merge(gh_cazy_fam_spec_df, gh_cazy_fam_recall_df, by=c("CAZy_family", "Prediction_tool", "cazy.class"))
+
+# gh_cazy_fam_spec_recall_df  <- gh_cazy_fam_spec_recall_df[complete.cases(gh_cazy_fam_spec_recall_df), ]
+gh_cazy_fam_spec_recall_df$Prediction_tool <- factor(gh_cazy_fam_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# add percentage columns
+gh_cazy_fam_spec_recall_df$Specificity_percentage <- gh_cazy_fam_spec_recall_df$Specificity * 100
+gh_cazy_fam_spec_recall_df$Recall_percentage <- gh_cazy_fam_spec_recall_df$Recall * 100
+
+#geom_text(aes(CPI, HDI, label = Country), data = dat[dat$Country %in% pointsToLabel,])
+
+# pdf(file = "mlcGHfamsSpecSens.pdf", width = 11.25, height = 7)
+
+gh_cazy_fam_spec_recall_df  <- gh_cazy_fam_spec_recall_df[complete.cases(gh_cazy_fam_spec_recall_df), ]
+
+# standard version
+# pdf(file = "mlcGHfamsSpecSens.pdf", width = 11.25, height = 7)
+p.gh.fam = ggplot(gh_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool)) +
+  # geom_density2d_filled() +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity (log10)") +
+  # geom_text(data = filter(gh_cazy_fam_spec_recall_df, Recall<0.5), aes(label = CAZy_family), vjust = -0.01) +
+  geom_boxplot(aes(x=Recall, y=0.996), alpha=0.5, width=0.0005, outlier.shape = NA) +
+  facet_wrap(~ Prediction_tool)
+p.gh.fam
+# dev.off()
+
+# interactive version
+p.gh.fam.interactive = ggplot(gh_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool,
+                                                  text = paste(
+                                                  "CAZy family: ", CAZy_family, "\n",
+                                                  "Specificity: ", Specificity, "\n",
+                                                  "Sensitivity: ", Recall, "\n",
+                                                  sep = ""
+                                                  ))) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity (log10)") +
+  facet_wrap(~ Prediction_tool)
+ggplotly(p.gh.fam.interactive, tooltip = "text")
+```
+
+```{r gh.fam.distribution, include=FALSE}
+gh.0.9 <- gh_cazy_fam_spec_recall_df[which(gh_cazy_fam_spec_recall_df$Recall >= 0.9), ]
+table(gh.0.9$Prediction_tool)
+gh.0.75 <- gh_cazy_fam_spec_recall_df[which(gh_cazy_fam_spec_recall_df$Recall >= 0.75), ]
+table(gh.0.75$Prediction_tool)
+gh.0.75.less <- gh_cazy_fam_spec_recall_df[which(gh_cazy_fam_spec_recall_df$Recall < 0.75), ]
+table(gh.0.75.less$Prediction_tool)
+```
+
+#### Identify potentially difficult to classify GH families
+
+To identify GH CAZy families that most prediction tools performed poorly, families for which at least three prediction tools produced a expression(paste("F", beta, "-score")) of less than 0.75, as shown in figure \@ref(fig:famGHPoorPerform). It was no suprise GH0 was included because CAZy classifies this family as 'unclassified'. The family includes CAZymes that CAZy has classified as GHs but cannot not determine the CAZy family annotation, therefore GH0 includes members from multiple different CAZy families. Thus, GHO has a higher sequence diversity, causing the accurate modeling of this family to be more difficult. Consequently, the performance for GH0 is typcially lower than other CAZy families for all prediction tools.
+ For families GH163-GH170, these families are not included into the models within the prediction tools (except HMMER which does included GH163), therefore, these tools cannot predict members of these families.
+ 
+ The remaining families, contained very small sample sizes of less than 10 proteins. Thus, the odds of producing a low expression(paste("F", beta, "-score")) is signficantly increased, and the probability of producing a low expression(paste("F", beta, "-score")) is much greater than producing a high expression(paste("F", beta, "-score")).
+ 
+```{r famGHPoorPerform, echo=FALSE, fig.cap="Heatmap of Glycoside Hydrolases families for which at least three CAZyme prediction tools produced a poor performance, defined as a Fbeta-score less than 0.75. 'Family population' is the number of CAZyme records in each family in CAZy, and 'Sample size' is the number of proteins from the CAZy family included across all test sets."}
+# gh.fam.subset contains all CAZy family prediction statistical evaluations for families from GH
+# gh.fam.sub has the structure CAZy_family, Stat_parameter, Prediction_tool, Stat_value, cazy.class
+# need to reorient dataframe to CAZy_family, dbCAN.fbeta.score, dbCAN-HMMER.fbeta.score... Poor_performing_tools_count
+# Poor_performing_tools_count is the number of tools with an fbeta-score less than 0.75 for the CAZy family
+
+# retrieve rows containing Fbeta-scores
+gh_cazy_fam_fbeta <- gh.fam.subset[which(gh.fam.subset$Stat_parameter == "Fbeta_score"), ]
+
+retrieve_tool_fam_fbeta_scores <- function (df, tool) {
+  # retrieve only the rows containing the tool of interest
+  df <- df[which(df$Prediction_tool == tool), ]
+  
+  # drop unneeded columns
+  df <- subset(df, select=-c(X,Stat_parameter,Prediction_tool,cazy.class))
+  
+  return(df)
+}
+
+dbCAN_gh_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(gh_cazy_fam_fbeta, "dbCAN")
+dbCAN_gh_cazy_fam_fbeta <- rename(dbCAN_gh_cazy_fam_fbeta, "dbCAN" = Stat_value)
+
+HMMER_gh_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(gh_cazy_fam_fbeta, "dbCAN-HMMER")
+HMMER_gh_cazy_fam_fbeta <- rename(HMMER_gh_cazy_fam_fbeta, "dbCAN-HMMER" = Stat_value)
+
+Hotpep_gh_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(gh_cazy_fam_fbeta, "dbCAN-Hotpep")
+Hotpep_gh_cazy_fam_fbeta <- rename(Hotpep_gh_cazy_fam_fbeta, "dbCAN-Hotpep" = Stat_value)
+
+DIAMOND_gh_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(gh_cazy_fam_fbeta, "dbCAN-DIAMOND")
+DIAMOND_gh_cazy_fam_fbeta <- rename(DIAMOND_gh_cazy_fam_fbeta, "dbCAN-DIAMOND" = Stat_value)
+
+CUPP_gh_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(gh_cazy_fam_fbeta, "CUPP")
+CUPP_gh_cazy_fam_fbeta <- rename(CUPP_gh_cazy_fam_fbeta, "CUPP" = Stat_value)
+
+eCAMI_gh_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(gh_cazy_fam_fbeta, "eCAMI")
+eCAMI_gh_cazy_fam_fbeta <- rename(eCAMI_gh_cazy_fam_fbeta, "eCAMI" = Stat_value)
+
+# merge the individual prediction tool fbeta scores dataframes into a single dataframe
+fam_gh_fbeta_df <- dbCAN_gh_cazy_fam_fbeta
+
+# merge dataframes
+fam_gh_fbeta_df <- merge(dbCAN_gh_cazy_fam_fbeta, HMMER_gh_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_gh_fbeta_df <- merge(fam_gh_fbeta_df, Hotpep_gh_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_gh_fbeta_df <- merge(fam_gh_fbeta_df, DIAMOND_gh_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_gh_fbeta_df <- merge(fam_gh_fbeta_df, CUPP_gh_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_gh_fbeta_df <- merge(fam_gh_fbeta_df, eCAMI_gh_cazy_fam_fbeta, by=c("CAZy_family"))
+
+# for each CAZy family (each row in fam_gh_fbeta_df), how many tools scored an Fbeta-score of less than 0.75
+fam_gh_fbeta_df$Number_of_tools <- rowSums(fam_gh_fbeta_df<0.75)
+
+# retrieve only rows with at least 3 tools producing a Fbeta-score of less than 0.75
+poor.3.fam_gh_fbeta_df <- fam_gh_fbeta_df[which(fam_gh_fbeta_df$Number_of_tools >= 3), ]
+
+# Drop the number of tools column
+poor.3.fam_gh_fbeta_df_no_NoT <- subset(poor.3.fam_gh_fbeta_df, select=-c(Number_of_tools))
+
+# create a dataframe of the number of protein from the family included across all test sets, and the number of protein in the family in CAZy
+# the values were retrieved using the cazy_webscraper (https://github.com/HobnobMancer/cazy_webscraper)
+
+# find the number of proteins from each fam included across all test sets
+gh_family_pops <- c(4756, 969, 207, 108, 632, 471, 1095, 556, 18913)
+# this is the number of PRIMARY GenBank accessions for each family
+# One PRIMARY GenBank accesion is one CAZyme record, one CAZyme record can have multiple NON-PRIMARY GenBank accessions
+gh_fam_testset_pops <- c(9, 1, 1, 1, 4, 1, 3, 4, 99)
+
+gh_poor_fams <- c("GH170", "GH166", "GH163", "GH138", "GH135", "GH123", "GH50", "GH45", "GH0")
+
+gh_fam_freq_df = data.frame(gh_family_pops, gh_fam_testset_pops, gh_poor_fams)
+gh_fam_freq_df$gh_poor_fams <- factor(gh_fam_freq_df$gh_poor_fams, levels = c("GH170", "GH166", "GH163", "GH138", "GH135", "GH123", "GH50", "GH45", "GH0"))
+
+gh_fam_freq_df <- rename(gh_fam_freq_df, "CAZy_family" = gh_poor_fams)
+
+# merge the dataframes
+poor.3.fam_gh_fbeta_df_no_NoT <- merge(poor.3.fam_gh_fbeta_df_no_NoT, gh_fam_freq_df, by=c("CAZy_family"))
+
+# melt the data into long form for plotting
+poor.gh.fam.melt <- melt(poor.3.fam_gh_fbeta_df_no_NoT, id.vars=c("CAZy_family", "gh_family_pops", "gh_fam_testset_pops"), )
+# in poor.gh.fam.melt variable is the prediction tool, value is the Fbeta-score
+
+# produce a heatmap of these results
+poor.gh.fam.melt$CAZy_family <- factor(poor.gh.fam.melt$CAZy_family, levels = c("GH170", "GH166", "GH163", "GH138", "GH135", "GH123", "GH50", "GH45", "GH0"))
+
+poor.gh.fam.melt <- rename(poor.gh.fam.melt, "Prediction_tool" = variable)
+poor.gh.fam.melt$Prediction_tool <- factor(poor.gh.fam.melt$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+#####
+# these figures are created and then merged together mannually in another programme for inclusion in publications and the thesis
+# tiff(file = "ghPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 12.192, res=600)
+p.gh.poor.fam.fbeta_only <- ggplot(poor.gh.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  xlab("Prediction Tool") +
+  ylab("CAZy family") +
+  geom_text(aes(label=round(value, digits=3))) +
+    theme(legend.position = "bottom",
+        legend.background = element_rect(fill = figbg, color = figbg),
+        plot.background = element_rect(fill = figbg, color = figbg),
+        text = element_text(size=10),
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=12),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  labs(fill = expression(paste("F", beta, "-score"))) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+# p.gh.poor.fam.fbeta_only
+# dev.off()
+
+# tiff(file = "ghPoorFamsPops.tiff", units="cm", width = 15.5, height = 9.95, res=600)
+p.gh.poor.fam.pops <- ggplot(gh_fam_freq_df, aes(x="", y=CAZy_family)) +
+  geom_text(aes(label=gh_family_pops, x="Family Population")) +
+  geom_text(aes(label=gh_fam_testset_pops, x="Sample Size")) +
+  ylab("CAZy family") +
+  theme(legend.background = element_rect(fill = figbg, color = figbg),
+      plot.background = element_rect(fill = figbg, color = figbg),
+      text = element_text(size=10),
+      legend.text=element_text(size=10),
+      legend.title=element_text(size=12),
+      axis.text=element_text(size=10),
+      axis.title=element_text(size=12,face="bold")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+# p.gh.poor.fam.pops
+# dev.off()
+
+#####
+# figure presented for the HTML report
+p.gh.poor.fam <- ggplot(poor.gh.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  xlab("Prediction Tool") +
+  ylab("CAZy family") +
+  geom_text(aes(label=round(value, digits=3))) +
+    theme(legend.position = "bottom",
+        legend.background = element_rect(fill = figbg, color = figbg),
+        plot.background = element_rect(fill = figbg, color = figbg),
+        text = element_text(size=10),
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=12),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  labs(fill = expression(paste("F", beta, "-score"))) +
+  coord_cartesian(clip="off") +
+  geom_text(aes(label=gh_family_pops, x="Family Population")) +
+  geom_text(aes(label=gh_fam_testset_pops, x="Sample Size"))
+p.gh.poor.fam
+```
+
+```{r, include=FALSE, echo=FALSE}
+# find the number of families for which each tool produced a poor performance (fbeta<0.75)
+# for each CAZy family (each row in fam_gh_fbeta_df), how many tools scored an Fbeta-score of less than 0.75
+fam_gh_fbeta_df%>%
+gather(
+CAZy_family, value, dbCAN:eCAMI)%>%
+group_by(CAZy_family)%>%
+tally(value < 0.75)
+
+length(unique(gh_cazy_fam_spec_recall_df$CAZy_family))  # total number of families included in the evaluation
+```
+
+
+### Predicting Families From GlycosylTransferases
+
+Figure \@ref(fig:famGTSpecSense) shows the specificity against sensitivity from each CAZyme prediction for each GT family. All tools showed an extremely strong performance for specificity, no tool produced a specificity of less than 0.9985.
+
+The k-mer based methods, dbCAN-Hotpep, CUPP and eCAMI showed the weakest performances because they had the most families with a sensitivity of less than 0.75.
+
+HMMER had the most families with a sensitivity equal to or greater than 0.9 (51 GT families); however, DIAMOND had the most families with a sensitivity equal to or greater than 0.75, and had the fewest families with a sensitivity less than 0.75 (58 and 11 GT families respectively). Therefore, HMMER and DIAMOND both showed the strongest performances.
+
+dbCAN had the most families with a specificity greater than 0.99975, but the difference in specificity scores was so small that it was not possible to differentiate the performance of the predictions tool by specificity. However, DIAMOND had the most families with a sensitivity greater than 0.75, and thus showed the strongest performance for sensitivity out of all the prediction tools, for predicting GT families.
+
+```{r famGTSpecSense, echo=FALSE, fig.cap="Scatter plot of specificity against sensitivity for each CAZy family within the GlycosylTransferases class. Hover cursor over each point to see the specific sensitivity and specificity."}
+gt.fam.subset <- family_stats_df[which(family_stats_df$CAZy_family %in% gt.names), ]
+
+# set order data is presented
+gt.fam.subset$Prediction_tool <- factor(gt.fam.subset$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# subset the data for only specificity and recall
+gt_cazy_fam_spec_df <- gt.fam.subset[which(gt.fam.subset$Stat_parameter == "Specificity"), ]
+gt_cazy_fam_recall_df <- gt.fam.subset[which(gt.fam.subset$Stat_parameter == "Recall"), ]
+
+# drop Statistic value column
+names(gt_cazy_fam_spec_df)[names(gt_cazy_fam_spec_df) == "Stat_value"] <- "Specificity"
+names(gt_cazy_fam_recall_df)[names(gt_cazy_fam_recall_df) == "Stat_value"] <- "Recall"
+
+gt_cazy_fam_spec_df <- gt_cazy_fam_spec_df[c("CAZy_family", "Prediction_tool", "cazy.class", "Specificity")]
+gt_cazy_fam_recall_df <- gt_cazy_fam_recall_df[c("CAZy_family", "Prediction_tool", "cazy.class", "Recall")]
+
+# merge dataframes
+gt_cazy_fam_spec_recall_df <- merge(gt_cazy_fam_spec_df, gt_cazy_fam_recall_df, by=c("CAZy_family", "Prediction_tool", "cazy.class"))
+
+# gt_cazy_fam_spec_recall_df  <- gt_cazy_fam_spec_recall_df[complete.cases(gt_cazy_fam_spec_recall_df), ]
+gt_cazy_fam_spec_recall_df$Prediction_tool <- factor(gt_cazy_fam_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# add percentage columns
+gt_cazy_fam_spec_recall_df$Specificity_percentage <- gt_cazy_fam_spec_recall_df$Specificity * 100
+gt_cazy_fam_spec_recall_df$Recall_percentage <- gt_cazy_fam_spec_recall_df$Recall * 100
+
+
+# standard version
+# pdf(file = "mlcGTfamsSpecSens.pdf", width = 11.25, height = 7)
+p.gt.fam = ggplot(gt_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool)) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity (log10)") +
+  geom_boxplot(aes(x=Recall, y=0.99875), alpha=0.5, width=0.0001, outlier.shape = NA) +
+  facet_wrap(~ Prediction_tool)
+# p.gt.fam
+# dev.off()
+
+# interactive version
+p.gt.fam.interactive = ggplot(gt_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool,
+                                                  text = paste(
+                                                  "CAZy family: ", CAZy_family, "\n",
+                                                  "Specificity: ", Specificity, "\n",
+                                                  "Sensitivity: ", Recall, "\n",
+                                                  sep = ""
+                                                  ))) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity (log10)") +
+  facet_wrap(~ Prediction_tool)
+ggplotly(p.gt.fam.interactive, tooltip = "text")
+```
+
+```{r gt.fam.distribution, include=FALSE}
+gt.0.9 <- gt_cazy_fam_spec_recall_df[which(gt_cazy_fam_spec_recall_df$Recall >= 0.9), ]
+table(gt.0.9$Prediction_tool)
+gt.0.75 <- gt_cazy_fam_spec_recall_df[which(gt_cazy_fam_spec_recall_df$Recall >= 0.75), ]
+table(gt.0.75$Prediction_tool)
+gt.0.75.less <- gt_cazy_fam_spec_recall_df[which(gt_cazy_fam_spec_recall_df$Recall < 0.75), ]
+table(gt.0.75.less$Prediction_tool)
+```
+
+#### Identify potentially difficult to classify GT families
+
+To identify GT CAZy families that most prediction tools performed poorly, families for which at least three prediction tools produced a expression(paste("F", beta, "-score")) of less than 0.75, as shown in figure \@ref(fig:famGTPoorPerform). It was no suprise GT0 was included because CAZy classifies this family as 'unclassified'. The family includes CAZymes that CAZy has classified as GTs but cannot not determine the CAZy family annotation, therefore GT0 includes members from multiple different CAZy families. Thus, GT0 has a higher sequence diversity, causing the accurate modeling of this family to be more difficult. Consequently, the performance for GT0 is typcially lower than other CAZy families for all prediction tools.
+
+For families GT109-113, these families are not included into the models within the prediction tools, therefore, these tools cannot predict members of these families.
+ 
+The remaining families (except GT29 and GT31), contained very small sample sizes of less than 10 proteins. Thus, the odds of producing a low expression(paste("F", beta, "-score")) is signficantly increased, and the probability of producing a low expression(paste("F", beta, "-score")) is much greater than producing a high expression(paste("F", beta, "-score")).
+
+For GT29 and GT31 had 30 and 20 family members included across all test sets respectively. These samples sizes are suitable for producing an accurate representation of the performance of the prediction tools performances for these families. A potential reason for the poor performance from most of the prediction tools for these families is that GT29 and GT31 contain a greater sequence diversity than families for which most prediction tools performed well (expression(paste("F", beta, "-score")) greater than 0.75). A greater sequence diversity in the family would make accurately modeling these families and thus predicting family members more difficult.
+ 
+```{r famGTPoorPerform, echo=FALSE, fig.cap="Heatmap of GlycosylTransferases families for which at least three CAZyme prediction tools produced a poor performance, defined as a Fbeta-score less than 0.75. 'Family population' is the number of CAZyme records in each family in CAZy, and 'Sample size' is the number of proteins from the CAZy family included across all test sets."}
+# gt.fam.subset contains all CAZy family prediction statistical evaluations for families from GH
+# gt.fam.sub has the structure CAZy_family, Stat_parameter, Prediction_tool, Stat_value, cazy.class
+# need to reorient dataframe to CAZy_family, dbCAN.fbeta.score, dbCAN-HMMER.fbeta.score... Poor_performing_tools_count
+# Poor_performing_tools_count is the number of tools with an fbeta-score less than 0.75 for the CAZy family
+
+# retrieve rows containing Fbeta-scores
+gt_cazy_fam_fbeta <- gt.fam.subset[which(gt.fam.subset$Stat_parameter == "Fbeta_score"), ]
+
+retrieve_tool_fam_fbeta_scores <- function (df, tool) {
+  # retrieve only the rows containing the tool of interest
+  df <- df[which(df$Prediction_tool == tool), ]
+  
+  # drop unneeded columns
+  df <- subset(df, select=-c(X,Stat_parameter,Prediction_tool,cazy.class))
+  
+  return(df)
+}
+
+dbCAN_gt_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(gt_cazy_fam_fbeta, "dbCAN")
+dbCAN_gt_cazy_fam_fbeta <- rename(dbCAN_gt_cazy_fam_fbeta, "dbCAN" = Stat_value)
+
+HMMER_gt_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(gt_cazy_fam_fbeta, "dbCAN-HMMER")
+HMMER_gt_cazy_fam_fbeta <- rename(HMMER_gt_cazy_fam_fbeta, "dbCAN-HMMER" = Stat_value)
+
+Hotpep_gt_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(gt_cazy_fam_fbeta, "dbCAN-Hotpep")
+Hotpep_gt_cazy_fam_fbeta <- rename(Hotpep_gt_cazy_fam_fbeta, "dbCAN-Hotpep" = Stat_value)
+
+DIAMOND_gt_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(gt_cazy_fam_fbeta, "dbCAN-DIAMOND")
+DIAMOND_gt_cazy_fam_fbeta <- rename(DIAMOND_gt_cazy_fam_fbeta, "dbCAN-DIAMOND" = Stat_value)
+
+CUPP_gt_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(gt_cazy_fam_fbeta, "CUPP")
+CUPP_gt_cazy_fam_fbeta <- rename(CUPP_gt_cazy_fam_fbeta, "CUPP" = Stat_value)
+
+eCAMI_gt_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(gt_cazy_fam_fbeta, "eCAMI")
+eCAMI_gt_cazy_fam_fbeta <- rename(eCAMI_gt_cazy_fam_fbeta, "eCAMI" = Stat_value)
+
+# merge the individual prediction tool fbeta scores dataframes into a single dataframe
+fam_gt_fbeta_df <- dbCAN_gt_cazy_fam_fbeta
+
+# merge dataframes
+fam_gt_fbeta_df <- merge(dbCAN_gt_cazy_fam_fbeta, HMMER_gt_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_gt_fbeta_df <- merge(fam_gt_fbeta_df, Hotpep_gt_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_gt_fbeta_df <- merge(fam_gt_fbeta_df, DIAMOND_gt_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_gt_fbeta_df <- merge(fam_gt_fbeta_df, CUPP_gt_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_gt_fbeta_df <- merge(fam_gt_fbeta_df, eCAMI_gt_cazy_fam_fbeta, by=c("CAZy_family"))
+
+# for each CAZy family (each row in fam_gt_fbeta_df), how many tools scored an Fbeta-score of less than 0.75
+fam_gt_fbeta_df$Number_of_tools <- rowSums(fam_gt_fbeta_df<0.75)
+
+# retrieve only rows with at least 3 tools producing a Fbeta-score of less than 0.75
+poor.3.fam_gt_fbeta_df <- fam_gt_fbeta_df[which(fam_gt_fbeta_df$Number_of_tools >= 3), ]
+
+# Drop the number of tools column
+poor.3.fam_gt_fbeta_df_no_NoT <- subset(poor.3.fam_gt_fbeta_df, select=-c(Number_of_tools))
+
+# create a dataframe of the number of protein from the family included across all test sets, and the number of protein in the family in CAZy
+# the values were retrieved using the cazy_webscraper (https://github.com/HobnobMancer/cazy_webscraper)
+
+# find the number of proteins from each fam included across all test sets
+gt_family_pops <- c(1003,1692,99,194,3671,388,884,1161,2091,939,836,1340,19459)
+# this is the number of PRIMARY GenBank accessions for each family
+# One PRIMARY GenBank accesion is one CAZyme record, one CAZyme record can have multiple NON-PRIMARY GenBank accessions
+gt_fam_testset_pops <- c(1,2,4,2,2,3,3,3,20,30,1,3,57)
+
+gt_poor_fams <- c('GT113','GT111','GT109','GT80','GT61','GT60','GT52','GT47','GT31','GT29','GT23','GT10','GT0')
+
+gt_fam_freq_df = data.frame(gt_family_pops, gt_fam_testset_pops, gt_poor_fams)
+gt_fam_freq_df$gt_poor_fams <- factor(gt_fam_freq_df$gt_poor_fams, levels=c('GT113','GT111','GT109','GT80','GT61','GT60','GT52','GT47','GT31','GT29','GT23','GT10','GT0'))
+
+gt_fam_freq_df <- rename(gt_fam_freq_df, "CAZy_family" = gt_poor_fams)
+
+# merge the dataframes
+poor.3.fam_gt_fbeta_df_no_NoT <- merge(poor.3.fam_gt_fbeta_df_no_NoT, gt_fam_freq_df, by=c("CAZy_family"))
+
+# melt the data into long form for plotting
+poor.gt.fam.melt <- melt(poor.3.fam_gt_fbeta_df_no_NoT, id.vars=c("CAZy_family", "gt_family_pops", "gt_fam_testset_pops"), )
+# in poor.gh.fam.melt variable is the prediction tool, value is the Fbeta-score
+
+# produce a heatmap of these results
+poor.gt.fam.melt$CAZy_family <- factor(poor.gt.fam.melt$CAZy_family, levels=c('GT113','GT111','GT109','GT80','GT61','GT60','GT52','GT47','GT31','GT29','GT23','GT10','GT0'))
+
+poor.gt.fam.melt <- rename(poor.gt.fam.melt, "Prediction_tool" = variable)
+poor.gt.fam.melt$Prediction_tool <- factor(poor.gt.fam.melt$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+#####
+# these figures are created and then merged together mannually in another programme for inclusion in publications and the thesis
+# tiff(file = "plPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 12.192, res=600)
+p.gt.poor.fam.fbeta_only <- ggplot(poor.gt.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  xlab("Prediction Tool") +
+  ylab("CAZy family") +
+  geom_text(aes(label=round(value, digits=3))) +
+    theme(legend.position = "bottom",
+        legend.background = element_rect(fill = figbg, color = figbg),
+        plot.background = element_rect(fill = figbg, color = figbg),
+        text = element_text(size=10),
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=12),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  labs(fill = expression(paste("F", beta, "-score"))) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+# p.gt.poor.fam.fbeta_only
+# dev.off()
+
+# tiff(file = "gtPoorFamsPops.tiff", units="cm", width = 15.5, height = 9.95, res=600)
+p.gt.poor.fam.pops <- ggplot(gt_fam_freq_df, aes(x="", y=CAZy_family)) +
+  geom_text(aes(label=gt_family_pops, x="Family Population")) +
+  geom_text(aes(label=gt_fam_testset_pops, x="Sample Size")) +
+  ylab("CAZy family") +
+  theme(legend.background = element_rect(fill = figbg, color = figbg),
+      plot.background = element_rect(fill = figbg, color = figbg),
+      text = element_text(size=10),
+      legend.text=element_text(size=10),
+      legend.title=element_text(size=12),
+      axis.text=element_text(size=10),
+      axis.title=element_text(size=12,face="bold")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+# p.gt.poor.fam.pops
+# dev.off()
+
+#####
+# figure presented for the HTML report
+p.gt.poor.fam <- ggplot(poor.gt.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  xlab("Prediction Tool") +
+  ylab("CAZy family") +
+  geom_text(aes(label=round(value, digits=3))) +
+    theme(legend.position = "bottom",
+        legend.background = element_rect(fill = figbg, color = figbg),
+        plot.background = element_rect(fill = figbg, color = figbg),
+        text = element_text(size=10),
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=12),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  labs(fill = expression(paste("F", beta, "-score"))) +
+  coord_cartesian(clip="off") +
+  geom_text(aes(label=gt_family_pops, x="Family Population")) +
+  geom_text(aes(label=gt_fam_testset_pops, x="Sample Size"))
+p.gt.poor.fam
+```
+
+```{r, include=FALSE, echo=FALSE}
+# find the number of families for which each tool produced a poor performance (fbeta<0.75)
+# for each CAZy family (each row in fam_gt_fbeta_df), how many tools scored an Fbeta-score of less than 0.75
+fam_gt_fbeta_df%>%
+gather(
+CAZy_family, value, dbCAN:eCAMI)%>%
+group_by(CAZy_family)%>%
+tally(value < 0.75)
+
+length(unique(gt_cazy_fam_spec_recall_df$CAZy_family))  # total number of families included in the evaluation
+```
+
+
+### Predicting Families From Polysaccharide Lyases
+
+Figure \@ref(fig:famPLSpecSense) plots the specificity against sensitivity from each CAZyme prediction for each PL family. All prediction tools showed a very strong specificity performance, with no family scoring less than 0.9997. The differences between specificity scores were so small the performances of the prediction tools could not be differentiated by specificity.
+
+The spread (meaning variation) in sensitivity scores for PL families was greater than that for GH and GT families. HMMER showed the strongest performance, because it had the most families with a sensitivity score of greater than 0.9, 16 PL families. Hotpep and eCAMI had the most families with a sensitivity of less than 0.75, 9 families each; however, eCAMI had fewer families score a sensitivity of greater than or equal to 0.9 than Hotpep (6 and 10 families, respectively), therefore, eCAMI showed the weakest performance.
+
+```{r famPLSpecSense, echo=FALSE, fig.cap="Scatter plot of specificity against sensitivity for each CAZy family within the Polysaccharide Lyases class."}
+pl.fam.subset <- family_stats_df[which(family_stats_df$CAZy_family %in% pl.names), ]
+
+# set order data is presented
+pl.fam.subset$Prediction_tool <- factor(pl.fam.subset$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# subset the data for only specificity and recall
+pl_cazy_fam_spec_df <- pl.fam.subset[which(pl.fam.subset$Stat_parameter == "Specificity"), ]
+pl_cazy_fam_recall_df <- pl.fam.subset[which(pl.fam.subset$Stat_parameter == "Recall"), ]
+
+# drop Statistic value column
+names(pl_cazy_fam_spec_df)[names(pl_cazy_fam_spec_df) == "Stat_value"] <- "Specificity"
+names(pl_cazy_fam_recall_df)[names(pl_cazy_fam_recall_df) == "Stat_value"] <- "Recall"
+
+pl_cazy_fam_spec_df <- pl_cazy_fam_spec_df[c("CAZy_family", "Prediction_tool", "cazy.class", "Specificity")]
+pl_cazy_fam_recall_df <- pl_cazy_fam_recall_df[c("CAZy_family", "Prediction_tool", "cazy.class", "Recall")]
+
+# merge dataframes
+pl_cazy_fam_spec_recall_df <- merge(pl_cazy_fam_spec_df, pl_cazy_fam_recall_df, by=c("CAZy_family", "Prediction_tool", "cazy.class"))
+
+# pl_cazy_fam_spec_recall_df  <- pl_cazy_fam_spec_recall_df[complete.cases(pl_cazy_fam_spec_recall_df), ]
+pl_cazy_fam_spec_recall_df$Prediction_tool <- factor(pl_cazy_fam_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# add percentage columns
+pl_cazy_fam_spec_recall_df$Specificity_percentage <- pl_cazy_fam_spec_recall_df$Specificity * 100
+pl_cazy_fam_spec_recall_df$Recall_percentage <- pl_cazy_fam_spec_recall_df$Recall * 100
+
+# standard version
+# pdf(file = "mlcPLfamsSpecSens.pdf", width = 11.25, height = 7)
+p.pl.fam = ggplot(pl_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool)) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity (log10)") +
+  geom_boxplot(aes(x=Recall, y=0.99975), alpha=0.5, width=0.000025, outlier.shape = NA) +
+  facet_wrap(~ Prediction_tool)
+# p.pl.fam
+# dev.off()
+
+# interactive version
+p.pl.fam.interactive = ggplot(pl_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool,
+                                                  text = paste(
+                                                  "CAZy family: ", CAZy_family, "\n",
+                                                  "Specificity: ", Specificity, "\n",
+                                                  "Sensitivity: ", Recall, "\n",
+                                                  sep = ""
+                                                  ))) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity (log10)") +
+  facet_wrap(~ Prediction_tool)
+ggplotly(p.pl.fam.interactive, tooltip = "text")
+```
+
+```{r pl.fam.distribution, include=FALSE}
+pl.0.9 <- pl_cazy_fam_spec_recall_df[which(pl_cazy_fam_spec_recall_df$Recall >= 0.9), ]
+table(pl.0.9$Prediction_tool)
+pl.0.75 <- pl_cazy_fam_spec_recall_df[which(pl_cazy_fam_spec_recall_df$Recall >= 0.75), ]
+table(pl.0.75$Prediction_tool)
+pl.0.75.less <- pl_cazy_fam_spec_recall_df[which(pl_cazy_fam_spec_recall_df$Recall < 0.75), ]
+table(pl.0.75.less$Prediction_tool)
+```
+
+#### Identify potentially difficult to classify PL families
+
+To identify GT CAZy families that most prediction tools performed poorly, families for which at least three prediction tools produced a expression(paste("F", beta, "-score")) of less than 0.75, as shown in figure \@ref(fig:famPLPoorPerform). It was no suprise PL0 was included because CAZy classifies this family as 'unclassified'. The family includes CAZymes that CAZy has classified as PLs but cannot not determine the CAZy family annotation, therefore PL0 includes members from multiple different CAZy families. Thus, PL0 has a higher sequence diversity, causing the accurate modeling of this family to be more difficult. Consequently, the performance for PL0 is typcially lower than other CAZy families for all prediction tools.
+
+CUPP and eCAMI do not include any PL families newer than PL28, therefore, they could not predict members of PL31, PL33 and PL38. dbCAN and incorporated HMMER, Hotpep and DIAMOND are based upon on more recent version of CAZy and do include PL31 and PL33 but they do not include PL38.
+ 
+The remaining families, contained very small sample sizes of less than 10 proteins. Thus, the odds of producing a low expression(paste("F", beta, "-score")) is significantly increased, and the probability of producing a low expression(paste("F", beta, "-score")) is much greater than producing a high expression(paste("F", beta, "-score")). 5 members of PL17 were included across the tests, and three prediction tools produced a expression(paste("F", beta, "-score")) greater than 0.88, inferring the tools may perform well against PL17 family members but the limited sample favours producing a lower expression(paste("F", beta, "-score")). 
+ 
+```{r famPLPoorPerform, echo=FALSE, fig.cap="Heatmap of Polysaccharide Lyases families for which at least three CAZyme prediction tools produced a poor performance, defined as a Fbeta-score less than 0.75. 'Family population' is the number of CAZyme records in each family in CAZy, and 'Sample size' is the number of proteins from the CAZy family included across all test sets."}
+# pl.fam.subset contains all CAZy family prediction statistical evaluations for families from PL
+# pl.fam.sub has the structure CAZy_family, Stat_parameter, Prediction_tool, Stat_value, cazy.class
+# need to reorient dataframe to CAZy_family, dbCAN.fbeta.score, dbCAN-HMMER.fbeta.score... Poor_performing_tools_count
+# Poor_performing_tools_count is the number of tools with an fbeta-score less than 0.75 for the CAZy family
+
+# retrieve rows containing Fbeta-scores
+pl_cazy_fam_fbeta <- pl.fam.subset[which(pl.fam.subset$Stat_parameter == "Fbeta_score"), ]
+
+retrieve_tool_fam_fbeta_scores <- function (df, tool) {
+  # retrieve only the rows containing the tool of interest
+  df <- df[which(df$Prediction_tool == tool), ]
+  
+  # drop unneeded columns
+  df <- subset(df, select=-c(X,Stat_parameter,Prediction_tool,cazy.class))
+  
+  return(df)
+}
+
+dbCAN_pl_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(pl_cazy_fam_fbeta, "dbCAN")
+dbCAN_pl_cazy_fam_fbeta <- rename(dbCAN_pl_cazy_fam_fbeta, "dbCAN" = Stat_value)
+
+HMMER_pl_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(pl_cazy_fam_fbeta, "dbCAN-HMMER")
+HMMER_pl_cazy_fam_fbeta <- rename(HMMER_pl_cazy_fam_fbeta, "dbCAN-HMMER" = Stat_value)
+
+Hotpep_pl_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(pl_cazy_fam_fbeta, "dbCAN-Hotpep")
+Hotpep_pl_cazy_fam_fbeta <- rename(Hotpep_pl_cazy_fam_fbeta, "dbCAN-Hotpep" = Stat_value)
+
+DIAMOND_pl_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(pl_cazy_fam_fbeta, "dbCAN-DIAMOND")
+DIAMOND_pl_cazy_fam_fbeta <- rename(DIAMOND_pl_cazy_fam_fbeta, "dbCAN-DIAMOND" = Stat_value)
+
+CUPP_pl_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(pl_cazy_fam_fbeta, "CUPP")
+CUPP_pl_cazy_fam_fbeta <- rename(CUPP_pl_cazy_fam_fbeta, "CUPP" = Stat_value)
+
+eCAMI_pl_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(pl_cazy_fam_fbeta, "eCAMI")
+eCAMI_pl_cazy_fam_fbeta <- rename(eCAMI_pl_cazy_fam_fbeta, "eCAMI" = Stat_value)
+
+# merge the individual prediction tool fbeta scores dataframes into a single dataframe
+fam_pl_fbeta_df <- dbCAN_pl_cazy_fam_fbeta
+
+# merge dataframes
+fam_pl_fbeta_df <- merge(dbCAN_pl_cazy_fam_fbeta, HMMER_pl_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_pl_fbeta_df <- merge(fam_pl_fbeta_df, Hotpep_pl_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_pl_fbeta_df <- merge(fam_pl_fbeta_df, DIAMOND_pl_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_pl_fbeta_df <- merge(fam_pl_fbeta_df, CUPP_pl_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_pl_fbeta_df <- merge(fam_pl_fbeta_df, eCAMI_pl_cazy_fam_fbeta, by=c("CAZy_family"))
+
+# for each CAZy family (each row in fam_pl_fbeta_df), how many tools scored an Fbeta-score of less than 0.75
+fam_pl_fbeta_df$Number_of_tools <- rowSums(fam_pl_fbeta_df<0.75)
+
+# retrieve only rows with at least 3 tools producing a Fbeta-score of less than 0.75
+poor.3.fam_pl_fbeta_df <- fam_pl_fbeta_df[which(fam_pl_fbeta_df$Number_of_tools >= 3), ]
+
+# Drop the number of tools column
+poor.3.fam_pl_fbeta_df_no_NoT <- subset(poor.3.fam_pl_fbeta_df, select=-c(Number_of_tools))
+
+# create a dataframe of the number of protein from the family included across all test sets, and the number of protein in the family in CAZy
+# the values were retrieved using the cazy_webscraper (https://github.com/HobnobMancer/cazy_webscraper)
+
+# find the number of proteins from each fam included across all test sets
+pl_family_pops <- c(10699,511,264,89,703,2041)
+# this is the number of PRIMARY GenBank accessions for each family
+# One PRIMARY GenBank accesion is one CAZyme record, one CAZyme record can have multiple NON-PRIMARY GenBank accessions
+pl_fam_testset_pops <- c(8,3,2,1,5,4)
+
+pl_poor_fams <- c('PL38','PL33','PL31','PL29','PL17','PL0')
+
+pl_fam_freq_df = data.frame(pl_family_pops, pl_fam_testset_pops, pl_poor_fams)
+pl_fam_freq_df$pl_poor_fams <- factor(pl_fam_freq_df$pl_poor_fams, levels=c('PL38','PL33','PL31','PL29','PL17','PL0'))
+
+pl_fam_freq_df <- rename(pl_fam_freq_df, "CAZy_family" = pl_poor_fams)
+
+# merge the dataframes
+poor.3.fam_pl_fbeta_df_no_NoT <- merge(poor.3.fam_pl_fbeta_df_no_NoT, pl_fam_freq_df, by=c("CAZy_family"))
+
+# melt the data into long form for plotting
+poor.pl.fam.melt <- melt(poor.3.fam_pl_fbeta_df_no_NoT, id.vars=c("CAZy_family", "pl_family_pops", "pl_fam_testset_pops"), )
+# in poor.pl.fam.melt variable is the prediction tool, value is the Fbeta-score
+
+# produce a heatmap of these results
+poor.pl.fam.melt$CAZy_family <- factor(poor.pl.fam.melt$CAZy_family, levels=c('PL38','PL33','PL31','PL29','PL17','PL0'))
+
+poor.pl.fam.melt <- rename(poor.pl.fam.melt, "Prediction_tool" = variable)
+poor.pl.fam.melt$Prediction_tool <- factor(poor.pl.fam.melt$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+#####
+# these figures are created and then merged together mannually in another programme for inclusion in publications and the thesis
+# tiff(file = "plPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 12.192, res=600)
+p.pl.poor.fam.fbeta_only <- ggplot(poor.pl.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  xlab("Prediction Tool") +
+  ylab("CAZy family") +
+  geom_text(aes(label=round(value, digits=3))) +
+    theme(legend.position = "bottom",
+        legend.background = element_rect(fill = figbg, color = figbg),
+        plot.background = element_rect(fill = figbg, color = figbg),
+        text = element_text(size=10),
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=12),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  labs(fill = expression(paste("F", beta, "-score"))) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+# p.pl.poor.fam.fbeta_only
+# dev.off()
+
+# tiff(file = "plPoorFamsPops.tiff", units="cm", width = 15.5, height = 9.95, res=600)
+p.pl.poor.fam.pops <- ggplot(pl_fam_freq_df, aes(x="", y=CAZy_family)) +
+  geom_text(aes(label=pl_family_pops, x="Family Population")) +
+  geom_text(aes(label=pl_fam_testset_pops, x="Sample Size")) +
+  ylab("CAZy family") +
+  theme(legend.background = element_rect(fill = figbg, color = figbg),
+      plot.background = element_rect(fill = figbg, color = figbg),
+      text = element_text(size=10),
+      legend.text=element_text(size=10),
+      legend.title=element_text(size=12),
+      axis.text=element_text(size=10),
+      axis.title=element_text(size=12,face="bold")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+# p.pl.poor.fam.pops
+# dev.off()
+
+#####
+# figure presented for the HTML report
+p.pl.poor.fam <- ggplot(poor.pl.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  xlab("Prediction Tool") +
+  ylab("CAZy family") +
+  geom_text(aes(label=round(value, digits=3))) +
+    theme(legend.position = "bottom",
+        legend.background = element_rect(fill = figbg, color = figbg),
+        plot.background = element_rect(fill = figbg, color = figbg),
+        text = element_text(size=10),
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=12),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  labs(fill = expression(paste("F", beta, "-score"))) +
+  coord_cartesian(clip="off") +
+  geom_text(aes(label=pl_family_pops, x="Family Population")) +
+  geom_text(aes(label=pl_fam_testset_pops, x="Sample Size"))
+p.pl.poor.fam
+```
+
+```{r, include=FALSE, echo=FALSE}
+# find the number of families for which each tool produced a poor performance (fbeta<0.75)
+# for each CAZy family (each row in fam_pl_fbeta_df), how many tools scored an Fbeta-score of less than 0.75
+fam_pl_fbeta_df%>%
+gather(
+CAZy_family, value, dbCAN:eCAMI)%>%
+group_by(CAZy_family)%>%
+tally(value < 0.75)
+
+length(unique(pl_cazy_fam_spec_recall_df$CAZy_family))  # total number of families included in the evaluation
+```
+
+
+### Predicting Families From Carbohydrate Esterases
+
+Figure \@ref(fig:famCESpecSense) plots the specificity against sensitivity from each CAZyme prediction for each CE family.
+
+All prediction tools showed a very strong specificity performance, with no family scoring less than 0.998. The differences between specificity scores were so small the performances of the prediction tools could not be differentiated by specificity.
+
+dbCAN, HMMER, and Hotpep showed the strongest performance with the most families scoring a sensitivity equal to or greater than 0.75. dbCAN and HMMER showed a slightly stronger performance than Hotpep with more families with a sensitivity equal to or greater than 0.9. Unlike previously showing one of the strongest performances, DIAMOND showed the weakest performance with the most families with a sensitivity less than 0.75. However, eCAMI had the fewest families with a sensitivity equal to or greater than 0.9.
+
+```{r famCESpecSense, echo=FALSE, fig.cap="Scatter plot of specificity against sensitivity for each CAZy family within the Carbohydrate Esterases class."}
+ce.fam.subset <- family_stats_df[which(family_stats_df$CAZy_family %in% ce.names), ]
+
+# set order data is presented
+ce.fam.subset$Prediction_tool <- factor(ce.fam.subset$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# subset the data for only specificity and recall
+ce_cazy_fam_spec_df <- ce.fam.subset[which(ce.fam.subset$Stat_parameter == "Specificity"), ]
+ce_cazy_fam_recall_df <- ce.fam.subset[which(ce.fam.subset$Stat_parameter == "Recall"), ]
+
+# drop Statistic value column
+names(ce_cazy_fam_spec_df)[names(ce_cazy_fam_spec_df) == "Stat_value"] <- "Specificity"
+names(ce_cazy_fam_recall_df)[names(ce_cazy_fam_recall_df) == "Stat_value"] <- "Recall"
+
+ce_cazy_fam_spec_df <- ce_cazy_fam_spec_df[c("CAZy_family", "Prediction_tool", "cazy.class", "Specificity")]
+ce_cazy_fam_recall_df <- ce_cazy_fam_recall_df[c("CAZy_family", "Prediction_tool", "cazy.class", "Recall")]
+
+# merge dataframes
+ce_cazy_fam_spec_recall_df <- merge(ce_cazy_fam_spec_df, ce_cazy_fam_recall_df, by=c("CAZy_family", "Prediction_tool", "cazy.class"))
+
+# ce_cazy_fam_spec_recall_df  <- ce_cazy_fam_spec_recall_df[complete.cases(ce_cazy_fam_spec_recall_df), ]
+ce_cazy_fam_spec_recall_df$Prediction_tool <- factor(ce_cazy_fam_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# add percentage columns
+ce_cazy_fam_spec_recall_df$Specificity_percentage <- ce_cazy_fam_spec_recall_df$Specificity * 100
+ce_cazy_fam_spec_recall_df$Recall_percentage <- ce_cazy_fam_spec_recall_df$Recall * 100
+
+# standard version
+# pdf(file = "mlcCEfamsSpecSens.pdf", width = 11.25, height = 7)
+p.ce.fam = ggplot(ce_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool)) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity (log10)") +
+  geom_boxplot(aes(x=Recall, y=0.998625), alpha=0.5, width=0.0001, outlier.shape = NA) +
+  facet_wrap(~ Prediction_tool)
+# p.ce.fam
+# dev.off()
+
+# interactive version
+p.ce.fam.interactive = ggplot(ce_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool,
+                                                  text = paste(
+                                                  "CAZy family: ", CAZy_family, "\n",
+                                                  "Specificity: ", Specificity, "\n",
+                                                  "Sensitivity: ", Recall, "\n",
+                                                  sep = ""
+                                                  ))) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity (log10)") +
+  facet_wrap(~ Prediction_tool)
+ggplotly(p.ce.fam.interactive, tooltip = "text")
+```
+
+```{r ce.fam.distribution, include=FALSE}
+ce.0.9 <- ce_cazy_fam_spec_recall_df[which(ce_cazy_fam_spec_recall_df$Recall >= 0.9), ]
+table(ce.0.9$Prediction_tool)
+ce.0.75 <- ce_cazy_fam_spec_recall_df[which(ce_cazy_fam_spec_recall_df$Recall >= 0.75), ]
+table(ce.0.75$Prediction_tool)
+ce.0.75.less <- ce_cazy_fam_spec_recall_df[which(ce_cazy_fam_spec_recall_df$Recall < 0.75), ]
+table(ce.0.75.less$Prediction_tool)
+```
+
+#### Identify potentially difficult to classify CE families
+
+To identify CE CAZy families that most prediction tools performed poorly, families for which at least three prediction tools produced a expression(paste("F", beta, "-score")) of less than 0.75, as shown in figure \@ref(fig:famGCEPoorPerform). It was no surprise CE0 was included because CAZy classifies this family as 'unclassified'. The family includes CAZymes that CAZy has classified as CEs but cannot not determine the CAZy family annotation, therefore CE0 includes members from multiple different CAZy families. Thus, CE0 has a higher sequence diversity, causing the accurate modeling of this family to be more difficult. Consequently, the performance for CE0 is typically lower than other CAZy families for all prediction tools.
+
+None of the prediction tools include the CAZy family CE18, therefore, known of the prediction tools could predict any of the proteins belong to CE18, resulting in poor performances.
+
+CE16 is included in all the prediction tools but only three family members were included across all test sets. A sample size this small significantly increases the probability of producing a low expression(paste("F", beta, "-score")). Therefore, the prediction tools are unlikely to truly perform poorly for CE16, the sample size was more influential in producing a low expression(paste("F", beta, "-score")).  
+
+```{r famCEPoorPerform, echo=FALSE, fig.cap="Heatmap of Carbohydrate Esterase families for which at least three CAZyme prediction tools produced a poor performance, defined as a Fbeta-score less than 0.75. 'Family population' is the number of CAZyme records in each family in CAZy, and 'Sample size' is the number of proteins from the CAZy family included across all test sets."}
+# ce.fam.subset contains all CAZy family prediction statistical evaluations for families from CE
+# ce.fam.sub has the structure CAZy_family, Stat_parameter, Prediction_tool, Stat_value, cazy.class
+# need to reorient dataframe to CAZy_family, dbCAN.fbeta.score, dbCAN-HMMER.fbeta.score... Poor_performing_tools_count
+# Poor_performing_tools_count is the number of tools with an fbeta-score less than 0.75 for the CAZy family
+
+# retrieve rows containing Fbeta-scores
+ce_cazy_fam_fbeta <- ce.fam.subset[which(ce.fam.subset$Stat_parameter == "Fbeta_score"), ]
+
+retrieve_tool_fam_fbeta_scores <- function (df, tool) {
+  # retrieve only the rows containing the tool of interest
+  df <- df[which(df$Prediction_tool == tool), ]
+  
+  # drop unneeded columns
+  df <- subset(df, select=-c(X,Stat_parameter,Prediction_tool,cazy.class))
+  
+  return(df)
+}
+
+dbCAN_ce_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(ce_cazy_fam_fbeta, "dbCAN")
+dbCAN_ce_cazy_fam_fbeta <- rename(dbCAN_ce_cazy_fam_fbeta, "dbCAN" = Stat_value)
+
+HMMER_ce_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(ce_cazy_fam_fbeta, "dbCAN-HMMER")
+HMMER_ce_cazy_fam_fbeta <- rename(HMMER_ce_cazy_fam_fbeta, "dbCAN-HMMER" = Stat_value)
+
+Hotpep_ce_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(ce_cazy_fam_fbeta, "dbCAN-Hotpep")
+Hotpep_ce_cazy_fam_fbeta <- rename(Hotpep_ce_cazy_fam_fbeta, "dbCAN-Hotpep" = Stat_value)
+
+DIAMOND_ce_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(ce_cazy_fam_fbeta, "dbCAN-DIAMOND")
+DIAMOND_ce_cazy_fam_fbeta <- rename(DIAMOND_ce_cazy_fam_fbeta, "dbCAN-DIAMOND" = Stat_value)
+
+CUPP_ce_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(ce_cazy_fam_fbeta, "CUPP")
+CUPP_ce_cazy_fam_fbeta <- rename(CUPP_ce_cazy_fam_fbeta, "CUPP" = Stat_value)
+
+eCAMI_ce_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(ce_cazy_fam_fbeta, "eCAMI")
+eCAMI_ce_cazy_fam_fbeta <- rename(eCAMI_ce_cazy_fam_fbeta, "eCAMI" = Stat_value)
+
+# merge the individual prediction tool fbeta scores dataframes into a single dataframe
+fam_ce_fbeta_df <- dbCAN_ce_cazy_fam_fbeta
+
+# merge dataframes
+fam_ce_fbeta_df <- merge(dbCAN_ce_cazy_fam_fbeta, HMMER_ce_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_ce_fbeta_df <- merge(fam_ce_fbeta_df, Hotpep_ce_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_ce_fbeta_df <- merge(fam_ce_fbeta_df, DIAMOND_ce_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_ce_fbeta_df <- merge(fam_ce_fbeta_df, CUPP_ce_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_ce_fbeta_df <- merge(fam_ce_fbeta_df, eCAMI_ce_cazy_fam_fbeta, by=c("CAZy_family"))
+
+# for each CAZy family (each row in fam_ce_fbeta_df), how many tools scored an Fbeta-score of less than 0.75
+fam_ce_fbeta_df$Number_of_tools <- rowSums(fam_ce_fbeta_df<0.75)
+
+# retrieve only rows with at least 3 tools producing a Fbeta-score of less than 0.75
+poor.3.fam_ce_fbeta_df <- fam_ce_fbeta_df[which(fam_ce_fbeta_df$Number_of_tools >= 3), ]
+
+# Drop the number of tools column
+poor.3.fam_ce_fbeta_df_no_NoT <- subset(poor.3.fam_ce_fbeta_df, select=-c(Number_of_tools))
+
+# create a dataframe of the number of protein from the family included across all test sets, and the number of protein in the family in CAZy
+# the values were retrieved using the cazy_webscraper (https://github.com/HobnobMancer/cazy_webscraper)
+
+# find the number of proteins from each fam included across all test sets
+ce_family_pops <- c(33, 149, 2486)
+# this is the number of PRIMARY GenBank accessions for each family
+# One PRIMARY GenBank accesion is one CAZyme record, one CAZyme record can have multiple NON-PRIMARY GenBank accessions
+ce_fam_testset_pops <- c(2,3,11)  # number of family members included across all test sets
+
+ce_poor_fams <- c('CE18','CE16','CE0')
+
+ce_fam_freq_df = data.frame(ce_family_pops, ce_fam_testset_pops, ce_poor_fams)
+ce_fam_freq_df$ce_poor_fams <- factor(ce_fam_freq_df$ce_poor_fams, levels=c('CE18','CE16','CE0'))
+
+ce_fam_freq_df <- rename(ce_fam_freq_df, "CAZy_family" = ce_poor_fams)
+
+# merge the dataframes
+poor.3.fam_ce_fbeta_df_no_NoT <- merge(poor.3.fam_ce_fbeta_df_no_NoT, ce_fam_freq_df, by=c("CAZy_family"))
+
+# melt the data into long form for plotting
+poor.ce.fam.melt <- melt(poor.3.fam_ce_fbeta_df_no_NoT, id.vars=c("CAZy_family", "ce_family_pops", "ce_fam_testset_pops"), )
+# in poor.gh.fam.melt variable is the prediction tool, value is the Fbeta-score
+
+# produce a heatmap of these results
+poor.ce.fam.melt$CAZy_family <- factor(poor.ce.fam.melt$CAZy_family, levels=c('CE18','CE16','CE0'))
+
+poor.ce.fam.melt <- rename(poor.ce.fam.melt, "Prediction_tool" = variable)
+poor.ce.fam.melt$Prediction_tool <- factor(poor.ce.fam.melt$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+#####
+# these figures are created and then merged together mannually in another programme for inclusion in publications and the thesis
+# tiff(file = "cePoorFamsFbeta.tiff", units="cm", width = 15.5, height = 12.192, res=600)
+p.ce.poor.fam.fbeta_only <- ggplot(poor.ce.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  xlab("Prediction Tool") +
+  ylab("CAZy family") +
+  geom_text(aes(label=round(value, digits=3))) +
+    theme(legend.position = "bottom",
+        legend.background = element_rect(fill = figbg, color = figbg),
+        plot.background = element_rect(fill = figbg, color = figbg),
+        text = element_text(size=10),
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=12),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  labs(fill = expression(paste("F", beta, "-score"))) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+# p.gt.poor.fam.fbeta_only
+# dev.off()
+
+# tiff(file = "cePoorFamsPops.tiff", units="cm", width = 15.5, height = 9.95, res=600)
+p.ce.poor.fam.pops <- ggplot(pl_fam_freq_df, aes(x="", y=CAZy_family)) +
+  geom_text(aes(label=gt_family_pops, x="Family Population")) +
+  geom_text(aes(label=gt_fam_testset_pops, x="Sample Size")) +
+  ylab("CAZy family") +
+  theme(legend.background = element_rect(fill = figbg, color = figbg),
+      plot.background = element_rect(fill = figbg, color = figbg),
+      text = element_text(size=10),
+      legend.text=element_text(size=10),
+      legend.title=element_text(size=12),
+      axis.text=element_text(size=10),
+      axis.title=element_text(size=12,face="bold")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+# p.ce.poor.fam.pops
+# dev.off()
+
+#####
+# figure presented for the HTML report
+p.ce.poor.fam <- ggplot(poor.ce.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  xlab("Prediction Tool") +
+  ylab("CAZy family") +
+  geom_text(aes(label=round(value, digits=3))) +
+    theme(legend.position = "bottom",
+        legend.background = element_rect(fill = figbg, color = figbg),
+        plot.background = element_rect(fill = figbg, color = figbg),
+        text = element_text(size=10),
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=12),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  labs(fill = expression(paste("F", beta, "-score"))) +
+  coord_cartesian(clip="off") +
+  geom_text(aes(label=ce_family_pops, x="Family Population")) +
+  geom_text(aes(label=ce_fam_testset_pops, x="Sample Size"))
+p.ce.poor.fam
+```
+
+```{r, include=FALSE, echo=FALSE}
+# find the number of families for which each tool produced a poor performance (fbeta<0.75)
+# for each CAZy family (each row in fam_ce_fbeta_df), how many tools scored an Fbeta-score of less than 0.75
+fam_ce_fbeta_df%>%
+gather(
+CAZy_family, value, dbCAN:eCAMI)%>%
+group_by(CAZy_family)%>%
+tally(value < 0.75)
+
+length(unique(ce_cazy_fam_spec_recall_df$CAZy_family))  # total number of families included in the evaluation
+```
+
+### Predicting Families From Auxiliary Activities
+
+Figure \@ref(fig:famAASpecSense) plots the specificity against sensitivity from each CAZyme prediction for each CE family.
+
+All prediction tools showed a very strong specificity performance, with no family scoring less than 0.997. The differences between specificity scores were so small the performances of the prediction tools could not be differentiated by specificity.
+
+HMMER had the most families with a sensitivity score equal to or greater than 0.9, and thus showed the strongest performance. DIAMOND, CUPP and eCAMI showed the weakest performance with the most families scoring a sensitivity less than 0.75.
+
+CUPP and dbCAN demonstrated similarly strong performances, with both tools with 8 AA families with a sensitivity equal to or greater than 0.9. However, dbCAN had more families with a sensitivity equal to or greater than 0.75 than CUPP, therefore, dbCAN showed a slightly stronger performance than CUPP. 
+
+```{r famAASpecSense, echo=FALSE, fig.cap="Scatter plot of specificity against sensitivity for each CAZy family within the Auxiliary Activities class."}
+aa.fam.subset <- family_stats_df[which(family_stats_df$CAZy_family %in% aa.names), ]
+
+# set order data is presented
+aa.fam.subset$Prediction_tool <- factor(aa.fam.subset$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# subset the data for only specificity and recall
+aa_cazy_fam_spec_df <- aa.fam.subset[which(aa.fam.subset$Stat_parameter == "Specificity"), ]
+aa_cazy_fam_recall_df <- aa.fam.subset[which(aa.fam.subset$Stat_parameter == "Recall"), ]
+
+# drop Statistic value column
+names(aa_cazy_fam_spec_df)[names(aa_cazy_fam_spec_df) == "Stat_value"] <- "Specificity"
+names(aa_cazy_fam_recall_df)[names(aa_cazy_fam_recall_df) == "Stat_value"] <- "Recall"
+
+aa_cazy_fam_spec_df <- aa_cazy_fam_spec_df[c("CAZy_family", "Prediction_tool", "cazy.class", "Specificity")]
+aa_cazy_fam_recall_df <- aa_cazy_fam_recall_df[c("CAZy_family", "Prediction_tool", "cazy.class", "Recall")]
+
+# merge dataframes
+aa_cazy_fam_spec_recall_df <- merge(aa_cazy_fam_spec_df, aa_cazy_fam_recall_df, by=c("CAZy_family", "Prediction_tool", "cazy.class"))
+
+# aa_cazy_fam_spec_recall_df  <- aa_cazy_fam_spec_recall_df[complete.cases(aa_cazy_fam_spec_recall_df), ]
+aa_cazy_fam_spec_recall_df$Prediction_tool <- factor(aa_cazy_fam_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# add percentage columns
+aa_cazy_fam_spec_recall_df$Specificity_percentage <- aa_cazy_fam_spec_recall_df$Specificity * 100
+aa_cazy_fam_spec_recall_df$Recall_percentage <- aa_cazy_fam_spec_recall_df$Recall * 100
+
+# standard version
+# pdf(file = "mlcAAfamsSpecSens.pdf", width = 11.25, height = 7)
+p.aa.fam = ggplot(aa_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool)) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity (log10)") +
+  geom_boxplot(aes(x=Recall, y=0.9990), alpha=0.5, width=0.00015, outlier.shape = NA) +
+  facet_wrap(~ Prediction_tool)
+# p.aa.fam
+# dev.off()
+
+# interactive version
+p.aa.fam.interactive = ggplot(aa_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool,
+                                                  text = paste(
+                                                  "CAZy family: ", CAZy_family, "\n",
+                                                  "Specificity: ", Specificity, "\n",
+                                                  "Sensitivity: ", Recall, "\n",
+                                                  sep = ""
+                                                  ))) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity (log10)") +
+  facet_wrap(~ Prediction_tool)
+ggplotly(p.aa.fam.interactive, tooltip = "text")
+```
+
+```{r aa.fam.distribution, include=FALSE}
+aa.0.9 <- aa_cazy_fam_spec_recall_df[which(aa_cazy_fam_spec_recall_df$Recall >= 0.9), ]
+table(aa.0.9$Prediction_tool)
+aa.0.75 <- aa_cazy_fam_spec_recall_df[which(aa_cazy_fam_spec_recall_df$Recall >= 0.75), ]
+table(aa.0.75$Prediction_tool)
+aa.0.75.less <- aa_cazy_fam_spec_recall_df[which(aa_cazy_fam_spec_recall_df$Recall < 0.75), ]
+table(aa.0.75.less$Prediction_tool)
+```
+
+
+#### Identify potentially difficult to classify AA families
+
+To identify AA CAZy families that most prediction tools performed poorly, families for which at least three prediction tools produced a expression(paste("F", beta, "-score")) of less than 0.75, as shown in figure \@ref(fig:famAAPoorPerform). It was no suprise AA0 was included because CAZy classifies this family as 'unclassified'. The family includes CAZymes that CAZy has classified as AAs but cannot not determine the CAZy family annotation, therefore AA0 includes members from multiple different CAZy families. Thus, AA0 has a higher sequence diversity, causing the accurate modeling of this family to be more difficult. Consequently, the performance for AA0 is typcially lower than other CAZy families for all prediction tools.
+
+The remaining families, contained very small sample sizes of less than 10 proteins. Thus, the odds of producing a low expression(paste("F", beta, "-score")) is significantly increased, and the probability of producing a low expression(paste("F", beta, "-score")) is much greater than producing a high expression(paste("F", beta, "-score")).
+ 
+```{r famAAPoorPerform, echo=FALSE, fig.cap="Heatmap of Auciliary Activities families for which at least three CAZyme prediction tools produced a poor performance, defined as a Fbeta-score less than 0.75. 'Family population' is the number of CAZyme records in each family in CAZy, and 'Sample size' is the number of proteins from the CAZy family included across all test sets."}
+# aa.fam.subset contains all CAZy family prediction statistical evaluations for families from AA
+# aa.fam.sub has the structure CAZy_family, Stat_parameter, Prediction_tool, Stat_value, cazy.class
+# need to reorient dataframe to CAZy_family, dbCAN.fbeta.score, dbCAN-HMMER.fbeta.score... Poor_performing_tools_count
+# Poor_performing_tools_count is the number of tools with an fbeta-score less than 0.75 for the CAZy family
+
+# retrieve rows containing Fbeta-scores
+aa_cazy_fam_fbeta <- aa.fam.subset[which(aa.fam.subset$Stat_parameter == "Fbeta_score"), ]
+
+retrieve_tool_fam_fbeta_scores <- function (df, tool) {
+  # retrieve only the rows containing the tool of interest
+  df <- df[which(df$Prediction_tool == tool), ]
+  
+  # drop unneeded columns
+  df <- subset(df, select=-c(X,Stat_parameter,Prediction_tool,cazy.class))
+  
+  return(df)
+}
+
+dbCAN_aa_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(aa_cazy_fam_fbeta, "dbCAN")
+dbCAN_aa_cazy_fam_fbeta <- rename(dbCAN_aa_cazy_fam_fbeta, "dbCAN" = Stat_value)
+
+HMMER_aa_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(aa_cazy_fam_fbeta, "dbCAN-HMMER")
+HMMER_aa_cazy_fam_fbeta <- rename(HMMER_aa_cazy_fam_fbeta, "dbCAN-HMMER" = Stat_value)
+
+Hotpep_aa_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(aa_cazy_fam_fbeta, "dbCAN-Hotpep")
+Hotpep_aa_cazy_fam_fbeta <- rename(Hotpep_aa_cazy_fam_fbeta, "dbCAN-Hotpep" = Stat_value)
+
+DIAMOND_aa_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(aa_cazy_fam_fbeta, "dbCAN-DIAMOND")
+DIAMOND_aa_cazy_fam_fbeta <- rename(DIAMOND_aa_cazy_fam_fbeta, "dbCAN-DIAMOND" = Stat_value)
+
+CUPP_aa_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(aa_cazy_fam_fbeta, "CUPP")
+CUPP_aa_cazy_fam_fbeta <- rename(CUPP_aa_cazy_fam_fbeta, "CUPP" = Stat_value)
+
+eCAMI_aa_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(aa_cazy_fam_fbeta, "eCAMI")
+eCAMI_aa_cazy_fam_fbeta <- rename(eCAMI_aa_cazy_fam_fbeta, "eCAMI" = Stat_value)
+
+# merge the individual prediction tool fbeta scores dataframes into a single dataframe
+fam_aa_fbeta_df <- dbCAN_aa_cazy_fam_fbeta
+
+# merge dataframes
+fam_aa_fbeta_df <- merge(dbCAN_aa_cazy_fam_fbeta, HMMER_aa_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_aa_fbeta_df <- merge(fam_aa_fbeta_df, Hotpep_aa_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_aa_fbeta_df <- merge(fam_aa_fbeta_df, DIAMOND_aa_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_aa_fbeta_df <- merge(fam_aa_fbeta_df, CUPP_aa_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_aa_fbeta_df <- merge(fam_aa_fbeta_df, eCAMI_aa_cazy_fam_fbeta, by=c("CAZy_family"))
+
+# for each CAZy family (each row in fam_pl_fbeta_df), how many tools scored an Fbeta-score of less than 0.75
+fam_aa_fbeta_df$Number_of_tools <- rowSums(fam_aa_fbeta_df<0.75)
+
+# retrieve only rows with at least 3 tools producing a Fbeta-score of less than 0.75
+poor.3.fam_aa_fbeta_df <- fam_aa_fbeta_df[which(fam_aa_fbeta_df$Number_of_tools >= 3), ]
+
+# Drop the number of tools column
+poor.3.fam_aa_fbeta_df_no_NoT <- subset(poor.3.fam_aa_fbeta_df, select=-c(Number_of_tools))
+
+# create a dataframe of the number of protein from the family included across all test sets, and the number of protein in the family in CAZy
+# the values were retrieved using the cazy_webscraper (https://github.com/HobnobMancer/cazy_webscraper)
+
+# find the number of proteins from each fam included across all test sets
+aa_family_pops <- c(30,169,94,678,71)
+# this is the number of PRIMARY GenBank accessions for each family
+# One PRIMARY GenBank accesion is one CAZyme record, one CAZyme record can have multiple NON-PRIMARY GenBank accessions
+aa_fam_testset_pops <- c(1,4,4,10,6)  # number of family members included across all test sets
+
+aa_poor_fams <- c('AA14','AA8','AA7','AA2','AA0')
+
+aa_fam_freq_df = data.frame(aa_family_pops, aa_fam_testset_pops, aa_poor_fams)
+aa_fam_freq_df$aa_poor_fams <- factor(aa_fam_freq_df$aa_poor_fams, levels=c('AA14','AA8','AA7','AA2','AA0'))
+
+aa_fam_freq_df <- rename(aa_fam_freq_df, "CAZy_family" = aa_poor_fams)
+
+# merge the dataframes
+poor.3.fam_aa_fbeta_df_no_NoT <- merge(poor.3.fam_aa_fbeta_df_no_NoT, aa_fam_freq_df, by=c("CAZy_family"))
+
+# melt the data into long form for plotting
+poor.aa.fam.melt <- melt(poor.3.fam_aa_fbeta_df_no_NoT, id.vars=c("CAZy_family", "aa_family_pops", "aa_fam_testset_pops"), )
+# in poor.aa.fam.melt variable is the prediction tool, value is the Fbeta-score
+
+# produce a heatmap of these results
+poor.aa.fam.melt$CAZy_family <- factor(poor.aa.fam.melt$CAZy_family, levels=c('AA14','AA8','AA7','AA2','AA0'))
+
+poor.aa.fam.melt <- rename(poor.aa.fam.melt, "Prediction_tool" = variable)
+poor.aa.fam.melt$Prediction_tool <- factor(poor.aa.fam.melt$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+#####
+# these figures are created and then merged together mannually in another programme for inclusion in publications and the thesis
+# tiff(file = "aaPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 12.192, res=600)
+p.aa.poor.fam.fbeta_only <- ggplot(poor.aa.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  xlab("Prediction Tool") +
+  ylab("CAZy family") +
+  geom_text(aes(label=round(value, digits=3))) +
+    theme(legend.position = "bottom",
+        legend.background = element_rect(fill = figbg, color = figbg),
+        plot.background = element_rect(fill = figbg, color = figbg),
+        text = element_text(size=10),
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=12),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  labs(fill = expression(paste("F", beta, "-score"))) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+# p.aa.poor.fam.fbeta_only
+# dev.off()
+
+# tiff(file = "aaPoorFamsPops.tiff", units="cm", width = 15.5, height = 9.95, res=600)
+p.aa.poor.fam.pops <- ggplot(aa_fam_freq_df, aes(x="", y=CAZy_family)) +
+  geom_text(aes(label=aa_family_pops, x="Family Population")) +
+  geom_text(aes(label=aa_fam_testset_pops, x="Sample Size")) +
+  ylab("CAZy family") +
+  theme(legend.background = element_rect(fill = figbg, color = figbg),
+      plot.background = element_rect(fill = figbg, color = figbg),
+      text = element_text(size=10),
+      legend.text=element_text(size=10),
+      legend.title=element_text(size=12),
+      axis.text=element_text(size=10),
+      axis.title=element_text(size=12,face="bold")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+# p.aa.poor.fam.pops
+# dev.off()
+
+#####
+# figure presented for the HTML report
+p.aa.poor.fam <- ggplot(poor.aa.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  xlab("Prediction Tool") +
+  ylab("CAZy family") +
+  geom_text(aes(label=round(value, digits=3))) +
+    theme(legend.position = "bottom",
+        legend.background = element_rect(fill = figbg, color = figbg),
+        plot.background = element_rect(fill = figbg, color = figbg),
+        text = element_text(size=10),
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=12),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  labs(fill = expression(paste("F", beta, "-score"))) +
+  coord_cartesian(clip="off") +
+  geom_text(aes(label=aa_family_pops, x="Family Population")) +
+  geom_text(aes(label=aa_fam_testset_pops, x="Sample Size"))
+p.aa.poor.fam
+```
+
+```{r, include=FALSE, echo=FALSE}
+# find the number of families for which each tool produced a poor performance (fbeta<0.75)
+# for each CAZy family (each row in fam_aa_fbeta_df), how many tools scored an Fbeta-score of less than 0.75
+fam_aa_fbeta_df%>%
+gather(
+CAZy_family, value, dbCAN:eCAMI)%>%
+group_by(CAZy_family)%>%
+tally(value < 0.75)
+
+length(unique(aa_cazy_fam_spec_recall_df$CAZy_family))  # total number of families included in the evaluation
+```
+
+### Predicting Families From Carbohydrate-Binding Modules
+
+Figure \@ref(fig:famCBMSpecSense) plots the specificity against sensitivity from each CAZyme prediction for each CE family.
+
+CUPP predicted not members of any CBM families. CUPP was invoked three times, and the output files searched for predictions of CBM families but none were found. Therefore, CUPP showed the weakest performance of CBM families.
+
+dbCAN and DIAMOND had the most families with a sensitivity greater than or equal to 0.9 (35 families each), and had similar numbers of families with a sensitivity greater than 0.75 (44 and 43 families respectively). Therefore, both dbCAN and DIAMOND showed the strongest performance.
+
+Hotpep showed a slightly stronger perfromance than eCAMI with more families with a sensitivity greater than or equal to 0.9 and 0.75.
+
+All prediction tools (except CUPP) showed a very strong specificity performance, with no family scoring less than 0.98. The differences between specificity scores were so small the performances of the prediction tools could not be differentiated by specificity.
+
+```{r famCBMSpecSense, echo=FALSE, fig.cap="Scatter plot of specificity against sensitivity for each CAZy family within the Carbohydrate-Binding Modules class."}
+cbm.fam.subset <- family_stats_df[which(family_stats_df$CAZy_family %in% cbm.names), ]
+
+# set order data is presented
+cbm.fam.subset$Prediction_tool <- factor(cbm.fam.subset$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# subset the data for only specificity and recall
+cbm_cazy_fam_spec_df <- cbm.fam.subset[which(cbm.fam.subset$Stat_parameter == "Specificity"), ]
+cbm_cazy_fam_recall_df <- cbm.fam.subset[which(cbm.fam.subset$Stat_parameter == "Recall"), ]
+
+# drop Statistic value column
+names(cbm_cazy_fam_spec_df)[names(cbm_cazy_fam_spec_df) == "Stat_value"] <- "Specificity"
+names(cbm_cazy_fam_recall_df)[names(cbm_cazy_fam_recall_df) == "Stat_value"] <- "Recall"
+
+cbm_cazy_fam_spec_df <- cbm_cazy_fam_spec_df[c("CAZy_family", "Prediction_tool", "cazy.class", "Specificity")]
+cbm_cazy_fam_recall_df <- cbm_cazy_fam_recall_df[c("CAZy_family", "Prediction_tool", "cazy.class", "Recall")]
+
+# merge dataframes
+cbm_cazy_fam_spec_recall_df <- merge(cbm_cazy_fam_spec_df, cbm_cazy_fam_recall_df, by=c("CAZy_family", "Prediction_tool", "cazy.class"))
+
+# cbm_cazy_fam_spec_recall_df  <- cbm_cazy_fam_spec_recall_df[complete.cases(cbm_cazy_fam_spec_recall_df), ]
+cbm_cazy_fam_spec_recall_df$Prediction_tool <- factor(cbm_cazy_fam_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+# add percentage columns
+cbm_cazy_fam_spec_recall_df$Specificity_percentage <- cbm_cazy_fam_spec_recall_df$Specificity * 100
+cbm_cazy_fam_spec_recall_df$Recall_percentage <- cbm_cazy_fam_spec_recall_df$Recall * 100
+
+# standard version
+# pdf(file = "mlcCBMfamsSpecSens.pdf", width = 11.25, height = 7)
+p.cbm.fam = ggplot(cbm_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool)) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity") +
+  geom_boxplot(aes(x=Recall, y=0.985), alpha=0.5, width=0.0015, outlier.shape = NA) +
+  facet_wrap(~ Prediction_tool)
+p.cbm.fam
+# dev.off()
+
+# interactive version
+p.cbm.fam.interactive = ggplot(cbm_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool,
+                                                  text = paste(
+                                                  "CAZy family: ", CAZy_family, "\n",
+                                                  "Specificity: ", Specificity, "\n",
+                                                  "Sensitivity: ", Recall, "\n",
+                                                  sep = ""
+                                                  ))) +
+  geom_point() +
+  scale_color_manual(values=colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=11,face="bold"),
+        strip.text = element_text(size=11)) +
+  labs(x = "Sensitivity", y = "Specificity") +
+  facet_wrap(~ Prediction_tool)
+ggplotly(p.cbm.fam.interactive, tooltip = "text")
+```
+
+```{r cbm.fam.distribution, include=FALSE}
+cbm.0.9 <- cbm_cazy_fam_spec_recall_df[which(cbm_cazy_fam_spec_recall_df$Recall >= 0.9), ]
+table(cbm.0.9$Prediction_tool)
+cbm.0.75 <- cbm_cazy_fam_spec_recall_df[which(cbm_cazy_fam_spec_recall_df$Recall >= 0.75), ]
+table(cbm.0.75$Prediction_tool)
+cbm.0.75.less <- cbm_cazy_fam_spec_recall_df[which(cbm_cazy_fam_spec_recall_df$Recall < 0.75), ]
+table(cbm.0.75.less$Prediction_tool)
+```
+
+#### Identify potentially difficult to classify CBM families
+
+To identify CBM CAZy families that most prediction tools performed poorly, families for which at least three prediction tools produced a expression(paste("F", beta, "-score")) of less than 0.75, as shown in figure \@ref(fig:famCBMPoorPerform). It was no surprise CBM0 was included because CAZy classifies this family as 'unclassified'. The family includes CAZymes that CAZy has classified asCBM but cannot not determine the CAZy family annotation, therefore AA0 includes members from multiple different CAZy families. Thus, CBM0 has a higher sequence diversity, causing the accurate modeling of this family to be more difficult. Consequently, the performance for CBM0 is typically lower than other CAZy families for all prediction tools.
+
+The remaining families, contained very small sample sizes of less than 10 proteins. Thus, the odds of producing a low expression(paste("F", beta, "-score")) is significantly increased, and the probability of producing a low expression(paste("F", beta, "-score")) is much greater than producing a high expression(paste("F", beta, "-score")).
+
+...
+ 
+```{r famCBMPoorPerform, echo=FALSE, fig.cap="Heatmap of Carbohydrate Binding Module families for which at least three CAZyme prediction tools produced a poor performance, defined as a Fbeta-score less than 0.75. 'Family population' is the number of CAZyme records in each family in CAZy, and 'Sample size' is the number of proteins from the CAZy family included across all test sets."}
+# cbm.fam.subset contains all CAZy family prediction statistical evaluations for families from CBM
+# cbm.fam.sub has the structure CAZy_family, Stat_parameter, Prediction_tool, Stat_value, cazy.class
+# need to reorient dataframe to CAZy_family, dbCAN.fbeta.score, dbCAN-HMMER.fbeta.score... Poor_performing_tools_count
+# Poor_performing_tools_count is the number of tools with an fbeta-score less than 0.75 for the CAZy family
+
+# retrieve rows containing Fbeta-scores
+cbm_cazy_fam_fbeta <- cbm.fam.subset[which(cbm.fam.subset$Stat_parameter == "Fbeta_score"), ]
+
+retrieve_tool_fam_fbeta_scores <- function (df, tool) {
+  # retrieve only the rows containing the tool of interest
+  df <- df[which(df$Prediction_tool == tool), ]
+  
+  # drop unneeded columns
+  df <- subset(df, select=-c(X,Stat_parameter,Prediction_tool,cazy.class))
+  
+  return(df)
+}
+
+dbCAN_cbm_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(cbm_cazy_fam_fbeta, "dbCAN")
+dbCAN_cbm_cazy_fam_fbeta <- rename(dbCAN_cbm_cazy_fam_fbeta, "dbCAN" = Stat_value)
+
+HMMER_cbm_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(cbm_cazy_fam_fbeta, "dbCAN-HMMER")
+HMMER_cbm_cazy_fam_fbeta <- rename(HMMER_cbm_cazy_fam_fbeta, "dbCAN-HMMER" = Stat_value)
+
+Hotpep_cbm_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(cbm_cazy_fam_fbeta, "dbCAN-Hotpep")
+Hotpep_cbm_cazy_fam_fbeta <- rename(Hotpep_cbm_cazy_fam_fbeta, "dbCAN-Hotpep" = Stat_value)
+
+DIAMOND_cbm_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(cbm_cazy_fam_fbeta, "dbCAN-DIAMOND")
+DIAMOND_cbm_cazy_fam_fbeta <- rename(DIAMOND_cbm_cazy_fam_fbeta, "dbCAN-DIAMOND" = Stat_value)
+
+CUPP_cbm_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(cbm_cazy_fam_fbeta, "CUPP")
+CUPP_cbm_cazy_fam_fbeta <- rename(CUPP_cbm_cazy_fam_fbeta, "CUPP" = Stat_value)
+
+eCAMI_cbm_cazy_fam_fbeta <- retrieve_tool_fam_fbeta_scores(cbm_cazy_fam_fbeta, "eCAMI")
+eCAMI_cbm_cazy_fam_fbeta <- rename(eCAMI_cbm_cazy_fam_fbeta, "eCAMI" = Stat_value)
+
+# merge the individual prediction tool fbeta scores dataframes into a single dataframe
+fam_cbm_fbeta_df <- dbCAN_cbm_cazy_fam_fbeta
+
+# merge dataframes
+fam_cbm_fbeta_df <- merge(dbCAN_cbm_cazy_fam_fbeta, HMMER_cbm_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_cbm_fbeta_df <- merge(fam_cbm_fbeta_df, Hotpep_cbm_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_cbm_fbeta_df <- merge(fam_cbm_fbeta_df, DIAMOND_cbm_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_cbm_fbeta_df <- merge(fam_cbm_fbeta_df, CUPP_cbm_cazy_fam_fbeta, by=c("CAZy_family"))
+fam_cbm_fbeta_df <- merge(fam_cbm_fbeta_df, eCAMI_cbm_cazy_fam_fbeta, by=c("CAZy_family"))
+
+# for each CAZy family (each row in fam_pl_fbeta_df), how many tools scored an Fbeta-score of less than 0.75
+fam_cbm_fbeta_df$Number_of_tools <- rowSums(fam_cbm_fbeta_df<0.75)
+
+# retrieve only rows with at least 3 tools producing a Fbeta-score of less than 0.75
+poor.3.fam_cbm_fbeta_df <- fam_cbm_fbeta_df[which(fam_cbm_fbeta_df$Number_of_tools >= 3), ]
+
+# Drop the number of tools column
+poor.3.fam_cbm_fbeta_df_no_NoT <- subset(poor.3.fam_cbm_fbeta_df, select=-c(Number_of_tools))
+
+# create a dataframe of the number of protein from the family included across all test sets, and the number of protein in the family in CAZy
+# the values were retrieved using the cazy_webscraper (https://github.com/HobnobMancer/cazy_webscraper)
+
+# find the number of proteins from each fam included across all test sets
+cbm_family_pops <- c(33,625,657,693,219,239,1312,75554,907,98,25,842,3405,459,131,3464,7717,29,569,434,83,1023,1969,158,915,2023,9638,2421,147,263,582,3846,8196,756,1823,6800,1329,1216)
+# this is the number of PRIMARY GenBank accessions for each family
+# One PRIMARY GenBank accesion is one CAZyme record, one CAZyme record can have multiple NON-PRIMARY GenBank accessions
+cbm_fam_testset_pops <- c(2,3,3,1,2,2,6,170,1,2,1,5,4,4,2,34,36,1,4,10,1,7,20,6,5,2,36,1,2,8,8,34,17,8,39,22,24,7)  # number of family members included across all test sets
+
+cbm_poor_fams <- c('CBM87','CBM67','CBM61', 'CBM57', 'CBM56', 'CBM54', 'CBM51', 'CBM50', 'CBM47', 'CBM45', 'CBM44', 'CBM42', 'CBM41', 'CBM38', 'CBM36', 'CBM35', 'CBM32', 'CBM30', 'CBM26', 'CBM25', 'CBM24', 'CBM22', 'CBM20', 'CBM19', 'CBM16', 'CBM14', 'CBM13', 'CBM12', 'CBM11', 'CBM10','CBM9', 'CBM6', 'CBM5', 'CBM4', 'CBM3', 'CBM2', 'CBM1', 'CBM0')
+
+cbm_fam_freq_df = data.frame(cbm_family_pops, cbm_fam_testset_pops, cbm_poor_fams)
+cbm_fam_freq_df$cbm_poor_fams <- factor(cbm_fam_freq_df$cbm_poor_fams, levels=c('CBM87','CBM67','CBM61', 'CBM57', 'CBM56', 'CBM54', 'CBM51', 'CBM50', 'CBM47', 'CBM45', 'CBM44', 'CBM42', 'CBM41', 'CBM38', 'CBM36', 'CBM35', 'CBM32', 'CBM30', 'CBM26', 'CBM25', 'CBM24', 'CBM22', 'CBM20', 'CBM19', 'CBM16', 'CBM14', 'CBM13', 'CBM12', 'CBM11', 'CBM10','CBM9', 'CBM6', 'CBM5', 'CBM4', 'CBM3', 'CBM2', 'CBM1', 'CBM0')
+)
+
+cbm_fam_freq_df <- rename(cbm_fam_freq_df, "CAZy_family" = cbm_poor_fams)
+
+# merge the dataframes
+poor.3.fam_cbm_fbeta_df_no_NoT <- merge(poor.3.fam_cbm_fbeta_df_no_NoT, cbm_fam_freq_df, by=c("CAZy_family"))
+
+# melt the data into long form for plotting
+poor.cbm.fam.melt <- melt(poor.3.fam_cbm_fbeta_df_no_NoT, id.vars=c("CAZy_family", "cbm_family_pops", "cbm_fam_testset_pops"), )
+# in poor.aa.fam.melt variable is the prediction tool, value is the Fbeta-score
+
+# produce a heatmap of these results
+poor.cbm.fam.melt$CAZy_family <- factor(poor.cbm.fam.melt$CAZy_family, levels=c('CBM87','CBM67','CBM61', 'CBM57', 'CBM56', 'CBM54', 'CBM51', 'CBM50', 'CBM47', 'CBM45', 'CBM44', 'CBM42', 'CBM41', 'CBM38', 'CBM36', 'CBM35', 'CBM32', 'CBM30', 'CBM26', 'CBM25', 'CBM24', 'CBM22', 'CBM20', 'CBM19', 'CBM16', 'CBM14', 'CBM13', 'CBM12', 'CBM11', 'CBM10','CBM9', 'CBM6', 'CBM5', 'CBM4', 'CBM3', 'CBM2', 'CBM1', 'CBM0')
+)
+
+poor.cbm.fam.melt <- rename(poor.cbm.fam.melt, "Prediction_tool" = variable)
+poor.cbm.fam.melt$Prediction_tool <- factor(poor.cbm.fam.melt$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+#####
+# these figures are created and then merged together mannually in another programme for inclusion in publications and the thesis
+# tiff(file = "cbmPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 12.192, res=600)
+p.cbm.poor.fam.fbeta_only <- ggplot(poor.cbm.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  xlab("Prediction Tool") +
+  ylab("CAZy family") +
+  geom_text(aes(label=round(value, digits=3))) +
+    theme(legend.position = "bottom",
+        legend.background = element_rect(fill = figbg, color = figbg),
+        plot.background = element_rect(fill = figbg, color = figbg),
+        text = element_text(size=10),
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=12),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  labs(fill = expression(paste("F", beta, "-score"))) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+# p.cbm.poor.fam.fbeta_only
+# dev.off()
+
+# tiff(file = "cbmPoorFamsPops.tiff", units="cm", width = 15.5, height = 9.95, res=600)
+p.cbm.poor.fam.pops <- ggplot(cbm_fam_freq_df, aes(x="", y=CAZy_family)) +
+  geom_text(aes(label=cbm_family_pops, x="Family Population")) +
+  geom_text(aes(label=cbm_fam_testset_pops, x="Sample Size")) +
+  ylab("CAZy family") +
+  theme(legend.background = element_rect(fill = figbg, color = figbg),
+      plot.background = element_rect(fill = figbg, color = figbg),
+      text = element_text(size=10),
+      legend.text=element_text(size=10),
+      legend.title=element_text(size=12),
+      axis.text=element_text(size=10),
+      axis.title=element_text(size=12,face="bold")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
+# p.cbm.poor.fam.pops
+# dev.off()
+
+#####
+# figure presented for the HTML report
+p.cbm.poor.fam <- ggplot(poor.cbm.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  xlab("Prediction Tool") +
+  ylab("CAZy family") +
+  geom_text(aes(label=round(value, digits=3))) +
+    theme(legend.position = "bottom",
+        legend.background = element_rect(fill = figbg, color = figbg),
+        plot.background = element_rect(fill = figbg, color = figbg),
+        text = element_text(size=10),
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=12),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  labs(fill = expression(paste("F", beta, "-score"))) +
+  coord_cartesian(clip="off") +
+  geom_text(aes(label=cbm_family_pops, x="Family Population")) +
+  geom_text(aes(label=cbm_fam_testset_pops, x="Sample Size"))
+p.cbm.poor.fam
+```
+
+```{r, include=FALSE, echo=FALSE}
+# find the number of families for which each tool produced a poor performance (fbeta<0.75)
+# for each CAZy family (each row in fam_cbm_fbeta_df), how many tools scored an Fbeta-score of less than 0.75
+fam_cbm_fbeta_df%>%
+gather(
+CAZy_family, value, dbCAN:eCAMI)%>%
+group_by(CAZy_family)%>%
+tally(value < 0.75)
+
+length(unique(cbm_cazy_fam_spec_recall_df$CAZy_family))  # total number of families included in the evaluation
+```
+
+# Final conclusions
+
+
