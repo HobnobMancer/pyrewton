@@ -723,23 +723,48 @@ cazy_class_GH_spec_recall_df$Prediction_tool <- factor(cazy_class_GH_spec_recall
 recall.results <- cazy_class_GH_spec_recall_df$Recall
 noisy.recall = c()
 for(i in recall.results){
-  i <- i - rnorm(1, mean=0, sd=0.2)
+  print(i)
+  a <- rnorm(1, mean=0, sd=0.1)
+  i <- i - a
+  print(a)
+  print(i)
+  print("-----")
   noisy.recall <- append(noisy.recall, i)
 }
 cazy_class_GH_spec_recall_df$Recall_Noise <- noisy.recall
 
+recall.results <- cazy_class_GH_spec_recall_df$Recall
+noisy.recall = c()
+for(i in recall.results){
+  i <- i - (runif(1, min=-0.000001, max=0.001))
+  noisy.recall <- append(noisy.recall, i)
+}
+cazy_class_GH_spec_recall_df$Recall_Noise <- noisy.recall
+
+spec.results <- cazy_class_GH_spec_recall_df$Specificity
+noisy.spec = c()
+for(i in spec.results){
+  i <- i - (runif(1, min=-0.0002, max=0.002))
+  noisy.spec <- append(noisy.spec, i)
+}
+cazy_class_GH_spec_recall_df$Specifcity_Noise <- noisy.spec
+
+# pdf(file = "classcGHSpecSens.pdf", width = 11.25, height = 7)
 p.class.gh.spec.recall = ggplot(cazy_class_GH_spec_recall_df %>% group_by(Prediction_tool), aes(x=as.numeric(Recall), y=as.numeric(Specificity))) +
-  geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10) +
+  geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10, aes(x=Recall_Noise, y=Specifcity_Noise)) +
   geom_point() +
   scale_color_manual(values=colour_set) +
   theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
         axis.title=element_text(size=11,face="bold"),
         strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity", fill="Count") +
+  labs(x = "Sensitivity", y = "Specificity", fill="Density") +
   geom_boxplot(aes(x=Recall, y=0.8875), alpha=0.5, width=0.01, outlier.shape = NA) +
+  scale_x_continuous(breaks = seq(0,1, by = 0.2), limits=c(0,1)) +
+  scale_y_continuous(breaks = seq(0.875,1, by = 0.025), limits=c(0.875,1)) +
   facet_wrap(~ Prediction_tool)
 p.class.gh.spec.recall
+# dev.off()
 
 # why is the contour only hotpep + eCAMI (this is not position specific), try with an isolated prediction tool
 # becuase of Error in seq_len(n) : argument must be coercible to non-negative integer
@@ -1533,7 +1558,7 @@ poor.gt.fam.melt$Prediction_tool <- factor(poor.gt.fam.melt$Prediction_tool, lev
 
 #####
 # these figures are created and then merged together mannually in another programme for inclusion in publications and the thesis
-# tiff(file = "plPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 12.192, res=600)
+# tiff(file = "gtPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 12.192, res=600)
 p.gt.poor.fam.fbeta_only <- ggplot(poor.gt.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
   geom_tile() +
   scale_fill_viridis_c() +
