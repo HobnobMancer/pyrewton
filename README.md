@@ -16,14 +16,14 @@ _Please find more detailed documentation for operation and troubleshooting at [R
 1. [Overview](#Overview)
 2. [Installation](#Installation)
     - [Requirements](#Requirements)
-3. [Current Developments](#Current)
+3. [Development](#Development)
 3. [Directories](#Directories)
 4. [Modules](#Modules)
     - [genbank](#genbank)
     - [cazymes](#cazymes)
         - [uniprot](#uniprot)
-        - [prediction](#prediction)
-5. [Evalulations of CAZyme Prediction Tools](#Evalulations)
+        - [evaluate_tools](#evaluate_tools)
+5. [Evaluations](#Evaluations)
         
 ## Overview
 
@@ -80,7 +80,7 @@ For all required Python libraries please read 'requirements.txt'.
 <p>&nbsp;</p>
 
 
-## Current Developments
+## Development
 
 This section of the README lists the areas that are currently being worked upon and expanded:
 - update unit tests to cover the newly added scripts, and match the last repo restructuring
@@ -180,7 +180,7 @@ An example of basic operation is:
 
 All command options can be viewed by using `python3 get_uniprot_proteins -h` or `python3 get_uniprot_proteins --help`. 'Read the Docs' documentation coming soon!
 
-#### **prediction**
+#### **evaluate_tools**
 
 _Detailed documentation for hosting at ReadTheDocs is still in development._
 
@@ -188,7 +188,7 @@ This submodule is for the prediction if a query protein sequence is a CAZyme or 
 This directory contains an additional README specifically for the independent evaluation of the CAZyme predictiont tools dbCAN, CUPP and eCAMI.
 <p>&nbsp;</p>
 
-## Evaluations and publications
+## Evaluations
 
 For a summary of the inital evaluation of the performance of dbCAN, CUPP and eCAMI (March 2021), see the [poster](https://hobnobmancer.github.io/pyrewton/pyrewton_2021_03_31_dbcancuppecami_evaluation.pdf) we presented at the Microbiology Society Annual Conference 2021.
 
