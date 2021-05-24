@@ -23,6 +23,7 @@ _Please find more detailed documentation for operation and troubleshooting at [R
     - [cazymes](#cazymes)
         - [uniprot](#uniprot)
         - [prediction](#prediction)
+5. [Evalulations of CAZyme Prediction Tools](#Evalulations)
         
 ## Overview
 
@@ -190,6 +191,8 @@ This directory contains an additional README specifically for the independent ev
 ## Evaluations and publications
 
 For a summary of the inital evaluation of the performance of dbCAN, CUPP and eCAMI (March 2021), see the [poster](https://hobnobmancer.github.io/pyrewton/pyrewton_2021_03_31_dbcancuppecami_evaluation.pdf) we presented at the Microbiology Society Annual Conference 2021.
+
+The Rnotebook (as a Rmarkdown file and HTML file), containing the full evaluation of the dbCAN, CUPP and eCAMI and which was used to generate the figures for Microbiology Society Conference poster are located in `pyrewton/cazymes/evaluate/tools/report`. We recommend using the Rnotebook as a template for any evaluations you conduct yourself.
 
 ## Repository renamed 2020-10-05
 **Note:** This repository was renamed from 'PhD_project_scripts' to 'pyrewton'.
