@@ -670,6 +670,7 @@ aa.class.sample.sizes
 
 ## Prediction of Each CAZy Class
 
+
 ```{r, echo=FALSE}
 # subset the data for only specificity and recall
 cazy_class_spec_df <- cazy_class_long_df[which(cazy_class_long_df$Statistic_parameter == "Specificity"), ]
@@ -696,7 +697,7 @@ cazy_class_spec_recall_df$Prediction_tool <- factor(cazy_class_spec_recall_df$Pr
 
 # this figure shows there is to much data to visualise on a single plot. Therefore, one plot per class with be made using facet_wrap by Prediciton_tool.
 p.class.spec.recall = ggplot(cazy_class_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity, color=Prediction_tool)) +
-  geom_point() +
+  geom_point(size=1.1) +
   scale_color_manual(values=colour_set) +
   theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
@@ -720,23 +721,12 @@ cazy_class_GH_spec_recall_df$Specificity_percentage = cazy_class_GH_spec_recall_
 
 cazy_class_GH_spec_recall_df$Prediction_tool <- factor(cazy_class_GH_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
 
-recall.results <- cazy_class_GH_spec_recall_df$Recall
-noisy.recall = c()
-for(i in recall.results){
-  print(i)
-  a <- rnorm(1, mean=0, sd=0.1)
-  i <- i - a
-  print(a)
-  print(i)
-  print("-----")
-  noisy.recall <- append(noisy.recall, i)
-}
-cazy_class_GH_spec_recall_df$Recall_Noise <- noisy.recall
+# A contours for shading the density of the scatter plots cannot be produced if there are several points with the same value on the same axis. Therefore, the data used to create the scatter plot is copied and noise is added to it by corrupting the original data, and using the 'noisy data' to plot the contour and the original data to plot the scatter plot
 
 recall.results <- cazy_class_GH_spec_recall_df$Recall
 noisy.recall = c()
 for(i in recall.results){
-  i <- i - (runif(1, min=-0.000001, max=0.001))
+  i <- i - (runif(1, min=-0.000001, max=0.0005))
   noisy.recall <- append(noisy.recall, i)
 }
 cazy_class_GH_spec_recall_df$Recall_Noise <- noisy.recall
@@ -744,7 +734,7 @@ cazy_class_GH_spec_recall_df$Recall_Noise <- noisy.recall
 spec.results <- cazy_class_GH_spec_recall_df$Specificity
 noisy.spec = c()
 for(i in spec.results){
-  i <- i - (runif(1, min=-0.0002, max=0.002))
+  i <- i - (runif(1, min=-0.0002, max=0.0015))
   noisy.spec <- append(noisy.spec, i)
 }
 cazy_class_GH_spec_recall_df$Specifcity_Noise <- noisy.spec
@@ -752,7 +742,7 @@ cazy_class_GH_spec_recall_df$Specifcity_Noise <- noisy.spec
 # pdf(file = "classcGHSpecSens.pdf", width = 11.25, height = 7)
 p.class.gh.spec.recall = ggplot(cazy_class_GH_spec_recall_df %>% group_by(Prediction_tool), aes(x=as.numeric(Recall), y=as.numeric(Specificity))) +
   geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10, aes(x=Recall_Noise, y=Specifcity_Noise)) +
-  geom_point() +
+  geom_point(size=1.1) +
   scale_color_manual(values=colour_set) +
   theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
@@ -785,18 +775,38 @@ cazy_class_GT_spec_recall_df$Prediction_tool <- factor(cazy_class_GT_spec_recall
 
 # cazy_class_GT_spec_recall_df <- cazy_class_GT_spec_recall_df[complete.cases(cazy_class_GT_spec_recall_df), ]
 
+# A contours for shading the density of the scatter plots cannot be produced if there are several points with the same value on the same axis. Therefore, the data used to create the scatter plot is copied and noise is added to it by corrupting the original data, and using the 'noisy data' to plot the contour and the original data to plot the scatter plot
+
+recall.results <- cazy_class_GT_spec_recall_df$Recall
+noisy.recall = c()
+for(i in recall.results){
+  i <- i - (runif(1, min=-0.000001, max=0.001))
+  noisy.recall <- append(noisy.recall, i)
+}
+cazy_class_GT_spec_recall_df$Recall_Noise <- noisy.recall
+
+spec.results <- cazy_class_GT_spec_recall_df$Specificity
+noisy.spec = c()
+for(i in spec.results){
+  i <- i - (runif(1, min=-0.0002, max=0.002))
+  noisy.spec <- append(noisy.spec, i)
+}
+cazy_class_GT_spec_recall_df$Specifcity_Noise <- noisy.spec
+
+# pdf(file = "classcGTSpecSens.pdf", width = 11.25, height = 7)
 p.class.gt.spec.recall = ggplot(cazy_class_GT_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity)) +
-  # geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10) +
-  geom_point() +
+  geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10, aes(x=Recall_Noise, y=Specifcity_Noise)) +
+  geom_point(size=1.1) +
   scale_color_manual(values=colour_set) +
   theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
         axis.title=element_text(size=11,face="bold"),
         strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity", fill="Count") +
+  labs(x = "Sensitivity", y = "Specificity", fill="Density") +
   geom_boxplot(aes(x=Recall, y=0.9125), alpha=0.5, width=0.01, outlier.shape = NA) +
   facet_wrap(~ Prediction_tool)
 p.class.gt.spec.recall
+# dev.off()
 
 # why is the contour only hotpep + eCAMI (this is not position specific), try with an isolated prediction tool
 # becuase of Error in seq_len(n) : argument must be coercible to non-negative integer
@@ -812,26 +822,38 @@ cazy_class_PL_spec_recall_df <- cazy_class_spec_recall_df[which(cazy_class_spec_
 
 cazy_class_PL_spec_recall_df$Prediction_tool <- factor(cazy_class_PL_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
 
-# recall.results <- cazy_class_PL_spec_recall_df$Recall
-# noisy.recall = c()
-# for(i in recall.results){
-#   i - rnorm(sum(recall.results), mean=0, sd=0.2)
-#   noisy.recall <- append(noisy.recall, i)
-# }
-# cazy_class_PL_spec_recall_df$Recall_Noise <- noisy.recall
+# A contours for shading the density of the scatter plots cannot be produced if there are several points with the same value on the same axis. Therefore, the data used to create the scatter plot is copied and noise is added to it by corrupting the original data, and using the 'noisy data' to plot the contour and the original data to plot the scatter plot
 
+recall.results <- cazy_class_PL_spec_recall_df$Recall
+noisy.recall = c()
+for(i in recall.results){
+  i <- i - (runif(1, min=-0.000001, max=0.001))
+  noisy.recall <- append(noisy.recall, i)
+}
+cazy_class_PL_spec_recall_df$Recall_Noise <- noisy.recall
+
+spec.results <- cazy_class_PL_spec_recall_df$Specificity
+noisy.spec = c()
+for(i in spec.results){
+  i <- i - (runif(1, min=-0.00002, max=0.0002))
+  noisy.spec <- append(noisy.spec, i)
+}
+cazy_class_PL_spec_recall_df$Specifcity_Noise <- noisy.spec
+
+# pdf(file = "classcPLSpecSens.pdf", width = 11.25, height = 7)
 p.class.pl.spec.recall = ggplot(cazy_class_PL_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity)) +
-  # geom_density_2d_filled(alpha = 0.5) +
-  geom_point() +
+  geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10, aes(x=Recall_Noise, y=Specifcity_Noise)) +
+  geom_point(size=1.1) +
   scale_color_manual(values=colour_set) +
   theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
         axis.title=element_text(size=11,face="bold"),
         strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity", fill="Count") +
+  labs(x = "Sensitivity", y = "Specificity", fill="Density") +
   geom_boxplot(aes(x=Recall, y=0.9825), alpha=0.5, width=0.002, outlier.shape = NA) +
   facet_wrap(~ Prediction_tool)
 p.class.pl.spec.recall
+# dev.off()
 
 # why is the contour only hotpep + eCAMI (this is not position specific), try with an isolated prediction tool
 # becuase of Error in seq_len(n) : argument must be coercible to non-negative integer
@@ -846,26 +868,38 @@ cazy_class_CE_spec_recall_df <- cazy_class_spec_recall_df[which(cazy_class_spec_
 
 cazy_class_CE_spec_recall_df$Prediction_tool <- factor(cazy_class_CE_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
 
-# recall.results <- cazy_class_CE_spec_recall_df$Recall
-# noisy.recall = c()
-# for(i in recall.results){
-#   i - rnorm(sum(recall.results), mean=0, sd=0.2)
-#   noisy.recall <- append(noisy.recall, i)
-# }
-# cazy_class_CE_spec_recall_df$Recall_Noise <- noisy.recall
+# A contours for shading the density of the scatter plots cannot be produced if there are several points with the same value on the same axis. Therefore, the data used to create the scatter plot is copied and noise is added to it by corrupting the original data, and using the 'noisy data' to plot the contour and the original data to plot the scatter plot
 
+recall.results <- cazy_class_CE_spec_recall_df$Recall
+noisy.recall = c()
+for(i in recall.results){
+  i <- i - (runif(1, min=-0.00001, max=0.001))
+  noisy.recall <- append(noisy.recall, i)
+}
+cazy_class_CE_spec_recall_df$Recall_Noise <- noisy.recall
+
+spec.results <- cazy_class_CE_spec_recall_df$Specificity
+noisy.spec = c()
+for(i in spec.results){
+  i <- i - (runif(1, min=-0.00015, max=0.0002))
+  noisy.spec <- append(noisy.spec, i)
+}
+cazy_class_CE_spec_recall_df$Specifcity_Noise <- noisy.spec
+
+# pdf(file = "classcCESpecSens.pdf", width = 11.25, height = 7)
 p.class.ce.spec.recall = ggplot(cazy_class_CE_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity)) +
-  geom_density_2d_filled(alpha = 0.5) +
-  geom_point() +
+  geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10, aes(x=Recall_Noise, y=Specifcity_Noise)) +
+  geom_point(size=1.1, aes(x=Recall, y=Specificity)) +
   scale_color_manual(values=colour_set) +
   theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
         axis.title=element_text(size=11,face="bold"),
         strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity", fill="Count") +
+  labs(x = "Sensitivity", y = "Specificity", fill="Density") +
   geom_boxplot(aes(x=Recall, y=0.94), alpha=0.5, width=0.006, outlier.shape = NA) +
   facet_wrap(~ Prediction_tool)
 p.class.ce.spec.recall
+# dev.off()
 
 # why is the contour only hotpep + eCAMI (this is not position specific), try with an isolated prediction tool
 # becuase of Error in seq_len(n) : argument must be coercible to non-negative integer
@@ -880,26 +914,38 @@ cazy_class_AA_spec_recall_df <- cazy_class_spec_recall_df[which(cazy_class_spec_
 
 cazy_class_AA_spec_recall_df$Prediction_tool <- factor(cazy_class_AA_spec_recall_df$Prediction_tool, levels = c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
 
-# recall.results <- cazy_class_AA_spec_recall_df$Recall
-# noisy.recall = c()
-# for(i in recall.results){
-#   i - rnorm(sum(recall.results), mean=0, sd=0.2)
-#   noisy.recall <- append(noisy.recall, i)
-# }
-# cazy_class_AA_spec_recall_df$Recall_Noise <- noisy.recall
+# A contours for shading the density of the scatter plots cannot be produced if there are several points with the same value on the same axis. Therefore, the data used to create the scatter plot is copied and noise is added to it by corrupting the original data, and using the 'noisy data' to plot the contour and the original data to plot the scatter plot
 
+recall.results <- cazy_class_AA_spec_recall_df$Recall
+noisy.recall = c()
+for(i in recall.results){
+  i <- i - (runif(1, min=-0.00001, max=0.001))
+  noisy.recall <- append(noisy.recall, i)
+}
+cazy_class_AA_spec_recall_df$Recall_Noise <- noisy.recall
+
+spec.results <- cazy_class_AA_spec_recall_df$Specificity
+noisy.spec = c()
+for(i in spec.results){
+  i <- i - (runif(1, min=-0.0002, max=0.0004))
+  noisy.spec <- append(noisy.spec, i)
+}
+cazy_class_AA_spec_recall_df$Specifcity_Noise <- noisy.spec
+
+# pdf(file = "classcAASpecSens.pdf", width = 11.25, height = 7)
 p.class.aa.spec.recall = ggplot(cazy_class_AA_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity)) +
-  # geom_density_2d_filled(alpha = 0.5) +
-  geom_point() +
+  geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10, aes(x=Recall_Noise, y=Specifcity_Noise)) +
+  geom_point(size=1.1, aes(x=Recall, y=Specificity)) +
   scale_color_manual(values=colour_set) +
   theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
         axis.title=element_text(size=11,face="bold"),
         strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity", fill="Count") +
+  labs(x = "Sensitivity", y = "Specificity", fill="Density") +
   geom_boxplot(aes(x=Recall, y=0.93), alpha=0.5, width=0.007, outlier.shape = NA) +
   facet_wrap(~ Prediction_tool)
 p.class.aa.spec.recall
+# dev.off()
 
 # why is the contour only hotpep + eCAMI (this is not position specific), try with an isolated prediction tool
 # becuase of Error in seq_len(n) : argument must be coercible to non-negative integer
@@ -914,17 +960,28 @@ cazy_class_CBM_spec_recall_df <- cazy_class_spec_recall_df[which(cazy_class_spec
 
 cazy_class_CBM_spec_recall_df$Prediction_tool <- factor(cazy_class_CBM_spec_recall_df$Prediction_tool, levels =c('dbCAN','dbCAN-HMMER','dbCAN-Hotpep','dbCAN-DIAMOND','CUPP','eCAMI')) # set order data is presented
 
-# recall.results <- cazy_class_CBM_spec_recall_df$Recall
-# noisy.recall = c()
-# for(i in recall.results){
-#   i - rnorm(sum(recall.results), mean=0, sd=0.2)
-#   noisy.recall <- append(noisy.recall, i)
-# }
-# cazy_class_CBM_spec_recall_df$Recall_Noise <- noisy.recall
+# A contours for shading the density of the scatter plots cannot be produced if there are several points with the same value on the same axis. Therefore, the data used to create the scatter plot is copied and noise is added to it by corrupting the original data, and using the 'noisy data' to plot the contour and the original data to plot the scatter plot
 
+recall.results <- cazy_class_CBM_spec_recall_df$Recall
+noisy.recall = c()
+for(i in recall.results){
+  i <- i - (runif(1, min=-0.00001, max=0.001))
+  noisy.recall <- append(noisy.recall, i)
+}
+cazy_class_CBM_spec_recall_df$Recall_Noise <- noisy.recall
+
+spec.results <- cazy_class_CBM_spec_recall_df$Specificity
+noisy.spec = c()
+for(i in spec.results){
+  i <- i - (runif(1, min=-0.0002, max=0.0004))
+  noisy.spec <- append(noisy.spec, i)
+}
+cazy_class_CBM_spec_recall_df$Specifcity_Noise <- noisy.spec
+
+# pdf(file = "classcCBMSpecSens.pdf", width = 11.25, height = 7)
 p.class.cbm.spec.recall = ggplot(cazy_class_CBM_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity)) +
-  geom_density_2d_filled(alpha = 0.5) +
-  geom_point() +
+  geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10, aes(x=Recall_Noise, y=Specifcity_Noise)) +
+  geom_point(size=1.1, aes(x=Recall, y=Specificity)) +
   scale_color_manual(values=colour_set) +
   theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
@@ -934,6 +991,7 @@ p.class.cbm.spec.recall = ggplot(cazy_class_CBM_spec_recall_df %>% group_by(Pred
   geom_boxplot(aes(x=Recall, y=0.69), alpha=0.5, width=0.02, outlier.shape = NA) +
   facet_wrap(~ Prediction_tool)
 p.class.cbm.spec.recall
+# dev.off()
 
 # why is the contour only hotpep + eCAMI (this is not position specific), try with an isolated prediction tool
 # becuase of Error in seq_len(n) : argument must be coercible to non-negative integer
@@ -942,16 +1000,20 @@ p.class.cbm.spec.recall
 
 # CAZy Family Prediction
 
+The CAZyme prediction tools predict the CAZy family annotations for predicted CAZymes. A single CAZyme can be assigned to multiple CAZy families, producing a multilabel classification which was evaluated to summarise the overall performance of each prediction tool. In addition, the performance of each prediction tool against each CAZy family was also evaluated.
+
 ## Multilabel CAZy Family Prediction Performance
+
+The multilabel classification of a CAZyme arises from a single CAZyme having the potential to be assigned to more than one CAZy family. Therefore, when a prediction tool is parsing a protein sequence it makes 458 classification decisions, one for each CAZy family. To address this and evaluate the multilabel classification of CAZy families the Rand Index (RI) and Adjusted Rand Index (ARI) were calculated. 
 
 ```{r familyRIARI, include=FALSE}
 # load in the data
 family_ri_ari_raw_df <- read.csv("cazy_family_predictions_2021_05_17.csv")
 ```
 
-A single CAZyme can be included in multiple CAZy families, from multiple different CAZy classes, resulting in the multilabel classification of CAZymes. To address this and evaluate the multilabel classification of CAZy families the Rand Index (RI) and Adjusted Rand Index (ARI) were calculated.
+A single CAZyme can be included in multiple CAZy families, from multiple different CAZy classes, resulting in the multilabel classification of CAZymes. 
 
-The RI is the measure of agreemment across all potential classifications of a protein. The RI ranges from 0 (no correct annotations) to 1 (all annotations correct) \@ref(fig:famRI). The ARI is the RI adjusted for chance, where 0 is the equivalent to assigning the CAZy family annotations randomly, -1 where the annotations are systematically handed out incorrectly and 1 where the annotations are all correct \@ref(fig:famRI).
+The RI is the measure of agreement across all potential classifications of a protein. The RI ranges from 0 (no correct annotations) to 1 (all annotations correct). Figure \@ref(fig:famRI) shows the RI result for all proteins parsed by the prediction tools.. The ARI is the RI adjusted for chance, where 0 is the equivalent to assigning the CAZy family annotations randomly, -1 where the annotations are systematically handed out incorrectly and 1 where the annotations are all correct. Figure \@ref(fig:famARI) shows the ARI for all proteins parsed by the prediction tools.
 
 ```{r famRI, echo=FALSE, fig.cap="Violin plot of Rand Index (RI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy families."}
 # make it clear we are evaluating HMMER, DIAMOND and Hotpep that are reliant upon and built into dbCAN, not a generic eval of these tools
@@ -997,7 +1059,9 @@ p.ari.fam
 
 ## CAZy Family Prediction Performance
 
-```{r familyStats, include=FALSE}
+The RI and ARI demonstrate the performance of each prediction tool across all families, but it does not evaluate the performance against each family regardless of the performance of other families. Therefore, the RI and ARI does not enable the comparison between differences in performances for specific families. Here, the performance for each prediction tool across all test sets was evaluated for each CAzy family.
+
+```{r familyStatsSetUp, include=FALSE}
 # load in the data
 family_all_stats_df <- read.csv("cazy_fam_long_form_stats_df_2021_05_17.csv")
 
@@ -1053,10 +1117,7 @@ family_stats_df[family_stats_df=="DIAMOND"]<-"dbCAN-DIAMOND"
 family_stats_df[family_stats_df=="Hotpep"]<-"dbCAN-Hotpep"
 ```
 
-Evaluate the performance of each prediction for each CAZy family, independent of the performance of the other CAZy families.
-Excluded true negative non-CAZyme predictions.
-
-figure \@ref(fig:familSummaryFbetaScore)
+Figure \@ref(fig:familSummaryFbetaScore) shows the performance of each prediction tool for each CAZy family included in the test sets and/or predicted to be present in the test sets. Each point in the plots is the result for one CAZy family. Results were not evaluated per test set, the performance for each CAZy family was evaluated across all test sets.
 
 ```{r familSummaryFbetaScore, echo=FALSE, fig.cap="Proportional area plot shaded to represent the distribution of Fbeta-score for each CAZy family for each test set parsed by CAZyme prediction tools."}
 # retrieve the Fbeta scores
@@ -1119,6 +1180,7 @@ p.famF1 = ggally_count(cazy_fam_fbeta_df, mapping=ggplot2::aes(x=Prediction_tool
 p.famF1
 # dev.off()
 ```
+..discuss the figure...
 
 ## Prediction of Each CAZy Family
 
@@ -1165,42 +1227,39 @@ gh_cazy_fam_spec_recall_df$Recall_percentage <- gh_cazy_fam_spec_recall_df$Recal
 
 gh_cazy_fam_spec_recall_df  <- gh_cazy_fam_spec_recall_df[complete.cases(gh_cazy_fam_spec_recall_df), ]
 
-# standard version
+# A contours for shading the density of the scatter plots cannot be produced if there are several points with the same value on the same axis. Therefore, the data used to create the scatter plot is copied and noise is added to it by corrupting the original data, and using the 'noisy data' to plot the contour and the original data to plot the scatter plot
+
+recall.results <- gh_cazy_fam_spec_recall_df$Recall
+noisy.recall = c()
+for(i in recall.results){
+  i <- i - (runif(1, min=-0.00001, max=0.001))
+  noisy.recall <- append(noisy.recall, i)
+}
+gh_cazy_fam_spec_recall_df$Recall_Noise <- noisy.recall
+
+spec.results <- gh_cazy_fam_spec_recall_df$Specificity
+noisy.spec = c()
+for(i in spec.results){
+  i <- i - (runif(1, min=-0.00002, max=0.00001))
+  noisy.spec <- append(noisy.spec, i)
+}
+gh_cazy_fam_spec_recall_df$Specifcity_Noise <- noisy.spec
+
 # pdf(file = "mlcGHfamsSpecSens.pdf", width = 11.25, height = 7)
-p.gh.fam = ggplot(gh_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool)) +
-  # geom_density2d_filled() +
-  geom_point() +
+p.gh.fam = ggplot(gh_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity)) +
+  geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10, aes(x=Recall_Noise, y=Specifcity_Noise)) +
+  geom_point(size=1.1, aes(x=Recall, y=Specificity)) +
   scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
+  theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
         axis.title=element_text(size=11,face="bold"),
         strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
-  # geom_text(data = filter(gh_cazy_fam_spec_recall_df, Recall<0.5), aes(label = CAZy_family), vjust = -0.01) +
+  labs(x = "Sensitivity", y = "Specificity", fill="Density") +
   geom_boxplot(aes(x=Recall, y=0.996), alpha=0.5, width=0.0005, outlier.shape = NA) +
+  scale_y_continuous(breaks = seq(0.995,1, by = 0.001), limits=c(0.995,1)) +
   facet_wrap(~ Prediction_tool)
 p.gh.fam
 # dev.off()
-
-# interactive version
-p.gh.fam.interactive = ggplot(gh_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool,
-                                                  text = paste(
-                                                  "CAZy family: ", CAZy_family, "\n",
-                                                  "Specificity: ", Specificity, "\n",
-                                                  "Sensitivity: ", Recall, "\n",
-                                                  sep = ""
-                                                  ))) +
-  geom_point() +
-  scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=11,face="bold"),
-        strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
-  facet_wrap(~ Prediction_tool)
-ggplotly(p.gh.fam.interactive, tooltip = "text")
 ```
 
 ```{r gh.fam.distribution, include=FALSE}
@@ -1306,7 +1365,7 @@ poor.gh.fam.melt$Prediction_tool <- factor(poor.gh.fam.melt$Prediction_tool, lev
 
 #####
 # these figures are created and then merged together mannually in another programme for inclusion in publications and the thesis
-# tiff(file = "ghPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 12.192, res=600)
+tiff(file = "ghPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 12.192, res=600)
 p.gh.poor.fam.fbeta_only <- ggplot(poor.gh.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
   geom_tile() +
   scale_fill_viridis_c() +
@@ -1326,7 +1385,7 @@ p.gh.poor.fam.fbeta_only <- ggplot(poor.gh.fam.melt %>% group_by(Prediction_tool
 # p.gh.poor.fam.fbeta_only
 # dev.off()
 
-# tiff(file = "ghPoorFamsPops.tiff", units="cm", width = 15.5, height = 9.95, res=600)
+tiff(file = "ghPoorFamsPops.tiff", units="cm", width = 15.5, height = 9.95, res=600)
 p.gh.poor.fam.pops <- ggplot(gh_fam_freq_df, aes(x="", y=CAZy_family)) +
   geom_text(aes(label=gh_family_pops, x="Family Population")) +
   geom_text(aes(label=gh_fam_testset_pops, x="Sample Size")) +
@@ -1361,7 +1420,8 @@ p.gh.poor.fam <- ggplot(poor.gh.fam.melt %>% group_by(Prediction_tool), aes(x=Pr
   labs(fill = expression(paste("F", beta, "-score"))) +
   coord_cartesian(clip="off") +
   geom_text(aes(label=gh_family_pops, x="Family Population")) +
-  geom_text(aes(label=gh_fam_testset_pops, x="Sample Size"))
+  geom_text(aes(label=gh_fam_testset_pops, x="Sample Size")) + 
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
 p.gh.poor.fam
 ```
 
@@ -1415,41 +1475,39 @@ gt_cazy_fam_spec_recall_df$Prediction_tool <- factor(gt_cazy_fam_spec_recall_df$
 gt_cazy_fam_spec_recall_df$Specificity_percentage <- gt_cazy_fam_spec_recall_df$Specificity * 100
 gt_cazy_fam_spec_recall_df$Recall_percentage <- gt_cazy_fam_spec_recall_df$Recall * 100
 
+# A contours for shading the density of the scatter plots cannot be produced if there are several points with the same value on the same axis. Therefore, the data used to create the scatter plot is copied and noise is added to it by corrupting the original data, and using the 'noisy data' to plot the contour and the original data to plot the scatter plot
 
-# standard version
+recall.results <- gt_cazy_fam_spec_recall_df$Recall
+noisy.recall = c()
+for(i in recall.results){
+  i <- i - (runif(1, min=-0.00001, max=0.001))
+  noisy.recall <- append(noisy.recall, i)
+}
+gt_cazy_fam_spec_recall_df$Recall_Noise <- noisy.recall
+
+spec.results <- gt_cazy_fam_spec_recall_df$Specificity
+noisy.spec = c()
+for(i in spec.results){
+  i <- i - (runif(1, min=-0.00002, max=0.00001))
+  noisy.spec <- append(noisy.spec, i)
+}
+gt_cazy_fam_spec_recall_df$Specifcity_Noise <- noisy.spec
+
 # pdf(file = "mlcGTfamsSpecSens.pdf", width = 11.25, height = 7)
-p.gt.fam = ggplot(gt_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool)) +
-  geom_point() +
+p.gt.fam = ggplot(gt_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity)) +
+  geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10, aes(x=Recall_Noise, y=Specifcity_Noise)) +
+  geom_point(size=1.1, aes(x=Recall, y=Specificity)) +
   scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
+  theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
         axis.title=element_text(size=11,face="bold"),
         strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
+  labs(x = "Sensitivity", y = "Specificity", fill="Density") +
   geom_boxplot(aes(x=Recall, y=0.99875), alpha=0.5, width=0.0001, outlier.shape = NA) +
+  scale_y_continuous(breaks = seq(0.9985,1, by = 0.0005), limits=c(0.9985,1)) +
   facet_wrap(~ Prediction_tool)
-# p.gt.fam
+p.gt.fam
 # dev.off()
-
-# interactive version
-p.gt.fam.interactive = ggplot(gt_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool,
-                                                  text = paste(
-                                                  "CAZy family: ", CAZy_family, "\n",
-                                                  "Specificity: ", Specificity, "\n",
-                                                  "Sensitivity: ", Recall, "\n",
-                                                  sep = ""
-                                                  ))) +
-  geom_point() +
-  scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=11,face="bold"),
-        strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
-  facet_wrap(~ Prediction_tool)
-ggplotly(p.gt.fam.interactive, tooltip = "text")
 ```
 
 ```{r gt.fam.distribution, include=FALSE}
@@ -1558,7 +1616,7 @@ poor.gt.fam.melt$Prediction_tool <- factor(poor.gt.fam.melt$Prediction_tool, lev
 
 #####
 # these figures are created and then merged together mannually in another programme for inclusion in publications and the thesis
-# tiff(file = "gtPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 12.192, res=600)
+# tiff(file = "gtPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 15, res=600)
 p.gt.poor.fam.fbeta_only <- ggplot(poor.gt.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
   geom_tile() +
   scale_fill_viridis_c() +
@@ -1578,7 +1636,7 @@ p.gt.poor.fam.fbeta_only <- ggplot(poor.gt.fam.melt %>% group_by(Prediction_tool
 # p.gt.poor.fam.fbeta_only
 # dev.off()
 
-# tiff(file = "gtPoorFamsPops.tiff", units="cm", width = 15.5, height = 9.95, res=600)
+# tiff(file = "gtPoorFamsPops.tiff", units="cm", width = 15.5, height = 12, res=600)
 p.gt.poor.fam.pops <- ggplot(gt_fam_freq_df, aes(x="", y=CAZy_family)) +
   geom_text(aes(label=gt_family_pops, x="Family Population")) +
   geom_text(aes(label=gt_fam_testset_pops, x="Sample Size")) +
@@ -1613,7 +1671,8 @@ p.gt.poor.fam <- ggplot(poor.gt.fam.melt %>% group_by(Prediction_tool), aes(x=Pr
   labs(fill = expression(paste("F", beta, "-score"))) +
   coord_cartesian(clip="off") +
   geom_text(aes(label=gt_family_pops, x="Family Population")) +
-  geom_text(aes(label=gt_fam_testset_pops, x="Sample Size"))
+  geom_text(aes(label=gt_fam_testset_pops, x="Sample Size")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
 p.gt.poor.fam
 ```
 
@@ -1627,6 +1686,26 @@ group_by(CAZy_family)%>%
 tally(value < 0.75)
 
 length(unique(gt_cazy_fam_spec_recall_df$CAZy_family))  # total number of families included in the evaluation
+```
+
+#### Sequence divergency of GT29 and 31
+
+```{r gt29, echo=FALSE}
+# gt29_alignment_output <- read.csv("gt29_alignment_output.csv")
+# identity vs bitscore
+# p_gt29_alignment_heatmap = ggplot(gt29_alignment_output, aes(x=identity, y=bitscore)) +
+  # geom_bin2d() +
+  # scale_fill_viridis()
+# p_gt29_alignment_heatmap
+```
+
+```{r gt31, echo=FALSE}
+# gt31_alignment_output <- read.csv("gt31_alignment_output.csv")
+# identity vs bitscore
+# p_gt31_alignment_heatmap = ggplot(gt31_alignment_output, aes(x=identity, y=bitscore)) +
+  # geom_bin2d() +
+  # scale_fill_viridis()
+# p_gt31_alignment_heatmap
 ```
 
 
@@ -1663,40 +1742,40 @@ pl_cazy_fam_spec_recall_df$Prediction_tool <- factor(pl_cazy_fam_spec_recall_df$
 pl_cazy_fam_spec_recall_df$Specificity_percentage <- pl_cazy_fam_spec_recall_df$Specificity * 100
 pl_cazy_fam_spec_recall_df$Recall_percentage <- pl_cazy_fam_spec_recall_df$Recall * 100
 
-# standard version
+# A contours for shading the density of the scatter plots cannot be produced if there are several points with the same value on the same axis. Therefore, the data used to create the scatter plot is copied and noise is added to it by corrupting the original data, and using the 'noisy data' to plot the contour and the original data to plot the scatter plot
+
+recall.results <- pl_cazy_fam_spec_recall_df$Recall
+noisy.recall = c()
+for(i in recall.results){
+  i <- i - (runif(1, min=-0.00001, max=0.001))
+  noisy.recall <- append(noisy.recall, i)
+}
+pl_cazy_fam_spec_recall_df$Recall_Noise <- noisy.recall
+
+spec.results <- pl_cazy_fam_spec_recall_df$Specificity
+noisy.spec = c()
+for(i in spec.results){
+  i <- i - (runif(1, min=-0.000002, max=0.0000045))
+  noisy.spec <- append(noisy.spec, i)
+}
+pl_cazy_fam_spec_recall_df$Specifcity_Noise <- noisy.spec
+
 # pdf(file = "mlcPLfamsSpecSens.pdf", width = 11.25, height = 7)
-p.pl.fam = ggplot(pl_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool)) +
-  geom_point() +
+p.pl.fam = ggplot(pl_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity)) +
+  geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10, aes(x=Recall_Noise, y=Specifcity_Noise)) +
+  geom_point(size=1.1, aes(x=Recall, y=Specificity)) +
   scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
+  theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
         axis.title=element_text(size=11,face="bold"),
         strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
+  labs(x = "Sensitivity", y = "Specificity", fill="Density") +
   geom_boxplot(aes(x=Recall, y=0.99975), alpha=0.5, width=0.000025, outlier.shape = NA) +
+  scale_y_continuous(limits=c(0.99971,1)) +
   facet_wrap(~ Prediction_tool)
-# p.pl.fam
+p.pl.fam
 # dev.off()
 
-# interactive version
-p.pl.fam.interactive = ggplot(pl_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool,
-                                                  text = paste(
-                                                  "CAZy family: ", CAZy_family, "\n",
-                                                  "Specificity: ", Specificity, "\n",
-                                                  "Sensitivity: ", Recall, "\n",
-                                                  sep = ""
-                                                  ))) +
-  geom_point() +
-  scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=11,face="bold"),
-        strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
-  facet_wrap(~ Prediction_tool)
-ggplotly(p.pl.fam.interactive, tooltip = "text")
 ```
 
 ```{r pl.fam.distribution, include=FALSE}
@@ -1803,7 +1882,7 @@ poor.pl.fam.melt$Prediction_tool <- factor(poor.pl.fam.melt$Prediction_tool, lev
 
 #####
 # these figures are created and then merged together mannually in another programme for inclusion in publications and the thesis
-# tiff(file = "plPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 12.192, res=600)
+# tiff(file = "plPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 9.5, res=600)
 p.pl.poor.fam.fbeta_only <- ggplot(poor.pl.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
   geom_tile() +
   scale_fill_viridis_c() +
@@ -1823,7 +1902,7 @@ p.pl.poor.fam.fbeta_only <- ggplot(poor.pl.fam.melt %>% group_by(Prediction_tool
 # p.pl.poor.fam.fbeta_only
 # dev.off()
 
-# tiff(file = "plPoorFamsPops.tiff", units="cm", width = 15.5, height = 9.95, res=600)
+# tiff(file = "plPoorFamsPops.tiff", units="cm", width = 15.5, height = 7, res=600)
 p.pl.poor.fam.pops <- ggplot(pl_fam_freq_df, aes(x="", y=CAZy_family)) +
   geom_text(aes(label=pl_family_pops, x="Family Population")) +
   geom_text(aes(label=pl_fam_testset_pops, x="Sample Size")) +
@@ -1858,7 +1937,8 @@ p.pl.poor.fam <- ggplot(poor.pl.fam.melt %>% group_by(Prediction_tool), aes(x=Pr
   labs(fill = expression(paste("F", beta, "-score"))) +
   coord_cartesian(clip="off") +
   geom_text(aes(label=pl_family_pops, x="Family Population")) +
-  geom_text(aes(label=pl_fam_testset_pops, x="Sample Size"))
+  geom_text(aes(label=pl_fam_testset_pops, x="Sample Size")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
 p.pl.poor.fam
 ```
 
@@ -1910,40 +1990,39 @@ ce_cazy_fam_spec_recall_df$Prediction_tool <- factor(ce_cazy_fam_spec_recall_df$
 ce_cazy_fam_spec_recall_df$Specificity_percentage <- ce_cazy_fam_spec_recall_df$Specificity * 100
 ce_cazy_fam_spec_recall_df$Recall_percentage <- ce_cazy_fam_spec_recall_df$Recall * 100
 
-# standard version
-# pdf(file = "mlcCEfamsSpecSens.pdf", width = 11.25, height = 7)
-p.ce.fam = ggplot(ce_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool)) +
-  geom_point() +
-  scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=11,face="bold"),
-        strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
-  geom_boxplot(aes(x=Recall, y=0.998625), alpha=0.5, width=0.0001, outlier.shape = NA) +
-  facet_wrap(~ Prediction_tool)
-# p.ce.fam
-# dev.off()
+# A contours for shading the density of the scatter plots cannot be produced if there are several points with the same value on the same axis. Therefore, the data used to create the scatter plot is copied and noise is added to it by corrupting the original data, and using the 'noisy data' to plot the contour and the original data to plot the scatter plot
 
-# interactive version
-p.ce.fam.interactive = ggplot(ce_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool,
-                                                  text = paste(
-                                                  "CAZy family: ", CAZy_family, "\n",
-                                                  "Specificity: ", Specificity, "\n",
-                                                  "Sensitivity: ", Recall, "\n",
-                                                  sep = ""
-                                                  ))) +
-  geom_point() +
+recall.results <- ce_cazy_fam_spec_recall_df$Recall
+noisy.recall = c()
+for(i in recall.results){
+  i <- i - (runif(1, min=-0.00001, max=0.0001))
+  noisy.recall <- append(noisy.recall, i)
+}
+ce_cazy_fam_spec_recall_df$Recall_Noise <- noisy.recall
+
+spec.results <- ce_cazy_fam_spec_recall_df$Specificity
+noisy.spec = c()
+for(i in spec.results){
+  i <- i - (runif(1, min=-0.0000001, max=0.0000001))
+  noisy.spec <- append(noisy.spec, i)
+}
+ce_cazy_fam_spec_recall_df$Specifcity_Noise <- noisy.spec
+
+# pdf(file = "mlcCEfamsSpecSens.pdf", width = 11.25, height = 7)
+p.ce.fam = ggplot(ce_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity)) +
+  geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10, aes(x=Recall_Noise, y=Specifcity_Noise)) +
+  geom_point(size=1.1, aes(x=Recall, y=Specificity)) +
   scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
+  theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
         axis.title=element_text(size=11,face="bold"),
         strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
+  labs(x = "Sensitivity", y = "Specificity", fill="Density") +
+  geom_boxplot(aes(x=Recall, y=0.998625), alpha=0.5, width=0.0001, outlier.shape = NA) +
+  scale_y_continuous(limits=c(0.9985,1)) +
   facet_wrap(~ Prediction_tool)
-ggplotly(p.ce.fam.interactive, tooltip = "text")
+p.ce.fam
+# dev.off()
 ```
 
 ```{r ce.fam.distribution, include=FALSE}
@@ -2050,7 +2129,7 @@ poor.ce.fam.melt$Prediction_tool <- factor(poor.ce.fam.melt$Prediction_tool, lev
 
 #####
 # these figures are created and then merged together mannually in another programme for inclusion in publications and the thesis
-# tiff(file = "cePoorFamsFbeta.tiff", units="cm", width = 15.5, height = 12.192, res=600)
+# tiff(file = "cePoorFamsFbeta.tiff", units="cm", width = 15.5, height = 6.5, res=600)
 p.ce.poor.fam.fbeta_only <- ggplot(poor.ce.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
   geom_tile() +
   scale_fill_viridis_c() +
@@ -2067,13 +2146,13 @@ p.ce.poor.fam.fbeta_only <- ggplot(poor.ce.fam.melt %>% group_by(Prediction_tool
         axis.title=element_text(size=12,face="bold")) +
   labs(fill = expression(paste("F", beta, "-score"))) +
   scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
-# p.gt.poor.fam.fbeta_only
+# p.ce.poor.fam.fbeta_only
 # dev.off()
 
-# tiff(file = "cePoorFamsPops.tiff", units="cm", width = 15.5, height = 9.95, res=600)
-p.ce.poor.fam.pops <- ggplot(pl_fam_freq_df, aes(x="", y=CAZy_family)) +
-  geom_text(aes(label=gt_family_pops, x="Family Population")) +
-  geom_text(aes(label=gt_fam_testset_pops, x="Sample Size")) +
+# tiff(file = "cePoorFamsPops.tiff", units="cm", width = 15.5, height = 4.5, res=600)
+p.ce.poor.fam.pops <- ggplot(ce_fam_freq_df, aes(x="", y=CAZy_family)) +
+  geom_text(aes(label=ce_family_pops, x="Family Population")) +
+  geom_text(aes(label=ce_fam_testset_pops, x="Sample Size")) +
   ylab("CAZy family") +
   theme(legend.background = element_rect(fill = figbg, color = figbg),
       plot.background = element_rect(fill = figbg, color = figbg),
@@ -2105,7 +2184,8 @@ p.ce.poor.fam <- ggplot(poor.ce.fam.melt %>% group_by(Prediction_tool), aes(x=Pr
   labs(fill = expression(paste("F", beta, "-score"))) +
   coord_cartesian(clip="off") +
   geom_text(aes(label=ce_family_pops, x="Family Population")) +
-  geom_text(aes(label=ce_fam_testset_pops, x="Sample Size"))
+  geom_text(aes(label=ce_fam_testset_pops, x="Sample Size")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
 p.ce.poor.fam
 ```
 
@@ -2158,40 +2238,40 @@ aa_cazy_fam_spec_recall_df$Prediction_tool <- factor(aa_cazy_fam_spec_recall_df$
 aa_cazy_fam_spec_recall_df$Specificity_percentage <- aa_cazy_fam_spec_recall_df$Specificity * 100
 aa_cazy_fam_spec_recall_df$Recall_percentage <- aa_cazy_fam_spec_recall_df$Recall * 100
 
-# standard version
-# pdf(file = "mlcAAfamsSpecSens.pdf", width = 11.25, height = 7)
-p.aa.fam = ggplot(aa_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool)) +
-  geom_point() +
-  scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=11,face="bold"),
-        strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
-  geom_boxplot(aes(x=Recall, y=0.9990), alpha=0.5, width=0.00015, outlier.shape = NA) +
-  facet_wrap(~ Prediction_tool)
-# p.aa.fam
-# dev.off()
+# A contours for shading the density of the scatter plots cannot be produced if there are several points with the same value on the same axis. Therefore, the data used to create the scatter plot is copied and noise is added to it by corrupting the original data, and using the 'noisy data' to plot the contour and the original data to plot the scatter plot
 
-# interactive version
-p.aa.fam.interactive = ggplot(aa_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool,
-                                                  text = paste(
-                                                  "CAZy family: ", CAZy_family, "\n",
-                                                  "Specificity: ", Specificity, "\n",
-                                                  "Sensitivity: ", Recall, "\n",
-                                                  sep = ""
-                                                  ))) +
-  geom_point() +
+recall.results <- aa_cazy_fam_spec_recall_df$Recall
+noisy.recall = c()
+for(i in recall.results){
+  i <- i - (runif(1, min=-0.00001, max=0.0001))
+  noisy.recall <- append(noisy.recall, i)
+}
+aa_cazy_fam_spec_recall_df$Recall_Noise <- noisy.recall
+
+spec.results <- aa_cazy_fam_spec_recall_df$Specificity
+noisy.spec = c()
+for(i in spec.results){
+  i <- i - (runif(1, min=-0.0000001, max=0.0000001))
+  noisy.spec <- append(noisy.spec, i)
+}
+aa_cazy_fam_spec_recall_df$Specifcity_Noise <- noisy.spec
+
+  # scale_y_continuous(limits=c(0.9985,1)) +
+
+# pdf(file = "mlcAAfamsSpecSens.pdf", width = 11.25, height = 7)
+p.aa.fam = ggplot(aa_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity)) +
+  geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10, aes(x=Recall_Noise, y=Specifcity_Noise)) +
+  geom_point(size=1.1, aes(x=Recall, y=Specificity)) +
   scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
+  theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
         axis.title=element_text(size=11,face="bold"),
         strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
+  labs(x = "Sensitivity", y = "Specificity", fill="Density") +
+  geom_boxplot(aes(x=Recall, y=0.998125), alpha=0.5, width=0.00015, outlier.shape = NA) +
   facet_wrap(~ Prediction_tool)
-ggplotly(p.aa.fam.interactive, tooltip = "text")
+p.aa.fam
+# dev.off()
 ```
 
 ```{r aa.fam.distribution, include=FALSE}
@@ -2297,7 +2377,7 @@ poor.aa.fam.melt$Prediction_tool <- factor(poor.aa.fam.melt$Prediction_tool, lev
 
 #####
 # these figures are created and then merged together mannually in another programme for inclusion in publications and the thesis
-# tiff(file = "aaPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 12.192, res=600)
+# tiff(file = "aaPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 8.75, res=600)
 p.aa.poor.fam.fbeta_only <- ggplot(poor.aa.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
   geom_tile() +
   scale_fill_viridis_c() +
@@ -2317,8 +2397,8 @@ p.aa.poor.fam.fbeta_only <- ggplot(poor.aa.fam.melt %>% group_by(Prediction_tool
 # p.aa.poor.fam.fbeta_only
 # dev.off()
 
-# tiff(file = "aaPoorFamsPops.tiff", units="cm", width = 15.5, height = 9.95, res=600)
-p.aa.poor.fam.pops <- ggplot(aa_fam_freq_df, aes(x="", y=CAZy_family)) +
+# tiff(file = "aaPoorFamsPops.tiff", units="cm", width = 15.5, height = 7, res=600)
+aa.poor.fam.pops <- ggplot(aa_fam_freq_df, aes(x="", y=CAZy_family)) +
   geom_text(aes(label=aa_family_pops, x="Family Population")) +
   geom_text(aes(label=aa_fam_testset_pops, x="Sample Size")) +
   ylab("CAZy family") +
@@ -2352,7 +2432,8 @@ p.aa.poor.fam <- ggplot(poor.aa.fam.melt %>% group_by(Prediction_tool), aes(x=Pr
   labs(fill = expression(paste("F", beta, "-score"))) +
   coord_cartesian(clip="off") +
   geom_text(aes(label=aa_family_pops, x="Family Population")) +
-  geom_text(aes(label=aa_fam_testset_pops, x="Sample Size"))
+  geom_text(aes(label=aa_fam_testset_pops, x="Sample Size")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
 p.aa.poor.fam
 ```
 
@@ -2407,40 +2488,41 @@ cbm_cazy_fam_spec_recall_df$Prediction_tool <- factor(cbm_cazy_fam_spec_recall_d
 cbm_cazy_fam_spec_recall_df$Specificity_percentage <- cbm_cazy_fam_spec_recall_df$Specificity * 100
 cbm_cazy_fam_spec_recall_df$Recall_percentage <- cbm_cazy_fam_spec_recall_df$Recall * 100
 
-# standard version
+# A contours for shading the density of the scatter plots cannot be produced if there are several points with the same value on the same axis. Therefore, the data used to create the scatter plot is copied and noise is added to it by corrupting the original data, and using the 'noisy data' to plot the contour and the original data to plot the scatter plot
+
+recall.results <- cbm_cazy_fam_spec_recall_df$Recall
+noisy.recall = c()
+for(i in recall.results){
+  i <- i - (runif(1, min=-0.00001, max=0.0001))
+  noisy.recall <- append(noisy.recall, i)
+}
+cbm_cazy_fam_spec_recall_df$Recall_Noise <- noisy.recall
+
+spec.results <- cbm_cazy_fam_spec_recall_df$Specificity
+noisy.spec = c()
+for(i in spec.results){
+  i <- i - (runif(1, min=-0.000001, max=0.000001))
+  noisy.spec <- append(noisy.spec, i)
+}
+cbm_cazy_fam_spec_recall_df$Specifcity_Noise <- noisy.spec
+
+  # scale_y_continuous(limits=c(0.9985,1)) +
+
 # pdf(file = "mlcCBMfamsSpecSens.pdf", width = 11.25, height = 7)
-p.cbm.fam = ggplot(cbm_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool)) +
-  geom_point() +
+p.cbm.fam = ggplot(cbm_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity)) +
+  geom_density_2d_filled(alpha = 0.5, contour_var = "ndensity", bins=10, aes(x=Recall_Noise, y=Specifcity_Noise)) +
+  geom_point(size=1.1, aes(x=Recall, y=Specificity)) +
   scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
+  theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
         axis.title=element_text(size=11,face="bold"),
         strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity") +
+  labs(x = "Sensitivity", y = "Specificity", fill="Density") +
   geom_boxplot(aes(x=Recall, y=0.985), alpha=0.5, width=0.0015, outlier.shape = NA) +
   facet_wrap(~ Prediction_tool)
 p.cbm.fam
 # dev.off()
 
-# interactive version
-p.cbm.fam.interactive = ggplot(cbm_cazy_fam_spec_recall_df, aes(x=Recall, y=Specificity, color=Prediction_tool,
-                                                  text = paste(
-                                                  "CAZy family: ", CAZy_family, "\n",
-                                                  "Specificity: ", Specificity, "\n",
-                                                  "Sensitivity: ", Recall, "\n",
-                                                  sep = ""
-                                                  ))) +
-  geom_point() +
-  scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=11,face="bold"),
-        strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity") +
-  facet_wrap(~ Prediction_tool)
-ggplotly(p.cbm.fam.interactive, tooltip = "text")
 ```
 
 ```{r cbm.fam.distribution, include=FALSE}
@@ -2549,7 +2631,7 @@ poor.cbm.fam.melt$Prediction_tool <- factor(poor.cbm.fam.melt$Prediction_tool, l
 
 #####
 # these figures are created and then merged together mannually in another programme for inclusion in publications and the thesis
-# tiff(file = "cbmPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 12.192, res=600)
+# tiff(file = "cbmPoorFamsFbeta.tiff", units="cm", width = 15.5, height = 24, res=600)
 p.cbm.poor.fam.fbeta_only <- ggplot(poor.cbm.fam.melt %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=value)) +
   geom_tile() +
   scale_fill_viridis_c() +
@@ -2569,7 +2651,7 @@ p.cbm.poor.fam.fbeta_only <- ggplot(poor.cbm.fam.melt %>% group_by(Prediction_to
 # p.cbm.poor.fam.fbeta_only
 # dev.off()
 
-# tiff(file = "cbmPoorFamsPops.tiff", units="cm", width = 15.5, height = 9.95, res=600)
+# tiff(file = "cbmPoorFamsPops.tiff", units="cm", width = 15.5, height = 20, res=600)
 p.cbm.poor.fam.pops <- ggplot(cbm_fam_freq_df, aes(x="", y=CAZy_family)) +
   geom_text(aes(label=cbm_family_pops, x="Family Population")) +
   geom_text(aes(label=cbm_fam_testset_pops, x="Sample Size")) +
@@ -2604,7 +2686,8 @@ p.cbm.poor.fam <- ggplot(poor.cbm.fam.melt %>% group_by(Prediction_tool), aes(x=
   labs(fill = expression(paste("F", beta, "-score"))) +
   coord_cartesian(clip="off") +
   geom_text(aes(label=cbm_family_pops, x="Family Population")) +
-  geom_text(aes(label=cbm_fam_testset_pops, x="Sample Size"))
+  geom_text(aes(label=cbm_fam_testset_pops, x="Sample Size")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))
 p.cbm.poor.fam
 ```
 
