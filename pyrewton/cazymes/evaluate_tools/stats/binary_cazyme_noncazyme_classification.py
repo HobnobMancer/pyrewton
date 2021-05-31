@@ -229,8 +229,9 @@ def bootstrap_binary_c_nc_classifications(all_binary_dfs, time_stamp, args):
         bootstrap_results,
         columns=['Genomic_accession', 'Prediction_tool', 'Bootstrap_number', 'accuracy'],
     )
-    bootstrap_results.to_csv(f'bootstrap_accuracy_evaluation_{time_stamp}.csv')
-    # USED FOR EVALUATION IN R
+
+    output_path = args.output / f'bootstrap_accuracy_evaluation_{time_stamp}.csv'
+    bootstrap_results.to_csv(output_path) # USED FOR EVALUATION IN R
 
     return
 
