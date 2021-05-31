@@ -339,7 +339,7 @@ def get_fam_freq(args, cazy_dict, timestamp):
     # get the paths to all test sets
     all_test_sets = get_test_set_paths(args)
 
-    logger.warning(f"Found {len(all_test_sets)} test sets in {args.fam_freq}")
+    logger.warning(f"Found {len(all_test_sets)} test sets in {args.input}")
 
     # build a dictionary to add frequency data to, key by CAZy fam, value by frequency
     freq_dict = family_classifications.foundation_dict()
