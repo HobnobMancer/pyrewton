@@ -339,14 +339,18 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
             "Accuracy",
         ],
     )
-    stats_df.to_csv(f"cazy_fam_stats_fam_per_row_{time_stamp}.csv")
+
+    output_path = args.output / f"cazy_fam_stats_fam_per_row_{time_stamp}.csv"
+    stats_df.to_csv(output_path)
 
     # build long form dataframe
     longform_df = pd.DataFrame(
         long_dataframe_data,
         columns=["CAZy_family", "Stat_parameter", "Prediction_tool", "Stat_value"],
     )
-    longform_df.to_csv(f"cazy_fam_long_form_stats_df_{time_stamp}.csv")
+
+    output_path = args.output / f"cazy_fam_long_form_stats_df_{time_stamp}.csv"
+    longform_df.to_csv(output_path)
 
     return
 
