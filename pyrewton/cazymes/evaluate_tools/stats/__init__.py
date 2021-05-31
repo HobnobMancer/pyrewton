@@ -61,10 +61,10 @@ class ClassificationDF:
         self.df_path = df_path  # path to csv file
 
     def __str__(self):
-        return f"<CAZyme/non-CAZyme classification df for test set {self.genome_id}>"
+        return f"<CAZyme/non-CAZyme classification df for test set {self.genome_accession}>"
 
     def __repr__(self):
-        return f"<CAZyme/non-CAZyme classification df for test set {self.genome_id}>"
+        return f"<CAZyme/non-CAZyme classification df for test set {self.genome_accession}>"
 
 
 def evaluate_performance(predictions, cazy_dict, args):
