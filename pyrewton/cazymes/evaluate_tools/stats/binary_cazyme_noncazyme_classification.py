@@ -16,11 +16,13 @@
 # UK
 #
 # The MIT License
+"""This script is for evaluating the binary CAZyme/non-CAZyme prediction performances"""
 
-
+import logging
 import random
 
 import pandas as pd
+import numpy as np
 
 from tqdm import tqdm
 
@@ -306,7 +308,10 @@ def get_f_pos_f_neg_predictions(all_binary_c_nc_dfs, time_stamp, args):
         classification_df = classification_df_instance.df
 
         row_index = 0
-        for row_index in range(len(classification_df["CAZy"])):
+        for row_index in tqdm(
+            range(len(classification_df["CAZy"])),
+            desc="Identifying FP and FN binary predictions",
+        ):
             row = classification_df.iloc[row_index]
 
             if row["CAZy"] == 0:  # non-CAZyme (according to CAZy)
@@ -324,7 +329,12 @@ def get_f_pos_f_neg_predictions(all_binary_c_nc_dfs, time_stamp, args):
                     false_positives_df_data["Number_of_tools"].append(row["Number_of_tools"])
 
                     # retrieve the highest blast score ratio between the protein an a known CAZyme
-                    false_positives_df_data["Blast_score_ratio"].append(get_blast_score_ratio())
+                    false_positives_df_data["Blast_score_ratio"].append(
+                        get_blast_score_ratio(
+                            classification_df_instance,
+                            row["Protein_accession"],
+                        ),
+                    )
 
             else:  # CAZyme (according to CAZy)
                 tool_total = row["dbCAN"] + row["HMMER"] + row["DIAMOND"] + row["Hotpep"] + row["CUPP"] + row["eCAMI"]
@@ -341,7 +351,12 @@ def get_f_pos_f_neg_predictions(all_binary_c_nc_dfs, time_stamp, args):
                     false_negatives_df_data["Number_of_tools"].append(row["Number_of_tools"])
 
                     # retrieve the highest blast score ratio between the protein an a known CAZyme
-                    false_negatives_df_data["Blast_score_ratio"].append(get_blast_score_ratio())
+                    false_negatives_df_data["Blast_score_ratio"].append(
+                        get_blast_score_ratio(
+                            classification_df_instance,
+                            row["Protein_accession"],
+                        ),
+                    )
     
     false_positives_df = pd.DataFrame(df_data)
     false_negatives_df = pd.DataFrame(df_data)
@@ -356,4 +371,36 @@ def get_f_pos_f_neg_predictions(all_binary_c_nc_dfs, time_stamp, args):
     return
 
 
-def get_blast_score_ratio()
+def get_blast_score_ratio(classification_df_instance, protein_accession):
+    """Retrieve the highest BLAST score ratio between the given protein and a known CAZyme.
+
+    :param classification_df_instance: ClassificationDF instance.
+    :param protein_accession: str, GenBank protein accession
+
+    Return the BLAST score ratio (str).
+    """
+    logger = logging.getLogger(__name__)
+
+    # compile the path to the alignment scores created when making the test set
+    alignment_score_file = classification_df_instance.df_path
+    alignment_score_file = alignment_score_file.replace("_test_set.fasta", "_alignment_scores.csv")
+
+    try:
+        # load in the data
+        alignment_score_df = pd.read_csv(alignment_score_file)
+
+    except FileNotFoundError:
+        logger.error(
+            f"Could not find alignment score file for\n{classification_df_instance.df_path}\n"
+            "Adding BLAST score ratio to False Positive/Negative dataframe as null/nan"
+        )
+        return np.nan
+
+    # retrieve all rows containing data for the given protein
+    alignment_score_df[alignment_score_df["query (non-CAZyme)"] == protein_accession]
+
+    alignment_score_df= alignment_score_df.sort_values(by = "blast_score_ratio")
+    highest_score = alignment_score_df.iloc[0]
+    highest_score = highest_score["blast_score_ratio"]
+
+    return highest_score
