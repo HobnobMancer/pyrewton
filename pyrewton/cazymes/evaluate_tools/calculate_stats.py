@@ -40,7 +40,6 @@ summarising statistical analsis of prediction accuracy.
 
 import logging
 import json
-import os
 import re
 import sys
 
@@ -111,6 +110,9 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # perform stats evaluations
     stats.evaluate_performance(predictions, cazy_dict, args)
+
+    time_stamp = datetime.now().strftime("%Y_%m_%d")
+    stats.get_fam_freq(args, cazy_dict, time_stamp)  # USED IN R EVALUATION
 
 
 def get_cazy_dict(cazy_path):
