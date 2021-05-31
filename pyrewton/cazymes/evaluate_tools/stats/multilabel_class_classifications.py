@@ -301,7 +301,9 @@ def calculate_class_stats(
             "Accuracy",
         ],
     )
-    class_stats_df.to_csv(f"class_stats_across_all_test_sets_{time_stamp}.csv")
+
+    output_path = args.output / f"class_stats_across_all_test_sets_{time_stamp}.csv"
+    class_stats_df.to_csv(output_path)
 
     return
 
