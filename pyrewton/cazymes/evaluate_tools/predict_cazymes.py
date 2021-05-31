@@ -27,7 +27,6 @@ summarising statistical analsis of prediction accuracy.
 """
 
 import logging
-import json
 import os
 import re
 import sys
