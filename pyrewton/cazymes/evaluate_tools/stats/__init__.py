@@ -25,12 +25,14 @@
 
 """
 
+import json
 import logging
 import sys
 
 import pandas as pd
 
 from datetime import datetime
+from pathlib import Path
 
 from tqdm import tqdm
 
@@ -334,7 +336,7 @@ def get_fam_freq(args, cazy_dict, timestamp):
     logger.warning(f"Found {len(all_test_sets)} test sets in {args.fam_freq}")
 
     # build a dictionary to add frequency data to, key by CAZy fam, value by frequency
-    freq_dict = foundation_dict()
+    freq_dict = family_classifications.foundation_dict()
 
     for testset in tqdm(all_test_sets, desc="Retrieving CAZy family freqs"):
         freq_dict = add_fam_freq(testset, freq_dict, cazy_dict)
