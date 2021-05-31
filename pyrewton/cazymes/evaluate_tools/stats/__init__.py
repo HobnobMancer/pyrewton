@@ -55,10 +55,11 @@ from pyrewton.cazymes.evaluate_tools.stats import (
 class ClassificationDF:
     """Represents a CAZyme/non-CAZyme annotation/classification df for a test set"""
 
-    def __init__(self, genome_accession, df, df_path):
+    def __init__(self, genome_accession, df, df_path, testset_path):
         self.genome_accession = genome_accession
         self.df = df
         self.df_path = df_path  # path to csv file
+        self.testset_path = testset_path  # path to test set FASTA file
 
     def __str__(self):
         return f"<CAZyme/non-CAZyme classification df for test set {self.genome_accession}>"
@@ -96,6 +97,12 @@ def evaluate_performance(predictions, cazy_dict, args):
 
     # bootstrap resample binary CAZyme/non-CAZyme classifications, to evaluate performance range
     binary_classification.bootstrap_binary_c_nc_classifications(
+        all_binary_c_nc_dfs,
+        time_stamp,
+        args,
+    )
+
+    binary_classification.get_f_pos_f_neg_predictions(
         all_binary_c_nc_dfs,
         time_stamp,
         args,
@@ -273,6 +280,7 @@ def build_prediction_dataframes(predictions, time_stamp, cazy_dict, args):
             genome_accession=test_set.source,
             df=classifications_df,
             df_path=output_path,
+            testset_path=test_set.fasta,
         ))
         # all_binary_c_nc_dfs used for bootstrapping accuracy of binary predictions
 
