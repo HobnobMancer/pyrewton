@@ -270,3 +270,90 @@ def bootstrap_acc(df, n):
         bootstraps.append(calc_acc(sample[:, 1], sample[:, 0]))
 
     return bootstraps
+
+
+def get_f_pos_f_neg_predictions(all_binary_c_nc_dfs, time_stamp, args):
+    """Identify all false positive and false negative CAZyme and non-CAZyme predictions.
+
+    Builds one dataframe of false positive CAZyme predictions, and another of false negative
+    non-CAZyme predictions. Both dataframes also include the number of tools that produced the
+    false positive/negative prediction.
+
+    :param all_binary_c_nc_dfs: list of ClassificationDF class instances
+    :param time_stamp: str, date/time script was enabled
+    :param args: cmd-line args
+
+    Return nothing.
+    """
+
+    df_data = {
+        "Protein_accession":[],
+        "dbCAN":[],
+        "HMMER":[],
+        "Hotpep":[],
+        "DIAMOND":[],
+        "CUPP":[],
+        "eCAMI":[],
+        "CAZy":[],
+        "Number_of_tools": [],
+        "Blast_score_ratio": [],
+    }
+
+    false_positives_df_data = df_data
+    false_negatives_df_data = df_data
+
+    for classification_df_instance in all_binary_c_nc_dfs:
+        classification_df = classification_df_instance.df
+
+        row_index = 0
+        for row_index in range(len(classification_df["CAZy"])):
+            row = classification_df.iloc[row_index]
+
+            if row["CAZy"] == 0:  # non-CAZyme (according to CAZy)
+                tool_total = row["dbCAN"] + row["HMMER"] + row["DIAMOND"] + row["Hotpep"] + row["CUPP"] + row["eCAMI"]
+
+                if tool_total != 0:  # found at least one false positive prediction
+                    false_positives_df_data["Protein_accession"].append(row["Protein_accession"])
+                    false_positives_df_data["dbCAN"].append(row["dbCAN"])
+                    false_positives_df_data["HMMER"].append(row["HMMER"])
+                    false_positives_df_data["DIAMOND"].append(row["DIAMOND"])
+                    false_positives_df_data["Hotpep"].append(row["Hotpep"])
+                    false_positives_df_data["CUPP"].append(row["CUPP"])
+                    false_positives_df_data["eCAMI"].append(row["eCAMI"])
+                    false_positives_df_data["CAZy"].append(row["CAZy"])
+                    false_positives_df_data["Number_of_tools"].append(row["Number_of_tools"])
+
+                    # retrieve the highest blast score ratio between the protein an a known CAZyme
+                    false_positives_df_data["Blast_score_ratio"].append(get_blast_score_ratio())
+
+            else:  # CAZyme (according to CAZy)
+                tool_total = row["dbCAN"] + row["HMMER"] + row["DIAMOND"] + row["Hotpep"] + row["CUPP"] + row["eCAMI"]
+
+                if tool_total != 6:  # found at least one false negative prediction
+                    false_negatives_df_data["Protein_accession"].append(row["Protein_accession"])
+                    false_negatives_df_data["dbCAN"].append(row["dbCAN"])
+                    false_negatives_df_data["HMMER"].append(row["HMMER"])
+                    false_negatives_df_data["DIAMOND"].append(row["DIAMOND"])
+                    false_negatives_df_data["Hotpep"].append(row["Hotpep"])
+                    false_negatives_df_data["CUPP"].append(row["CUPP"])
+                    false_negatives_df_data["eCAMI"].append(row["eCAMI"])
+                    false_negatives_df_data["CAZy"].append(row["CAZy"])
+                    false_negatives_df_data["Number_of_tools"].append(row["Number_of_tools"])
+
+                    # retrieve the highest blast score ratio between the protein an a known CAZyme
+                    false_negatives_df_data["Blast_score_ratio"].append(get_blast_score_ratio())
+    
+    false_positives_df = pd.DataFrame(df_data)
+    false_negatives_df = pd.DataFrame(df_data)
+
+    # write out the dataframes
+    output_path = args.output / f"binary_false_positive_predictions_{time_stamp}.csv"
+    false_positives_df.to_csv(output_path)
+
+    output_path = args.output / f"binary_false_negative_predictions_{time_stamp}.csv"
+    false_negatives_df.to_csv(output_path)
+
+    return
+
+
+def get_blast_score_ratio()
