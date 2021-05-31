@@ -42,7 +42,7 @@ def build_parser(argv: Optional[List] = None):
         "input",
         type=Path,
         metavar="input directory",
-        help="Path to directory containing outputs from prediction tools",
+        help="Path to directory containing outputs from prediction tools and test sets fasta files",
     )
     parser.add_argument(
         "cazy",
