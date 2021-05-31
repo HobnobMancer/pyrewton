@@ -114,7 +114,8 @@ def evaluate_performance(predictions, cazy_dict, args):
     class_predictions_df = class_classifications.calculate_class_ari_ri(
         class_ground_truths_df,
         class_predictions_df,
-        time_stamp)
+        time_stamp,
+    )
 
     # write out predicted CAZy class annotations and RI and ARI to disk
     output_path = args.output / f"cazy_class_predictions_{time_stamp}.csv"
