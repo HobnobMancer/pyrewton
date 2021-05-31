@@ -486,6 +486,8 @@ def calculate_class_stats_by_testsets(
             "Statistic_value",
         ],
     )
-    class_stats_df.to_csv(f"class_stats_per_test_set_{time_stamp}.csv")
+
+    output_path = args.output / f"class_stats_per_test_set_{time_stamp}.csv"
+    class_stats_df.to_csv(output_path)
 
     return
