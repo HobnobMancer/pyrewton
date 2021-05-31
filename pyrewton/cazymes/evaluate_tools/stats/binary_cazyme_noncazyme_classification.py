@@ -224,7 +224,7 @@ def bootstrap_binary_c_nc_classifications(all_binary_dfs, time_stamp, args):
             bs_acc = bootstrap_acc(temp_df, args.bs_resampling)
             bs_number = 1
             for result in bs_acc:
-                bootstrap_results.append([df.genome_id, tool, bs_number, result])
+                bootstrap_results.append([df.genome_accession, tool, bs_number, result])
                 bs_number += 1
 
     bootstrap_results = pd.DataFrame(
