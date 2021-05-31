@@ -312,6 +312,10 @@ def get_f_pos_f_neg_predictions(all_binary_c_nc_dfs, time_stamp, args):
             range(len(classification_df["CAZy"])),
             desc="Identifying FP and FN binary predictions",
         ):
+            # protein accessions are the row indexes
+            classification_df.reset_index(inplace=True)
+            classification_df = classification_df.rename(columns = {'index':'Protein_accession'})
+
             row = classification_df.iloc[row_index]
 
             if row["CAZy"] == 0:  # non-CAZyme (according to CAZy)
@@ -326,7 +330,7 @@ def get_f_pos_f_neg_predictions(all_binary_c_nc_dfs, time_stamp, args):
                     false_positives_df_data["CUPP"].append(row["CUPP"])
                     false_positives_df_data["eCAMI"].append(row["eCAMI"])
                     false_positives_df_data["CAZy"].append(row["CAZy"])
-                    false_positives_df_data["Number_of_tools"].append(row["Number_of_tools"])
+                    false_positives_df_data["Number_of_tools"].append(tool_total)
 
                     # retrieve the highest blast score ratio between the protein an a known CAZyme
                     false_positives_df_data["Blast_score_ratio"].append(
@@ -348,7 +352,7 @@ def get_f_pos_f_neg_predictions(all_binary_c_nc_dfs, time_stamp, args):
                     false_negatives_df_data["CUPP"].append(row["CUPP"])
                     false_negatives_df_data["eCAMI"].append(row["eCAMI"])
                     false_negatives_df_data["CAZy"].append(row["CAZy"])
-                    false_negatives_df_data["Number_of_tools"].append(row["Number_of_tools"])
+                    false_negatives_df_data["Number_of_tools"].append(tool_total)
 
                     # retrieve the highest blast score ratio between the protein an a known CAZyme
                     false_negatives_df_data["Blast_score_ratio"].append(
