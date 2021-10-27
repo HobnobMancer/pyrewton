@@ -24,15 +24,10 @@ CAZymes prediction tools. The datasets contain an equal number of CAZymes to non
 
 import logging
 import random
-import re
 import shutil
 
 import pandas as pd
-from pathlib import Path
-from socket import timeout
 from typing import List, Optional
-from urllib.error import HTTPError, URLError
-from urllib.request import urlopen
 
 from Bio import Entrez, SeqIO
 from Bio.Blast.Applications import NcbiblastpCommandline, NcbimakeblastdbCommandline
@@ -40,7 +35,6 @@ from tqdm import tqdm
 
 from pyrewton.genbank import genomes
 from pyrewton.utilities import config_logger
-from pyrewton.utilities.entrez import entrez_retry
 from pyrewton.utilities.file_io import make_output_directory, io_create_eval_testsets
 from pyrewton.utilities.parsers.cmd_parser_get_evaluation_dataset_from_dict import build_parser
 
@@ -96,7 +90,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
             io_create_eval_testsets.prepare_output_dir(temp_alignment_dir)
 
             # download genomic assembly
-            assembly_path = get_genomic_assembly(assembly)
+            assembly_path = genomes.get_genomic_assembly(assembly)
 
             # create a FASTA file containing all proteins sequences in the genomic assembly
             fasta_path = genomes.extract_protein_seqs(assembly_path, assembly, txid)
@@ -130,125 +124,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # delete the temporary alignment dir
     shutil.rmtree(temp_alignment_dir)
-
-
-def get_genomic_assembly(assembly_accession, suffix="genomic.gbff.gz"):
-    """Coordinate downloading Genomic assemmbly from the NCBI Assembly database.
-
-    :param assembly_accession: str, accession of the Genomic assembly to be downloaded
-    :param suffix: str, suffix of file
-
-    Return path to downloaded genomic assembly.
-    """
-    # compile url for download
-    genbank_url, filestem = compile_url(assembly_accession, suffix)
-
-    # create path to write downloaded Genomic assembly to
-    out_file_path = "_".join([filestem.replace(".", "_"), suffix])
-    out_file_path = Path(out_file_path)
-
-    # download GenBank file
-    download_file(genbank_url, out_file_path, assembly_accession, "GenBank file")
-
-    return out_file_path
-
-
-def compile_url(accession_number, suffix, ftpstem="ftp://ftp.ncbi.nlm.nih.gov/genomes/all"):
-    """Retrieve URL for downloading the assembly from NCBI, and create filestem of output file path
-
-    :param accession_number: str, asseccion number of genomic assembly
-
-    Return str, url required for download and filestem for output file path for the downloaded assembly.
-    """
-    # search for the ID of the record
-    with entrez_retry(
-        10, Entrez.esearch, db="Assembly", term="GCA_000021645.1[Assembly Accession]", rettype='uilist',
-    ) as handle:
-        search_record = Entrez.read(handle)
-
-    # retrieve record for genomic assembly
-    with entrez_retry(
-        10,
-        Entrez.esummary,
-        db="assembly",
-        id=search_record['IdList'][0],
-        report="full",
-    ) as handle:
-        record = Entrez.read(handle)
-
-    assembly_name = record["DocumentSummarySet"]["DocumentSummary"][0]["AssemblyName"]
-
-    escape_characters = re.compile(r"[\s/,#\(\)]")
-    escape_name = re.sub(escape_characters, "_", assembly_name)
-
-    # compile filstem
-    filestem = "_".join([accession_number, escape_name])
-
-    # separate out filesteam into GCstem, accession number intergers and discarded
-    url_parts = tuple(filestem.split("_", 2))
-
-    # separate identifying numbers from version number
-    sub_directories = "/".join(
-        [url_parts[1][i : i + 3] for i in range(0, len(url_parts[1].split(".")[0]), 3)]
-    )
-
-    # return url for downloading file
-    return (
-        "{0}/{1}/{2}/{3}/{3}_{4}".format(
-            ftpstem, url_parts[0], sub_directories, filestem, suffix
-        ),
-        filestem,
-    )
-
-
-def download_file(
-    genbank_url, out_file_path, accession_number, file_type
-):
-    """Download file.
-
-    :param genbank_url: str, url of file to be downloaded
-    :param out_file_path: path, output directory for file to be written to
-    :param accession_number: str, accession number of genome
-    :param file_type: str, denotes in logger file type downloaded
-
-    Return nothing.
-    """
-    logger = logging.getLogger(__name__)
-    # Try URL connection
-    try:
-        response = urlopen(genbank_url, timeout=45)
-    except (HTTPError, URLError, timeout) as e:
-        logger.error(
-            f"Failed to download {file_type} for {accession_number}", exc_info=1,
-        )
-        return
-
-    if out_file_path.exists():
-        logger.warning(f"Output file {out_file_path} exists, not downloading")
-        return
-
-    # Download file
-    file_size = int(response.info().get("Content-length"))
-    bsize = 1_048_576
-    try:
-        with open(out_file_path, "wb") as out_handle:
-            # Using leave=False as this will be an internally-nested progress bar
-            with tqdm(
-                total=file_size,
-                leave=False,
-                desc=f"Downloading {accession_number} {file_type}",
-            ) as pbar:
-                while True:
-                    buffer = response.read(bsize)
-                    if not buffer:
-                        break
-                    pbar.update(len(buffer))
-                    out_handle.write(buffer)
-    except IOError:
-        logger.error(f"Download failed for {accession_number}", exc_info=1)
-        return
-
-    return
 
 
 def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, assembly):
