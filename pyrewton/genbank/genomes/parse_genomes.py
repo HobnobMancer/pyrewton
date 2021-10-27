@@ -38,44 +38,4 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-"""Connect to NCBI and handling when connection errors arise"""
-
-
-import logging
-import time
-
-
-def entrez_retry(retries, entrez_func, *func_args, **func_kwargs):
-    """Call to NCBI using Entrez.
-
-    :param retries: int, maximum number of retries excepted if network error encountered
-    :param entrez_func: function, call method to NCBI
-    :param *func_args: tuple, arguments passed to Entrez function
-    :param ** func_kwargs: dictionary, keyword arguments passed to Entrez function
-
-    Returns record.
-    """
-    logger = logging.getLogger(__name__)
-    record, retries, tries = None, retries, 0
-
-    while record is None and tries < retries:
-        try:
-            record = entrez_func(*func_args, **func_kwargs)
-
-        except IOError:
-            # log retry attempt
-            if tries < retries:
-                logger.warning(
-                    f"Network error encountered during try no.{tries}.\nRetrying in 10s",
-                    exc_info=1,
-                )
-                time.sleep(10)
-            tries += 1
-
-    if record is None:
-        logger.error(
-            "Network error encountered too many times. Exiting attempt to call to NCBI"
-        )
-        return
-
-    return record
+"""Parse genomes and genomic assemblies"""
