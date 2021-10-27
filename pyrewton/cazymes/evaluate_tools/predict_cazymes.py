@@ -16,15 +16,7 @@
 # UK
 #
 # The MIT License
-"""Predict CAZymes from protein sequences and evaluate prediction accuracy.
-
-:cmd_args   :
-
-:func    :
-
-Creates dataframes of CAZyme predictions and report
-summarising statistical analsis of prediction accuracy.
-"""
+"""Invokes CAZyme prediction tools to predict CAZymes from protein sequences in the test sets."""
 
 import logging
 import os
@@ -40,7 +32,7 @@ from typing import List, Optional
 from pyrewton.cazymes.evaluate_tools.tools import invoke_prediction_tools
 from pyrewton.utilities import config_logger
 from pyrewton.utilities.parsers.cmd_parser_predict_cazymes import build_parser
-from pyrewton.utilities.file_io import make_output_directory
+from pyrewton.utilities.file_io import make_output_directory, io_get_paths
 
 
 @dataclass
@@ -56,7 +48,7 @@ class Proteome:
     fasta: Path  # path to FASTA file containing proteins for prediction
     tax_id: str  # NCBI taxonomy id, prefix NCBI:txid
     source: str  # source of protein sequences, genomic assembly or database
-    prediction_paths: {}  # contains path to outputs
+    prediction_paths: dict()  # contains path to outputs
 
     def __str__(self):
         """Representation of object"""
@@ -145,7 +137,7 @@ def get_predictions(args):
     Return list of Proteome class objects, queries to prediction tools.
     """
     # create list of paths to all fasta files in input directory
-    all_fasta_paths = get_fasta_paths(args)
+    all_fasta_paths = io_get_paths.get_fasta_paths(args)
 
     # create empty list to store all instances of Proteome class objects
     predictions = []
@@ -180,41 +172,6 @@ def get_predictions(args):
         predictions.append(prediction_tool_query)
 
     return predictions
-
-
-def get_fasta_paths(args):
-    """Retrieve paths to call FASTA files in input dir.
-
-    :param args: parser object
-
-    Returns list of paths to fasta files.
-    """
-    logger = logging.getLogger(__name__)
-    # create empty list to store the file entries, to allow checking if no files returned
-    fasta_file_paths = []
-
-    # retrieve all files from input directory
-    files_in_entries = (
-        entry for entry in Path(args.input).iterdir() if entry.is_file()
-    )
-    # retrieve paths to fasta files
-    for item in files_in_entries:
-        # search for fasta file extension
-        if item.name.endswith(".fasta") or item.name.endswith(".fa"):
-            fasta_file_paths.append(item)
-
-    # check files were retrieved from input directory
-    if len(fasta_file_paths) == 0:
-        logger.warning(
-            (
-                "No FASTA files retrieved from input directory.\n"
-                "Check the path to the input directory is correct.\n"
-                "Terminanting program."
-            )
-        )
-        sys.exit(1)
-
-    return fasta_file_paths
 
 
 def get_protein_source(file_path):
