@@ -143,6 +143,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 cazy_dict,
                 fasta_path,
                 temp_alignment_dir,
+                assembly[0],
             )
 
             if selected_cazymes is None:
@@ -158,7 +159,13 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
             final_fasta = compile_output_file_path(fasta_path)
 
-            write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta)
+            write_out_test_set(
+                selected_cazymes,
+                non_cazymes,
+                alignment_df,
+                final_fasta,
+                assembly[0],
+            )
 
     # delete the temporary alignment dir
     shutil.rmtree(temp_alignment_dir)
@@ -173,6 +180,8 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
 
     :param session: open SQL database session
     :param input_fasta: path to input FASTA file containing all protein seqs from a genomic assembly
+    :param temp_alignment_dir: path to dir where alignment inputs/outputs are written
+    :param assmebly: genomic assembly accessions retrieved from input yaml file
 
     Return list of CAZymes, path to temp FASTA of selected CAZymes, dict of non-CAZymes
     {protein_accession: Protein_instance}, and path to temporary non-CAZyme dir.
