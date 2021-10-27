@@ -43,8 +43,6 @@ import json
 import re
 import sys
 
-import numpy as np
-
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -53,7 +51,7 @@ from typing import List, Optional
 
 from pyrewton.cazymes.evaluate_tools import stats
 from pyrewton.utilities import config_logger
-from pyrewton.utilities.file_io import make_output_directory
+from pyrewton.utilities.file_io import make_output_directory, io_create_eval_testsets
 from pyrewton.utilities.parsers.cmd_parser_calc_stats import build_parser
 
 
@@ -70,7 +68,7 @@ class TestSet:
     fasta: Path  # path to FASTA file containing proteins for prediction
     tax_id: str  # NCBI taxonomy id, prefix NCBI:txid
     source: str  # source of protein sequences, genomic assembly or database
-    prediction_paths: {}  # contains path to outputs
+    prediction_paths: dict()  # contains path to outputs
 
     def __str__(self):
         """Representation of object"""
@@ -103,7 +101,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         make_output_directory(args.output, args.force, args.nodelete)
 
     # open the CAZy dict
-    cazy_dict = get_cazy_dict(args.cazy)
+    cazy_dict = io_create_eval_testsets.get_cazy_dict(args.cazy)
 
     # retrieve paths to all dirs
     predictions = get_predictions(args.input)
@@ -113,21 +111,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     time_stamp = datetime.now().strftime("%Y_%m_%d")
     stats.get_fam_freq(args, cazy_dict, time_stamp)  # USED IN R EVALUATION
-
-
-def get_cazy_dict(cazy_path):
-    logger = logging.getLogger(__name__)
-    try:
-        with open(cazy_path, "r") as fh:
-            cazy_dict = json.load(fh)
-    except FileNotFoundError:
-        logger.error(
-            "Did not find the local CAZy dict (JSON) file.\n"
-            "Check the path is correct.\n"
-            "Terminating programme"
-        )
-        sys.exit(1)
-    return cazy_dict
 
 
 def get_predictions(prediction_dir):
