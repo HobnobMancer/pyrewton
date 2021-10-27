@@ -75,6 +75,15 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     make_output_directory(args.output, args.force, args.nodelete)
 
+    # create file for storing CAZome coverage
+    headers = (
+        f"Total proteins\tTotal cazymes\tGenome CAZome percent\t"
+        "CAZome sample size\tCAZome coverage percent\n"
+    )
+    cazome_coverage_path = args.output / "cazome_coverage.txt"
+    with open(cazome_coverage_path,"w") as fh:
+        fh.write(headers)
+
     # get the YAML file containing the genomic assemblies to be used for creating test sets
     assembly_dict = io_create_eval_testsets.retrieve_assemblies_dict(args.yaml)
 
@@ -101,6 +110,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 cazyme_fasta,
                 non_cazymes,
                 noncazyme_fasta,
+                total_proteins,
+                total_cazymes,
             ) = separate_cazymes_and_noncazymes(
                 cazy_dict,
                 fasta_path,
@@ -120,13 +131,21 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
             final_fasta = compile_output_file_path(fasta_path)
 
-            write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta)
+            write_out_test_set(
+                selected_cazymes,
+                non_cazymes,
+                alignment_df,
+                final_fasta,
+                total_proteins,
+                total_cazymes,
+                args,
+            )
 
     # delete the temporary alignment dir
     shutil.rmtree(temp_alignment_dir)
 
 
-def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, assembly):
+def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, assembly, args):
     """Identify CAZymes and non-CAZymes in the input FASTA file.
 
     Writes non-CAZymes to a FASTA file and builds a non-CAZyme database needed for later alignments
@@ -135,9 +154,13 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
 
     :param session: open SQL database session
     :param input_fasta: path to input FASTA file containing all protein seqs from a genomic assembly
+    :param temp_alignment_dir: path to dir where alignment output is written
+    :param assembly: str, genomic assembly acession
+    :param args: cmd-line args parser
 
     Return list of CAZymes, path to temp FASTA of selected CAZymes, dict of non-CAZymes
     {protein_accession: Protein_instance}, and path to temporary non-CAZyme dir.
+    Return total number of proteins in the genomic assembly, and number of CAZy annotated CAZymes
     """
     logger = logging.getLogger(__name__)
     cazyme_accessions = set()  # ott checking duplicate cazymes not selected
@@ -177,10 +200,13 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
                 seq = "\n".join([seq[i : i + 60] for i in range(0, len(seq), 60)])
                 file_content = f">{accession} \n{seq}\n"
                 fh.write(file_content)
+    
+    total_proteins = len(cazymes) + len(list(non_cazymes.keys()))
+    total_cazymes = len(cazymes)
 
-    # randomly selected 100 CAZymes
+    # randomly selected n CAZymes
     try:
-        selected_cazymes = random.sample(cazymes, 100)
+        selected_cazymes = random.sample(cazymes, args.sample_size)
         # write selected CAZymes to FASTA file in temp dir
         with open(cazyme_fasta, "w") as fh:
             for cazyme in tqdm(selected_cazymes, desc="Writing selected CAZymes to FASTA"):
@@ -196,7 +222,7 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
         logger.warning(f"No CAZymes selected for {assembly}, the following error was raised:\n{e}")
         selected_cazymes = None
 
-    return selected_cazymes, cazyme_fasta, non_cazymes, noncazyme_fasta
+    return selected_cazymes, cazyme_fasta, non_cazymes, noncazyme_fasta, total_proteins, total_cazymes
 
 
 def align_cazymes_and_noncazymes(cazyme_fasta, noncazyme_fasta, temp_alignment_dir):
@@ -254,7 +280,16 @@ def compile_output_file_path(input_fasta):
     return fasta
 
 
-def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta, genomic_acc):
+def write_out_test_set(
+    selected_cazymes,
+    non_cazymes,
+    alignment_df,
+    final_fasta,
+    genomic_acc,
+    total_proteins,
+    total_cazymes,
+    args,
+):
     """Create the test set and write out a FASTA file.
 
     The FASTA file contains the protein sequences of the test set (in a random order).
@@ -264,6 +299,9 @@ def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta,
     :param alignment_df: Pandas df of Blast Score Ratios of non-CAZyme alignemnts against selected CAZymes
     :param final_fasta: path to output FASTA file of the final test set
     :param genomic_acc: str, genomic assembly accession
+    :param total_proteins: int, number of proteins in genome
+    :param total_cazymes: int, number of CAZymes in the 
+    :param args: cmd-line args parser
 
     Return nothing.
     """
@@ -320,5 +358,14 @@ def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta,
         file_content = f">{protein.accession}\n{seq}\n"
         with open(final_fasta, "a") as fh:
             fh.write(file_content)
+
+    cazome_percentage = (total_cazymes / total_proteins) * 100  # CAZome percentage of the genome
+    cazome_coverage = (args.sample_size / total_cazymes) * 100
+    log_content = (
+        f"{total_proteins}\t{total_cazymes}\t{cazome_percentage}\t{args.sample_size}\t{cazome_coverage}\n"
+    )
+    cazome_coverage_path = args.output / "cazome_coverage.txt"    
+    with open(cazome_coverage_path, "a") as fh:
+        fh.write(log_content)
 
     return
