@@ -65,16 +65,17 @@ else:
 
 setuptools.setup(
     name="pyrewton",
-    version="0.1.1",
+    version="0.1.2",
     # Metadata
     author="Emma E. M. Hobbs",
     author_email="eemh1@st-andrews.ac.uk",
     description="".join(
         [
             (
-                "pyrewton provides the scripts for the EASTBio protein "
-                "engineering PhD project, supporting the identification "
-                "of engineer candidates for catalysis in biofuel production"
+                "pyrewton is a Python package for independently benchmarking "
+                "CAZyme prediction tools, annotating the CAZome of candidate species, "
+                "and creating a database of CAZomes supplemented with PDB accessions, "
+                "UniProt accessions and EC numbers from UniProtKB."
             )
         ]
     ),
@@ -83,14 +84,16 @@ setuptools.setup(
     license="MIT",
     keywords="genome bioinforamtics protein engineering",
     platforms="Posix, MacOS X",
-    url="https://github.com/HobnobMancer/PhD_Project_Scripts",  # Github repository
+    url="https://github.com/HobnobMancer/pyrewton",  # Github repository
     entry_points={
         "console_scripts": [
             "get_ncbi_genomes.py = pyrewton.genbank.get_ncbi_genomes.get_ncbi_genomes:main",
             "get_genbank_annotations.py = pyrewton.genbank.get_genbank_annotations."
             "get_genbank_annotations:main",
             "get_uniprot_proteins.py = pyrewton.cazymes.uniprot.get_uniprot_proteins:main",
-            "predict_cazymes.py = pyrewton.cazymes.prediction.predict_cazymes:main",
+            "benchmark_create_test_sets = pyrewton.cazymes.evaluate_tools.create_test_sets_from_dict:main",
+            "benchmark_predict_cazymes = pyrewton.cazymes.evaluate_tools.predict_cazymes:main",
+            "benchmark_calculate_stats = pyrewton.cazymes.evaluate_tools.calculate_stats:main",
         ]
     },
     # Ensure all additional requirements are installed
@@ -104,6 +107,7 @@ setuptools.setup(
         "scipy>=1.5.4",
         "tqdm>=4.53.0",
     ],
+    packages=setuptools.find_packages(),
     # Include conda microenvironment
     # and template input file for Extract_genomes_NCBI.py
     package_data={
