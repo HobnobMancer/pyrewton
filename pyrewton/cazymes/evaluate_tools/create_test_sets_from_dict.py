@@ -166,7 +166,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
             if alignment_df is None:
                 continue
 
-            final_fasta = compile_output_file_path(fasta_path)
+            final_fasta = compile_output_file_path(fasta_path, args)
 
             write_out_test_set(
                 selected_cazymes,
