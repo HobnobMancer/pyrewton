@@ -77,7 +77,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # create file for storing CAZome coverage
     headers = (
-        f"Total proteins\tTotal cazymes\tGenome CAZome percent\t"
+        f"Genomic accession\tTotal proteins\tTotal cazymes\tGenome CAZome percent\t"
         "CAZome sample size\tCAZome coverage percent\n"
     )
     cazome_coverage_path = args.output / "cazome_coverage.txt"
@@ -362,7 +362,8 @@ def write_out_test_set(
     cazome_percentage = (total_cazymes / total_proteins) * 100  # CAZome percentage of the genome
     cazome_coverage = (args.sample_size / total_cazymes) * 100
     log_content = (
-        f"{total_proteins}\t{total_cazymes}\t{cazome_percentage}\t{args.sample_size}\t{cazome_coverage}\n"
+        f"{genomic_acc}\t{total_proteins}\t{total_cazymes}\t{cazome_percentage}\t"
+        f"{args.sample_size}\t{cazome_coverage}\n"
     )
     cazome_coverage_path = args.output / "cazome_coverage.txt"    
     with open(cazome_coverage_path, "a") as fh:
