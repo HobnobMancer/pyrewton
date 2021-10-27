@@ -57,7 +57,7 @@ from tqdm import tqdm
 
 from pyrewton.genbank import genomes
 from pyrewton.utilities import config_logger
-from pyrewton.utilities.file_io import make_output_directory, io_create_eval_testsets
+from pyrewton.utilities.file_io import io_get_paths, make_output_directory, io_create_eval_testsets
 from pyrewton.utilities.parsers.cmd_parser_get_evaluation_dataset_from_dict import build_parser
 
 
@@ -105,14 +105,26 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     temp_alignment_dir = args.output / "temp_alignment_dir"
 
+    if args.genomes is not None:
+        genomic_assembly_paths = io_get_paths.get_genomic_assembly_paths(args)
+        genomic_path_dict = {}
+        for _path in genomic_assembly_paths:
+            filename = (_path.name).split(".")[0]
+            filename = filename.split("_")
+            accession = f"{filename[0]}_{filename[1]}.{filename[2]}"
+            genomic_path_dict[accession] = _path
+
     # create a test set for each genomic assembly
     for txid in tqdm(assembly_dict, desc="Parsing assemblies in config file"):
         for assembly in assembly_dict[txid]:
             # whipe temp dir clean
             io_create_eval_testsets.prepare_output_dir(temp_alignment_dir)
 
-            # download genomic assembly
-            assembly_path = genomes.get_genomic_assembly(assembly)
+            if args.genomes is not None:
+                assembly_path = genomic_path_dict[assembly]
+            else:
+                # download genomic assembly
+                assembly_path = genomes.get_genomic_assembly(assembly)
 
             # create a FASTA file containing all proteins sequences in the genomic assembly
             fasta_path = genomes.extract_protein_seqs(assembly_path, assembly, txid)

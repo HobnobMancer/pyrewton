@@ -19,7 +19,6 @@
 """Build parser for 'cmd_parser_get_evaluation_dataset_from_dict.py'"""
 
 import argparse
-import sys
 
 from pathlib import Path
 from typing import List, Optional
@@ -68,6 +67,14 @@ def build_parser(argv: Optional[List] = None):
         action="store_true",
         default=False,
         help="Force file over writting",
+    )
+
+    parser.add_argument(
+        "-g",
+        "--genomes",
+        type=Path,
+        default=None,
+        help="Path to dir containing already downloaded genomes",
     )
     # Add option to specific directory for log to be written out to
     parser.add_argument(
