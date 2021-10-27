@@ -106,6 +106,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     temp_alignment_dir = args.output / "temp_alignment_dir"
 
     if args.genomes is not None:
+        logger.info(f"Retrieving genomes from {args.genomes}")
         genomic_assembly_paths = io_get_paths.get_genomic_assembly_paths(args)
         genomic_path_dict = {}
         for _path in genomic_assembly_paths:
@@ -356,3 +357,7 @@ def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta,
             fh.write(file_content)
 
     return
+
+
+if __name__ == "__main__":
+    main()
