@@ -47,7 +47,7 @@ import logging
 from Bio import SeqIO
 
 
-def extract_protein_seqs(assembly_path, accession, txid, filestem="genbank_proteins"):
+def extract_protein_seqs(assembly_path, accession, txid, output_dir, subfolder=None, filestem="genbank_proteins"):
     """Retrieve annoated protein sequences from genomic assembly and write to a single FASTA file.
 
     :param assemly_path: Path to genomic assembly
@@ -61,6 +61,9 @@ def extract_protein_seqs(assembly_path, accession, txid, filestem="genbank_prote
 
     # build path to the output FASTA file
     fasta_path = f"{filestem}_{txid}_{accession}.fasta"
+    if subfolder is not None:
+        fasta_path = output_dir / subfolder / fasta_path
+    else: fasta_path = output_dir / fasta_path
 
     protein_count = 0
 
