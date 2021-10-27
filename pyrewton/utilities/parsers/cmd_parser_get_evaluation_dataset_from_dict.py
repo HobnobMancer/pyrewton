@@ -68,7 +68,6 @@ def build_parser(argv: Optional[List] = None):
         default=False,
         help="Force file over writting",
     )
-
     parser.add_argument(
         "-g",
         "--genomes",
