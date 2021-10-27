@@ -22,15 +22,10 @@ Writes out a FASTA per candidate species, containing all the protein sequences t
 CAZymes prediction tools. The datasets contain an equal number of CAZymes to non-CAZymes.
 """
 
-import gzip
-import json
 import logging
 import random
 import re
-import yaml
-import sys
 import shutil
-import time
 
 import pandas as pd
 from pathlib import Path
@@ -43,21 +38,22 @@ from Bio import Entrez, SeqIO
 from Bio.Blast.Applications import NcbiblastpCommandline, NcbimakeblastdbCommandline
 from tqdm import tqdm
 
+from pyrewton.genbank import genomes
 from pyrewton.utilities import config_logger
-from pyrewton.utilities.file_io import make_output_directory
+from pyrewton.utilities.entrez import entrez_retry
+from pyrewton.utilities.file_io import make_output_directory, io_create_eval_testsets
 from pyrewton.utilities.parsers.cmd_parser_get_evaluation_dataset_from_dict import build_parser
 
 
 class Protein:
-    """A single protein from a genomic assembly."""
+    """A single protein from a genomic assembly.
+    
+    :attr accession: str, unique GenBank accession
+    :attr sequence: str, protein amino acid sequence
+    :attr cazyme_classification: int, CAZyme = 1, non-CAZyme = 0.
+    """
 
     def __init__(self, accession, sequence, cazyme_classification):
-        """Initiate class instance.
-
-        :attr accession: str, unique GenBank accession
-        :attr sequence: str, protein amino acid sequence
-        :attr cazyme_classification: int, CAZyme = 1, non-CAZyme = 0.
-        """
         self.accession = accession
         self.sequence = sequence
         self.cazyme_classification = cazyme_classification
@@ -86,10 +82,10 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     make_output_directory(args.output, args.force, args.nodelete)
 
     # get the YAML file containing the genomic assemblies to be used for creating test sets
-    assembly_dict = retrieve_assemblies_dict(args.yaml)
+    assembly_dict = io_create_eval_testsets.retrieve_assemblies_dict(args.yaml)
 
     # get dict containing the genomic assemblies of all CAZymes in CAZy
-    cazy_dict = get_cazy_dict(args.cazy)
+    cazy_dict = io_create_eval_testsets.get_cazy_dict(args.cazy)
 
     temp_alignment_dir = args.output / "temp_alignment_dir"
 
@@ -97,16 +93,21 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     for txid in tqdm(assembly_dict, desc="Parsing assemblies in config file"):
         for assembly in assembly_dict[txid]:
             # whipe temp dir clean
-            prepare_output_dir(temp_alignment_dir)
+            io_create_eval_testsets.prepare_output_dir(temp_alignment_dir)
 
             # download genomic assembly
-            assembly_path = get_genomic_assembly(assembly, txid)
+            assembly_path = get_genomic_assembly(assembly)
 
             # create a FASTA file containing all proteins sequences in the genomic assembly
-            fasta_path = get_protein_seqs(assembly_path, assembly, txid)
+            fasta_path = genomes.extract_protein_seqs(assembly_path, assembly, txid)
 
-            # differentiate between CAZymes and non-CAZymes and get test set of 100 CAZymes
-            selected_cazymes, cazyme_fasta, non_cazymes, noncazyme_fasta = differentiate_cazymes_and_noncazymes(
+            # differentiate between CAZymes and non-CAZymes and get test set of 100 known CAZymes
+            (
+                selected_cazymes,
+                cazyme_fasta,
+                non_cazymes,
+                noncazyme_fasta,
+            ) = separate_cazymes_and_noncazymes(
                 cazy_dict,
                 fasta_path,
                 temp_alignment_dir,
@@ -115,7 +116,11 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
             if selected_cazymes is None:
                 continue
 
-            alignment_df = align_cazymes_and_noncazymes(cazyme_fasta, noncazyme_fasta, temp_alignment_dir)
+            alignment_df = align_cazymes_and_noncazymes(
+                cazyme_fasta,
+                noncazyme_fasta,
+                temp_alignment_dir,
+            )
             if alignment_df is None:
                 continue
 
@@ -127,45 +132,10 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     shutil.rmtree(temp_alignment_dir)
 
 
-def retrieve_assemblies_dict(yaml_path):
-    """Retrieve dict of genomic assemblies to create test sets from.
-
-    :param yaml_path: Path to yaml file, keyed by NCBI:txid and valued by genomic assemblies
-
-    Return dict, keyed by NCBI:txid and valued by list genomic assemblies"""
-    logger = logging.getLogger(__name__)
-    # open the YAML file
-    try:
-        with open(yaml_path, "r") as fh:
-            assemblies_dict = yaml.full_load(fh)
-    except FileNotFoundError:
-        logger.error(
-            "Did not find the configuration file. Check the path is correct.\n"
-            "Terminating programme"
-        )
-        sys.exit(1)
-    return assemblies_dict
-
-
-def get_cazy_dict(cazy_path):
-    logger = logging.getLogger(__name__)
-    try:
-        with open(cazy_path, "r") as fh:
-            cazy_dict = json.load(fh)
-    except FileNotFoundError:
-        logger.error(
-            "Did not find the configuration file. Check the path is correct.\n"
-            "Terminating programme"
-        )
-        sys.exit(1)
-    return cazy_dict
-
-
-def get_genomic_assembly(assembly_accession, txid, suffix="genomic.gbff.gz"):
+def get_genomic_assembly(assembly_accession, suffix="genomic.gbff.gz"):
     """Coordinate downloading Genomic assemmbly from the NCBI Assembly database.
 
     :param assembly_accession: str, accession of the Genomic assembly to be downloaded
-    :param txid: str, NCBI Taxonomy ID of the host species of the genomic assembly
     :param suffix: str, suffix of file
 
     Return path to downloaded genomic assembly.
@@ -197,7 +167,13 @@ def compile_url(accession_number, suffix, ftpstem="ftp://ftp.ncbi.nlm.nih.gov/ge
         search_record = Entrez.read(handle)
 
     # retrieve record for genomic assembly
-    with entrez_retry(10, Entrez.esummary, db="assembly", id=search_record['IdList'][0], report="full") as handle:
+    with entrez_retry(
+        10,
+        Entrez.esummary,
+        db="assembly",
+        id=search_record['IdList'][0],
+        report="full",
+    ) as handle:
         record = Entrez.read(handle)
 
     assembly_name = record["DocumentSummarySet"]["DocumentSummary"][0]["AssemblyName"]
@@ -223,42 +199,6 @@ def compile_url(accession_number, suffix, ftpstem="ftp://ftp.ncbi.nlm.nih.gov/ge
         ),
         filestem,
     )
-
-
-def entrez_retry(retries, entrez_func, *func_args, **func_kwargs):
-    """Call to NCBI using Entrez.
-
-    :param retries: int, maximum number of retries excepted if network error encountered
-    :param entrez_func: function, call method to NCBI
-    :param *func_args: tuple, arguments passed to Entrez function
-    :param ** func_kwargs: dictionary, keyword arguments passed to Entrez function
-
-    Returns record.
-    """
-    logger = logging.getLogger(__name__)
-    record, retries, tries = None, retries, 0
-
-    while record is None and tries < retries:
-        try:
-            record = entrez_func(*func_args, **func_kwargs)
-
-        except IOError:
-            # log retry attempt
-            if tries < retries:
-                logger.warning(
-                    f"Network error encountered during try no.{tries}.\nRetrying in 10s",
-                    exc_info=1,
-                )
-                time.sleep(10)
-            tries += 1
-
-    if record is None:
-        logger.error(
-            "Network error encountered too many times. Exiting attempt to call to NCBI"
-        )
-        return
-
-    return record
 
 
 def download_file(
@@ -311,91 +251,10 @@ def download_file(
     return
 
 
-def get_protein_seqs(assembly_path, accession, txid, filestem="genbank_proteins"):
-    """Retrieve annoated protein sequences from genomic assembly and write to a single FASTA file.
-
-    :param assemly_path: Path to genomic assembly
-    :param accession: str, accession number of the genomic assembly
-    :param txid: str, NCBI taxonomy id of the host species
-    :param filestem: str, file name prefix
-
-    Return path to FASTA file containing the protein sequences from the assembly.
-    """
-    logger = logging.getLogger(__name__)
-
-    # build path to the output FASTA file
-    fasta_path = f"{filestem}_{txid}_{accession}.fasta"
-
-    protein_count = 0
-
-    with open(fasta_path, "a") as fh:
-        with gzip.open(assembly_path, "rt") as handle:  # unzip the genomic assembly
-            # parse proteins in the genomic assembly
-            for gb_record in SeqIO.parse(handle, "genbank"):
-                for (index, feature) in enumerate(gb_record.features):
-                    # Parse over only protein encoding features (type = 'CDS')
-                    if feature.type == "CDS":
-                        # retrieve data from protein feature record
-                        protein_id = get_record_feature(feature, "protein_id", accession_number)
-                        locus_tag = get_record_feature(feature, "locus_tag", accession_number)
-                        # extract protein sequence
-                        seq = get_record_feature(feature, "translation", accession_number)
-                        if seq is None:
-                            continue
-
-                        # create file content for writing protein to fasta file
-                        # FASTA sequences have 60 characters per line
-                        seq = "\n".join([seq[i : i + 60] for i in range(0, len(seq), 60)])
-                        protein_id = protein_id + " " + locus_tag
-
-                        file_content = f">{protein_id} \n{seq}\n"
-
-                        fh.write(file_content)
-
-                        protein_count += 1
-
-    logger.warning(f"{protein_count} proteins in genomic assembly {accession}")
-
-    return fasta_path
-
-
-def get_record_feature(feature, qualifier, accession_number):
-    """Retrieve data from BioPython feature object.
-
-    :param feature: BioPython feature object representing the curernt working protein
-    :param qualifier: str, data to be retrieved
-    :accession_number: str, accession of the protein being parsed.
-
-    Return feature data.
-    """
-    logger = logging.getLogger(__name__)
-    try:
-        data = feature.qualifiers[qualifier][0]
-        return data
-    except KeyError:
-        logger.warning(f"Failed to retrieve feature {qualifier}, returning None value, accession: {accession}")
-        return None
-
-
-def prepare_output_dir(output_dir):
-    """Delete and make temporary output directory"""
-    output_dir = Path(output_dir)
-    try:
-        if output_dir.exists:
-            shutil.rmtree(output_dir)
-    except (FileExistsError, FileNotFoundError) as e:
-        pass
-    try:
-        output_dir.mkdir(exist_ok=True)
-    except FileExistsError:
-        print("output_dir_exists")
-    return
-
-
-def differentiate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, assembly):
+def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, assembly):
     """Identify CAZymes and non-CAZymes in the input FASTA file.
 
-    Writes non-CAZymes to a FASTA fie and builds a non-CAZyme database needed for later alignments
+    Writes non-CAZymes to a FASTA file and builds a non-CAZyme database needed for later alignments
     to identify the non-CAZymes that are most similar to the CAZymes (positive controls)
     selected for the test set.
 
@@ -406,11 +265,13 @@ def differentiate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_
     {protein_accession: Protein_instance}, and path to temporary non-CAZyme dir.
     """
     logger = logging.getLogger(__name__)
+    cazyme_accessions = set()  # ott checking duplicate cazymes not selected
     cazymes = []
     non_cazymes = {}  # {accession: Protein_instance}
 
     # create temporary, empty dir for holding alignment input and output
-    prepare_output_dir(temp_alignment_dir)
+    io_create_eval_testsets.prepare_output_dir(temp_alignment_dir)
+
     # alignment_output = temp_alignment_dir / "alignment_output.tab"
     noncazyme_fasta = temp_alignment_dir / "noncazymes.fasta"
     cazyme_fasta = temp_alignment_dir / "cazymes.fasta"
@@ -429,7 +290,9 @@ def differentiate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_
             try:
                 cazy_dict[accession]
                 cazyme_classification = 1
-                cazymes.append(Protein(accession, sequence, cazyme_classification))
+                if accession not in cazyme_accessions:
+                    cazyme_accessions.add(accession)
+                    cazymes.append(Protein(accession, sequence, cazyme_classification))
 
             except KeyError:
                 cazyme_classification = 0
@@ -516,7 +379,7 @@ def compile_output_file_path(input_fasta):
     return fasta
 
 
-def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta):
+def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta, genomic_acc):
     """Create the test set and write out a FASTA file.
 
     The FASTA file contains the protein sequences of the test set (in a random order).
@@ -525,9 +388,12 @@ def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta)
     :param non_cazymes: dict of all non-CAZymes from the input FASTA file {accession: Protein instance}
     :param alignment_df: Pandas df of Blast Score Ratios of non-CAZyme alignemnts against selected CAZymes
     :param final_fasta: path to output FASTA file of the final test set
+    :param genomic_acc: str, genomic assembly accession
 
     Return nothing.
     """
+    logger = logging.getLogger(__name__)
+
     # sort results by BLAST score ratio
     alignment_results = alignment_df.sort_values(by=["blast_score_ratio"], ascending=False)
 
@@ -535,12 +401,37 @@ def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta)
     csv_fh = final_fasta.replace("_test_set.fasta", "_alignment_scores.csv")
     alignment_results.to_csv(csv_fh)
 
-    selected_non_cazymes = alignment_results[:200]
+    selected_noncazyme_accessions = set()  # used to prevent introduction of duplicates
+
+    # create empty df to store selected non-CAZymes
+    headers = ["query (non-CAZyme)", "subject (Cazyme)", "identity", "coverage",
+               "qlength", "slength", "alength",
+               "bitscore", "E-value"]
+    selected_non_cazymes = pd.DataFrame(columns=headers)
+
+    for row_index in range(len(alignment_results["blast_score_ratio"])):
+        df_row = alignment_results.iloc[row_index]
+        accession = df_row['query (non-CAZyme)']
+        if accession not in selected_noncazyme_accessions:
+            selected_noncazyme_accessions.add(accession)
+            selected_non_cazymes.append(df_row)
+        if len(selected_non_cazymes["blast_score_ratio"]) == 200:
+            break
+    
+    if len(selected_non_cazymes["blast_score_ratio"]) != 200:
+        logger.error(
+            f"Could not retrieve 100 non-CAZymes from {genomic_acc}\n"
+            f"Test set for {genomic_acc} not created."
+        )
+        return
 
     all_selected_proteins = []  # list of Protein instances
 
     index = 0
-    for index in tqdm(range(len(selected_non_cazymes["blast_score_ratio"])), desc="Retrieving selected non-CAZymes"):
+    for index in tqdm(
+        range(len(selected_non_cazymes["blast_score_ratio"])),
+        desc="Retrieving selected non-CAZymes",
+    ):
         df_row = alignment_results.iloc[index]
         protein_accession = df_row['query (non-CAZyme)']
         all_selected_proteins.append(non_cazymes[protein_accession])  # retrieve Protein instance from dict
