@@ -12,12 +12,13 @@ Read on for instructions on how to use the provided scripts to independetly eval
 If you have any difficulties please do raise an issue in this repository!
 
 ## Steps for evaluating CAZyme classifiers
-1. Creating test sets
-2. Invoking classifiers
-3. Evaluating performance
-4. Presenting the evaluation
-
-## [1] Creating the test sets
+<!-- TOC -->
+1. [Creating test sets](#1---creating-the-test-sets)
+2. [Invoking classifiers](#2---invoking-classifiers)
+3. [Evaluating performance](#3---evaluating-performance)
+4. [Presenting the evaluation](#4---presenting-the-evaluation)
+<!-- TOC -->
+### 1 - Creating the test sets
 
 In order to create the test sets [`cazy_webscraper`](https://doi.org/10.6084/m9.figshare.14370860.v3) was invoked to create a JSON file, keyed by GenBank protein accession and valued by a list of CAZy family annotations. This is necessary to determine which proteins are CAZymes and which proteins are non-CAZymes becuase each created test set includes an equal number of CAZymes and non-CAZymes.
 
@@ -36,7 +37,7 @@ The output directory does not already have to exist, as long as the parent direc
 
 To change the number of CAZymes included in the test set use the `--sample_size` flag followed by the number of CAZymes to include. An equal number of non-CAZymes will be retrieved as well.
 
-## [2] Invoking classifiers
+### 2 - Invoking classifiers
 
 To invoke the predictions tools use the following command:
 ```
@@ -47,7 +48,7 @@ The same rules for the output directory used for `create_test_sets_from_dict.py`
 
 This command need only be invoked once because it will invoke the prediction tools for each of the test sets included in the `<path_to_the_dir_containing_test_sets>`.
 
-## [3] Evaluating performance
+### 3 - Evaluating performance
 
 To perform the statistical evaluation of the prediction tools use the command:
 ```
@@ -65,7 +66,7 @@ The same rules for the output directory used for `create_test_sets_from_dict.py`
 Many of the created `CSV` files stored the data in the long format, which is preferred format for parsing data within R, which is used in step 4. For more info on long and tidy data please refer to [Tidy Data](https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html).
 
 
-### Dataframes created for the binary evaluation
+**Dataframes created for the binary evaluation:**
 
 'binary_classification_evaluation_{time_stamp}.csv'
 Dataframe written in the long format, including the statistical evaluation of each of the prediction tools. It contains the columns: Statistic paramter, genomic assembly, prediction tool, statistic value
@@ -78,7 +79,7 @@ One dataframe of this format is made for each test set, and includes the columns
 Each row contains a unique protein. The columns named after a prediction tool include the CAZyme (1) / non-CAZyme (0) predicted classification, and the 'CAZy' column includes the CAZyme (1) and non-CAZyme (0) classification of the protein by CAZy.
 
 
-### Dataframes created for the CAZy class and CAZy family multilabel classification
+**Dataframes created for the CAZy class and CAZy family multilabel classification:**
 
 `{tool}_fam_prediction_df_{time_stamp}.csv`
 These dataframes containg the CAZy family classifications for each protein.
@@ -98,7 +99,7 @@ These dataframes containg the CAZy family classifications for each protein.
 `class_stats_per_test_set_{time_stamp}.csv` contains the statistical parameter values for each CAZy class, for each test set. This is better for seeing the variation of prediction tool performance.
 
 
-## [4] Presenting the evaluation
+### 4 - Presenting the evaluation
 
 To visualise the data of the statistical evaluation, we use R. We specifically use an R notebook which can be knitted into HTML and can be easily shared and viewed. In this directory we provide the Rnotebook used in our evaluation, and encourage others to use it as a template it for their own evaluations, and modify as they see fit. If you see areas of improvement for the R notebook please raise an issue at this repository!
 
