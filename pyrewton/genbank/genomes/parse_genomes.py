@@ -82,6 +82,10 @@ def extract_protein_seqs(assembly_path, accession, txid, filestem="genbank_prote
                         # create file content for writing protein to fasta file
                         # FASTA sequences have 60 characters per line
                         seq = "\n".join([seq[i : i + 60] for i in range(0, len(seq), 60)])
+                        if locus_tag is None:
+                            locus_tag = "unknown_locus_tag"
+                        if protein_id is None:
+                            protein_id = "unknown_protein_id"
                         protein_id = protein_id + " " + locus_tag
 
                         file_content = f">{protein_id} \n{seq}\n"
