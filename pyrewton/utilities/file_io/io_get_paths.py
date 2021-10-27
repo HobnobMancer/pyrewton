@@ -48,7 +48,7 @@ from pathlib import Path
 
 
 def get_fasta_paths(args):
-    """Retrieve paths to call FASTA files in input dir.
+    """Retrieve paths to all FASTA files in input dir.
 
     :param args: parser object
 
@@ -80,3 +80,38 @@ def get_fasta_paths(args):
         sys.exit(1)
 
     return fasta_file_paths
+
+
+def get_genomic_assembly_paths(args):
+    """Retrieve paths to all gbff.gz files in input dir.
+
+    :param args: parser object
+
+    Returns list of paths to fasta files.
+    """
+    logger = logging.getLogger(__name__)
+    # create empty list to store the file entries, to allow checking if no files returned
+    file_paths = []
+
+    # retrieve all files from input directory
+    files_in_entries = (
+        entry for entry in Path(args.genomes).iterdir() if entry.is_file()
+    )
+    # retrieve paths to fasta files
+    for item in files_in_entries:
+        # search for fasta file extension
+        if item.name.endswith(".gbff.gz"):
+            file_paths.append(item)
+
+    # check files were retrieved from input directory
+    if len(file_paths) == 0:
+        logger.warning(
+            (
+                "No genomic assembly (gbff.gz) files retrieved from input directory.\n"
+                "Check the path to the input directory is correct.\n"
+                "Terminanting program."
+            )
+        )
+        sys.exit(1)
+
+    return file_paths
