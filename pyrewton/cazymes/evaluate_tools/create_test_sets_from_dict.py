@@ -49,6 +49,8 @@ import random
 import shutil
 
 import pandas as pd
+
+from pathlib import Path
 from typing import List, Optional
 
 from Bio import Entrez, SeqIO
@@ -96,8 +98,10 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     Entrez.email = args.email
 
     extract_seq_dir = args.output / "extract_protein_seqs"
+    alignment_score_dir = args.output / "alignment_scores"
     test_set_dir = args.output / "test_sets"
     make_output_directory(extract_seq_dir, args.force, args.nodelete)
+    make_output_directory(alignment_score_dir, args.force, args.nodelete)
     make_output_directory(test_set_dir, args.force, args.nodelete)
 
     # get the YAML file containing the genomic assemblies to be used for creating test sets
@@ -311,7 +315,7 @@ def compile_output_file_path(fasta_path, args):
     return fasta
 
 
-def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta, genomic_acc):
+def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta, genomic_acc, args):
     """Create the test set and write out a FASTA file.
 
     The FASTA file contains the protein sequences of the test set (in a random order).
@@ -321,6 +325,7 @@ def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta,
     :param alignment_df: Pandas df of Blast Score Ratios of non-CAZyme alignemnts against selected CAZymes
     :param final_fasta: path to output FASTA file of the final test set
     :param genomic_acc: str, genomic assembly accession
+    :param args: cmd-line args parser
 
     Return nothing.
     """
@@ -330,7 +335,8 @@ def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta,
     alignment_results = alignment_df.sort_values(by=["blast_score_ratio"], ascending=False)
 
     # write alignment scores to csv for future reference and documentation
-    csv_fh = final_fasta.replace("_test_set.fasta", "_alignment_scores.csv")
+    csv_filename = (final_fasta.name).replace('_test_set.fasta', "_alignment_scores.csv")
+    csv_fh = args.output / "alignment_scores" / csv_filename
     alignment_results.to_csv(csv_fh)
 
     selected_noncazyme_accessions = set()  # used to prevent introduction of duplicates
