@@ -326,23 +326,26 @@ def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta,
     selected_noncazyme_accessions = set()  # used to prevent introduction of duplicates
 
     # create empty df to store selected non-CAZymes
-    headers = ["query (non-CAZyme)", "subject (Cazyme)", "identity", "coverage",
-               "qlength", "slength", "alength",
-               "bitscore", "E-value"]
+    headers = list(alignment_results.columns)
     selected_non_cazymes = pd.DataFrame(columns=headers)
 
-    for row_index in range(len(alignment_results["blast_score_ratio"])):
+    for row_index in tqdm(
+        range(len(alignment_results["blast_score_ratio"])),
+        desc="Selecting unique non-CAZymes",
+    ):
         df_row = alignment_results.iloc[row_index]
         accession = df_row['query (non-CAZyme)']
         if accession not in selected_noncazyme_accessions:
             selected_noncazyme_accessions.add(accession)
-            selected_non_cazymes.append(df_row)
+            selected_non_cazymes = selected_non_cazymes.append(df_row)
         if len(selected_non_cazymes["blast_score_ratio"]) == 200:
             break
     
     if len(selected_non_cazymes["blast_score_ratio"]) != 200:
+        noncazyme_count = len(selected_non_cazymes["blast_score_ratio"])
         logger.error(
             f"Could not retrieve 100 non-CAZymes from {genomic_acc}\n"
+            f"Only retrieved {noncazyme_count} non-CAZymes\n"
             f"Test set for {genomic_acc} not created."
         )
         return
