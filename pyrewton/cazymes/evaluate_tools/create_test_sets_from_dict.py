@@ -95,7 +95,10 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     Entrez.email = args.email
 
-    make_output_directory(args.output, args.force, args.nodelete)
+    extract_seq_dir = args.output / "extract_protein_seqs"
+    test_set_dir = args.output / "test_sets"
+    make_output_directory(extract_seq_dir, args.force, args.nodelete)
+    make_output_directory(test_set_dir, args.force, args.nodelete)
 
     # get the YAML file containing the genomic assemblies to be used for creating test sets
     assembly_dict = io_create_eval_testsets.retrieve_assemblies_dict(args.yaml)
@@ -131,7 +134,13 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 assembly_path = download_genomes.get_genomic_assembly(assembly)
                 
             # create a FASTA file containing all proteins sequences in the genomic assembly
-            fasta_path = parse_genomes.extract_protein_seqs(assembly_path, assembly, txid)
+            fasta_path = parse_genomes.extract_protein_seqs(
+                assembly_path,
+                assembly[0],
+                txid,
+                args.output,
+                subfolder="extract_protein_seqs",
+            )
 
             # differentiate between CAZymes and non-CAZymes and get test set of 100 known CAZymes
             (
@@ -256,6 +265,7 @@ def align_cazymes_and_noncazymes(cazyme_fasta, noncazyme_fasta, temp_alignment_d
     Return pandas df of alignment results.
     """
     logger = logging.getLogger(__name__)
+    logger.warning("Starting alignment")
     alignment_output = temp_alignment_dir / "alignment_output.tab"
     # perform all-verus-all alignment
     all_v_all_blastp = NcbiblastpCommandline(
@@ -282,21 +292,21 @@ def align_cazymes_and_noncazymes(cazyme_fasta, noncazyme_fasta, temp_alignment_d
 
     # Create a new column: blast_score_ratio a.k.a normalised bitscore
     alignment_results['blast_score_ratio'] = alignment_results.bitscore/alignment_results.qlength
-
+    logger.warning("Alignment complete and Blast score ratio calculated")
     return alignment_results
 
 
-def compile_output_file_path(input_fasta):
-    """Compile paths to the FASTA file for the test set from the input FASTA file.
+def compile_output_file_path(fasta_path, args):
+    """Compile paths write out the final test sets (FASTA files).
 
-    :param input_fasta: path to the input fasta file
+    :param fasta_path: path to fasta file containing protein sequences extracted from genome
+    :param args: cmd-line args parser
 
     Return path to output FASTA file.
     """
-    input_fasta = input_fasta.split("/")
-    genomic_assembly = input_fasta[0]
-
-    fasta = genomic_assembly.replace("fasta", "_test_set.fasta")
+    genomic_assembly = fasta_path.name
+    fasta = genomic_assembly.replace(".fasta", "_test_set.fasta")
+    fasta = args.output / "test_sets" / fasta
 
     return fasta
 
