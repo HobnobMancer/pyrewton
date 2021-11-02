@@ -1,21 +1,21 @@
-# EastBIO PhD Project Supplementary Material
+# Pyrewton
+## Independent, comprehensive benchmarking of CAZyme classifiers and Creation of a CAZome SQL database
 
-## Identifying, Characterising & Engineering Plant Cell Wall Degrading Enzymes for Enhanced Biocatalysts in Biofuel Production
 
-[![DOI](https://zenodo.org/badge/243783792.svg)](https://zenodo.org/badge/latestdoi/243783792)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3876218.svg)](https://doi.org/10.5281/zenodo.3876218)
 [![Funding](https://img.shields.io/badge/Funding-EASTBio-blue)](http://www.eastscotbiodtp.ac.uk/)
 [![PhD licence](https://img.shields.io/badge/Licence-MIT-green)](https://github.com/HobnobMancer/PhD_Project_Scripts/blob/master/LICENSE)
 [![CircleCI](https://circleci.com/gh/HobnobMancer/pyrewton.svg?style=shield)](https://circleci.com/gh/HobnobMancer/PhD_Project_Scripts)
-[![codecov](https://codecov.io/gh/HobnobMancer/PhD_Project_Scripts/branch/master/graph/badge.svg)](https://codecov.io/gh/HobnobMancer/PhD_Project_Scripts)
-[![Documentation Status](https://readthedocs.org/projects/phd-project-scripts/badge/?version=latest)](https://phd-project-scripts.readthedocs.io/en/latest/?badge=latest)
+[![codecov](https://codecov.io/gh/HobnobMancer/pyrewton/branch/master/graph/badge.svg)](https://codecov.io/gh/HobnobMancer/pyrewton)
+[![Documentation Status](https://readthedocs.org/projects/pyrewton/badge/?version=latest)](https://pyrewton.readthedocs.io/en/latest/?badge=latest)
 [![Python](https://img.shields.io/badge/Python-v3.7.---orange)](https://www.python.org/about/)
 [![Research](https://img.shields.io/badge/Bioinformatics-Protein%20Engineering-ff69b4)](http://www.eastscotbiodtp.ac.uk/eastbio-student-cohort-2019)
 
-These pages are published from the repository containing files used during the EastBIO PhD Project, for the identification of engineering candidates to enhance biocatalysis for biofuel production.
+This page is published as supplementary material to the main [`pyrewton` repo](), and the independet evaluation of the CAZyme classifiers [dbCAN](), [CUPP](), and [eCAMI]() presented in [Hobbs et al., 2021]().
 
-The `Jupyter` notebook environments have been used to facilitate explanation of the function and operation of the command-line python programmes used. These notebooks include explanatory text and snippets of code extract to illustrate code function, and thus not all code snippets are runnable in the `Jupyter` environment.
+This page covers includes the specific method used to perform the presented evaluation of the CAZyme classifiers listed above, including additional supplemenatry material to faciltiate the reporduction of the analysis.
 
-Please find more detailed information for operation and troubleshooting pyrewton (the Python 3 program written to perform the compuational work during the PhD project) at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/).
+Information for the general operation of `pyrewton` and support troubleshooting can be found at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/).
 
 ## Table of Contents
 
@@ -26,15 +26,13 @@ Please find more detailed information for operation and troubleshooting pyrewton
 
 ### Files and Directories<a id="linkfile"><a/>
   
-The repository is separated into documentation and program modules.
-
-Inital plans and devleopment plans are stored within the [Wiki](https://github.com/HobnobMancer/PhD_Project_Scripts/wiki).
+The `pyrewton` repository is separated into documentation and program modules.
 
 - `assets/`: directory containing all files needed for the GitHub page.
 - `docs/`: directory containing all files used for build documentation.
-- `notebooks/`: directory containing all jupyter notebooks.
+- `notebooks/`: directory containing all jupyter notebooks. The notebooks present the operation of some scripts, providing an explanation of the specific computational processes of some scripts.
 - `tests/`: directory containing all unit-tests, and required test inputs and targets.
-- `supplementary/`: directory containing supplemenatry data, accompanying the PhD thesis.
+- `supplementary/`: directory containing supplemenatry data, accompanying the presentation of the results in _Hobbs et al., 2021_.
 - `pyrewton/`: directory containing all `pyrewton` program modules (including all submodules and Python scripts).
   - `parsers/`: directory containing all Python scripts for building parsers used in `pyrewton`.
   - `loggers/`: directory containing all Python scripts for building loggers in `pyrewton`.
@@ -47,12 +45,76 @@ Inital plans and devleopment plans are stored within the [Wiki](https://github.c
     - `search_uniprot_proteins.py`: script that searches the proteins retrieved from UniProt for those with indicated cazyme functionality
     - `search_genbank_annotations.py`: script that searches retrieved GenBank annotations for those with indicated cazyme functionality.
 
+  
+### Installation
 
-### Quick Start<a id="linkquick"><a/>
+1. Create a new virtual environment  
+  _To install Conda please see the [Conda documentation](https://docs.conda.io/en/latest/)._
+  ```bash
+  conda create -n pyrewton
+  ```
+2. Clone the `pyrewton` repository
+  ```bash
+  git clone https://github.com/HobnobMancer/pyrewton.git
+  cd pyrewton  # navigate into the repo root
+  ```
+3. Install `pyrewton`
+  ```bash
+  pip3 install -e .
+  ```
+4. Install the CAZyme classifiers into the correct directories
+  ```bash
+  python3 . cpt -p .
+  ```
+ 
+Following this method ensure all requirments are installed, as well as installing the CAZyme classifers into the correct directorys.
+  
+### Requirements
 
-The quickest way to install the programme `pyrewton` is to use pip: `pip3 install -e <path to DIRECTORY containing setup.py file>`. This will install all required Python packages and dependencies.<br/>
-<font color="red"><b>Note:</b></font> [Conda](https://docs.conda.io/en/latest/) will need to be installed on your system.
+POISx or Mac OS, or linux emulator
+Python version 3.7+
+Miniconda3 or Anaconda managed microenvironment, incorporated code checkers are included in list form in 'requirements.txt'.
+Miniconda3 environment file is also available in the GitHub repository: 'environment.yml'.
+For all required Python libraries please read 'requirements.txt'.
+  
+## Independent evaluation of CAZyme classifiers
+ 
+At the time of publishing `pyrewton` no independent evaluation of the widely used CAZyme classifiers dbCAN, CUPP and eCAMI had been performed. Additionally, previous evaluations had not included an evaluation of the performance of the tools to differentiate between CAZymes and non-CAZymes predict the CAZy class annotation and had not evaluated the multi-label CAZy family annotation performance of the classifiers.
+  
+### Creation of the test sets
+  
+The Python script `` was used to generate the test sets, and was invoked using the following command:
+```bash
 
+```
+  
+The yaml file containing the genomic accessions and taxonomy IDs of the genomes selected for the inclusion in the study is lcoated in [`supplementary/test_set_data`]().
+  
+In total 70 test sets were created for the evaluation, 39 from Bacteria genomes and 31 from Eukaryote genomes.
+  
+### Invokving the classifiers
+
+The Python script `` was used to invoke each CAZyme classifier (dbCAN, CUPP and eCAMI) for each test set created in the last step. The command listed below was used and should be run from ``. This is because dbCAN, CUPP and eCAMI use hard coded path to find their respective data, which requires `pyrewton` to navigate to the correct directors for the CAZyme classifers to function properly and this cannot be achieved if the script `` is not invoked in the correct directory.
+
+```bash
+  
+```
+
+### Calculating statistics
+
+To statistical evaluate the performance of the CAZyme classifiers, the Python script `` was invoked using the following command:
+```bash
+```
+
+### Presenting the findings
+
+The R notebook ``, located in `` was used to generate visualsiations of the statistical output from ``.
+ 
+To reuse this R notebook, the hard coded file import paths on lines .... need to be changed to match the location of the new `` ouput.
+
+## Creation of a local CAZome database
+ 
+  
 ### Notebooks <a id="linkuse"><a/>
 
 Jupyter notebooks are accessible here, but also via the terminal if the programme `pyrewton` is installed on your system.
