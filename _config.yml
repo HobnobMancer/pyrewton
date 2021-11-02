@@ -1,4 +1,4 @@
 theme: jekyll-theme-architect
 logo: '/assets/repophdcover.png'
-title: EastBIO PhD Project
-description: Repository containing pyrewton program and documentation written to identify engineering candidates for advanced biocatalysis in biofuel production
+title: pyrewton
+description: Repository containing the Python package pyrewton for the independent evaluation of CAZyme classifiers and creation of a comprehensive CAZome database.
