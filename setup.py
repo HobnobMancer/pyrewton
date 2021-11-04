@@ -65,7 +65,7 @@ else:
 
 setuptools.setup(
     name="pyrewton",
-    version="0.1.2",
+    version="0.1.3",
     # Metadata
     author="Emma E. M. Hobbs",
     author_email="eemh1@st-andrews.ac.uk",
@@ -105,6 +105,7 @@ setuptools.setup(
         "pyyaml>=5.3.1",
         "run-dbcan==2.0.11",
         "scipy>=1.5.4",
+        "sqlalchemy>=1.4.2",
         "tqdm>=4.53.0",
     ],
     packages=setuptools.find_packages(),
