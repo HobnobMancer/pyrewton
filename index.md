@@ -14,16 +14,27 @@
 This page is published as supplementary material to the main [`pyrewton` repo](https://github.com/HobnobMancer/pyrewton), and the independet evaluation of the CAZyme classifiers [dbCAN](zhange _et al._, 2018), [CUPP](), and [eCAMI]() presented in [Hobbs et al., 2021]().
 
 > Hobbs, E. E. M., Gloster, T. M., Chapman, S., Pritchard, L. (2021): Microbiology Society Annual Conference 2021. figshare. Poster. https://doi.org/10.6084/m9.figshare.14370836.v
+
 > Zhang, H., Yohe, T., Huang, L., Entwistle, S., Wu, P., Yang, Z., Busk, P.K., Xu, Y., Yin, Y. (2018) 'dbCAN2: a meta server for automated carbohydrate-active enzyme annotation', _Nucleic Acids Res._, 46(W1), pp. W95-W101. doi: 10.1093/nar/gky418
+
 > Barrett, K., Lange, L. (2019) 'Peptide-based functional annotation of carbohydrate-active enzymes by conserved unique peptide patterns (CUPP)', _Biotechnology for Biofuels_, 12(102).  https://doi.org/10.1186/s13068-019-1436-5
+
 > Xu, J., Zhang, H., Zheng, J., Dovedo, P., Yin, Y. (2020) 'eCAMI: simultaneous classification and motif identification for enzyme annotation', _Bioinformatics_, 36(7), pp. 2068-2075 https://doi.org/10.1093/bioinformatics/btz908
 
 This page covers includes the specific method used to perform the presented evaluation of the CAZyme classifiers listed above, including additional supplemenatry material to faciltiate the reporduction of the analysis.
 
 Information for the general operation of `pyrewton` and support troubleshooting can be found at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/).
 
+## Citation
+
+When using `pyrewton` please cite:
+
+> Hobbs, E. E. M., Gloster, T. M., Chapman, S., Pritchard, L. (2021): Microbiology Society Annual Conference 2021. figshare. Poster. https://doi.org/10.6084/m9.figshare.14370836.v
+
 ## Table of Contents
 
+- [pyrewton](#pyrewton)
+- [Citation](#citation)
 - [Program overview and installation](#program-overview-and-installation)
   - [Files and directories](#files-and-directories)
   - [Installation](#installation)
