@@ -53,11 +53,9 @@ import random
 import shutil
 import sys
 
-
 from typing import List, Optional
 
 from Bio import Entrez, SeqIO
-from Bio.Blast.Applications import NcbiblastpCommandline
 from cazy_webscraper.sql.sql_orm import Genbank, Session
 from saintBioutils.file_io import get_paths
 from saintBioutils.utilities import config_logger

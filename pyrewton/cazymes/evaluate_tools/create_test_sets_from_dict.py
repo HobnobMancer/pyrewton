@@ -51,12 +51,9 @@ import logging
 import random
 import shutil
 
-import pandas as pd
-
 from typing import List, Optional
 
 from Bio import Entrez, SeqIO
-from Bio.Blast.Applications import NcbiblastpCommandline
 from saintBioutils.utilities import config_logger
 from tqdm import tqdm
 
