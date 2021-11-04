@@ -1,7 +1,5 @@
 # Pyrewton
-## Independent, comprehensive benchmarking of CAZyme classifiers
-## &
-## Creation of a CAZome SQL database
+## Independent, comprehensive benchmarking of CAZyme classifiers & Creation of a CAZome SQL database
 
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3876218.svg)](https://doi.org/10.5281/zenodo.3876218)
