@@ -43,20 +43,23 @@
 Writes out a FASTA per candidate species, containing all the protein sequences to analysed by the
 CAZymes prediction tools. The datasets contain an equal number of CAZymes to non-CAZymes.
 
-Uses a local CAZyme database to identify CAZy annotated CAZymes.
+Uses a JSON file keyed by GenBank accession and valued by list of CAZy family annotations to
+identify CAZy annotated CAZymes.
 """
 
 
 import logging
 import random
 import shutil
+import sys
 
-import pandas as pd
 
 from typing import List, Optional
 
 from Bio import Entrez, SeqIO
 from Bio.Blast.Applications import NcbiblastpCommandline
+from cazy_webscraper.sql.sql_orm import Genbank, Session
+from saintBioutils.file_io import get_paths
 from saintBioutils.utilities import config_logger
 from tqdm import tqdm
 
@@ -66,7 +69,7 @@ from pyrewton.cazymes.evaluate_tools.test_sets import (
     compile_output_file_path,
     write_out_test_set,
 )
-from pyrewton.utilities.file_io import io_get_paths, make_output_directory, io_create_eval_testsets
+from pyrewton.utilities.file_io import make_output_directory, io_create_eval_testsets
 from pyrewton.utilities.parsers.cmd_parser_get_evaluation_dataset_from_dict import build_parser
 
 
@@ -115,14 +118,23 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     assembly_dict = io_create_eval_testsets.retrieve_assemblies_dict(args.yaml)
 
     # get dict containing the genomic assemblies of all CAZymes in CAZy
-    cazy_dict = io_create_eval_testsets.get_cazy_dict(args.cazy)
+    db_connection = io_create_eval_testsets.get_db_connection(args.cazy)
 
     temp_alignment_dir = args.output / "temp_alignment_dir"
 
     if args.genomes is not None:
         logger.info(f"Retrieving genomes from {args.genomes}")
-        genomic_assembly_paths = io_get_paths.get_genomic_assembly_paths(args)
+        genomic_assembly_paths = get_paths.get_file_paths(args.genomes, suffixes=[".gbff.gz"])
+        if len(genomic_assembly_paths) == 0:
+            logger.error(
+                "No genomic assembly (gbff.gz) files retrieved from input directory.\n"
+                "Check the path to the input directory is correct.\n"
+                "Terminanting program."
+            )
+            sys.exit(1)
+
         logger.info(f"Retrieved {len(genomic_assembly_paths)} genomic assemblies")
+
         genomic_path_dict = {}
         for _path in genomic_assembly_paths:
             filename = (_path.name).split(".")[0]
@@ -160,7 +172,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 non_cazymes,
                 noncazyme_fasta,
             ) = separate_cazymes_and_noncazymes(
-                cazy_dict,
+                db_connection,
                 fasta_path,
                 temp_alignment_dir,
                 assembly[0],
@@ -192,14 +204,14 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     shutil.rmtree(temp_alignment_dir)
 
 
-def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, assembly):
+def separate_cazymes_and_noncazymes(db_connection, input_fasta, temp_alignment_dir, assembly):
     """Identify CAZymes and non-CAZymes in the input FASTA file.
 
     Writes non-CAZymes to a FASTA file and builds a non-CAZyme database needed for later alignments
     to identify the non-CAZymes that are most similar to the CAZymes (positive controls)
     selected for the test set.
 
-    :param session: open SQL database session
+    :param db_connection: open sqlalchemy connection to SQLite 3 database
     :param input_fasta: path to input FASTA file containing all protein seqs from a genomic assembly
     :param temp_alignment_dir: path to dir where alignment inputs/outputs are written
     :param assmebly: genomic assembly accessions retrieved from input yaml file
@@ -230,14 +242,18 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
             sequence = seq_record.seq
 
             # get the CAZyme classification, 1 = CAZyme, 0 = non-CAZyme
-            try:
-                cazy_dict[accession]
+            with Session(bind=db_connection) as session:
+                gbk_query = session(Genbank).\
+                    filter(Genbank.genbank_accession == accession).\
+                    all()
+            
+            if len(gbk_query) != 0:
                 cazyme_classification = 1
                 if accession not in cazyme_accessions:
                     cazyme_accessions.add(accession)
                     cazymes.append(Protein(accession, sequence, cazyme_classification))
 
-            except KeyError:
+            else:
                 cazyme_classification = 0
                 non_cazymes[accession] = Protein(accession, sequence, cazyme_classification)
                 # write to FASTA file

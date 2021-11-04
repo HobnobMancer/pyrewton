@@ -68,11 +68,11 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from saintBioutils.utilities import config_logger
 from tqdm import tqdm
 from typing import List, Optional
 
 from pyrewton.cazymes.evaluate_tools import stats
-from pyrewton.utilities import config_logger
 from pyrewton.utilities.file_io import make_output_directory, io_create_eval_testsets
 from pyrewton.utilities.parsers.cmd_parser_calc_stats import build_parser
 

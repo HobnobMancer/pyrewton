@@ -48,11 +48,11 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from saintBioutils.utilities import config_logger
 from tqdm import tqdm
 from typing import List, Optional
 
 from pyrewton.cazymes.evaluate_tools.tools import invoke_prediction_tools
-from pyrewton.utilities import config_logger
 from pyrewton.utilities.parsers.cmd_parser_predict_cazymes import build_parser
 from pyrewton.utilities.file_io import make_output_directory, io_get_paths
 
