@@ -1,5 +1,7 @@
 # Pyrewton
-## Independent, comprehensive benchmarking of CAZyme classifiers and Creation of a CAZome SQL database
+## Independent, comprehensive benchmarking of CAZyme classifiers
+## &
+## Creation of a CAZome SQL database
 
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3876218.svg)](https://doi.org/10.5281/zenodo.3876218)
@@ -11,7 +13,12 @@
 [![Python](https://img.shields.io/badge/Python-v3.7.---orange)](https://www.python.org/about/)
 [![Research](https://img.shields.io/badge/Bioinformatics-Protein%20Engineering-ff69b4)](http://www.eastscotbiodtp.ac.uk/eastbio-student-cohort-2019)
 
-This page is published as supplementary material to the main [`pyrewton` repo](), and the independet evaluation of the CAZyme classifiers [dbCAN](), [CUPP](), and [eCAMI]() presented in [Hobbs et al., 2021]().
+This page is published as supplementary material to the main [`pyrewton` repo](https://github.com/HobnobMancer/pyrewton), and the independet evaluation of the CAZyme classifiers [dbCAN](zhange _et al._, 2018), [CUPP](), and [eCAMI]() presented in [Hobbs et al., 2021]().
+
+> Hobbs, E. E. M., Gloster, T. M., Chapman, S., Pritchard, L. (2021): Microbiology Society Annual Conference 2021. figshare. Poster. https://doi.org/10.6084/m9.figshare.14370836.v
+> Zhang, H., Yohe, T., Huang, L., Entwistle, S., Wu, P., Yang, Z., Busk, P.K., Xu, Y., Yin, Y. (2018) 'dbCAN2: a meta server for automated carbohydrate-active enzyme annotation', _Nucleic Acids Res._, 46(W1), pp. W95-W101. doi: 10.1093/nar/gky418
+> Barrett, K., Lange, L. (2019) 'Peptide-based functional annotation of carbohydrate-active enzymes by conserved unique peptide patterns (CUPP)', _Biotechnology for Biofuels_, 12(102).  https://doi.org/10.1186/s13068-019-1436-5
+> Xu, J., Zhang, H., Zheng, J., Dovedo, P., Yin, Y. (2020) 'eCAMI: simultaneous classification and motif identification for enzyme annotation', _Bioinformatics_, 36(7), pp. 2068-2075 https://doi.org/10.1093/bioinformatics/btz908
 
 This page covers includes the specific method used to perform the presented evaluation of the CAZyme classifiers listed above, including additional supplemenatry material to faciltiate the reporduction of the analysis.
 
@@ -19,32 +26,36 @@ Information for the general operation of `pyrewton` and support troubleshooting 
 
 ## Table of Contents
 
-1. [Files and Directories](#linkfiles)
-2. [Quick Start](#linkquick)
-3. [Notebooks](#linkuse)
-4. [Help](#linkhelp)
+- [Program overview and installation](#program-overview-and-installation)
+  - [Files and directories](#files-and-directories)
+  - [Installation](#installation)
+  - [Requirements](#requirements)
+- [Independent evaluation of CAZyme classifiers](#independent-evaluation-of-cazyme-classifiers)
+  - [Creation of the test sets](#creation-of-test-sets)
+  - [Invoking the classifiers](#invoking-the-classifiers)
+  - [Calculating the statistics](#calculating-the-statistics)
+  - [Presenting the findings](#presenting-the-findings)
+- [Creating a local CAZome database](#creating-a-local-cazome-database)
+- [Notebooks](#notebooks)
+- [Help](#help)
 
-### Files and Directories<a id="linkfile"><a/>
+## Program overview and installation
+
+### Files and directories
   
 The `pyrewton` repository is separated into documentation and program modules.
 
-- `assets/`: directory containing all files needed for the GitHub page.
-- `docs/`: directory containing all files used for build documentation.
-- `notebooks/`: directory containing all jupyter notebooks. The notebooks present the operation of some scripts, providing an explanation of the specific computational processes of some scripts.
-- `tests/`: directory containing all unit-tests, and required test inputs and targets.
-- `supplementary/`: directory containing supplemenatry data, accompanying the presentation of the results in _Hobbs et al., 2021_.
-- `pyrewton/`: directory containing all `pyrewton` program modules (including all submodules and Python scripts).
-  - `parsers/`: directory containing all Python scripts for building parsers used in `pyrewton`.
-  - `loggers/`: directory containing all Python scripts for building loggers in `pyrewton`.
-  - `file_io/`: directory containing all Python scripts for handling directories and files in `pyrewton`.
-  - `genbank/`: directory containing all submodules that are involved in retrieving NCBI GenBank files, and retrieving data from GenBank files.
-    - `genbank/get_genomes_ncbi/`: directory containing the submodule `get_genomes_ncbi`, which takes a list of species (in a plain text file) and downloads all directly linked GenBank (.gbff) files from the NCBI Assembly database.
-    - `genbank/get_genbank_annotations/`: directory containing the submodule `get_genbank_annoations`, which retrieves all protein annotations from GenBank (.gbff) files.
-  - `annotations/`: directory containing Python scripts that make the up `annotations` module of `pyrewton`, which are involved in identifying cazyme annotations.
-    - `get_uniprot_proteins.py`: script that retrieves all protein entries from UniProt for each species containing in a dataframe passed to the script.
-    - `search_uniprot_proteins.py`: script that searches the proteins retrieved from UniProt for those with indicated cazyme functionality
-    - `search_genbank_annotations.py`: script that searches retrieved GenBank annotations for those with indicated cazyme functionality.
-
+- `assets`: Directory containing all files needed for the GitHub page.
+- `docs`: Directory containing all files used for building the [documentation](https://pyrewton.readthedocs.io/en/latest/).
+- `notebooks`: Directory containing all jupyter notebooks. The notebooks present the operation of some scripts, providing an explanation of the specific computational processes of some scripts.
+- `tests`: Directory containing all unit-tests, and required test inputs and targets.
+- `supplementary`: Directory containing supplemenatry data, accompanying the presentation of the results in _Hobbs et al., 2021_.
+- `pyrewton`: Directory containing all `pyrewton` program modules (including all submodules and Python scripts).
+  - `cazymes`: Module for predicting CAZy family annotations and evaluating CAZyme prediction tools
+  - `genbank`: Module for retrieving and parsing data from [NCBI GenBank](https://www.ncbi.nlm.nih.gov/genbank/)
+  - `utilities`: Module containing program utility functions and methods
+    - `file_ui`: Submodule for handling file inputs and outputs
+    - `parsers`: Submodule for building cmd-line args parsers
   
 ### Installation
 
@@ -67,7 +78,7 @@ The `pyrewton` repository is separated into documentation and program modules.
   python3 . cpt -p .
   ```
  
-Following this method ensure all requirments are installed, as well as installing the CAZyme classifers into the correct directorys.
+Following this method ensures all requirments are installed, as well as installing the CAZyme classifers into the correct directorys.
   
 ### Requirements
 
@@ -112,7 +123,7 @@ The R notebook ``, located in `` was used to generate visualsiations of the stat
  
 To reuse this R notebook, the hard coded file import paths on lines .... need to be changed to match the location of the new `` ouput.
 
-## Creation of a local CAZome database
+## Creating a local CAZome database
  
   
 ### Notebooks <a id="linkuse"><a/>
@@ -139,8 +150,8 @@ Again note that these notebooks contain exerts of code to facilitate the explana
 
 If you are new or have little experience of using command-line programmes and/or the Python coding language, please read the appropriate notebooks  before using the associated scripts and posting queries/issues on the GitHub pages. The notebooks have been written so that those of all experience levels should be able to understand how and why the script operates.
 
-### Help<a id="linkhelp"><a/>
+### Help
 
-Many of the common errors expected to arise during the operation of the scripts provided in this repository are named in the repository README, including the probable causes of these issues.
-
+More indepth documentation is hosted at [Read the Docs](https://pyrewton.readthedocs.io/en/latest/). This includes listing all optional flags for configuring the operation of `pyrewton` and more details on the operation of each script/entry point in `pyrewton`.
+ 
 Please raise any issues with any of the programmes at the GitHub issues pages for this repository, by following [the link](https://github.com/HobnobMancer/PhD_Project_Scripts/issues).
