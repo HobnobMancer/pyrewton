@@ -115,9 +115,20 @@ The script `create_test_sets_from_db.py` is used when retrieving CAZy family ann
 The script `create_test_sets_from_dict.py` is used when retrieving CAZy family annotations from a JSON file keyed by GenBank accessions and valued by list of CAZy family annotations.
 The input aurgements for both scripts are the same:
 - User email address: Required by NCBI Entrez for downloading genomes to produce the test sets from
-- YAML file path: Path to a YAMl file keyed by NCBI taxonomy IDs and valued by list of GenBank accessions, this defines the genomes to be downloaded and used to create the test sets
+- YAML file path: Path to a YAMl file keyed by NCBI taxonomy IDs and valued by list of GenBank assemblies, this defines the genomes to be downloaded and used to create the test sets
 - Path to CAZy JSON or local CAZyme database db file
 - Path to an output directory to write the output to - _this output directory and its parents do not need to already exist_
+
+Specifically, in the YAML file, each selected GenBank genomic assembly selected to be used to create a test set 
+is represented as a list. The first element is the **genomic accession number**, the second element 
+is the **assembly name**. For example:
+```yaml
+txid498019:
+    - [GCA_003013715.2, ASM301371v2]
+    - [GCA_008275145.1, ASM827514v1]
+txid573826:
+    - [GCA_000026945.1, ASM2694v1]
+```
 
 `create_test_sets_*.py` create an output directory, at the location specified by the user. Inside this output directory, four directories and a plain text file are produced:
 - `alignment_scores`: contains `.csv` files of the BLAST all-versus-all scores of the selected CAZymes query against all non-CAZymes
