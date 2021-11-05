@@ -105,8 +105,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     check_cwd()
 
     # If specified output directory for genomic files, create output directory
-    if args.output is not sys.stdout:
-        make_output_directory(args.output, args.force, args.nodelete)
+    make_output_directory(args.output, args.force, args.nodelete)
 
     # invoke prediction tools and build prediciton Proteome instances
     get_predictions(args)
