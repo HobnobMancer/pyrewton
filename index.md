@@ -82,9 +82,9 @@ The `pyrewton` repository is separated into documentation and program modules.
   ```bash
   pip3 install -e .
   ```
-4. Install the CAZyme classifiers into the correct directories
+4. Install the CAZyme classifiers into the correct directories. This **must** be run from the root of the repository to ensure the CAZyme classifiers are written to the correct directories.
   ```bash
-  python3 . cpt -p .
+  python3 setup.py cpt -p .
   ```
  
 Following this method ensures all requirments are installed, as well as installing the CAZyme classifers into the correct directorys.
@@ -153,11 +153,22 @@ In total 70 test sets were created for the evaluation, 39 from Bacteria genomes 
   
 ### Invokving the classifiers
 
-The Python script `` was used to invoke each CAZyme classifier (dbCAN, CUPP and eCAMI) for each test set created in the last step. The command listed below was used and should be run from ``. This is because dbCAN, CUPP and eCAMI use hard coded path to find their respective data, which requires `pyrewton` to navigate to the correct directors for the CAZyme classifers to function properly and this cannot be achieved if the script `` is not invoked in the correct directory.
+The Python script `predict_cazymes.py` is used to invoke each CAZyme classifier (dbCAN, CUPP and eCAMI) for each test set created in the last step.  
 
+`predict_cazymes.py` **must** be run from the `pyrewton/cazymes/evaluation/` directory. This is because dbCAN, CUPP and eCAMI use hard coded paths to find their respective datasets. This requires `pyrewton` to navigate to the correct directories for the CAZyme classifers to function properly and this cannot be achieved if the script `predict_cazymes.py` is not invoked in the correct directory.
+
+`predict_cazymes.py` takes 2 positional arguments:
+1. The path to the directory containing the test sets created using `create_test_sets_*.py`
+2. The path to the output directory (this directory and it's parents do not need to already exist. `pyrewton` will construct these)
+
+The command for `predict_cazymes.py` takes the following structure:
 ```bash
-  
+python3 predict_cazymes.py \
+  <path to dir containing test sets> \
+  <path to output diir>
 ```
+
+Additional optional flags are laid out in the [documentation]().
 
 ### Calculating statistics
 
