@@ -165,8 +165,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 assembly_path,
                 assembly[0],
                 txid,
-                args.output,
-                subfolder="extracted_protein_seqs",
+                extract_seq_dir,
             )
 
             # differentiate between CAZymes and non-CAZymes and get test set of 100 known CAZymes
@@ -182,6 +181,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 fasta_path,
                 temp_alignment_dir,
                 assembly[0],
+                args,
             )
 
             if selected_cazymes is None:

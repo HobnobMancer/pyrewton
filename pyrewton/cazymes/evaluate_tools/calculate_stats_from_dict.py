@@ -68,7 +68,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from saintBioutils.utilities import config_logger
+from saintBioutils.utilities.logger import config_logger
 from tqdm import tqdm
 from typing import List, Optional
 

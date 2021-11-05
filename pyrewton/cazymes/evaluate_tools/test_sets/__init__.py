@@ -46,6 +46,8 @@ import random
 
 import pandas as pd
 
+from pathlib import Path
+
 from Bio.Blast.Applications import NcbiblastpCommandline
 from tqdm import tqdm
 
@@ -94,11 +96,12 @@ def align_cazymes_and_noncazymes(cazyme_fasta, noncazyme_fasta, temp_alignment_d
 def compile_output_file_path(fasta_path, args):
     """Compile paths write out the final test sets (FASTA files).
 
-    :param fasta_path: path to fasta file containing protein sequences extracted from genome
+    :param fasta_path: str, path to fasta file containing protein sequences extracted from genome
     :param args: cmd-line args parser
 
     Return path to output FASTA file.
     """
+    fasta_path = Path(fasta_path)
     genomic_assembly = fasta_path.name
     fasta = genomic_assembly.replace(".fasta", "_test_set.fasta")
     fasta = args.output / "test_sets" / fasta
@@ -191,8 +194,8 @@ def write_out_test_set(
         with open(final_fasta, "a") as fh:
             fh.write(file_content)
 
-    cazome_genome_coverage = (total_cazymes / total_proteins) * 100
-    cazome_coverage = (total_cazymes / args.sample_size) * 100
+    cazome_genome_coverage = ((total_cazymes / total_proteins) * 100)
+    cazome_coverage = ((args.sample_size / total_cazymes) * 100)
 
     log_message = (
         f"{genomic_acc}\t"

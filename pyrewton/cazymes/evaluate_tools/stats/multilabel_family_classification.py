@@ -26,7 +26,7 @@ import pandas as pd
 
 from tqdm import tqdm
 
-from cazy_webscraper.sql.sql_orm import CazyFamily, Genbank, Session
+from scraper.sql.sql_orm import CazyFamily, Genbank, Session
 from sklearn.metrics import fbeta_score, confusion_matrix, recall_score, precision_score
 from sklearn.metrics.cluster import rand_score, adjusted_rand_score
 

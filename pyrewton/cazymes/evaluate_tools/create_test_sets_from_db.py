@@ -57,10 +57,10 @@ from datetime import datetime
 from typing import List, Optional
 
 from Bio import Entrez, SeqIO
-from cazy_webscraper.sql.sql_orm import Genbank, Session, get_db_connection
-from saintBioutils.file_io import get_paths
+from scraper.sql.sql_orm import Genbank, Session, get_db_connection
 from saintBioutils.genbank import get_genomes, parse_genomes
-from saintBioutils.utilities import config_logger
+from saintBioutils.utilities.file_io import get_paths
+from saintBioutils.utilities.logger import config_logger
 from tqdm import tqdm
 
 from pyrewton.cazymes.evaluate_tools.test_sets import (

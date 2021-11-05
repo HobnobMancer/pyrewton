@@ -26,7 +26,7 @@ import numpy as np
 
 from tqdm import tqdm
 
-from cazy_webscraper.sql.sql_orm import Genbank, Session
+from scraper.sql.sql_orm import Genbank, Session
 from sklearn.metrics import confusion_matrix, fbeta_score, precision_score, recall_score
 from sklearn.utils import resample
 

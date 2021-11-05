@@ -69,8 +69,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
-from cazy_webscraper.sql.sql_orm import get_db_connection
-from saintBioutils.utilities import config_logger
+from scraper.sql.sql_orm import get_db_connection
+from saintBioutils.utilities.logger import config_logger
 from tqdm import tqdm
 
 from pyrewton.cazymes.evaluate_tools import stats

@@ -34,7 +34,7 @@ import pandas as pd
 from datetime import datetime
 from pathlib import Path
 
-from cazy_webscraper.sql.sql_orm import CazyFamily, Genbank, Session
+from scraper.sql.sql_orm import CazyFamily, Genbank, Session
 from tqdm import tqdm
 
 from pyrewton.cazymes.evaluate_tools.parse import (
