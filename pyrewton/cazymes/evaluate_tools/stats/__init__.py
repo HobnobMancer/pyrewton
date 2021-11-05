@@ -34,6 +34,7 @@ import pandas as pd
 from datetime import datetime
 from pathlib import Path
 
+from cazy_webscraper.sql.sql_orm import CazyFamily, Genbank, Session
 from tqdm import tqdm
 
 from pyrewton.cazymes.evaluate_tools.parse import (
@@ -433,10 +434,22 @@ def add_fam_freq(testset, freq_dict, cazy):
             protein_accession = line.replace(">", "")
             
             # check if protein is a CAZy classified CAZyme
-            try:
-                fam_annotations = cazy[protein_accession]
-            except KeyError:
-                continue
+            if data_source == 'db':
+                with Session(bind=cazy) as session:
+                    fam_query = session.query(CazyFamily).\
+                        join(CazyFamily, Genbank.families).\
+                        filter(Genbank.genbank_accession == protein_accession).\
+                        all()
+                
+                fam_annotations = [fam.family for fam in fam_query]
+                if len(fam_annotations) == 0:  # non-CAZyme
+                    continue
+
+            else:
+                try:
+                    fam_annotations = cazy[protein_accession]
+                except KeyError:
+                    continue
                 
             for fam in fam_annotations:
                 try:
