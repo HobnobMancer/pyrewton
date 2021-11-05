@@ -104,6 +104,7 @@ setuptools.setup(
         "pandas>=1.0.3",
         "pyyaml>=5.3.1",
         "run-dbcan==2.0.11",
+        "saintBioutils",
         "scipy>=1.5.4",
         "sqlalchemy>=1.4.2",
         "tqdm>=4.53.0",
