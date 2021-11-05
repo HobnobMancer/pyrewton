@@ -44,7 +44,7 @@ classifier [dbCAN](https://github.com/linnabrown/run_dbcan),
 [CUPP](https://www.bioengineering.dtu.dk/english/researchny/research-sections/section-for-protein-chemistry-and-enzyme-technology/enzyme-technology/cupp), 
 and [eCAMI](https://github.com/zhanglabNKU/eCAMI).
 
-``pyrewton`` provides a reproducible method of independently and comprehensively evaluating CAZyme classifiers. 
+``pyrewton`` provides a reproducible method for independently and comprehensively evaluating CAZyme classifiers. 
 Specifically, evaluating the ability of CAZyme classifiers to:
 - Differentiate between CAZymes and non-CAZymes
 - Predict CAZy class annotations
