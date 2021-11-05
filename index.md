@@ -105,7 +105,11 @@ At the time of publishing `pyrewton` no independent evaluation of the widely use
   
 The Python scripts `create_test_sets*.py` are used to generate the test sets. They are invoked using the same command structure:
 ```bash
-create_test_sets*.py <user email> <yaml file path> <path to cazy json or db> <path to output dir>
+create_test_sets*.py \
+  <user email> \
+  <yaml file path> \
+  <path to cazy json or db> \
+  <path to output dir>
 ```
 The script `create_test_sets_from_db.py` is used when retrieving CAZy family annotations from a local CAZyme database created using [`cazy_webscraper`](https://github.com/HobnobMancer/cazy_webscraper).
 The script `create_test_sets_from_dict.py` is used when retrieving CAZy family annotations from a JSON file keyed by GenBank accessions and valued by list of CAZy family annotations.
@@ -134,7 +138,7 @@ A full list of optional arguments are listed at [Read the Docs]().
 
 The yaml file containing the genomic accessions and taxonomy IDs of the genomes selected for the inclusion in the study is lcoated in [`supplementary/mar_2021_eval/selected_genomes.yaml`](), as well as the JSON file of CAZy family annotations [`supplementary/mar_2021_eval/cazy_dict_2021-03-25.json`]() - _although we strongly recommend using the local CAZyme database appraoch for future evaluations_.
   
-In total 70 test sets were created for the evaluation, 39 from Bacteria genomes and 31 from Eukaryote genomes. 
+In total 70 test sets were created for the evaluation, 39 from Bacteria genomes and 31 from Eukaryote genomes. A complete list of the proteins (identified by their GenBank accession number) used in the test sets for the evaluation presented in Hobbs _et al._,_ is located in [`supplementary/mar_2021_eval/test_set_composition.json`]()
   
 ### Invokving the classifiers
 
