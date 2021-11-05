@@ -3,97 +3,140 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+=====================================
 Welcome to pyrewton's documentation!
-====================================
-
-.. image:: docu_cover.jpg
-   :width: 60%
-   :align: left
-   :alt: Logos of EastBIO, BBSRC, University of St Andrews and James Huttton Institute
+=====================================
 
 | 
-| Version v0.1.1 2020/06/04
+| Version v0.1.3 2021/11/05
 | DOI: 10.5281/zendo.3876218 
 | `GitHub repository <https://github.com/HobnobMancer/PhD_Project_Scripts/tree/master>`_
 | 
 
+|DOI| |Funding| |PhD licence| |CircleCI| |codecov| |Documentation
+Status| |Python| |Research|
+
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3876218.svg
+   :target: https://doi.org/10.5281/zenodo.3876218
+.. |Funding| image:: https://img.shields.io/badge/Funding-EASTBio-blue
+   :target: http://www.eastscotbiodtp.ac.uk/
+.. |PhD licence| image:: https://img.shields.io/badge/Licence-MIT-green
+   :target: https://github.com/HobnobMancer/PhD_Project_Scripts/blob/master/LICENSE
+.. |CircleCI| image:: https://circleci.com/gh/HobnobMancer/pyrewton.svg?style=shield
+   :target: https://circleci.com/gh/HobnobMancer/pyrewton
+.. |codecov| image:: https://codecov.io/gh/HobnobMancer/pyrewton/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/HobnobMancer/pyrewton
+.. |Documentation Status| image:: https://readthedocs.org/projects/pyrewton/badge/?version=latest
+   :target: https://pyrewton.readthedocs.io/en/latest/?badge=latest
+.. |Python| image:: https://img.shields.io/badge/Python-v3.7.---orange
+   :target: https://www.python.org/about/
+.. |Research| image:: https://img.shields.io/badge/Bioinformatics-Protein%20Engineering-ff69b4
+   :target: http://www.eastscotbiodtp.ac.uk/eastbio-student-cohort-2019
+
+-----------
 Overview
-========
+-----------
 
-Pyrewton is a Python3 package for the identification of Carbohydrate Active enZymes (CAZymes) from candidate species, providing the user a complete CAZyome (all CAZymes encoded within a genome) for each candidate species.
-Pyrewton invokes and statistically evaluates three CAZyme prediction tools [dbCAN](https://github.com/linnabrown/run_dbcan), [CUPP](https://www.bioengineering.dtu.dk/english/researchny/research-sections/section-for-protein-chemistry-and-enzyme-technology/enzyme-technology/cupp), and [eCAMI](https://github.com/zhanglabNKU/eCAMI).
+``pyrewton`` is a Python3 package for the identification of Carbohydrate Active enZymes (CAZymes) 
+from candidate species, providing the user a complete CAZyome (all CAZymes encoded within a genome) 
+for each candidate species, and the independent and comprehensive evaluation of the CAZyme prediction tools /
+classifier [dbCAN](https://github.com/linnabrown/run_dbcan), 
+[CUPP](https://www.bioengineering.dtu.dk/english/researchny/research-sections/section-for-protein-chemistry-and-enzyme-technology/enzyme-technology/cupp), 
+and [eCAMI](https://github.com/zhanglabNKU/eCAMI).
 
-Pyrewton is designed to be run at the command line and is free to use under the MIT license, with proper recognition.
+``pyrewton`` provides a reproducible method of independently and comprehensively evaluating CAZyme classifiers. 
+Specifically, evaluating the ability of CAZyme classifiers to:
+- Differentiate between CAZymes and non-CAZymes
+- Predict CAZy class annotations
+- Predict multi-label CAZy class annotations
+- Predict CAZy family annotations
+- Predict multi-label CAZy family annotations
 
-Pyrewton supports:
-- Downloading of all genomic assemblies (as GenBank files .gbff) from the [NCBI Assembly database](https://www.ncbi.nlm.nih.gov/assembly)
-associated with each candidate species passed to the programme
-- Retrieval of all annotated protein sequences from GenBank (.gbff) files
-- Retrieve proteins entries from [UniProtKB](https://www.uniprot.org/), using a JSON file to configure the queries. Writing out the protein data to a summary dataframe and protein sequence to a FASTA file.
+``pyrewton`` can also be used to compile a comprehensize CAZome database. ``pyrewton`` downloads all 
+GenBank genomic assemblies for a list of candidate species provided as NCBI taxonomy IDs or scientific names. 
+Protein sequences are then extracted from the assemblies and queried against a local CAZyme database (which **must** 
+be created using [``cazy_webscraper``](https://hobnobmancer.github.io/cazy_webscraper/)). CAZy family annotations 
+are retrieved from the local CAZyme database and stored in a local CAZome SQLite3 database, build by ``pyrewton``. 
+Proteins extracted from the genomic assemblies and not found in the local CAZyme database are parsed by dbCAN to 
+faciltiate annotating the comprehensive CAZome. ``pyrewton`` can add additional protein information (PDB accession, 
+EC numbers and protein names) from [UniProt](https://www.uniprot.org/) to the local CAZome database, 
+to create a comprehensive CAZome 
+database.
 
-Features currently in development:
-- Use the 3rd-party tools dbCAN, CUPP and eCAMI to predict which proteins within a FASTA file (generated by searching genomic assemblies and querying UniProt) are CAZymes
-- Evaluate the accuracy of the CAZyme prediction tools to distinguish between CAZyme and non-CAZyme protein sequences
-- Evaluate the accuracy of the CAZyme prediction tools to the correct CAZy family
-- Produce a report of the CAZyme prediction tool evaluation
+Supplemenatry for the published independent evaluation of dbCAN, CUPP and eCAMI presented in Hobbs _et al._, 2021 is 
+provided via `GitPages <https://hobnobmancer.github.io/pyrewton/>`_
 
-*More detailed documentation for each module is linked to in the contents table below, including links to documentation to help with trouble shooting.*
-
+------------
 Contents
-========
+-------------
 
 .. toctree::
    :maxdepth: 3
 
-   genbank
-   cazymes
+   evaluating
+   test-sets
    trouble-shooting
    notebooks
    license
 
+--------------
+Citation
+--------------
 
+If you use ``pyrewton`` for indpendent benchmarking CAZyme classifers and/or compiling a local CAZome 
+SQLite3 database, please cite our work:
+
+   Hobbs, E. E. M., Gloster, T. M., Chapman, S., Pritchard, L. (2021): Microbiology Society Annual Conference 2021. figshare. Poster. https://doi.org/10.6084/m9.figshare.14370836.v
+
+If using ``pyrewton`` for indpendent benchmarking CAZyme classifers do not forget to cite the tools you 
+are evaluating.
+
+---------------
 Requirements
-============
+---------------
 
 Python version 3.7+
 Miniconda3 managed microenvironment, incorporated code checkers are included in list form in 'requirements.txt'.
 Miniconda3 environment file is also available in the GitHub repository: 'environment.yml'.
 
-
+--------------
 Installation
-============
+--------------
 
-1. Navigate the directory you wish to store pyrewton in, then clone this repository.
-`git clone https://github.com/HobnobMancer/pyrewton.git`
+1. Create a new virtual environment. (To install Conda please see the Conda `documentation <https://docs.conda.io/projects/conda/en/latest/user-guide/install/>`_)
+.. code-block:: bash
+   conda create -n pyrewton
 
-1. Create a virtual environment with dependencies, then activate the environment.   
-`conda create -n <venv_name> python=3.8 diamond hmmer prodigal -c conda-forge -c bioconda`   
-`conda activate <venv_name>`
+2. Clone the ``pyrewton`` repository
+.. code-block:: bash
+   git clone https://github.com/HobnobMancer/pyrewton.git
+   cd pyrewton  # navigate into the repo root
 
-2. Install all requirements from requirements.txt file. The requirements.txt file is stored in the root of this repository.  
-`pip3 install -r <path to requirements.txt file>`   
+3. Install ``pyrewton`` 
+.. code-block:: bash
+   pip3 install -e .
 
-3. Install pyrewton.
-`pip3 install -e <path to directory containing setup.py file>`   
-Do not forget to use the **-e** option when install using pip3, otherwise each time pyrewton is invoked a ModuleNotFound error will be raised. Pass the path to the **directory** containign the setup.py file not the path to the setup.py file; if you are currently in the root directory of the repoistory where the file is located, simply use '.' to indicate the current working directory.
+4. Install the CAZyme classifiers into the correct directories
+.. code-block:: bash
+   python3 . cpt -p .
 
-4. Install third party CAZyme predicition tools.
+.. TIP::
+   Following this method ensures all requirments are installed, as well as installing the CAZyme 
+   classifers into the correct directories. This is essential becuase the CAZyme classifiers use 
+   hard coded paths to access their respective datasets. ``pyrewton`` is required to navigate to the 
+   correct directory to invoke these classifiers, so that the classifers can access their respective 
+   datasets.
 
-To install dbCAN follow the instructions within their [GitHub repository](https://github.com/linnabrown/run_dbcan), **BUT ignore** steps 1 and 2 of their installtion guide, becuase the necessary virtual environment was already created in the second step of this installation and it meets all requirements of dbCAN. Install dbCAN within **'pyrewton/cazymes/prediction/tools/dbcan'** directory within the repository, otherwise pyrewton will not be able to find the tool.  
-
-To install eCAMI follow the instructions within their [GitHub respository](https://github.com/yinlabniu/eCAMI). eCAMI must be installed within the directory pyrewton/cazymes/prediction/tools/ecami. Following the method from the eCAMI repository will write eCAMI to 'pyrewton/cazymes/prediction/tools/ecami/**eCAMI**', to avoid this perform the installation within 'pyrewton/cazymes/prediction/tools' and rename 'eCAMI' to 'ecami', thus install eCAMI in **'pyrewton/cazymes/prediction/tools/ecami'**.   
-
-To install CUPP download the CUPP files from the [DTU Bioengineering server](https://www.bioengineering.dtu.dk/english/ResearchNy/Research-Sections/Section-for-Protein-Chemistry-and-Enzyme-Technology/Enzyme-Technology/CUPP), and store the files in **'pyrewton/cazymes/prediction/tools/cupp'**. It is not necessary to download all the files becuase the .tar and .tar.gz directories each contain all the files, therefore, download either the .tar _or_ .tar.gz directories and unpackage them or download all the files located within 'CUPP_v1.0.14'.
-
-
+---------------
 Notebooks
-=========
+---------------
 
 Jupyter notebook environments were crated, documenting how pyrewton was used during the EastBIO 2019-2023 PhD Project,
 the GitHub pages for which are `available here <https://hobnobmancer.github.io/pyrewton/>`_. These can be used as examples for how to use pyrewton in research.
 
+------------------------------
 Help, Contribute and Support
-============================
+------------------------------
 
 Many of the common errors expected to arise during the operation of the scripts provided in this repository are
 covered in this documentation, including the probable causes of these issues.
