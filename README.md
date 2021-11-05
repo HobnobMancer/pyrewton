@@ -46,6 +46,11 @@ Development plans are stored within the [Wiki](https://github.com/HobnobMancer/p
 
 If you're coming from the [Microbiology Society Conference poster](https://doi.org/10.6084/m9.figshare.14370836.v1), and want to see how to repeat the analysis, please navigate to `pyrewton/cazymes/precition`. This directory contains an additional README specifically for the independent evaluation of the CAZyme predictiont tools dbCAN, CUPP and eCAMI.
 
+In the above study, Hobbs _et al._, 2021, the following version of the CAZyme classifiers were evaluated:
+- dbCAN: v2.0.11
+- CUPP: v1.0.14
+- eCAMI: no version given, April 2020 release
+
 ## Installation
 
 The easiest method is to use pip to install `pyrewton` and all requirements.
