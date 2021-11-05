@@ -198,7 +198,7 @@ def write_out_test_set(
         with open(final_fasta, "a") as fh:
             fh.write(file_content)
     
-    with open(composition_log_content, 'a') as fh:
+    with open(composition_log_path, 'a') as fh:
         for protein in selected_cazymes:
             new_line = f"{genomic_acc}\t{protein.accession}\t1\n"
             fh.write(new_line)
