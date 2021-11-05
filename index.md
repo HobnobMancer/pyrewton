@@ -11,7 +11,7 @@
 [![Python](https://img.shields.io/badge/Python-v3.7.---orange)](https://www.python.org/about/)
 [![Research](https://img.shields.io/badge/Bioinformatics-Protein%20Engineering-ff69b4)](http://www.eastscotbiodtp.ac.uk/eastbio-student-cohort-2019)
 
-This page is published as supplementary material to the main [`pyrewton` repo](https://github.com/HobnobMancer/pyrewton), and the independet evaluation of the CAZyme classifiers [dbCAN](zhange _et al._, 2018), [CUPP](), and [eCAMI]() presented in [Hobbs et al., 2021]().
+This page is published as supplementary material to the main [`pyrewton` repo](https://github.com/HobnobMancer/pyrewton), and the independent evaluation of the CAZyme classifiers [dbCAN](zhange _et al._, 2018), [CUPP](), and [eCAMI]() presented in [Hobbs et al., 2021]().
 
 > Hobbs, E. E. M., Gloster, T. M., Chapman, S., Pritchard, L. (2021): Microbiology Society Annual Conference 2021. figshare. Poster. https://doi.org/10.6084/m9.figshare.14370836.v
 
@@ -21,7 +21,7 @@ This page is published as supplementary material to the main [`pyrewton` repo](h
 
 > Xu, J., Zhang, H., Zheng, J., Dovedo, P., Yin, Y. (2020) 'eCAMI: simultaneous classification and motif identification for enzyme annotation', _Bioinformatics_, 36(7), pp. 2068-2075 https://doi.org/10.1093/bioinformatics/btz908
 
-This page covers includes the specific method used to perform the presented evaluation of the CAZyme classifiers listed above, including additional supplemenatry material to faciltiate the reporduction of the analysis.
+This page covers the specific method used to perform the presented evaluation of the CAZyme classifiers dbCAN, CUPP and eCAMI, including additional supplemenatry material to faciltiate the reporduction of the analysis, as presented in [Hobbs et al., 2021]().
 
 Information for the general operation of `pyrewton` and support troubleshooting can be found at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/).
 
@@ -103,14 +103,38 @@ At the time of publishing `pyrewton` no independent evaluation of the widely use
   
 ### Creation of the test sets
   
-The Python script `` was used to generate the test sets, and was invoked using the following command:
+The Python scripts `create_test_sets*.py` are used to generate the test sets. They are invoked using the same command structure:
 ```bash
-
+create_test_sets*.py <user email> <yaml file path> <path to cazy json or db> <path to output dir>
 ```
+The script `create_test_sets_from_db.py` is used when retrieving CAZy family annotations from a local CAZyme database created using [`cazy_webscraper`](https://github.com/HobnobMancer/cazy_webscraper).
+The script `create_test_sets_from_dict.py` is used when retrieving CAZy family annotations from a JSON file keyed by GenBank accessions and valued by list of CAZy family annotations.
+The input aurgements for both scripts are the same:
+- User email address: Required by NCBI Entrez for downloading genomes to produce the test sets from
+- YAML file path: Path to a YAMl file keyed by NCBI taxonomy IDs and valued by list of GenBank accessions, this defines the genomes to be downloaded and used to create the test sets
+- Path to CAZy JSON or local CAZyme database db file
+- Path to an output directory to write the output to - _this output directory and its parents do not need to already exist_
+
+`create_test_sets_*.py` create an output directory, at the location specified by the user. Inside this output directory, four directories and a plain text file are produced:
+- `alignment_scores`: contains `.csv` files of the BLAST all-versus-all scores of the selected CAZymes query against all non-CAZymes
+- `extracted_proteins_seqs`: FASTA files containing all extracted protein sequences from the downloaded genomic assemblies, one FASTA  file is created per genome and contains all extracted protein sequences from that one genome
+- `genomes`: contains the downloaded genomic assemlbies in `gbff.gz` format
+- `test_sets`: contains the tests sets (FASTA) files for be used as input for each CAZyme classifier. One test set is created per genome.
+- `cazome_coverage_<time stamp>.txt`: Contains the following headers and data:
+  - Genomic_accession: The accession of the genomic assembly
+  - Total_proteins: Total number of proteins extracted from the genomic assembly
+  - Total_CAZymes: Total number of CAZy annotated CAZymes extracted from the genomic assembly
+  - Genome_CAZome_percentage: Percentage of the proteome contained within the CAZome
+  - CAZome_coverage_percengate: Percentage of the identified CAZome included in the test set compiled from the genomic assembly
+  - CAZyme_sample_size: Number of CAZymes included in the test set compiled from the genomic assembly
+
+The default test set size is 100 CAZymes and 100 non-CAZymes, which was used in Hobbs _et al._, 2021. To change the sample size, call the `--sample_size` flag and define the number of **CAzymes** to be included in the test set, an equal number of non-CAZymes wills be added to the test set. For example, `--sample_size 200` will produce test sets of 200 CAZymes and 200 non-CAZymes.
+
+A full list of optional arguments are listed at [Read the Docs]().
+
+The yaml file containing the genomic accessions and taxonomy IDs of the genomes selected for the inclusion in the study is lcoated in [`supplementary/mar_2021_eval/selected_genomes.yaml`](), as well as the JSON file of CAZy family annotations [`supplementary/mar_2021_eval/cazy_dict_2021-03-25.json`]() - _although we strongly recommend using the local CAZyme database appraoch for future evaluations_.
   
-The yaml file containing the genomic accessions and taxonomy IDs of the genomes selected for the inclusion in the study is lcoated in [`supplementary/test_set_data`]().
-  
-In total 70 test sets were created for the evaluation, 39 from Bacteria genomes and 31 from Eukaryote genomes.
+In total 70 test sets were created for the evaluation, 39 from Bacteria genomes and 31 from Eukaryote genomes. 
   
 ### Invokving the classifiers
 
