@@ -55,9 +55,9 @@ from datetime import datetime
 from typing import List, Optional
 
 from Bio import Entrez, SeqIO
-from saintBioutils.file_io import get_paths
 from saintBioutils.genbank import get_genomes, parse_genomes
-from saintBioutils.utilities import config_logger
+from saintBioutils.utilities.file_io import get_paths
+from saintBioutils.utilities.logger import config_logger
 from tqdm import tqdm
 
 from pyrewton.cazymes.evaluate_tools.test_sets import (
@@ -112,15 +112,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     if args.genomes is None:
         genome_dir = args.output / "genomes"
         make_output_directory(genome_dir, args.force, args.nodelete)
-
-    # create file for storing CAZome coverage
-    headers = (
-        f"Genomic accession\tTotal proteins\tTotal cazymes\tGenome CAZome percent\t"
-        "CAZome sample size\tCAZome coverage percent\n"
-    )
-    cazome_coverage_path = args.output / "cazome_coverage.txt"
-    with open(cazome_coverage_path,"w") as fh:
-        fh.write(headers)
 
     # get the YAML file containing the genomic assemblies to be used for creating test sets
     assembly_dict = io_create_eval_testsets.retrieve_assemblies_dict(args.yaml)
