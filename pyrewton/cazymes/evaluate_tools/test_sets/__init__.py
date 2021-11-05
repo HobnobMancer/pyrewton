@@ -189,8 +189,6 @@ def write_out_test_set(
     all_selected_proteins += selected_cazymes
     random.shuffle(all_selected_proteins)  # write out the test set in a random order
 
-    composition_log_content = []
-
     for protein in all_selected_proteins:
         seq = str(protein.sequence)
         seq = "\n".join([seq[i : i + 60] for i in range(0, len(seq), 60)])
