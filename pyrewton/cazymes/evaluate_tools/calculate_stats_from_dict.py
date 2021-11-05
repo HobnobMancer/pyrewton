@@ -132,7 +132,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     stats.evaluate_performance(predictions, cazy_dict, 'dict', args)
 
     time_stamp = datetime.now().strftime("%Y_%m_%d")
-    stats.get_fam_freq(args, cazy_dict, time_stamp)  # USED IN R EVALUATION
+    stats.get_fam_freq(args, cazy_dict, time_stamp, 'dict')  # USED IN R EVALUATION
 
 
 def get_predictions(prediction_dir):

@@ -346,12 +346,13 @@ def build_prediction_dataframes(predictions, time_stamp, cazy, data_source, args
     )
 
 
-def get_fam_freq(args, cazy, timestamp):
+def get_fam_freq(args, cazy, timestamp, data_source):
     """Retrieve the frequencies of all CAZy families total occurences across all test sets.
 
     :param args: cmd-line args parser
     :param cazy: dict of CAZy family annotations of proteins from CAZy.
     :param timestamp: str, date-time script was invoked
+    :param data_source: str, source of CAZy annotations, db or dict
 
     Return nothing.
     """
@@ -366,7 +367,7 @@ def get_fam_freq(args, cazy, timestamp):
     freq_dict = family_classifications.foundation_dict()
 
     for testset in tqdm(all_test_sets, desc="Retrieving CAZy family freqs"):
-        freq_dict = add_fam_freq(testset, freq_dict, cazy)
+        freq_dict = add_fam_freq(testset, freq_dict, cazy, data_source)
 
     # write out freq_dict
     output_path = args.output / f"CAZy_fam_testset_freq_{timestamp}.json"
@@ -411,12 +412,13 @@ def get_test_set_paths(args):
     return all_test_sets
 
 
-def add_fam_freq(testset, freq_dict, cazy):
+def add_fam_freq(testset, freq_dict, cazy, data_source):
     """Retrieve the frequency of CAZy family annotations in a test set.
 
     :param testset: Testset class instance
     :param freq_dict: dict of total CAZy family frequencies across all test sets
     :param cazy: dict of CAZy family annotations of proteins from CAZy.
+    :param data_source: str, CAZy annotation source type, db or dict
 
     Return freq_dict.
     """

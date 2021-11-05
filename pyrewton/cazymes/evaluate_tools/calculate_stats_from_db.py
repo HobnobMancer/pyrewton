@@ -133,7 +133,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     stats.evaluate_performance(predictions, db_connection, 'db', args)
 
     time_stamp = datetime.now().strftime("%Y_%m_%d")
-    stats.get_fam_freq(args, db_connection, time_stamp)  # USED IN R EVALUATION
+    stats.get_fam_freq(args, db_connection, time_stamp, 'db')  # USED IN R EVALUATION
 
 
 def get_predictions(prediction_dir):
