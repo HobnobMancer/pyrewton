@@ -109,6 +109,15 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     make_output_directory(alignment_score_dir, args.force, args.nodelete)
     make_output_directory(test_set_dir, args.force, args.nodelete)
 
+    # create file for storing CAZome coverage
+    headers = (
+        f"Genomic accession\tTotal proteins\tTotal cazymes\tGenome CAZome percent\t"
+        "CAZome sample size\tCAZome coverage percent\n"
+    )
+    cazome_coverage_path = args.output / "cazome_coverage.txt"
+    with open(cazome_coverage_path,"w") as fh:
+        fh.write(headers)
+
     # get the YAML file containing the genomic assemblies to be used for creating test sets
     assembly_dict = io_create_eval_testsets.retrieve_assemblies_dict(args.yaml)
 
@@ -209,7 +218,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     shutil.rmtree(temp_alignment_dir)
 
 
-def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, assembly):
+def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, assembly, args):
     """Identify CAZymes and non-CAZymes in the input FASTA file.
 
     Writes non-CAZymes to a FASTA file and builds a non-CAZyme database needed for later alignments
@@ -266,10 +275,13 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
                 seq = "\n".join([seq[i : i + 60] for i in range(0, len(seq), 60)])
                 file_content = f">{accession} \n{seq}\n"
                 fh.write(file_content)
+    
+    total_proteins = len(cazymes) + len(list(non_cazymes.keys()))
+    total_cazymes = len(cazymes)
 
-    # randomly selected 100 CAZymes
+    # randomly selected n CAZymes
     try:
-        selected_cazymes = random.sample(cazymes, 100)
+        selected_cazymes = random.sample(cazymes, args.sample_size)
         # write selected CAZymes to FASTA file in temp dir
         with open(cazyme_fasta, "w") as fh:
             for cazyme in tqdm(selected_cazymes, desc="Writing selected CAZymes to FASTA"):
