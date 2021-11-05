@@ -47,7 +47,7 @@ class InstallCPTs(Command):
     def run(self):
         """Run command"""
         installation_path = self.pyrewton_dir + "/installation.sh"
-        tools_dir = self.pyrewton_dir + "/pyrewton/cazymes/prediction/tools"
+        tools_dir = self.pyrewton_dir + "/pyrewton/cazymes/evaluate_tools/tools"
         subprocess.check_call([installation_path, tools_dir])
 
 

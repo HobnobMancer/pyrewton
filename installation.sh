@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# :args $1: absolute path to pyrewton prediction/tools dir
+# :args 1: path to pyrewton/cazymes/evaluate_tools dir
 
 # Installing the CAZyme prediciton tools dbCAN, eCAMI and CUPP
 # Requirements for these tools are installed via requirements.txt
