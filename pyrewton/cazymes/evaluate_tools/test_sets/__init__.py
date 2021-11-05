@@ -117,7 +117,8 @@ def write_out_test_set(
     genomic_acc,
     total_proteins,
     total_cazymes,
-    log_path,
+    coverage_log_path,
+    composition_log_path,
     args,
 ):
     """Create the test set and write out a FASTA file.
@@ -131,7 +132,8 @@ def write_out_test_set(
     :param genomic_acc: str, genomic assembly accession
     :param total_proteins: int, total number of proteins extracted from the genomic assembly
     :param total_proteins: int, total number of CAZy annotated CAZymes extracted from the genomic assembly
-    :param log_path: Path, path for logging test set genome coverage stats
+    :param coverage_log_path: Path, path for logging test set genome coverage stats
+    :param composition_log_path: Path, path for logging the composition of the test sets
     :param args: cmd-line args parser
 
     Return nothing.
@@ -187,12 +189,23 @@ def write_out_test_set(
     all_selected_proteins += selected_cazymes
     random.shuffle(all_selected_proteins)  # write out the test set in a random order
 
+    composition_log_content = []
+
     for protein in all_selected_proteins:
         seq = str(protein.sequence)
         seq = "\n".join([seq[i : i + 60] for i in range(0, len(seq), 60)])
         file_content = f">{protein.accession}\n{seq}\n"
         with open(final_fasta, "a") as fh:
             fh.write(file_content)
+    
+    with open(composition_log_content, 'a') as fh:
+        for protein in selected_cazymes:
+            new_line = f"{genomic_acc}\t{protein.accession}\t1\n"
+            fh.write(new_line)
+
+        for accession in selected_noncazyme_accessions:
+            new_line = f"{genomic_acc}\t{accession}\t0\n"
+            fh.write(new_line)
 
     cazome_genome_coverage = ((total_cazymes / total_proteins) * 100)
     cazome_coverage = ((args.sample_size / total_cazymes) * 100)
@@ -206,7 +219,7 @@ def write_out_test_set(
         f"{args.sample_size}\n"
     )
 
-    with open(log_path, 'a') as fh:
+    with open(coverage_log_path, 'a') as fh:
         fh.write(log_message)
 
     return

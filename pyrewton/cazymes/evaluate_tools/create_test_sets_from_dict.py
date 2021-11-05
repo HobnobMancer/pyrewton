@@ -119,6 +119,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # get dict containing the genomic assemblies of all CAZymes in CAZy
     cazy_dict = io_create_eval_testsets.get_cazy_dict(args.cazy)
 
+    time_stamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
+
     header = (
         "Genomic_accession\t"
         "Total_proteins\t"
@@ -127,11 +129,18 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         "CAZome_coverage_percentage\t"
         "CAZyme_sample_size\n"
     )
-    time_stamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
     coverage_log_path = args.output / f"cazome_coverage_{time_stamp}.txt"
     with open(coverage_log_path, 'a') as fh:
         fh.write(header)
-
+    
+    headers = (
+        "Genomic_accession\t"
+        "Protein_accession\t"
+        "CAZyme_classification\n"
+    )
+    composition_log_path = args.output / f"test_set_composition_{time_stamp}.txt"
+    with open(composition_log_path, 'a') as fh:
+        fh.write(headers)
 
     temp_alignment_dir = args.output / "temp_alignment_dir"
 
@@ -206,6 +215,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 total_proteins,
                 total_cazymes,
                 coverage_log_path,
+                composition_log_path,
                 args,
             )
 

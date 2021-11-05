@@ -116,6 +116,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         genome_dir = args.output / "genomes"
         make_output_directory(genome_dir, args.force, args.nodelete)
 
+    time_stamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
+
     header = (
         "Genomic_accession\t"
         "Total_proteins\t"
@@ -124,10 +126,18 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         "CAZome_coverage_percentage\t"
         "CAZyme_sample_size\n"
     )
-    time_stamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
     coverage_log_path = args.output / f"cazome_coverage_{time_stamp}.txt"
     with open(coverage_log_path, 'a') as fh:
         fh.write(header)
+    
+    headers = (
+        "Genomic_accession\t"
+        "Protein_accession\t"
+        "CAZyme_classification\n"
+    )
+    composition_log_path = args.output / f"test_set_composition_{time_stamp}.txt"
+    with open(composition_log_path, 'a') as fh:
+        fh.write(headers)
 
     # get the YAML file containing the genomic assemblies to be used for creating test sets
     assembly_dict = io_create_eval_testsets.retrieve_assemblies_dict(args.yaml)
@@ -217,6 +227,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 total_proteins,
                 total_cazymes,
                 coverage_log_path,
+                composition_log_path,
                 args,
             )
 
