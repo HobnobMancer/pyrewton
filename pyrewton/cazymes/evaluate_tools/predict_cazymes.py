@@ -48,13 +48,13 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from saintBioutils.utilities.file_io import get_paths, make_output_directory
 from saintBioutils.utilities import config_logger
 from tqdm import tqdm
 from typing import List, Optional
 
 from pyrewton.cazymes.evaluate_tools.tools import invoke_prediction_tools
 from pyrewton.utilities.parsers.cmd_parser_predict_cazymes import build_parser
-from pyrewton.utilities.file_io import make_output_directory, io_get_paths
 
 
 @dataclass
@@ -159,7 +159,7 @@ def get_predictions(args):
     Return list of Proteome class objects, queries to prediction tools.
     """
     # create list of paths to all fasta files in input directory
-    all_fasta_paths = io_get_paths.get_fasta_paths(args)
+    all_fasta_paths = get_paths.get_file_paths(args.input, suffixes=[".fasta", ".fa"])
 
     # create empty list to store all instances of Proteome class objects
     predictions = []

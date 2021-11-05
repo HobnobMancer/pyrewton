@@ -71,10 +71,10 @@ from typing import List, Optional
 
 from scraper.sql.sql_orm import get_db_connection
 from saintBioutils.utilities.logger import config_logger
+from saintBioutils.utilities.file_io import make_output_directory
 from tqdm import tqdm
 
 from pyrewton.cazymes.evaluate_tools import stats
-from pyrewton.utilities.file_io import make_output_directory, io_create_eval_testsets
 from pyrewton.utilities.parsers.cmd_parser_calc_stats import build_parser
 
 

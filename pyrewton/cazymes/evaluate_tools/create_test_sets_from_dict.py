@@ -56,7 +56,7 @@ from typing import List, Optional
 
 from Bio import Entrez, SeqIO
 from saintBioutils.genbank import get_genomes, parse_genomes
-from saintBioutils.utilities.file_io import get_paths
+from saintBioutils.utilities.file_io import get_paths, make_output_directory
 from saintBioutils.utilities.logger import config_logger
 from tqdm import tqdm
 
@@ -65,7 +65,7 @@ from pyrewton.cazymes.evaluate_tools.test_sets import (
     compile_output_file_path,
     write_out_test_set,
 )
-from pyrewton.utilities.file_io import make_output_directory, io_create_eval_testsets
+from pyrewton.utilities.file_io import io_create_eval_testsets
 from pyrewton.utilities.parsers.cmd_parser_create_eval_test_sets import build_parser_dict
 
 

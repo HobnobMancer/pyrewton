@@ -59,7 +59,7 @@ from typing import List, Optional
 from Bio import Entrez, SeqIO
 from scraper.sql.sql_orm import Genbank, Session, get_db_connection
 from saintBioutils.genbank import get_genomes, parse_genomes
-from saintBioutils.utilities.file_io import get_paths
+from saintBioutils.utilities.file_io import get_paths, make_output_directory
 from saintBioutils.utilities.logger import config_logger
 from tqdm import tqdm
 
