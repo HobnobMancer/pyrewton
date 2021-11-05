@@ -55,16 +55,17 @@ from datetime import datetime
 from typing import List, Optional
 
 from Bio import Entrez, SeqIO
+from saintBioutils.file_io import get_paths
+from saintBioutils.genbank import get_genomes, parse_genomes
 from saintBioutils.utilities import config_logger
 from tqdm import tqdm
 
-from pyrewton.genbank.genomes import download_genomes, parse_genomes
 from pyrewton.cazymes.evaluate_tools.test_sets import (
     align_cazymes_and_noncazymes,
     compile_output_file_path,
     write_out_test_set,
 )
-from pyrewton.utilities.file_io import io_get_paths, make_output_directory, io_create_eval_testsets
+from pyrewton.utilities.file_io import make_output_directory, io_create_eval_testsets
 from pyrewton.utilities.parsers.cmd_parser_create_eval_test_sets import build_parser_dict
 
 
@@ -108,6 +109,9 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     make_output_directory(extract_seq_dir, args.force, args.nodelete)
     make_output_directory(alignment_score_dir, args.force, args.nodelete)
     make_output_directory(test_set_dir, args.force, args.nodelete)
+    if args.genomes is None:
+        genome_dir = args.output / "genomes"
+        make_output_directory(genome_dir, args.force, args.nodelete)
 
     # create file for storing CAZome coverage
     headers = (
@@ -142,7 +146,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     if args.genomes is not None:
         logger.info(f"Retrieving genomes from {args.genomes}")
-        genomic_assembly_paths = io_get_paths.get_genomic_assembly_paths(args)
+        genomic_assembly_paths = get_paths.get_file_paths(args.genomes, suffixes=[".gbff.gz"])
         logger.info(f"Retrieved {len(genomic_assembly_paths)} genomic assemblies")
         genomic_path_dict = {}
         for _path in genomic_assembly_paths:
@@ -163,7 +167,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 assembly_path = genomic_path_dict[assembly[0]]
             else:
                 # download genomic assembly
-                assembly_path = download_genomes.get_genomic_assembly(assembly)
+                assembly_path = get_genomes.get_genomic_assembly(assembly, outdir=genome_dir)
                 
             # create a FASTA file containing all proteins sequences in the genomic assembly
             fasta_path = parse_genomes.extract_protein_seqs(
