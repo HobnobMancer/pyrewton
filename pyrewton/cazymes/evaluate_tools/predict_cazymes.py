@@ -116,9 +116,9 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 def check_cwd():
     """Check user invoked script in correct directory so can access the prediciton tools.
 
-    If user is not within any of pyrewton/cazymes/prediction module directories then
+    If user is not within any of pyrewton/cazymes/evaluation module directories then
     raise error and terminate program. Excepted directories for starting at:
-    pyrewton/cazymes/prediction
+    pyrewton/cazymes/evaluation
     pyrewton/cazymes/tools
 
     Return nothing.
@@ -126,14 +126,14 @@ def check_cwd():
     logger = logging.getLogger(__name__)
     current_path = os.getcwd()
 
-    if current_path.endswith("pyrewton/cazymes/prediction"):
+    if current_path.endswith("pyrewton/cazymes/evaluation"):
         return
 
-    elif current_path.endswith("pyrewton/cazymes/prediction/tools"):
+    elif current_path.endswith("pyrewton/cazymes/evaluation/tools"):
         logger.warning(
             (
                 "Script invoked in 'tools' directory.\n"
-                "Changed current working directory to pyrewton/cazymes/prediction."
+                "Changed current working directory to pyrewton/cazymes/evaluation."
             )
         )
         os.chdir('..')
@@ -144,7 +144,7 @@ def check_cwd():
             (
                 "Script invokved in wrong directory.\n"
                 "To be able to access dbCAN, CUPP and eCAMI please invokve script when cwd is\n"
-                "pyrewton/cazymes/prediction within the pyrewton programm. Terminating program."
+                "pyrewton/cazymes/evaluation within the pyrewton programm. Terminating program."
             )
         )
         sys.exit(1)
