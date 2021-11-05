@@ -98,14 +98,14 @@ For example, ``--sample_size 200`` will produce test sets of 200 CAZymes and 200
 The output
 --------------------------
 
-In the output directory specified by the user, four directories and a plain text file are produced:
+In the output directory specified by the user, four directories and two plain text file are produced:
 
 - ``alignment_scores``: contains ``.csv`` files of the BLAST all-versus-all scores of the selected CAZymes query against all non-CAZymes
 - ``extracted_proteins_seqs``: FASTA files containing all extracted protein sequences from the downloaded genomic assemblies, one FASTA file is created per genome and contains all extracted protein sequences from that one genome
 - ``genomes``: contains the downloaded genomic assemlbies in gbff.gz format
 - ``test_sets``: contains the tests sets (FASTA) files for be used as input for each CAZyme classifier. One test set is created per genome.
 - ``cazome_coverage_<time stamp>.txt``: Contains the following headers and data:
-    - Genomic_accession: The accession of the genomic assembly
+    - Genomic_accession: The accession of the genomic assembly 
     - Total_proteins: Total number of proteins extracted from the genomic assembly
     - Total_CAZymes: Total number of CAZy annotated CAZymes extracted from the genomic assembly
     - Genome_CAZome_percentage: Percentage of the proteome contained within the CAZome
