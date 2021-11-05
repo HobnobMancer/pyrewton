@@ -51,6 +51,7 @@ import logging
 import random
 import shutil
 
+from datetime import datetime
 from typing import List, Optional
 
 from Bio import Entrez, SeqIO
@@ -64,7 +65,7 @@ from pyrewton.cazymes.evaluate_tools.test_sets import (
     write_out_test_set,
 )
 from pyrewton.utilities.file_io import io_get_paths, make_output_directory, io_create_eval_testsets
-from pyrewton.utilities.parsers.cmd_parser_get_evaluation_dataset_from_dict import build_parser
+from pyrewton.utilities.parsers.cmd_parser_create_eval_test_sets import build_parser_dict
 
 
 class Protein:
@@ -89,10 +90,10 @@ class Protein:
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
     if argv is None:
-        parser = build_parser()
+        parser = build_parser_dict()
         args = parser.parse_args()
     else:
-        parser = build_parser(argv)
+        parser = build_parser_dict(argv)
         args = parser.parse_args()
 
     if logger is None:
@@ -113,6 +114,20 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # get dict containing the genomic assemblies of all CAZymes in CAZy
     cazy_dict = io_create_eval_testsets.get_cazy_dict(args.cazy)
+
+    header = (
+        "Genomic_accession\t"
+        "Total_proteins\t"
+        "Total_CAZymes\t"
+        "Genome_CAZome_percentage\t"
+        "CAZome_coverage_percentage\t"
+        "CAZyme_sample_size\n"
+    )
+    time_stamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
+    coverage_log_path = args.output / f"cazome_coverage_{time_stamp}.txt"
+    with open(coverage_log_path, 'a') as fh:
+        fh.write(header)
+
 
     temp_alignment_dir = args.output / "temp_alignment_dir"
 
@@ -156,6 +171,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 cazyme_fasta,
                 non_cazymes,
                 noncazyme_fasta,
+                total_proteins,
+                total_cazymes,
             ) = separate_cazymes_and_noncazymes(
                 cazy_dict,
                 fasta_path,
@@ -182,6 +199,9 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 alignment_df,
                 final_fasta,
                 assembly[0],
+                total_proteins,
+                total_cazymes,
+                coverage_log_path,
                 args,
             )
 
@@ -202,7 +222,8 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
     :param assmebly: genomic assembly accessions retrieved from input yaml file
 
     Return list of CAZymes, path to temp FASTA of selected CAZymes, dict of non-CAZymes
-    {protein_accession: Protein_instance}, and path to temporary non-CAZyme dir.
+    {protein_accession: Protein_instance}, path to temporary non-CAZyme dir, and total number
+    of proteins and CAZymes extracted from the genome.
     """
     logger = logging.getLogger(__name__)
     cazyme_accessions = set()  # ott checking duplicate cazymes not selected
@@ -216,12 +237,15 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
     noncazyme_fasta = temp_alignment_dir / "noncazymes.fasta"
     cazyme_fasta = temp_alignment_dir / "cazymes.fasta"
 
+    protein_count = 0
+
     with open(noncazyme_fasta, "a") as fh:
         for seq_record in tqdm(
             SeqIO.parse(input_fasta, "fasta"),
             total=len(list(SeqIO.parse(input_fasta, "fasta"))),
             desc="Differentiating CAZymes and non-CAZymes",
         ):
+            protein_count += 1
             accession = seq_record.id
             accession = accession.split(" ")[0]
             sequence = seq_record.seq
@@ -261,7 +285,7 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
         logger.warning(f"No CAZymes selected for {assembly}, the following error was raised:\n{e}")
         selected_cazymes = None
 
-    return selected_cazymes, cazyme_fasta, non_cazymes, noncazyme_fasta
+    return selected_cazymes, cazyme_fasta, non_cazymes, noncazyme_fasta, protein_count, len(cazymes)
 
 
 if __name__ == "__main__":
