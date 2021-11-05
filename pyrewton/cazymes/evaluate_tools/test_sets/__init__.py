@@ -46,6 +46,7 @@ import random
 
 import pandas as pd
 
+from Bio.Blast.Applications import NcbiblastpCommandline
 from tqdm import tqdm
 
 
@@ -105,7 +106,17 @@ def compile_output_file_path(fasta_path, args):
     return fasta
 
 
-def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta, genomic_acc, args):
+def write_out_test_set(
+    selected_cazymes,
+    non_cazymes,
+    alignment_df,
+    final_fasta,
+    genomic_acc,
+    total_proteins,
+    total_cazymes,
+    log_path,
+    args,
+):
     """Create the test set and write out a FASTA file.
 
     The FASTA file contains the protein sequences of the test set (in a random order).
@@ -115,6 +126,9 @@ def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta,
     :param alignment_df: Pandas df of Blast Score Ratios of non-CAZyme alignemnts against selected CAZymes
     :param final_fasta: path to output FASTA file of the final test set
     :param genomic_acc: str, genomic assembly accession
+    :param total_proteins: int, total number of proteins extracted from the genomic assembly
+    :param total_proteins: int, total number of CAZy annotated CAZymes extracted from the genomic assembly
+    :param log_path: Path, path for logging test set genome coverage stats
     :param args: cmd-line args parser
 
     Return nothing.
@@ -176,5 +190,20 @@ def write_out_test_set(selected_cazymes, non_cazymes, alignment_df, final_fasta,
         file_content = f">{protein.accession}\n{seq}\n"
         with open(final_fasta, "a") as fh:
             fh.write(file_content)
+
+    cazome_genome_coverage = (total_cazymes / total_proteins) * 100
+    cazome_coverage = (total_cazymes / args.sample_size) * 100
+
+    log_message = (
+        f"{genomic_acc}\t"
+        f"{total_proteins}\t"
+        f"{total_cazymes}\t"
+        f"{cazome_genome_coverage}\t"
+        f"{cazome_coverage}\t"
+        f"{args.sample_size}\n"
+    )
+
+    with open(log_path, 'a') as fh:
+        fh.write(log_message)
 
     return
