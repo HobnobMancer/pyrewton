@@ -68,14 +68,16 @@ class ClassificationDF:
         return f"<CAZyme/non-CAZyme classification df for test set {self.genome_accession}>"
 
 
-def evaluate_performance(predictions, cazy_dict, args):
+def evaluate_performance(predictions, cazy, data_source, args):
     """Evaluate the performance of the CAZymes prediction tools.
 
     Binary classification: CAZyme/non-CAZyme differentiation
     Multilabel classification (MLC): CAZy family predictions
 
     :param predictions: list of TestSet class instances
-    :param cazy_dict: dict keyed by GenBank protein accession, valued by CAZy family classifications
+    :param cazy: dict keyed by GenBank protein accession, valued by CAZy family classifications
+        or open connection to a local CAZyme db engine
+    :param data_source: str, 'dict' or 'db' depending if accessing CAZy annotations from a dict or db
     :param args: cmd-line args parser
 
     Return nothing.
@@ -90,7 +92,13 @@ def evaluate_performance(predictions, cazy_dict, args):
         class_ground_truths_df,
         all_family_predictions,
         all_family_ground_truths,
-    ) = build_prediction_dataframes(predictions, time_stamp, cazy_dict, args)
+    ) = build_prediction_dataframes(
+        predictions,
+        time_stamp,
+        cazy,
+        data_source,
+        args,
+    )
 
     output_path = args.output / f'binary_classification_evaluation_{time_stamp}.csv'
     binary_c_nc_statistics.to_csv(output_path)  # USED FOR EVALUATION IN R
@@ -166,12 +174,14 @@ def evaluate_performance(predictions, cazy_dict, args):
     return
 
 
-def build_prediction_dataframes(predictions, time_stamp, cazy_dict, args):
+def build_prediction_dataframes(predictions, time_stamp, cazy, data_source, args):
     """Parse prediction outputs from prediction tools and create dataframes for the stats eval.
 
     :param predictions: list of TestSet class instances
     :param time_stamp: str, data and time when evaluation started, used for naming files
-    :param cazy_dict: dict keyed by GenBank protein accession, valued by CAZy family classifications
+    :param cazy: dict keyed by GenBank protein accession, valued by CAZy family classifications
+        or open connection to a local CAZyme db engine
+    :param data_source: str, 'dict' or 'db' depending if accessing CAZy annotations from a dict or db
     :param args: cmd-line arguments parser
 
     Return:
@@ -253,7 +263,7 @@ def build_prediction_dataframes(predictions, time_stamp, cazy_dict, args):
             ) = family_classifications.get_family_classifications(
                 predictions=standardised_outputs[tool],
                 prediciton_tool=tool,
-                cazy_dict=cazy_dict,
+                cazy=cazy,
                 genomic_accession=test_set.source,
             )
 
@@ -268,7 +278,9 @@ def build_prediction_dataframes(predictions, time_stamp, cazy_dict, args):
 
         # add ground truth (CAZy) binary CAZyme/non-CAZyme classifications to classifications.df
         classifications_df = binary_classification.add_ground_truths(
-            classifications_df, cazy_dict,
+            classifications_df,
+            cazy,
+            data_source,
         )
 
         # write out binary CAZyme/non-CAZyme predictions and ground truth annotations for test set
@@ -333,11 +345,11 @@ def build_prediction_dataframes(predictions, time_stamp, cazy_dict, args):
     )
 
 
-def get_fam_freq(args, cazy_dict, timestamp):
+def get_fam_freq(args, cazy, timestamp):
     """Retrieve the frequencies of all CAZy families total occurences across all test sets.
 
     :param args: cmd-line args parser
-    :param cazy_dict: dict of CAZy family annotations of proteins from CAZy.
+    :param cazy: dict of CAZy family annotations of proteins from CAZy.
     :param timestamp: str, date-time script was invoked
 
     Return nothing.
@@ -353,7 +365,7 @@ def get_fam_freq(args, cazy_dict, timestamp):
     freq_dict = family_classifications.foundation_dict()
 
     for testset in tqdm(all_test_sets, desc="Retrieving CAZy family freqs"):
-        freq_dict = add_fam_freq(testset, freq_dict, cazy_dict)
+        freq_dict = add_fam_freq(testset, freq_dict, cazy)
 
     # write out freq_dict
     output_path = args.output / f"CAZy_fam_testset_freq_{timestamp}.json"
@@ -398,12 +410,12 @@ def get_test_set_paths(args):
     return all_test_sets
 
 
-def add_fam_freq(testset, freq_dict, cazy_dict):
+def add_fam_freq(testset, freq_dict, cazy):
     """Retrieve the frequency of CAZy family annotations in a test set.
 
     :param testset: Testset class instance
     :param freq_dict: dict of total CAZy family frequencies across all test sets
-    :param cazy_dict: dict of CAZy family annotations of proteins from CAZy.
+    :param cazy: dict of CAZy family annotations of proteins from CAZy.
 
     Return freq_dict.
     """
@@ -422,7 +434,7 @@ def add_fam_freq(testset, freq_dict, cazy_dict):
             
             # check if protein is a CAZy classified CAZyme
             try:
-                fam_annotations = cazy_dict[protein_accession]
+                fam_annotations = cazy[protein_accession]
             except KeyError:
                 continue
                 

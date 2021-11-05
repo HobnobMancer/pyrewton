@@ -32,18 +32,20 @@ from sklearn.metrics.cluster import rand_score, adjusted_rand_score
 from pyrewton.utilities import build_logger
 
 
-def get_family_classifications(predictions, prediciton_tool, cazy_dict, genomic_accession):
+def get_family_classifications(predictions, prediciton_tool, cazy, data_source, genomic_accession):
     """Retrieve the predicted  and ground truth (CAZy determined) CAZy family annotations.
 
     :param predictions: list of CazymeProteinPrediction instances 
     :param prediction_tools: str, name of the prediction tool being passed
-    :param cazy_dict: dict of CAZyme/non-CAZyme predicted classifications
+    :param cazy: dict keyed by GenBank protein accession, valued by CAZy family classifications
+        or open connection to a local CAZyme db engine
+    :param data_source: str, 'dict' or 'db' depending if accessing CAZy annotations from a dict or db
     :param genomic_accession: str, genomic accession of genomic assembly from which proteins are sourced
 
     Return two lists, one of predicted results, one of ground truths.
     Each list is a list of nested lists. Each nested list contains:
     [genomic_accession, protein_accession, prediction_tool, one column for each fam with 
-    its 0 (not predicted) / 1 (predicted) prediction].
+    its 0 (not predicted) or 1 (predicted) prediction score].
     """
     logger = logging.getLogger(__name__)
 
@@ -95,24 +97,38 @@ def get_family_classifications(predictions, prediciton_tool, cazy_dict, genomic_
                         f"from prediction {domain}, from {prediciton_tool}"
                     )
 
-        # add cazy family (0/1) predictions to list representing CAZy family predictions
-        # for the current working protein
+        # add cazy family (0/1) predictions to list representing known CAZy family annotations
         new_predictions += list(fam_predictions.values())
 
-        # retrieve the ground thruth (CAZy determined) CAZy family annotations for the protein
-        try:
-            cazy_annotations = cazy_dict[protein.protein_accession]
+        if data_source == 'db':
+            with Session(bind=cazy) as session:
+                fam_query = session.query(CazyFamily).\
+                    join(CazyFamily, Genbank.families).\
+                    filter(Genbank.genbank_accession == protein.protein_accession).\
+                    all()
+
+            for fam in fam_query:
+                try:
+                    known_fams[fam.family] = 1
+                except KeyError as e:
+                    logger.error(
+                        f"KeyError raised for known CAZy family {fam.family}. Error raised:\n{e}"
+                    )
+
+        else:
+            # retrieve the ground thruth (CAZy determined) CAZy family annotations for the protein
             try:
-                for fam in cazy_annotations:
-                    fam = fam.strip()
-                    known_fams[fam]
-                    known_fams[fam] = 1
-            except KeyError as e:
-                logger.warning(
-                    f"KeyError raised for known CAZy family {fam}. Error raised:\n{e}"
-                )
-        except KeyError:
-            pass
+                cazy_annotations = cazy_dict[protein.protein_accession]
+                try:
+                    for fam in cazy_annotations:
+                        fam = fam.strip()
+                        known_fams[fam] = 1
+                except KeyError as e:
+                    logger.error(
+                        f"KeyError raised for known CAZy family {fam}. Error raised:\n{e}"
+                    )
+            except KeyError:
+                pass
 
         # add cazy family (0/1) ground truth annotations to list representing all 
         # CAZy family ground truth annotations for the current working protein

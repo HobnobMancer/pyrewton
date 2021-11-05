@@ -26,6 +26,7 @@ import numpy as np
 
 from tqdm import tqdm
 
+from cazy_webscraper.sql.sql_orm import CazyFamily, Genbank, Session
 from sklearn.metrics import confusion_matrix, fbeta_score, precision_score, recall_score
 from sklearn.utils import resample
 
@@ -126,27 +127,43 @@ def build_classification_df(predicted_classifications):
     return df
 
 
-def add_ground_truths(classifications_df, cazy_dict):
+def add_ground_truths(classifications_df, cazy, data_source):
     """Retrieve ground truth CAZyme/non-CAZyme classifications and add to the df of predictions.
 
     :param classifications_df: pandas dataframe of prediction tool CAZyme/non-CAZyme classifications
     for each protein. Each unqiue protein is one row, each prediction tool is one column.
+    :param cazy: dict or sqlalchemy connection to a local SQLite3 db engine
 
     Return df containing the prediction tool predictions and CAZy ground truths added as an
     additional column, called 'CAZy'.
     """
     cazy_c_nc_classification = []
     # tool_predictions = clasifications_df
-
     protein_accessions = classifications_df.index
-    for protein_accession in protein_accessions:
-        try:
-            cazy_dict[protein_accession]
-            cazyme_classification = 1
-        except KeyError:
-            cazyme_classification = 0
 
-        cazy_c_nc_classification.append(cazyme_classification)
+    if data_source == 'db':
+        for protein_accession in protein_accessions:
+            with Session(bind=cazy) as session:
+                gbk_query = session(Genbank).\
+                    filter(Genbank.genbank_accession == protein_accession).\
+                    all()
+            
+            if len(gbk_query) != 0:
+                cazyme_classification = 1
+            else:
+                cazyme_classification = 0
+
+            cazy_c_nc_classification.append(cazyme_classification)
+    
+    else:
+        for protein_accession in protein_accessions:
+            try:
+                cazy[protein_accession]
+                cazyme_classification = 1
+            except KeyError:
+                cazyme_classification = 0
+
+            cazy_c_nc_classification.append(cazyme_classification)
 
     classifications_df["CAZy"] = cazy_c_nc_classification
 
