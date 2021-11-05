@@ -30,7 +30,11 @@ def build_parser(argv: Optional[List] = None):
     # Create parser object
     parser = argparse.ArgumentParser(
         prog="predict_cazymes.py",
-        description="Programme to invoke and evaluate third-party CAZyme prediction tools",
+        description=(
+            "Programme to invoke and evaluate third-party CAZyme prediction tools\n"
+            "To be able to access dbCAN, CUPP and eCAMI please invokve script when cwd is\n"
+            "pyrewton/cazymes/evaluation within the pyrewton programm."
+        ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
@@ -42,6 +46,12 @@ def build_parser(argv: Optional[List] = None):
         type=Path,
         metavar="input directory",
         help="Path to directory containing FASTA files for prediction tools",
+    )
+    parser.add_argument(
+        "output",
+        type=Path,
+        metavar="output directory",
+        help="Directory to which all outputs are written",
     )
 
     # Add optional arguments to parser
@@ -82,16 +92,6 @@ def build_parser(argv: Optional[List] = None):
         action="store_true",
         default=False,
         help="enable/disable deletion of exisiting files",
-    )
-    # Add option to specify output directory
-    # This will enable creation of a new output directory
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        metavar="output directory",
-        default=sys.stdout,
-        help="Directory to which all outputs are written",
     )
     # Add option for more detail (verbose) logging
     parser.add_argument(
