@@ -21,6 +21,11 @@ This page is published as supplementary material to the main [`pyrewton` repo](h
 
 > Xu, J., Zhang, H., Zheng, J., Dovedo, P., Yin, Y. (2020) 'eCAMI: simultaneous classification and motif identification for enzyme annotation', _Bioinformatics_, 36(7), pp. 2068-2075 https://doi.org/10.1093/bioinformatics/btz908
 
+In Hobbs _et al._, 2021, the following version of the CAZyme classifiers were evaluated:
+- dbCAN: v2.0.11
+- CUPP: v1.0.14
+- eCAMI: no version given, April 2020 release
+
 This page covers the specific method used to perform the presented evaluation of the CAZyme classifiers dbCAN, CUPP and eCAMI, including additional supplemenatry material to faciltiate the reporduction of the analysis, as presented in [Hobbs et al., 2021]().
 
 Information for the general operation of `pyrewton` and support troubleshooting can be found at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/).
@@ -68,10 +73,11 @@ The `pyrewton` repository is separated into documentation and program modules.
   
 ### Installation
 
-1. Create a new virtual environment  
+1. Create a new virtual environment and install some dependencies.
   _To install Conda please see the [Conda documentation](https://docs.conda.io/en/latest/)._
   ```bash
-  conda create -n pyrewton
+  conda create -n <venve name> python=3.8 diamond hmmer prodigal -c conda-forge -c bioconda
+  conda activate <venve name>
   ```
 2. Clone the `pyrewton` repository
   ```bash
