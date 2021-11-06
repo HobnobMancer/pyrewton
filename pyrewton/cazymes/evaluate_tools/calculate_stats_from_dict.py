@@ -61,9 +61,8 @@ summarising statistical analsis of prediction accuracy.
 """
 
 import logging
-import json
+import os
 import re
-import sys
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -119,8 +118,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         logger = logging.getLogger(__name__)
         config_logger(args)
 
-    # If specified output directory for genomic files, create output directory
-    if args.output is not sys.stdout:
+    # If specified output directory for output files, create output directory
+    if args.output != Path(os.getcwd()):
         make_output_directory(args.output, args.force, args.nodelete)
 
     # open the CAZy dict
