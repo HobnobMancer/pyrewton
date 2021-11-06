@@ -47,8 +47,7 @@ def build_parser(argv: Optional[List] = None):
     parser.add_argument(
         "cazy",
         type=Path,
-        metavar="cazy annotations dict",
-        help="Path to JSON file of CAZy annotations of proteins (ground truths)",
+        help="Path to JSON file or local CAZyme db of CAZy annotations of proteins (ground truths)",
     )
 
     # Add optional arguments to parser
