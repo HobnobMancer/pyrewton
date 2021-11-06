@@ -3,6 +3,7 @@ biopython
 bioservices
 numpy
 pandas
+psutil
 pyyaml
 saintBioutils
 scipy

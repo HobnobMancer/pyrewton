@@ -102,6 +102,7 @@ setuptools.setup(
         "bioservices>=1.7.9",
         "numpy>=1.19.4",
         "pandas>=1.0.3",
+        "psutil",
         "pyyaml>=5.3.1",
         "run-dbcan==2.0.11",
         "saintBioutils",
