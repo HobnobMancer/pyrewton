@@ -178,9 +178,38 @@ Additional optional flags are laid out in the [documentation]().
 
 ### Calculating statistics
 
-To statistical evaluate the performance of the CAZyme classifiers, the Python script `` was invoked using the following command:
+To statistical evaluate the performance of the CAZyme classifiers, the Python scripts `calculate_stats_from_*.py` are used.
+
+Similar to when creating the test sets, known CAZy family annotations (the ground truths) can be provided to `calculate_stats_from_*.py` as either:
+- a JSON file keyed by GenBank accession, and valued by set of CAZy family annotations (this can be compiled using [`cazy_webscraper`](https://github.com/HobnobMancer/cazy_webscraper))
+- a path to a local CAZyme database created using [`cazy_webscraper`](https://github.com/HobnobMancer/cazy_webscraper)
+
+The Python script `calculate_stats_from_dict.py` is used when using a JSON file ofCAZy family annotations.   
+`calculate_stats_from_db.py` is used when using a local CAZyme SQLite3 database.
+
+Both Python scripts have the same command structure:
 ```bash
+python3 calculate_stats_from_*.py <path to dir containing predict_cazymes.py output>
 ```
+
+`python3 calculate_stats_from_*.py` produces several output files, which can be grouped to 5 differet levels of evaluating/benchmarking CAZyme classifier performance:
+
+**Binary CAZyme/non-CAZyme differentiation:** 
+1. `binary_classification_evaluation_<date>.csv`, written in long form with the columns: Statistic_parameters, Genomic_assembly, Prediciton_tool, Statistic_value. Statistical parameters calcualted are specificity, recall, precition, F1-score and accuracy.
+2. `bootstrap_accuracy_evaluation_<date>.csv`, written in long form with the columns: Genomic_accession, Prediction_tool, Bootstrap_number, accuracy. This contains the accuracy score of each bootstrap sample.
+3. `false_positive_binary_classifications_<date>.csv`, with the columns: Genomic_accession, Protein_accession, then one column per prediction tool (listing a 0 if the tool did not annotate the protien as a CAZyme and a 1 if it did), BLAST_score_ratio (from creating the test sets), CAZyme_subject (the CAZyme if had the greatest sequence identitiy with in the genome when creating the test set).
+
+**CAZy class annotation prediction:**. Evaluating per CAZy class indpendent of other CAZy classes, and the CAZy class multi-label classification.  
+1. `class_predicted_classification_<date>.csv`, written in long form with the columns: Genomic_accession, Protein_accession, Prediction_tool, then one column per CAZy clas (which are scored as 0 if not predicted to be in the class, and 1 if predicted to be in the CAZy class), Rand_index and Adjusted_rand_index
+2. `class_classification_stats_per_test_set_<date>.csv`, written in long form with the columns: Genomic_accession, Prediction_tool, CAZy_class, Statistic_parameter, Statistic_value. Statistical parameters calcualted are specificity, recall, precition, F1-score and accuracy.
+
+
+**CAZy family annotation prediction:**. Evaluating per CAZy family indpendent of other CAZy families, and the CAZy family multi-label classification.  
+1. Per prediction a `.csv` file with the name `<tool>_fam_classifications_<date>.csv` is compiled, with the columns Genomic_accession, Protein_accession, Prediction_tool, then one column for each CAZy family (listing a 0 if the family classification was not predicted for the protein and a 1 if was predicted for the protein)
+2. `fam_stats_df_<date>.csv`, with the columns: CAZy_family, Prediction_tool, Specificty, Recall, Fbeta_score, Accuracy, #TN (number of true negative predictions), #FN (number of false negative predictions), #TP (number of true positive predictions), #FP (number of false positive predictions), Recall_sample_size
+ 3. `fam_ground_truth_classifications_<date>.csv` containing the ground truth CAZy family annotations retrieved from CAZy.
+
+By default `python3 calculate_stats_from_*.py` writes the output to the cwd. To specify a different output directory, add the `--output` flag to the command, followed by the path to the output directory. The output directory and its parent directories do not need to already exist, these can be created `pyrewton`.
 
 ### Presenting the findings
 
