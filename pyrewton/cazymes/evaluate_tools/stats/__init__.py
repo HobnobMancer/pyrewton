@@ -121,11 +121,11 @@ def evaluate_performance(predictions, cazy, data_source, args):
     )
 
     # write out ground truth CAZy class annotations to disk
-    output_path = args.output / f"cazy_class_ground_truths_{time_stamp}.csv"
+    output_path = args.output / f"class_ground_truths_classifications_{time_stamp}.csv"
     class_ground_truths_df.to_csv(output_path)
 
     # write out ground truth CAZy family annotations to disk
-    output_path = args.output / f"cazy_family_ground_truths_{time_stamp}.csv"
+    output_path = args.output / f"family_ground_truths_classifications_{time_stamp}.csv"
     all_family_ground_truths.to_csv(output_path)
 
     # Evaluate the performance of CAZy class predictions
@@ -137,7 +137,7 @@ def evaluate_performance(predictions, cazy, data_source, args):
     )
 
     # write out predicted CAZy class annotations and RI and ARI to disk
-    output_path = args.output / f"cazy_class_predictions_{time_stamp}.csv"
+    output_path = args.output / f"class_predicted_classifications_{time_stamp}.csv"
     class_predictions_df.to_csv(output_path)   # USED FOR EVALUATION IN R
 
     # Calculate Fbeta, Sens, Spec and Acc for predicting each CAZy class
@@ -164,7 +164,7 @@ def evaluate_performance(predictions, cazy, data_source, args):
         time_stamp,
     )
     # write out predicted CAZy class annotations and RI and ARI to disk
-    output_path = args.output / f"cazy_family_predictions_{time_stamp}.csv"
+    output_path = args.output / f"family_predicted_classifications_{time_stamp}.csv"
     all_family_predictions.to_csv(output_path)   # USED FOR EVALUATION IN R
 
     # evaluate the performance of predicting the correct CAZy family ACROSS ALL test sets
