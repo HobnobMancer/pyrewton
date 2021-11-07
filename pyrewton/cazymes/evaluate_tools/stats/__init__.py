@@ -103,6 +103,9 @@ def evaluate_performance(predictions, cazy, data_source, args):
 
     output_path = args.output / f'binary_classification_evaluation_{time_stamp}.csv'
     binary_c_nc_statistics.to_csv(output_path)  # USED FOR EVALUATION IN R
+    # Written in long for, with the columns: Statistic_parameters, Genomic_assembly, 
+    # Prediciton_tool, Statistic_value. Statistical parameters calcualted are specificity, 
+    # recall, precition, F1-score and accuracy
 
     # bootstrap resample binary CAZyme/non-CAZyme classifications, to evaluate performance range
     binary_classification.bootstrap_binary_c_nc_classifications(
@@ -251,6 +254,7 @@ def build_prediction_dataframes(predictions, time_stamp, cazy, data_source, args
             # parse binary CAZyme/non-CAZyme predictions for the prediction tool
             # retrieves list of nested lists [accession, tool, prediction (0 or 1)]
             all_binary_classifications = binary_classification.get_cazyme_noncazyme_predictions(
+                test_set.source,
                 standardised_outputs[tool],
                 tool,
                 all_binary_classifications,
@@ -286,7 +290,7 @@ def build_prediction_dataframes(predictions, time_stamp, cazy, data_source, args
 
         # write out binary CAZyme/non-CAZyme predictions and ground truth annotations for test set
         # for documentation
-        output_path = args.output / f"binary_classifications_{time_stamp}_{test_set.source}.csv"
+        output_path = args.output / "binary_classifications" / f"binary_classifications_{time_stamp}_{test_set.source}.csv"
         classifications_df.to_csv(output_path)
 
         all_binary_c_nc_dfs.append(ClassificationDF(

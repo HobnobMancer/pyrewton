@@ -31,9 +31,16 @@ from sklearn.metrics import confusion_matrix, fbeta_score, precision_score, reca
 from sklearn.utils import resample
 
 
-def get_cazyme_noncazyme_predictions(tool_predictions, prediction_tool, classifications):
+def get_cazyme_noncazyme_predictions(
+    genomic_accession,
+    tool_predictions,
+    prediction_tool,
+    classifications,
+):
     """Add CAZyme/non-CAZyme predictions to list of all CAZyme/non-CAZyme predictions.
 
+    :param genomic_accession: str, accession number of the genomic assembly from which the proteins
+            are sourced
     :param tool_predictions: list of CazymeProteinPrediction instances
     :param prediction_tool: str, name of the prediction tool being passed
     :param classifications: dict of CAZyme/non-CAZyme predicted classifications
@@ -44,10 +51,11 @@ def get_cazyme_noncazyme_predictions(tool_predictions, prediction_tool, classifi
     # classifications  = [[protien_accession, tool, cazyme classification],]
     if (prediction_tool == "eCAMI") or (prediction_tool == "CUPP"):
         for prediction in tqdm(tool_predictions, desc=f"Retreiving {prediction_tool} predictions"):
-            accession = prediction.protein_accession.split(" ")[0]
+            protein_accession = prediction.protein_accession.split(" ")[0]
             classifications.append(
                 [
-                    accession,
+                    genomic_accession,
+                    protein_accession,
                     prediction_tool,
                     prediction.cazyme_classification,
                 ],
@@ -57,6 +65,7 @@ def get_cazyme_noncazyme_predictions(tool_predictions, prediction_tool, classifi
     for prediction in tqdm(tool_predictions, desc=f"Retreiving {prediction_tool} predictions"):
         classifications.append(
             [
+                genomic_accession,
                 prediction.protein_accession,
                 prediction_tool,
                 prediction.cazyme_classification
@@ -68,9 +77,11 @@ def get_cazyme_noncazyme_predictions(tool_predictions, prediction_tool, classifi
 def build_classification_df(predicted_classifications):
     """Build dataframe of classifications. Unique protein per row, unqiue tool per column.
 
-    :param classifications: list of lists, each list contains a protein accession, name of the
-        prediction tool, and the CAZyme (represented by a value of 1) or non-CAZyme (represented
-        by a value of 0) classification.
+    :param classifications: list of lists, each list contains a:
+        - genomic accession
+        - protein accession, 
+        - name of the prediction tool
+        - the CAZyme (represented by a value of 1) or non-CAZyme (represented by a value of 0) classification
 
     Return pandas dataframe.
     """
@@ -78,12 +89,13 @@ def build_classification_df(predicted_classifications):
     # this dictionary is used to then organise the data into a list of lists, for creating
     # a dataframe in long/tidy form below, with a unique protein per row, a the corresponding
     # prediction tool classification per column
-    classification_dict = {}  # { protein_acession : {prediction_tool : [all_classiciations]} }
+    classification_dict = {}  # { protein_acession : genomic_accession: str, {prediction_tool : [all_classiciations]} }
 
     for classification in predicted_classifications:
-        protein_accession = classification[0]
-        prediciton_tool = classification[1]
-        cazyme_classification = classification[2]
+        genomic_accession = classification[0]
+        protein_accession = classification[1]
+        prediciton_tool = classification[2]
+        cazyme_classification = classification[3]
         try:
             classification_dict[protein_accession]
 
@@ -92,20 +104,21 @@ def build_classification_df(predicted_classifications):
                 classification_dict[protein_accession][prediciton_tool].append(
                     cazyme_classification
                 )
-            except KeyError:
+            except KeyError:  # not add the prediction_tool classifications to the protien record
                 classification_dict[protein_accession][prediciton_tool] = [cazyme_classification]
 
-        except KeyError:
+        except KeyError:  # not added a record for the protein
             classification_dict[protein_accession] = {}
+            classification_dict[protein_accession]["Genomic_accession"] = genomic_accession
             classification_dict[protein_accession][prediciton_tool] = [cazyme_classification]
 
     # build a series of lists
-    data = []  # [Protein_accession, dbcan, hmmer, hotpep, diamond, cupp, ecami]
+    data = []  # [Protein_accession, Genomic_accession, dbcan, hmmer, hotpep, diamond, cupp, ecami]
     for protein_accession in classification_dict:
         for i in range(len(classification_dict[protein_accession]["dbCAN"])): 
             # for loop is included in case of duplicate proteins in the test set
             # create a unique row for each instance of a protein in the test set
-            new_data = [protein_accession]
+            new_data = [protein_accession, protein_accession["genomic_accession"]]
             for tool in ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]:
                 new_data.append(classification_dict[protein_accession][tool][i])
             data.append(new_data)
@@ -114,6 +127,7 @@ def build_classification_df(predicted_classifications):
         data,
         columns=[
             "Protein_accession",
+            "Genomic_accession",
             "dbCAN",
             "HMMER",
             "Hotpep",
@@ -202,7 +216,7 @@ def evaluate_binary_cazyme_noncazyme_predictions(classifications_df, genomic_acc
         stats_results.append(["Specificity", genomic_accession, tool, specificity_result])
 
         recall_result = recall_score(y_true, y_pred)
-        stats_results.append(["Recall", genomic_accession, tool, recall_result])
+        stats_results.append(["Sensitivity", genomic_accession, tool, recall_result])
 
         precision_result = precision_score(y_true, y_pred)
         stats_results.append(["Precision", genomic_accession, tool, precision_result])
@@ -251,6 +265,8 @@ def bootstrap_binary_c_nc_classifications(all_binary_dfs, time_stamp, args):
 
     output_path = args.output / f'bootstrap_accuracy_evaluation_{time_stamp}.csv'
     bootstrap_results.to_csv(output_path) # USED FOR EVALUATION IN R
+    # Written in long form with the columns: Genomic_accession, Prediction_tool, Bootstrap_number, 
+    # accuracy. This contains the accuracy score of each bootstrap sample.
 
     return
 
@@ -399,10 +415,10 @@ def get_f_pos_f_neg_predictions(all_binary_c_nc_dfs, time_stamp, args):
     false_negatives_df = pd.DataFrame(df_data)
 
     # write out the dataframes
-    output_path = args.output / f"binary_false_positive_predictions_{time_stamp}.csv"
+    output_path = args.output / f"binary_false_positive_classifications_{time_stamp}.csv"
     false_positives_df.to_csv(output_path)
 
-    output_path = args.output / f"binary_false_negative_predictions_{time_stamp}.csv"
+    output_path = args.output / f"binary_false_negative_classifications_{time_stamp}.csv"
     false_negatives_df.to_csv(output_path)
 
     return
