@@ -266,7 +266,7 @@ def bootstrap_binary_c_nc_classifications(all_binary_dfs, time_stamp, args):
         columns=['Genomic_accession', 'Prediction_tool', 'Bootstrap_number', 'accuracy'],
     )
 
-    output_path = args.output / f'bootstrap_accuracy_evaluation_{time_stamp}.csv'
+    output_path = args.output / f'binary_bootstrap_accuracy_evaluation_{time_stamp}.csv'
     bootstrap_results.to_csv(output_path) # USED FOR EVALUATION IN R
     # Written in long form with the columns: Genomic_accession, Prediction_tool, Bootstrap_number, 
     # accuracy. This contains the accuracy score of each bootstrap sample.
