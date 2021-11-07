@@ -38,10 +38,17 @@ def build_parser(argv: Optional[List] = None):
 
     # Add path to input fasta files
     parser.add_argument(
-        "input",
+        "prediction_dir",
         type=Path,
-        metavar="input directory",
         help="Path to directory containing outputs from prediction tools and test sets fasta files",
+    )
+    parser.add_argument(
+        "testset_dir",
+        type=Path,
+        help=(
+            "Path to directory containing test set dir from create_test_sets_*.py,\n"
+            "containing the dirs 'alignment_scores' and 'test_sets'"
+        ),
     )
     parser.add_argument(
         "cazy",
