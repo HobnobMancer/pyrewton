@@ -118,7 +118,10 @@ def build_classification_df(predicted_classifications):
         for i in range(len(classification_dict[protein_accession]["dbCAN"])): 
             # for loop is included in case of duplicate proteins in the test set
             # create a unique row for each instance of a protein in the test set
-            new_data = [protein_accession, protein_accession["genomic_accession"]]
+            new_data = [
+                protein_accession,
+                classification_dict[protein_accession]["genomic_accession"],
+            ]
             for tool in ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]:
                 new_data.append(classification_dict[protein_accession][tool][i])
             data.append(new_data)
