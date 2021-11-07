@@ -43,6 +43,7 @@
 import logging
 import os
 import re
+import shutil
 import sys
 
 from dataclasses import dataclass
@@ -161,9 +162,6 @@ def get_predictions(args):
     # create list of paths to all fasta files in input directory
     all_fasta_paths = get_paths.get_file_paths(args.input, suffixes=[".fasta", ".fa"])
 
-    # create empty list to store all instances of Proteome class objects
-    predictions = []
-
     # for each FASTA file invoke dbCAN, CUPP and eCAMI
     for file_path in tqdm(all_fasta_paths, desc="Invoking tools for FASTA file"):  # make tqdm
         # retrieve data on source of protein sequences and species taxonomy ID
@@ -188,12 +186,10 @@ def get_predictions(args):
         # invoke prediction tools and retrieve paths to the prediction tools outputs
         full_outdir_path = invoke_prediction_tools(prediction_tool_query)
 
-        # update outdir path with full path
-        prediction_tool_query.prediction_paths["dir"] = full_outdir_path
+        # copy parsed fasta file into the prediction output dir
+        shutil.copy(file_path, full_outdir_path)
 
-        predictions.append(prediction_tool_query)
-
-    return predictions
+    return
 
 
 def get_protein_source(file_path):
