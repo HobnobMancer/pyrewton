@@ -123,6 +123,10 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     if args.output != Path(os.getcwd()):
         make_output_directory(args.output, args.force, args.nodelete)
 
+    # make dir to store binary CAZyme classification csv files
+    binary_classification_dir = args.output / "binary_classifications"
+    make_output_directory(binary_classification_dir, args.force, args.nodelete)
+
     # open the CAZy dict
     db_connection = get_db_connection(args.cazy, args, False)
 

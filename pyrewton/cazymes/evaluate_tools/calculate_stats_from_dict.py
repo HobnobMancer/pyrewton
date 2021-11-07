@@ -118,9 +118,15 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         logger = logging.getLogger(__name__)
         config_logger(args)
 
+    # class_classification_evaluation_<date>.csv from class_predictions_classifications_<date>.csv
+
     # If specified output directory for output files, create output directory
     if args.output != Path(os.getcwd()):
         make_output_directory(args.output, args.force, args.nodelete)
+    
+    # make dir to store binary CAZyme classification csv files
+    binary_classification_dir = args.output / "binary_classifications"
+    make_output_directory(binary_classification_dir, args.force, args.nodelete)
 
     # open the CAZy dict
     cazy_dict = io_create_eval_testsets.get_cazy_dict(args.cazy)
