@@ -240,7 +240,7 @@ def calculate_class_stats(
                 )
 
                 sensitivity = np.nan
-                class_stats_data.append([accession, tool, cazy_class, "Recall", recall])
+                class_stats_data.append([accession, tool, cazy_class, "Sensitivity", recall])
                 
                 precision = np.nan
                 class_stats_data.append([accession, tool, cazy_class, "Precision", precision])
@@ -295,7 +295,7 @@ def calculate_class_stats(
             "Prediction_tool",
             "CAZy_class",
             "Specificity",
-            "Recall",
+            "Sensitivity",
             "Precision",
             "Fbeta_score",
             "Accuracy",
@@ -406,7 +406,7 @@ def calculate_class_stats_by_testsets(
                     )
 
                     sensitivity = np.nan
-                    class_stats_data.append([accession, tool, cazy_class, "Recall", recall])
+                    class_stats_data.append([accession, tool, cazy_class, "Sensitivity", sensitivity])
                     
                     precision = np.nan
                     class_stats_data.append([accession, tool, cazy_class, "Precision", precision])
@@ -420,7 +420,7 @@ def calculate_class_stats_by_testsets(
                     continue
 
                 recall = recall_score(y_true, y_pred)
-                class_stats_data.append([accession, tool, cazy_class, "Recall", recall])
+                class_stats_data.append([accession, tool, cazy_class, "Sensitivity", recall])
 
                 precision = precision_score(y_true, y_pred)
                 class_stats_data.append([accession, tool, cazy_class, "Precision", precision])

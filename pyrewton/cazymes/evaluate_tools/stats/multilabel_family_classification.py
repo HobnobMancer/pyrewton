@@ -264,7 +264,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
 
                 for stat in [
                     [specificity, "Specificity"],
-                    [recall, "Recall"],
+                    [recall, "Sensitivity"],
                     [precision, "Precision"],
                     [fbeta, "Fbeta_score"],
                     [accuracy, "Accuracy"],
@@ -279,7 +279,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
 
             # recall aka sensitivity
             recall = recall_score(y_true, y_pred)
-            long_dataframe_data.append([fam, "Recall", tool, recall])
+            long_dataframe_data.append([fam, "Sensitivity", tool, recall])
 
             precision = precision_score(y_true, y_pred)
             long_dataframe_data.append([fam, "Precision", tool, recall])
@@ -350,7 +350,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
             "CAZy_family",
             "Prediction_tool",
             "Specificity",
-            "Recall",
+            "Sensitivity",
             "Precision",
             "Fbeta_score",
             "Accuracy",
