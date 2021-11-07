@@ -26,11 +26,13 @@
 """
 
 import json
+import re
 import logging
 import sys
 
 import pandas as pd
 
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
@@ -53,6 +55,31 @@ from pyrewton.cazymes.evaluate_tools.stats import (
 )
 
 
+@dataclass
+class TestSet:
+    """TestSet from a genomic assembly.
+
+    :param fasta: path, path to query fasta file
+    :param tax_id: str, NCBI taxonomy ID of host species
+    :param source: str, source of proteins within fasta file
+    :param prediction_paths: path, path to which prediction tool output is written
+    """
+
+    fasta: Path  # path to FASTA file containing proteins for prediction
+    tax_id: str  # NCBI taxonomy id, prefix NCBI:txid
+    source: str  # source of protein sequences, genomic assembly or database
+    prediction_paths: dict()  # contains path to outputs
+
+    def __str__(self):
+        """Representation of object"""
+        return(
+            (
+                f"<tax-id={self.tax_id} source={self.source} "
+                f"fasta={self.fasta} prediction_paths={self.prediction_paths}"
+            )
+        )
+
+
 class ClassificationDF:
     """Represents a CAZyme/non-CAZyme annotation/classification df for a test set"""
 
@@ -67,6 +94,60 @@ class ClassificationDF:
 
     def __repr__(self):
         return f"<CAZyme/non-CAZyme classification df for test set {self.genome_accession}>"
+
+
+
+def get_predictions(prediction_dir):
+    """Retrieve create class instances to represent output for each test set.
+
+    :param prediction_dir: path to dir containing all prediction tool outputs.
+
+    Return list containing class instances, one instance per test set.
+    """
+    logger = logging.getLogger(__name__)
+
+    output_dirs = [f for f in prediction_dir.iterdir() if f.is_dir()]  # store the paths to the output dirs
+
+    predictions = []  # store TestSet instances
+
+    for output_dir in tqdm(output_dirs, desc="Building TestSet instances"):
+        # get the genomic assembly accession
+        search_result = re.search(r"GCA_\d+?(_|.)\d+?\.\d+?.", str(output_dir), re.IGNORECASE)
+        try:
+            genomic_accession = search_result.group()[:-1]
+        except AttributeError as e:
+            logger.error(
+                f"Could not get genomic asseccion from {output_dir}.\n"
+                "Not including test set in the evaluation. The following error was raised:\n"
+                f"{e}"
+            )
+            continue
+
+        # get the taxonomy id
+        search_result = re.search(r"txid\d+?_", str(output_dir), re.IGNORECASE)
+        try:
+            tax_id = search_result.group()[:-1]
+        except AttributeError as e:
+            logger.error(
+                f"Could not get taxonomy ID from {output_dir}.\n"
+                "Not including test set in the evaluation. The following error was raised:\n"
+                f"{e}"
+            )
+            continue
+
+        # build path to the FASTA file
+        fasta_path = f"genbank_proteins_{tax_id}_{genomic_accession}._test_set.fasta"
+        fasta_path = prediction_dir / fasta_path
+
+        # build dict of output paths
+        output_paths = {}
+        output_paths["dir"] = output_dir
+
+        # build TestSet instance
+        test_set = TestSet(fasta_path, tax_id, genomic_accession, output_paths)
+        predictions.append(test_set)
+
+    return predictions
 
 
 def evaluate_performance(predictions, cazy, data_source, args):
