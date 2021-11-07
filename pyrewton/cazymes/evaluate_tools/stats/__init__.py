@@ -350,6 +350,7 @@ def build_prediction_dataframes(predictions, time_stamp, cazy, data_source, args
                 predictions=standardised_outputs[tool],
                 prediciton_tool=tool,
                 cazy=cazy,
+                data_source=data_source,
                 genomic_accession=test_set.source,
             )
 
