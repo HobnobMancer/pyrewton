@@ -37,6 +37,7 @@ from datetime import datetime
 from pathlib import Path
 
 from scraper.sql.sql_orm import CazyFamily, Genbank, Session
+from saintBioutils.utilities.file_io import get_paths
 from tqdm import tqdm
 
 from pyrewton.cazymes.evaluate_tools.parse import (
@@ -136,7 +137,12 @@ def get_predictions(prediction_dir):
             continue
 
         # build path to the FASTA file
-        fasta_path = f"genbank_proteins_{tax_id}_{genomic_accession}_test_set.fasta"
+        fasta_path = get_paths.get_file_paths(
+            output_dir,
+            prefixes=['genbank_proteins_'],
+            suffixes=['_test_set.fasta'],
+        )
+        fasta_path = fasta_path[0]
         fasta_path = output_dir / fasta_path
 
         # build dict of output paths
