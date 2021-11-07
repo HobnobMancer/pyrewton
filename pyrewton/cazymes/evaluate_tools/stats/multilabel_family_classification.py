@@ -119,7 +119,7 @@ def get_family_classifications(predictions, prediciton_tool, cazy, data_source, 
         else:
             # retrieve the ground thruth (CAZy determined) CAZy family annotations for the protein
             try:
-                cazy_annotations = cazy_dict[protein.protein_accession]
+                cazy_annotations = cazy[protein.protein_accession]
                 try:
                     for fam in cazy_annotations:
                         fam = fam.strip()
