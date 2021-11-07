@@ -50,12 +50,6 @@
 :cmd --bs_resampling: number of times to perform bootstrap resampling
 :cmd --verbose: enable verbose logging
 
-:class TestSet: represents a single test parsed by the prediction tools
-
-:func main: co-ordinate entire module function
-:func get_cazy_dict: retrieve dictionary of CAZy classifications of proteins
-:func get_predictions: retrieve the paths to the directories contain the prediction tool predictions
-
 Creates dataframes of CAZyme predictions and report
 summarising statistical analsis of prediction accuracy.
 """

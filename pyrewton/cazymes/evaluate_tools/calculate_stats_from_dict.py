@@ -50,12 +50,6 @@
 :cmd --bs_resampling: number of times to perform bootstrap resampling
 :cmd --verbose: enable verbose logging
 
-:class TestSet: represents a single test parsed by the prediction tools
-
-:func main: co-ordinate entire module function
-:func get_cazy_dict: retrieve dictionary of CAZy classifications of proteins
-:func get_predictions: retrieve the paths to the directories contain the prediction tool predictions
-
 Creates dataframes of CAZyme predictions and report
 summarising statistical analsis of prediction accuracy.
 """
@@ -104,7 +98,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     cazy_dict = io_create_eval_testsets.get_cazy_dict(args.cazy)
 
     # retrieve paths to all dirs
-    predictions = stats.get_predictions(args.input)
+    predictions = stats.get_predictions(args)
 
     # perform stats evaluations
     stats.evaluate_performance(predictions, cazy_dict, 'dict', args)
