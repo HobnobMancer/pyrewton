@@ -43,7 +43,6 @@
 import logging
 import os
 import re
-import shutil
 import sys
 
 from dataclasses import dataclass
@@ -185,9 +184,6 @@ def get_predictions(args):
 
         # invoke prediction tools and retrieve paths to the prediction tools outputs
         full_outdir_path = invoke_prediction_tools(prediction_tool_query)
-
-        # copy parsed fasta file into the prediction output dir
-        shutil.copy(file_path, full_outdir_path)
 
     return
 
