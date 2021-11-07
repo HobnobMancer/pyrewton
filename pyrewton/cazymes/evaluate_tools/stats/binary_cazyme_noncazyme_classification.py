@@ -438,16 +438,9 @@ def get_blast_score_ratio(classification_df_instance, protein_accession, predict
     """
     logger = logging.getLogger(__name__)
 
-    # compile the path to the alignment scores created when making the test set
-    alignment_score_file = classification_df_instance.testset_path
-    alignment_score_file = str(alignment_score_file).replace(
-        "_test_set.fasta",
-        "_alignment_scores.csv",
-    )
-
     try:
         # load in the data
-        alignment_score_df = pd.read_csv(alignment_score_file)
+        alignment_score_df = pd.read_csv(classification_df_instance.alignment_scores)
 
     except FileNotFoundError:
         logger.error(
