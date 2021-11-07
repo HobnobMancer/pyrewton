@@ -137,7 +137,7 @@ def get_predictions(prediction_dir):
 
         # build path to the FASTA file
         fasta_path = f"genbank_proteins_{tax_id}_{genomic_accession}._test_set.fasta"
-        fasta_path = prediction_dir / fasta_path
+        fasta_path = output_dir / fasta_path
 
         # build dict of output paths
         output_paths = {}
