@@ -457,7 +457,7 @@ def get_blast_score_ratio(classification_df_instance, protein_accession, predict
         return np.nan
 
     # retrieve all rows containing data for the given protein
-    if prediction_type is "FN":
+    if prediction_type == "FN":
         protein_blast_scores_df = alignment_score_df[alignment_score_df["subject (Cazyme)"] == protein_accession]
     else:
         protein_blast_scores_df = alignment_score_df[alignment_score_df["query (non-CAZyme)"] == protein_accession]
