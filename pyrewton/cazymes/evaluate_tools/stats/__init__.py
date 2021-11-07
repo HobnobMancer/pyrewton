@@ -143,7 +143,6 @@ def get_predictions(prediction_dir):
             suffixes=['_test_set.fasta'],
         )
         fasta_path = fasta_path[0]
-        fasta_path = output_dir / fasta_path
 
         # build dict of output paths
         output_paths = {}
