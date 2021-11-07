@@ -513,7 +513,12 @@ def get_fam_freq(args, cazy, timestamp, data_source):
     logger = logging.getLogger(__name__)
 
     # get the paths to all test sets
-    all_test_sets = get_test_set_paths(args)
+    testset_dir = args.testset_dir / "test_sets"
+    all_test_sets = get_paths.get_file_paths(
+        testset_dir,
+        prefixes=['genbank_proteins_'], 
+        suffixes=['_test_set.fasta'],
+    )
 
     logger.warning(f"Found {len(all_test_sets)} test sets in {args.input}")
 
@@ -529,41 +534,6 @@ def get_fam_freq(args, cazy, timestamp, data_source):
         json.dump(freq_dict, fh)
 
     return
-
-
-def get_test_set_paths(args):
-    """Retrieve the paths to all the test set fasta files.#
-    
-    :param args: cmd-line args parser
-    
-    Return list of paths to all test set fasta files"""
-    logger = logging.getLogger(__name__)
-
-    # create empty list to store the file entries, to allow checking if no files returned
-    all_test_sets = []
-
-    # retrieve all files from input directory
-    files_in_entries = (
-        entry for entry in Path(args.input).iterdir() if entry.is_file()
-    )
-    # retrieve paths to fasta files, 1 fasta file = 1 test set
-    for item in files_in_entries:
-        # search for fasta file extension
-        if item.name.endswith("._test_set.fasta") or item.name.endswith(".fa"):
-            all_test_sets.append(item)
-
-    # check files were retrieved from input directory
-    if len(all_test_sets) == 0:
-        logger.warning(
-            (
-                f"No FASTA test set files retrieved from {args.fam_freq}.\n"
-                "Check the path to the input directory is correct.\n"
-                "Terminanting program."
-            )
-        )
-        sys.exit(1)
-
-    return all_test_sets
 
 
 def add_fam_freq(testset, freq_dict, cazy, data_source):
