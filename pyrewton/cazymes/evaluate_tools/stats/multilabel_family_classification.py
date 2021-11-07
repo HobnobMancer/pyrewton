@@ -193,7 +193,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
     logger = logging.getLogger(__name__)
 
     stats_orientated_df_data = []  # [[CAZyFam, Prediction_Tool, Specificity, Recall, Fbeta, Accuracy]]
-    long_dataframe_data = []  # [[CAZyFam, StatParameter, PredicitonTool, StatValue]]
+    long_dataframe_data = []  # [[CAZyFam, PredictionTool, StatParam, StatValue]]
 
     family_names = foundation_dict()
     family_names = list(family_names.keys())
@@ -270,7 +270,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
                     [accuracy, "Accuracy"],
                 ]:
                     # [[CAZyFam, StatParameter, PredicitonTool, StatValue]]
-                    longform_row = [fam, stat[1], tool, stat[0]]
+                    longform_row = [fam, tool, stat[1], stat[0]]
                     long_dataframe_data.append(longform_row)
 
                 continue
@@ -279,13 +279,13 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
 
             # recall aka sensitivity
             recall = recall_score(y_true, y_pred)
-            long_dataframe_data.append([fam, "Sensitivity", tool, recall])
+            long_dataframe_data.append([fam, tool, "Sensitivity", recall])
 
             precision = precision_score(y_true, y_pred)
-            long_dataframe_data.append([fam, "Precision", tool, recall])
+            long_dataframe_data.append([fam, tool, "Precision", precision])
 
             fbeta = fbeta_score(y_true, y_pred, beta=args.beta)
-            long_dataframe_data.append([fam, "Fbeta_score", tool, fbeta])
+            long_dataframe_data.append([fam, tool, "Fbeta_score", fbeta])
 
             # create confusion matrix for calculating Specificty and Accuracy
             cm = confusion_matrix(y_true, y_pred)
@@ -307,10 +307,10 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
                 )
 
                 specificity = np.nan
-                long_dataframe_data.append([fam, "Specificity", tool, specificity])
+                long_dataframe_data.append([fam, tool, "Specificity", specificity])
 
                 accuracy = np.nan
-                long_dataframe_data.append([fam, "Accuracy", tool, accuracy])
+                long_dataframe_data.append([fam, tool, "Accuracy", accuracy])
 
                 # [[CAZyFam, Prediction_Tool, Specificity, Recall, Fbeta, Accuracy]]
                 stats_orientated_row = [
@@ -326,10 +326,10 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
 
             # calculate specificity and accuracy
             specificity = tn / (tn + fp)
-            long_dataframe_data.append([fam, "Specificity", tool, specificity])
+            long_dataframe_data.append([fam, tool, "Specificity", specificity])
 
             accuracy = (tp + tn)/(tp + fp + fn + tn)
-            long_dataframe_data.append([fam, "Accuracy", tool, accuracy])
+            long_dataframe_data.append([fam, tool, "Accuracy", accuracy])
 
             # [[CAZyFam, Prediction_Tool, Specificity, Recall, Fbeta, Accuracy]]
             stats_orientated_row = [
@@ -357,16 +357,16 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
         ],
     )
 
-    output_path = args.output / f"cazy_fam_stats_fam_per_row_{time_stamp}.csv"
+    output_path = args.output / f"family_per_row_stats_{time_stamp}.csv"
     stats_df.to_csv(output_path)
 
     # build long form dataframe
     longform_df = pd.DataFrame(
         long_dataframe_data,
-        columns=["CAZy_family", "Stat_parameter", "Prediction_tool", "Stat_value"],
+        columns=["CAZy_family", "Prediction_tool", "Statistical_parameter", "Statistic_value"],
     )
 
-    output_path = args.output / f"cazy_fam_long_form_stats_df_{time_stamp}.csv"
+    output_path = args.output / f"family_long_form_stats_df_{time_stamp}.csv"
     longform_df.to_csv(output_path)
 
     return
