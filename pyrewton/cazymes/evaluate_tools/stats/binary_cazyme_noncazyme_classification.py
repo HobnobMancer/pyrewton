@@ -109,7 +109,7 @@ def build_classification_df(predicted_classifications):
 
         except KeyError:  # not added a record for the protein
             classification_dict[protein_accession] = {}
-            classification_dict[protein_accession]["Genomic_accession"] = genomic_accession
+            classification_dict[protein_accession]["genomic_accession"] = genomic_accession
             classification_dict[protein_accession][prediciton_tool] = [cazyme_classification]
 
     # build a series of lists
