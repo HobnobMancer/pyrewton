@@ -215,6 +215,7 @@ python3 calculate_stats_from_*.py <path to dir containing predict_cazymes.py out
 2. Per prediction a `.csv` file with the name `<tool>_fam_classifications_<date>.csv` is compiled, with the columns Genomic_accession, Protein_accession, Prediction_tool, then one column for each CAZy family (listing a 0 if the family classification was not predicted for the protein and a 1 if was predicted for the protein)
 3. `fam_stats_df_<date>.csv`, with the columns: CAZy_family, Prediction_tool, Specificty, Sensitivity, Fbeta_score, Accuracy, #TN (number of true negative predictions), #FN (number of false negative predictions), #TP (number of true positive predictions), #FP (number of false positive predictions), Recall_sample_size
 4. `family_ground_truth_classifications_<date>.csv` containing the CAZy family annotations from CAZy for every protein across all input tests sets.
+5. `CAZy_fam_testset_freq_<date>.json` keyed by CAZy family and valued by interget listing the number of occurences of the respective CAZy family across all test sets.
 
 By default `python3 calculate_stats_from_*.py` writes the output to the cwd. To specify a different output directory, add the `--output` flag to the command, followed by the path to the output directory. The output directory and its parent directories do not need to already exist, these can be created `pyrewton`.
 
