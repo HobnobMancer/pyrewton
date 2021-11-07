@@ -163,10 +163,10 @@ def write_out_test_set(
         if accession not in selected_noncazyme_accessions:
             selected_noncazyme_accessions.add(accession)
             selected_non_cazymes = selected_non_cazymes.append(df_row)
-        if len(selected_non_cazymes["blast_score_ratio"]) == 200:
+        if len(selected_non_cazymes["blast_score_ratio"]) == args.sample_size:
             break
     
-    if len(selected_non_cazymes["blast_score_ratio"]) != 200:
+    if len(selected_non_cazymes["blast_score_ratio"]) != args.sample_size:
         noncazyme_count = len(selected_non_cazymes["blast_score_ratio"])
         logger.error(
             f"Could not retrieve 100 non-CAZymes from {genomic_acc}\n"
