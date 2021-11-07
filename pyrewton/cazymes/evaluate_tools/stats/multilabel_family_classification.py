@@ -268,6 +268,11 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
                     [precision, "Precision"],
                     [fbeta, "Fbeta_score"],
                     [accuracy, "Accuracy"],
+                    [np.nan, "TNs"],
+                    [np.nan, "FNs"],
+                    [np.nan, "TPs"],
+                    [np.nan, "FPs"],
+                    [np.nan, "Sensitivity_sample_size"],
                 ]:
                     # [[CAZyFam, StatParameter, PredicitonTool, StatValue]]
                     longform_row = [fam, tool, stat[1], stat[0]]
@@ -324,6 +329,12 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
                 ]
                 stats_orientated_df_data.append(stats_orientated_row)
 
+                for group in ['TNs', 'FNs', 'TPs', 'FPs']:
+                    longform_row = [fam, tool, group, np.nan]
+                    long_dataframe_data.append(longform_row)
+
+                continue
+
             # calculate specificity and accuracy
             specificity = tn / (tn + fp)
             long_dataframe_data.append([fam, tool, "Specificity", specificity])
@@ -342,6 +353,16 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
                 accuracy,
             ]
             stats_orientated_df_data.append(stats_orientated_row)
+
+            for group in [
+                ['TNs', tn],
+                ['FNs', fn],
+                ['TPs', tp],
+                ['FPs', fp],
+            ]:
+                longform_row = [fam, tool, group[0], group[1]]
+                long_dataframe_data.append(longform_row)
+
 
     # build statistics orientated datafrae
     stats_df = pd.DataFrame(
