@@ -60,15 +60,17 @@ from pyrewton.cazymes.evaluate_tools.stats import (
 class TestSet:
     """TestSet from a genomic assembly.
 
-    :param fasta: path, path to query fasta file
+    :param fasta: Path, path to query fasta file
+    :param alignment: Path, path to BLAST all vs all alignment score csv file
     :param tax_id: str, NCBI taxonomy ID of host species
     :param source: str, source of proteins within fasta file
     :param prediction_paths: path, path to which prediction tool output is written
     """
 
     fasta: Path  # path to FASTA file containing proteins for prediction
+    alignment: Path
     tax_id: str  # NCBI taxonomy id, prefix NCBI:txid
-    source: str  # source of protein sequences, genomic assembly or database
+    source: str  # source of protein sequences, genomic accession number
     prediction_paths: dict()  # contains path to outputs
 
     def __str__(self):
@@ -84,11 +86,12 @@ class TestSet:
 class ClassificationDF:
     """Represents a CAZyme/non-CAZyme annotation/classification df for a test set"""
 
-    def __init__(self, genome_accession, df, df_path, testset_path):
+    def __init__(self, genome_accession, df, df_path, testset_path, alignment_scores):
         self.genome_accession = genome_accession
         self.df = df
         self.df_path = df_path  # path to csv file
         self.testset_path = testset_path  # path to test set FASTA file
+        self.alignment_scores = alignment_scores  # path to csv containing BLAST all vs. all scores
 
     def __str__(self):
         return f"<CAZyme/non-CAZyme classification df for test set {self.genome_accession}>"
@@ -98,16 +101,19 @@ class ClassificationDF:
 
 
 
-def get_predictions(prediction_dir):
+def get_predictions(args):
     """Retrieve create class instances to represent output for each test set.
 
-    :param prediction_dir: path to dir containing all prediction tool outputs.
+    :param args: cmd-line args parser
 
     Return list containing class instances, one instance per test set.
     """
     logger = logging.getLogger(__name__)
 
-    output_dirs = [f for f in prediction_dir.iterdir() if f.is_dir()]  # store the paths to the output dirs
+    # path_dict = {genomic_accession: {testset: Path, alingment: Path}}
+    path_dict = get_testset_alignment_paths(args) 
+
+    output_dirs = [f for f in (args.prediction_dir).iterdir() if f.is_dir()]  # store the paths to the output dirs
 
     predictions = []  # store TestSet instances
 
@@ -137,22 +143,78 @@ def get_predictions(prediction_dir):
             continue
 
         # build path to the FASTA file
-        fasta_path = get_paths.get_file_paths(
-            output_dir,
-            prefixes=['genbank_proteins_'],
-            suffixes=['_test_set.fasta'],
-        )
-        fasta_path = fasta_path[0]
+        try:
+            fasta_path = path_dict[genomic_accession]
+        except KeyError:
+            logger.error(
+                f"No test set FASTA file found for {genomic_accession}\n"
+                "Excluding test set from evaluation"
+            )
+            continue
+        try:
+            alignment_path = path_dict[genomic_accession]
+        except KeyError:
+            logger.error(
+                f"No BLAST all vs all alignment score csv file found for {genomic_accession}"
+            )
 
         # build dict of output paths
         output_paths = {}
         output_paths["dir"] = output_dir
 
         # build TestSet instance
-        test_set = TestSet(fasta_path, tax_id, genomic_accession, output_paths)
+        test_set = TestSet(fasta_path, alignment_path, tax_id, genomic_accession, output_paths)
         predictions.append(test_set)
 
     return predictions
+
+
+def get_testset_alignment_paths(args):
+    logger = logging.getLogger(__name__)
+
+    # retrieve paths to all test set FASTA files
+    testset_dir = args.testset_dir / "test_sets"
+    all_test_set_path = get_paths.get_file_paths(
+        testset_dir,
+        prefixes=['genbank_proteins_'], 
+        suffixes=['_test_set.fasta'],
+    )
+
+    # retrieve paths to all test set BLAST all versus all alignment score .csv files
+    alignment_dir = args.testset_dir / "alignment_scores"
+    all_align_score_paths = get_paths.get_file_paths(
+        alignment_dir,
+        prefixes=['genbank_proteins_'], 
+        suffixes=['_alignment_scores.csv'],
+    )
+
+    path_dict = {}  # {genomic_accession: {testset: Path, alingment: Path}}
+
+    for fasta_path in all_test_set_path:
+        filename = fasta_path.name
+        filename_parts = filename.split("_")
+        genomic_accession = f"{filename_parts[3]}_{filename_parts[4]}"
+        
+        try:
+            path_dict[genomic_accession]
+            path_dict[genomic_accession]["testset"] = fasta_path
+            logger.warning(f"Multiple test sets found with genomic accession: {genomic_accession}")
+        except KeyError:
+            path_dict[genomic_accession]["testset"] = fasta_path
+    
+    for alignment_path in all_align_score_paths:
+        filename = alignment_path.name
+        filename_parts = filename.split("_")
+        genomic_accession = f"{filename_parts[3]}_{filename_parts[4]}"
+
+        try:
+            path_dict[genomic_accession]
+            path_dict[genomic_accession]["alignment"] = alignment_path
+        except KeyError:
+            logger.warning(f"No test set FASTA file found for {genomic_accession}")
+            path_dict[genomic_accession]["alignment"] = alignment_path
+    
+    return path_dict
 
 
 def evaluate_performance(predictions, cazy, data_source, args):
@@ -385,6 +447,7 @@ def build_prediction_dataframes(predictions, time_stamp, cazy, data_source, args
             df=classifications_df,
             df_path=output_path,
             testset_path=test_set.fasta,
+            alignment_scores=test_set.alignemnt,
         ))
         # all_binary_c_nc_dfs used for bootstrapping accuracy of binary predictions
 
