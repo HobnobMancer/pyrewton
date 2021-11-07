@@ -176,6 +176,8 @@ python3 predict_cazymes.py \
 
 Additional optional flags are laid out in the [documentation]().
 
+The output printed to the terminal when invoking each of the CAZyme classifiers is still printed to the terminal when invoking the classifiers via `predict_cazymes.py`. Additionally, the terminal output is logged and written to a `.log` file for each CAZyme classifier and stored in the respecitive test set output directory.
+
 ### Calculating statistics
 
 To statistical evaluate the performance of the CAZyme classifiers, the Python scripts `calculate_stats_from_*.py` are used.
