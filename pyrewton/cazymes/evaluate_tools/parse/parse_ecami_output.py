@@ -22,6 +22,7 @@
 :func get_ecami_additional_info: Retrieve predicted EC numbers and additional domains
 """
 
+import logging
 import re
 
 import pandas as pd
@@ -175,10 +176,14 @@ def add_non_cazymes(ecami_predictions, fasta_path):
 
     Return a dictionary keyed by protein accession and valued by corresponding ECAMIprediction instance.
     """
+    logger = logging.getLogger(__name__)
+
     # Add non-CAZymes
     # open the FASTA file containing the input protein sequences
     with open(fasta_path, "r") as fh:
         fasta = fh.read().splitlines()
+
+    testset_proteins = 0
 
     for line in tqdm(fasta, desc="Adding non-CAZymes"):
         if line.startswith(">"):
@@ -197,5 +202,10 @@ def add_non_cazymes(ecami_predictions, fasta_path):
                     protein_accession,
                     cazyme_classification,
                 )
+    
+        logger.warning(
+        f"Found {testset_proteins} proteins in test set FASTA:\n{fasta_path}\n"
+        f"Parsing eCAMI output found {len(list(ecami_predictions.keys()))}"
+    )
 
     return ecami_predictions
