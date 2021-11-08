@@ -640,11 +640,8 @@ def get_non_cazymes(fasta_path, overview_dict):
     with open(fasta_path) as fh:
         fasta = fh.read().splitlines()
 
-    protein_count = 0  # used only in this notebook to ensure the correct number of protiens are parsed
-
     for line in tqdm(fasta, desc="Adding non-CAZymes"):
         if line.startswith(">"):
-            protein_count += 1  # used for counting proteins in the jupyter notebook
             protein_accession = line.split(" ")[0].strip().replace(">","")
 
             # check if the protein has been listed as a CAZyme by CUPP
