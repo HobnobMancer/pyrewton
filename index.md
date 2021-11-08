@@ -106,7 +106,15 @@ For all required Python libraries please read 'requirements.txt'.
 ## Independent evaluation of CAZyme classifiers
  
 At the time of publishing `pyrewton` no independent evaluation of the widely used CAZyme classifiers dbCAN, CUPP and eCAMI had been performed. Additionally, previous evaluations had not included an evaluation of the performance of the tools to differentiate between CAZymes and non-CAZymes predict the CAZy class annotation and had not evaluated the multi-label CAZy family annotation performance of the classifiers.
-  
+
+### Retrieving ground truth annotations
+
+CAZy is used as the reference annotation database during the evaluation. CAZy family annotations of proteins retrieved from CAZy can be provided to `pyrewton` as an SQLite3 database created using [`cazy_webscraper`](https://github.com/HobnobMancer/cazy_webscraper). The instructions for using `cazy_webscraper` can be found in the `cazy_webscraper` documentation.
+
+Alternatively, a JSON file, keyed by GenBank protein accessions and valued by list of CAZy family annotations can be provided. This can also be generated using `cazy_webscraper`.
+
+It is recommended to use an SQLite3 database becuase `cazy_webscraper` incorprates a log of every scrape of CAZy, UniProt and GenBank which is performed to add data to the local CAZyme database, thus facilitate reproduction of the database and the subsequent evaluation of the CAZyme prediction tools.
+
 ### Creation of the test sets
   
 The Python scripts `create_test_sets*.py` are used to generate the test sets. They are invoked using the same command structure:
@@ -191,7 +199,10 @@ The Python script `calculate_stats_from_dict.py` is used when using a JSON file 
 
 Both Python scripts have the same command structure:
 ```bash
-python3 calculate_stats_from_*.py <path to dir containing predict_cazymes.py output>
+python3 calculate_stats_from_*.py \
+  <path to dir containing predict_cazymes.py output> \
+  <path to dir containing create_test_sets_*.py output, containing the dirs alignment_scores and test_sets> \
+  <path to JSON or SQLite3 database file of CAZy family annotations from CAZy>
 ```
 
 `python3 calculate_stats_from_*.py` produces several output files, which can be grouped to 5 differet levels of evaluating/benchmarking CAZyme classifier performance:
