@@ -237,11 +237,11 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
             if (1 not in y_true) and (1 not in y_pred):
                 # do not include in statistics
                 logger.warning(
-                    f"{fam} not predicted by {tool} and not in known annotations\n"
+                    f"{fam} not predicted by {tool} and not in known annotations for the protein\n"
                     f"Excluding {fam} from evaluation by setting all stats results as NaN"
                 )
                 specific_logger.warning(
-                    f"{fam} not predicted by {tool} and not in known annotations. "
+                    f"{fam} not predicted by {tool} and not in known annotations for the protein.\n"
                     f"Excluding {fam} from evaluation by setting all stats results as NaN"
                 )
                 specificity = np.nan
