@@ -71,6 +71,19 @@ large_colour_set = unlist(mapply(brewer.pal, qual_col$maxcolors, rownames(qual_c
 # import "binary_classification_evaluation_<date>.csv"
 # Written in long form, with the columns: Statistic_parameter, Genomic_assembly, Prediction_tool, Statistic_value
 binary_stat_df <- read.csv("binary_classification_evaluation_2021_03_31.csv")
+
+# import "binary_bootstrap_accuracy_evaluation_<date>.csv"
+# Contains the output from the bootstrap resampling of the binary classification of CAZymes/non-CAZymes
+bootstrap.results.df <- read.csv("binary_bootstrap_accuracy_evaluation_2021_04_04.csv")
+
+# import "class_predicted_classifications_<date>.csv"
+# Contains the columns: Genomic_accession, Protein_accession, Prediciton_tool, one column per CAZy class, Rand_index and Adjusted_rand_index
+class_ri_ari_raw_df <- read.csv("class_predicted_classifications_2021_04_23.csv")
+
+# import "class_stats_per_test_set_<date>.csv"
+# Contains the calculated performance satistics when evaluating performance of CAZy class prediction per test set.
+# Written in long form with the columns: Genomic_accession, Prediction_tool, CAZy_class, Statistic_parameter, Statistic_value
+cazy_class_long_df <- read.csv("class_stats_per_test_set_time_stamp.csv")
 ```
 
 <div id="summary">
@@ -326,6 +339,7 @@ ggarrange(
 dev.off()
 ```
 
+
 ## Expected Range of Accruacy
 
 The statistics evaluated above provide an idea of the general performance of the tools, but they do not provide an idea of the expect range of performance. Specifically, the data does not provide a clear image of the best and worse performance a user can expect when using these tools.
@@ -333,12 +347,12 @@ The statistics evaluated above provide an idea of the general performance of the
 To compare the expected typical range in accuracies for each classifier, 6 test sets (identified by the source genomic assemblies) were selected at random. The CAZyme/non-CAZyme predictions for each classifier, for each test set, were bootstrap resampled 100 times each, and for each bootstrap sample the accuracy calculated. The accuracies of the bootstrap samples for each classifier were plotted on stacked histograms, shown in figure \@ref(fig:bsacc).
 
 ```{r bsacc, echo=FALSE, fig.cap="Stacked histograms of bootstrap sample accuracies of CAZyme classifiers' differentiation between CAZymes and non-CAZymes. 6 test sets (identified by their source genomic assembly) were selected at random. The CAZyme/non-CAZyme predictions for each classifier, for each test set, were bootstrap resampled 100 times. The accuracy of each of the 600 bootstrap samples per test set were plotted as a stacked histogram."}
-bootstrap.results <- read.csv("bootstrap_accuracy_evaluation_2021_04_04.csv")
-bootstrap.results$Prediction_tool <- factor(bootstrap.results$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+bootstrap.results.df$Prediction_tool <- factor(bootstrap.results.df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
 # This plot is incase you do not want the total count of each bin printed above it
-# pdf(file = "binaryBootstrapAcc.pdf", width = 10, height = 6)
-p.bs = ggplot(bootstrap.results %>% group_by(Genomic_accession), aes(x=accuracy, fill=Genomic_accession)) +
+pdf(file = "binaryBootstrapAcc_noBinTotal.pdf", width = 10, height = 6)
+p.bs.noBinTotal = ggplot(bootstrap.results.df %>% group_by(Genomic_accession), aes(x=accuracy, fill=Genomic_accession)) +
   geom_histogram(alpha=0.7, color="black", binwidth = 0.01) +
   scale_fill_brewer(palette="Set1") +
   theme(plot.background = element_rect(fill = figbg, color = figbg),
@@ -349,15 +363,15 @@ p.bs = ggplot(bootstrap.results %>% group_by(Genomic_accession), aes(x=accuracy,
   scale_y_continuous(breaks = seq(0,125, by = 25)) +
   scale_x_continuous(breaks = seq(0.75,1, by = 0.05)) +
   facet_wrap(~ Prediction_tool) 
-# p.bs
-# dev.off()
+p.bs.noBinTotal
+dev.off()
 
 # plot generated to see the number of items in each bin for the figure above, and additional boxplots to represent the distribution of the data
-# pdf(file = "binaryBootstrapAccNumbered.pdf", width = 8.25, height = 11)
-# svg(file = "binaryBootstrapAccNumbered.svg", width = 8.25, height = 11)
-p.bsbs = ggplot(bootstrap.results %>% group_by(Genomic_accession), aes(x=accuracy)) +
+pdf(file = "binaryBootstrapAccAnnotated.pdf", width = 8.25, height = 11)
+svg(file = "binaryBootstrapAccAnnotated.svg", width = 8.25, height = 11)
+p.bs.annotated = ggplot(bootstrap.results.df %>% group_by(Genomic_accession), aes(x=accuracy)) +
   geom_histogram(alpha=0.7, color="black", binwidth = 0.01, aes(fill=Genomic_accession), position = ) +
-  geom_boxplot(outlier.shape=NA, width = 10, data=bootstrap.results, aes(x=accuracy, y=100), alpha=0.5) +
+  geom_boxplot(outlier.shape=NA, width = 10, data=bootstrap.results.df, aes(x=accuracy, y=100), alpha=0.5) +
   scale_fill_brewer(palette="Set1") +
   # stat_bin(aes(y=..count.. + 5, label=..count..), geom="text", binwidth = 0.01, size=3.5, angle=90) +
   theme(plot.background = element_rect(fill = figbg, color = figbg),
@@ -370,17 +384,9 @@ p.bsbs = ggplot(bootstrap.results %>% group_by(Genomic_accession), aes(x=accurac
   scale_x_continuous(breaks = seq(0.75,1, by = 0.05)) +
   facet_wrap(~ Prediction_tool, ncol=2) 
   # remove the comment if you want to see the histogram with the total number per column printed
-p.bsbs
-# dev.off()
+p.bs.annotated
+dev.off()
 ```
-
-All classifiers demonstrated a bimodal shaped histogram, skewed towards the right (an accuracy of 1).
-
-The majority of accuracies of bootstrap samples from dbCAN fell within its second biomodal peak (from 0.96-1.00), and it's lower bimodal peak ranged from 0.85-0.9. HMMER also had the majority of bootstrap accuracies fell within the upper modal peak, although this covered a greater range than the upper peak of dbCAN (0.9-1.00). However, fewer accuracies fell within the lower modal peak of HMMER (0.8 - 0.9), and predominately came from a single test set (GCA_900635675.1), which also made up half the accuracies within the lower modal peak from dbCAN. Similar to dbCAN, the lower modal peak of DIAMOND was composed mainly of bootstrap samples from GCA_001592805.2 and GCA_900635675.1, ranging from 0.75-0.90. Bootstrap samples from the remaining test sets all fell within 0.945 - 1.00.
-
-All three of the k-mer methods did not show a reduced performance of bootstrap samples from GCA_900635675.1 to the same degree as dbCAN, HMMER and DIAMOND. Hotpep and CUPP showed similar biomodal histogram patterns (0.85-0.93, and 0.95-0.98, and overall range in accuracies was similar between the two tools, although Hotpep had more calculated accuracies within 0.9-0.87 then CUPP. This infers that in general CUPP out performs Hotpep. eCAMI showed the weakest bimodal histogram pattern. The majoirty of bootstrap samples calculated accuracies fell within 0.9-1. A much greater proportion of accuracies fell within the range of 0.9-1.0 for eCAMI than Hotpep, infering eCAMI generally produces a better performance than Hotpep. eCAMI and Hotpep had comparable number of calculated accuracies within the range of 0.8-0.9 (234 and 236, respectively), and was significantly more accuracies than CUPP, with 163 accuracies within the range. This inferred that a user has a higher probability of achieving a performance with an accuracy within 0.9-1.0 when using CUPP than using Hotpep or eCAMI.
-
-Comparing the performances of classifiers on specific test sets is difficult for this data set. In the version of `pyrewton` used to generate the bootstrap samples, new bootstrap samples were created from each test set for each classifier, which could have lead to some of the variation in performances across classifiers on the same test set. However, the size of each bootstrap sample was the same size as the test set (n = 200), therefore, taking the performances across all bootstrap samples for each classifier (n = 600) \@ref(fig:bsacc) does provide an approximation of the expected range of performance of each classifier. This has been corrected in newer versions of `pyrewton` so that the proteins sample for each of the 100 boostrap samples is the same for each classifier. This means there will still be 100 bootstrap samples were test set, but the protein consumption of the 100 boostrap samples for one classifier will be the same for all other classifiers. This will allow for a more accurate comparison between the performances of each of the classifiers on a specific test set. This is supported by observing the same general trend if accuracy score distributions in figures \@ref(fig:bsacc) and \@ref(fig:accbc).
 
 
 ### Investigation of Non-CAZymes classified as CAZymes (False positives)
@@ -468,10 +474,10 @@ Overall, all tools show a low probability of producing false positives (misclass
 dbCAN consistently demonstrated the strongest performance in all catagories, inferring that eCAMI and CUPP are not suitable replacements of the CAZyme classifier. Hotpep consistently demonstrated the weakest performance, and is incorporated within dbCAN. Therefore, substituting eCAMI and/or CUPP into dbCAN instead of Hotpep may futher improve the performance of dbCAN. The new k-mer based methods, eCAMI and CUPP demonstrated similar performances. CUPP showed a more consistent performance and eCAMI demonstrating a greater range in performance although its mean performance was fractionally greater than that of CUPP. However, more bootstrap calculated accuracy scores feel within the range of 0.9-1.0 for CUPP than eCAMI. This infers that a CUPP may typically provide a better performance than eCAMI, although eCAMI does have the potential on some occations to out perform CUPP, depending on the test set.
 
 
-
 # Evaluation of the Multilabel Classification of CAZy Classes
 
 CAZy groups CAZymes into CAZy families by sequence similarity, and CAZy families are grouped into one of 6 functional classes. The CAZyme classifiers predict the CAZy family annotations of predicted CAZymes, but it is of interest to see what the level of performance of the classiferis is at the CAZy class level. Specifically, a classifier may struggle to predict the correct CAZy class for a CAZyme but consistently predict the correct CAZy class. Therefore, the aim of this part of the evaluation is to evaluate the performance of the classifiers to predict the correct CAZy class of predict CAZymes.
+
 
 ## Rand Index and Adjusted Rand Index of CAZy Class Prediction
 
@@ -480,9 +486,9 @@ A single CAZyme can be included in multiple CAZy classes leading to the multilab
 The RI is the measure of accuracy across all potential classifications of a protein. The RI ranges from 0 (no correct annotations) to 1 (all annotations correct). The ARI is the RI adjusted for chance, where 0 is the equivalent to assigning the CAZy class annotations randomly, -1 where the annotations are systematically handed out incorrectly and 1 where the annotations are all correct.
 
 ```{r classRI, echo=FALSE, fig.cap="Violin plot of Rand Index (RI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy classes."}
-# load in the data
-class_ri_ari_raw_df <- read.csv("class_predictions_classifications_2021_04_23.csv")
+
 class_ri_ari_raw_df$Prediction_tool <- factor(class_ri_ari_raw_df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+
 # plot RI
 p.ri.class = ggplot(class_ri_ari_raw_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Rand_index, fill=Prediction_tool)) +
   geom_violin() +
@@ -500,7 +506,7 @@ p.ri.class
 
 
 ```{r classRI, echo=FALSE, fig.cap="Violin plot of Adjusted Rand Index (ARI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy classes."}
-# plot ARI
+
 p.ari.class = ggplot(class_ri_ari_raw_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Adjusted_Rand_index, fill=Prediction_tool)) +
   geom_violin() +
   geom_jitter(width=0.1, height=0) +
@@ -522,9 +528,6 @@ p.ari.class
 Fbeta scores by test set, proportional area plot
 
 ```{r}
-# load in the data
-cazy_class_long_df <- read.csv("class_stats_per_test_set_time_stamp.csv")
-
 # retrieve the Fbeta scores
 cazy_class_fbeta_df <- cazy_class_long_df[which(cazy_class_long_df$Statistic_parameter == "Fbeta_score"), ]
 cazy_class_fbeta_df$Prediction_tool <- factor(cazy_class_fbeta_df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
