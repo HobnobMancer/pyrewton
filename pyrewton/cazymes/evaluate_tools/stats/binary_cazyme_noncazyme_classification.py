@@ -438,6 +438,8 @@ def get_blast_score_ratio(classification_df_instance, protein_accession, predict
     """
     logger = logging.getLogger(__name__)
 
+    if classification_df_instance.alignment_scores is None:
+        return "<unretrievable>"
     try:
         # load in the data
         alignment_score_df = pd.read_csv(classification_df_instance.alignment_scores)
