@@ -13,6 +13,9 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+#
+# Import required libraries
+#
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library('kableExtra')
 library(magrittr) 
@@ -37,19 +40,37 @@ library("MASS")
 library("interp")
 library('reshape2')
 
+#
+# define global constants
+#
+
 # BG color for plots - should match .figure and .caption classes in rmd_style.css
 figbg = "whitesmoke"
 
+#
 # Colour schemes for data
-colour_set <- c("#0a7a6d", "#d4af37", "#7844b8", "#acbf1b", "#c22176", "#3888e0")
-colour_grad <- c("#4a1b00", "#620021", "#ba2922", "#D73027", "#F38345", "#FDBA67", "#FEE168", "#fff966", "#BCF9FC", "#98D0E4", "#66A5CC", "#3D7A99", "#2f5b61", "#2e5c39", "#328544", "#22b348", "#40c740", "#80e831", "#a5f200")
+#
 
+# define small colour set, with one colour per CAZyme classifier
+colour_set <- c("#0a7a6d", "#d4af37", "#7844b8", "#acbf1b", "#c22176", "#3888e0")
+# colour gradient from red-orange-yellow-blue-gree
+colour_grad <- c("#4a1b00", "#620021", "#ba2922", "#D73027", "#F38345", "#FDBA67", "#FEE168", "#fff966", "#BCF9FC", "#98D0E4", "#66A5CC", "#3D7A99", "#2f5b61", "#2e5c39", "#328544", "#22b348", "#40c740", "#80e831", "#a5f200")
+# define large colour set when many colours are needed
 n <- 60
 qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
 col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
-
 qual_col = qual_col_pals[c(TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE, TRUE), ]
 large_colour_set = unlist(mapply(brewer.pal, qual_col$maxcolors, rownames(qual_col)))
+```
+
+```{r importData, include=FALSE}
+#
+# Import data files
+#
+
+# import "binary_classification_evaluation_<date>.csv"
+# Written in long form, with the columns: Statistic_parameter, Genomic_assembly, Prediction_tool, Statistic_value
+binary_stat_df <- read.csv("binary_classification_evaluation_2021_03_31.csv")
 ```
 
 <div id="summary">
@@ -109,42 +130,47 @@ The assignment of CAZy family annotations to proteins that meet specific criteri
 
 ## Summary statistics
 
-For each classifier, for each test set the specificity, recall, precision, F1-score and accuracy were calculated. The average of each statistical parameter was calculated for each classifier across all tests, to represent the overall performance of each CAZyme classifier. These results are presented in table \@ref(tab:sumstats). The performances of the classifiers for each statistical parameters are discussed in separate sections below.
+For every classifier-test set pair, the specificity, sensitivity, prevision, F1-score and accuracy were calculated.
+
+The mean of each statistical parameter was calculated for each classifier across all tests, to represent the overall performance of each CAZyme classifier.
+
+These results are presented in table \@ref(tab:sumstats).
 
 ```{r sumstats, echo=FALSE, fig.cap="Summary statistics of CAZyme classifiers performances of binary CAZyme/non-CAZyme prediction. Data collected is the mean of call calculated statistical parameters across all test sets, plus and minus the standard devliation. All figures are rounded to 4 decimal places."}
-# Loads in the data for the binary classification evaluation
-all_stat_data <- read.csv("binary_classification_evaluation_2021_03_31.csv")
 
 # Calculate statistics
-subset <- all_stat_data[which(all_stat_data$Statistic.parameter == "Specificity"), ]
-specificity <- subset %>% group_by(Prediction.tool) %>% summarise("Mean Specificity"=mean(Statistic.value), "Specificity Standard Deviation"=sd(Statistic.value))
+subset_spec <- binary_stat_df[which(binary_stat_df$Statistic_parameter == "Specificity"), ]
+binary_specificity <- subset_spec %>% group_by(Prediction.tool) %>% summarise("Mean Specificity"=mean(Statistic.value), "Specificity Standard Deviation"=sd(Statistic.value))
 
-subset <- all_stat_data[which(all_stat_data$Statistic.parameter == "Recall"), ]
-recall_set <- subset %>% group_by(Prediction.tool) %>% summarise("Mean Recall"=mean(Statistic.value), "Recall Standard Deviation"=sd(Statistic.value))
+subset_sens <- binary_stat_df[which(binary_stat_df$Statistic_parameter == "Recall"), ]
+binary_sensitivity <- subset_sens %>% group_by(Prediction.tool) %>% summarise("Mean Recall"=mean(Statistic.value), "Recall Standard Deviation"=sd(Statistic.value))
 
-subset <- all_stat_data[which(all_stat_data$Statistic.parameter == "Precision"), ]
-precision <- subset %>% group_by(Prediction.tool) %>% summarise("Mean Precision"=mean(Statistic.value), "Precision Standard Deviation"=sd(Statistic.value))
+subset_prec <- binary_stat_df[which(binary_stat_df$Statistic_parameter == "Precision"), ]
+binary_precision <- subset_prec %>% group_by(Prediction.tool) %>% summarise("Mean Precision"=mean(Statistic.value), "Precision Standard Deviation"=sd(Statistic.value))
 
-subset <- all_stat_data[which(all_stat_data$Statistic.parameter == "F1-score"), ]
-f1_score <- subset %>% group_by(Prediction.tool) %>% summarise("Mean F1-score"=mean(Statistic.value), "F1-score Standard Deviation"=sd(Statistic.value))
+subset_f1 <- binary_stat_df[which(binary_stat_df$Statistic_parameter == "F1-score"), ]
+binary_f1_score <- subset_f1 %>% group_by(Prediction.tool) %>% summarise("Mean F1-score"=mean(Statistic.value), "F1-score Standard Deviation"=sd(Statistic.value))
 
-subset <- all_stat_data[which(all_stat_data$Statistic.parameter == "Accuracy"), ]
-accuracy <- subset %>% group_by(Prediction.tool) %>% summarise("Mean Accuracy"=mean(Statistic.value), "Accuracy Standard Deviation"=sd(Statistic.value))
+subset_acc <- binary_stat_df[which(binary_stat_df$Statistic_parameter == "Accuracy"), ]
+binary_accuracy <- subset_acc %>% group_by(Prediction.tool) %>% summarise("Mean Accuracy"=mean(Statistic.value), "Accuracy Standard Deviation"=sd(Statistic.value))
 
-# combine data and build a dataframe
-binary_summary_df <- merge(specificity, recall_set)
-binary_summary_df <- merge(binary_summary_df, precision)
-binary_summary_df <- merge(binary_summary_df, f1_score)
-binary_summary_df <- merge(binary_summary_df, accuracy)
+# combine data and build a single dataframe
+binary_summary_df <- merge(binary_specificity, subset_sens)
+binary_summary_df <- merge(binary_summary_df, binary_precision)
+binary_summary_df <- merge(binary_summary_df, binary_f1_score)
+binary_summary_df <- merge(binary_summary_df, binary_accuracy)
+
+# define factors
 binary_summary_df$Prediction.tool <- factor(binary_summary_df$Prediction.tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
-names(binary_summary_df)[names(binary_summary_df) == "Prediction.tool"] <- "Classifier"
+
+names(binary_summary_df)[names(binary_summary_df) == "Prediction_tool"] <- "Classifier"
 # reorder the rows
+
 binary_summary_df <- binary_summary_df[c(2,5,6,3,1,4), ]
 row.names(binary_summary_df) = NULL  # hides row names which are added by reordering the rows
 
 kable(binary_summary_df, caption="Overall performance of CAZyme classifiers differentiation between CAZymes and non-CAZymes", align='c', digits = 4) %>% kable_styling(full_width = F)
 
-# write.csv(binary_summary_df[1:5], "binary_summary_dataframe.csv", row.names=FALSE)
 ```
 
 
@@ -154,7 +180,7 @@ kable(binary_summary_df, caption="Overall performance of CAZyme classifiers diff
 Specificity is the proportion of known negatives (in this case known non-CAZymes) which are correctly classified as negatives/non-CAZymes. Figure \@ref(fig:spec) is a graphical representation of the results calculated in table \@ref(tab:sumstats).
 
 ```{r spec, echo=FALSE, fig.cap="One-dimensional scatter plot of specificity scores of CAZyme and non-CAZyme predictions per test set, overlaying box plot of standard deviation."}
-subset.spec <- all_stat_data[which(all_stat_data$Statistic.parameter == "Specificity"), ]
+subset.spec <- binary_stat_df[which(binary_stat_df$Statistic.parameter == "Specificity"), ]
 subset.spec$Prediction.tool <- factor(subset.spec$Prediction.tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
 # pdf(file = "binarySpec.pdf", width = 8.58, height = 5.5)
@@ -182,7 +208,7 @@ Recall (also known as sensitivity) is the proportion of known CAZymes that are c
 
 
 ```{r recallbc, echo=FALSE, fig.cap="One-dimensional scatter plot of recall (sensitivity) scores of CAZyme and non-CAZyme predictions per test set, overlaying box plot of standard deviation."}
-subset.recall <- all_stat_data[which(all_stat_data$Statistic.parameter == "Recall"), ]
+subset.recall <- binary_stat_df[which(binary_stat_df$Statistic.parameter == "Recall"), ]
 subset.recall$Prediction.tool <- factor(subset.recall$Prediction.tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
 # pdf(file = "binaryRecallSens.pdf", width = 8.58, height = 5.5)
@@ -211,7 +237,7 @@ The recall scores from all classifiers infers that it is unlikely the prediction
 Precision is the proportion of positive predictions by the classifiers that are correct. In this case, precision represents the fraction of CAZyme predictions by the classifiers that are correct, specifically the proportion of predicted CAZymes that are known CAZymes. Figure \@ref(fig:precbc) is a visual representation of the results calculated in table \@ref(tab:sumstats).
 
 ```{r precbc, echo=FALSE, fig.cap="One-dimensional scatter plot of precision scores of CAZyme and non-CAZyme predictions per test set, overlaying box plot of standard deviation."}
-subset.prec <- all_stat_data[which(all_stat_data$Statistic.parameter == "Precision"), ]
+subset.prec <- binary_stat_df[which(binary_stat_df$Statistic.parameter == "Precision"), ]
 subset.prec$Prediction.tool <- factor(subset.prec$Prediction.tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
 # pdf(file = "binaryPrec.pdf", width = 8.58, height = 5.5)
@@ -240,7 +266,7 @@ Again, all tools demonstrated a similar strength in performance, except the the 
 The F1-score is a harmonic (or weighted) average of recall and precision and provides an idea of the overall performance of the tool, 0 being the lowest and 1 being the best performance. Figure \@ref(fig:f1bc) shows the F1-score from each test set, for each classifier.
 
 ```{r f1bc, echo=FALSE, fig.cap="Bar chart of specificity of CAZyme classifiers differentiation between CAZymes and non-CAZymes."}
-subset.f1 <- all_stat_data[which(all_stat_data$Statistic.parameter == "F1-score"), ]
+subset.f1 <- binary_stat_df[which(binary_stat_df$Statistic.parameter == "F1-score"), ]
 subset.f1$Prediction.tool <- factor(subset.f1$Prediction.tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
 # pdf(file = "binaryF1.pdf", width = 8.58, height = 5.5)
@@ -267,7 +293,7 @@ Accuarcy (calculated using (TP + TN) / (TP + TN + FP + FN) ) provides an idea of
 
 
 ```{r accbc, echo=FALSE, fig.cap="Bar chart of specificity of CAZyme classifiers differentiation between CAZymes and non-CAZymes."}
-subset.acc <- all_stat_data[which(all_stat_data$Statistic.parameter == "Accuracy"), ]
+subset.acc <- binary_stat_df[which(binary_stat_df$Statistic.parameter == "Accuracy"), ]
 subset.acc$Prediction.tool <- factor(subset.acc$Prediction.tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
 # pdf(file = "binaryAcc.pdf", width = 8.58, height = 5.5)
