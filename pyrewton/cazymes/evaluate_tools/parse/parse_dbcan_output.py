@@ -636,12 +636,17 @@ def get_non_cazymes(fasta_path, overview_dict):
 
     Return a dictionary keyed by protein accession and valued by dict {tool:CazymeProteinPrediction}
     """
+    logger = logging.getLogger(__name__)
+
     # open the FASTA path
     with open(fasta_path) as fh:
         fasta = fh.read().splitlines()
 
+    testset_proteins = 0
+
     for line in tqdm(fasta, desc="Adding non-CAZymes"):
         if line.startswith(">"):
+            testset_proteins += 1
             protein_accession = line.split(" ")[0].strip().replace(">","")
 
             # check if the protein has been listed as a CAZyme by CUPP
@@ -657,6 +662,11 @@ def get_non_cazymes(fasta_path, overview_dict):
                         protein_accession,
                         cazyme_classification,
                     )
+
+    logger.warning(
+        f"Found {testset_proteins} proteins in test set FASTA:\n{fasta_path}\n"
+        f"Parsing dbCAN output found {len(list(overview_dict.keys()))}"
+    )
 
     return overview_dict
 
