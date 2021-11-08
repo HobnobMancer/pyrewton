@@ -251,12 +251,16 @@ def add_non_cazymes(fasta_path, cupp_predictions):
 
     Return a dictionary valued by protein accessions and keyed by their respective CUPPprediction instance.
     """
+    logger = logging.getLogger(__name__)
     # open the FASTA path
     with open(fasta_path) as fh:
         fasta = fh.read().splitlines()
+    
+    testset_proteins = 0
 
     for line in tqdm(fasta, desc="Adding non-CAZymes"):
         if line.startswith(">"):
+            testset_proteins += 1
             protein_accession = line[1:].strip()
 
             # check if the protein has been listed as a CAZyme by CUPP
@@ -271,4 +275,8 @@ def add_non_cazymes(fasta_path, cupp_predictions):
                     cazyme_classification,
                 )
 
+    logger.warning(
+        f"Found {testset_proteins} proteins in test set FASTA:\n{fasta_path}\n"
+        f"Parsing CUPP output found {len(list(cupp_predictions.keys()))}"
+    )
     return cupp_predictions
