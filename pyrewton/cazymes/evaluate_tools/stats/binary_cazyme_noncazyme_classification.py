@@ -20,6 +20,7 @@
 
 import logging
 import random
+import sys
 
 import pandas as pd
 import numpy as np
@@ -323,6 +324,7 @@ def get_f_pos_f_neg_predictions(all_binary_c_nc_dfs, time_stamp, args):
 
     Return nothing.
     """
+    logger = logging.getLogger(__name__)
 
     df_data = {
         "Protein_accession":[],
@@ -340,12 +342,28 @@ def get_f_pos_f_neg_predictions(all_binary_c_nc_dfs, time_stamp, args):
     false_positives_df_data = df_data
     false_negatives_df_data = df_data
 
+    nan_alignment_score = None
+
     for classification_df_instance in all_binary_c_nc_dfs:
         classification_df = classification_df_instance.df
 
         # protein accessions are the row indexes
         classification_df.reset_index(inplace=True)
         classification_df = classification_df.rename(columns = {'index':'Protein_accession'})
+        
+        # load in the alignment score df 
+        if classification_df_instance.alignment_scores is None:
+            nan_alignment_score = np.nan
+        try:
+            # load in the data
+            alignment_score_df = pd.read_csv(classification_df_instance.alignment_scores)
+
+        except FileNotFoundError:
+            logger.error(
+                f"Could not find alignment score file for\n{classification_df_instance.df_path}\n"
+                "Adding BLAST score ratio to False Positive/Negative dataframe as null/nan"
+            )
+            nan_alignment_score =  np.nan
 
         row_index = 0
         for row_index in tqdm(
@@ -375,14 +393,17 @@ def get_f_pos_f_neg_predictions(all_binary_c_nc_dfs, time_stamp, args):
                     false_positives_df_data["CAZy"].append(row["CAZy"])
                     false_positives_df_data["Number_of_tools"].append(tool_total)
 
-                    # retrieve the highest blast score ratio between the protein an a known CAZyme
-                    false_positives_df_data["Blast_score_ratio"].append(
-                        get_blast_score_ratio(
-                            classification_df_instance,
-                            row["Protein_accession"],
-                            "FP"
-                        ),
-                    )
+                    if nan_alignment_score is not None:
+                        false_positives_df_data["Blast_score_ratio"].append(np.nan)
+                    else:
+                        # retrieve the highest blast score ratio between the protein an a known CAZyme
+                        false_positives_df_data["Blast_score_ratio"].append(
+                            get_blast_score_ratio(
+                                alignment_score_df,
+                                row["Protein_accession"],
+                                "FP"
+                            ),
+                        )
 
             else:  # CAZyme (according to CAZy)
                 tool_total = (
@@ -405,14 +426,17 @@ def get_f_pos_f_neg_predictions(all_binary_c_nc_dfs, time_stamp, args):
                     false_negatives_df_data["CAZy"].append(row["CAZy"])
                     false_negatives_df_data["Number_of_tools"].append(tool_total)
 
-                    # retrieve the highest blast score ratio between the protein an a known CAZyme
-                    false_negatives_df_data["Blast_score_ratio"].append(
-                        get_blast_score_ratio(
-                            classification_df_instance,
-                            row["Protein_accession"],
-                            "FN"
-                        ),
-                    )
+                    if nan_alignment_score is not None:
+                        false_positives_df_data["Blast_score_ratio"].append(np.nan)
+                    else:
+                        # retrieve the highest blast score ratio between the protein an a known CAZyme
+                        false_negatives_df_data["Blast_score_ratio"].append(
+                            get_blast_score_ratio(
+                                alignment_score_df,
+                                row["Protein_accession"],
+                                "FN"
+                            ),
+                        )
     
     false_positives_df = pd.DataFrame(df_data)
     false_negatives_df = pd.DataFrame(df_data)
@@ -427,38 +451,30 @@ def get_f_pos_f_neg_predictions(all_binary_c_nc_dfs, time_stamp, args):
     return
 
 
-def get_blast_score_ratio(classification_df_instance, protein_accession, prediction_type):
+def get_blast_score_ratio(alignment_score_df, protein_accession, prediction_type):
     """Retrieve the highest BLAST score ratio between the given protein and a known CAZyme.
 
-    :param classification_df_instance: ClassificationDF instance.
+    :param alignment_score_df: pandas df, output from BLAST all vs all alignments
     :param protein_accession: str, GenBank protein accession
     :param prediction_type: str, 'FP' or 'FN'
 
     Return the BLAST score ratio (str).
     """
-    logger = logging.getLogger(__name__)
-
-    if classification_df_instance.alignment_scores is None:
-        return "<unretrievable>"
-    try:
-        # load in the data
-        alignment_score_df = pd.read_csv(classification_df_instance.alignment_scores)
-
-    except FileNotFoundError:
-        logger.error(
-            f"Could not find alignment score file for\n{classification_df_instance.df_path}\n"
-            "Adding BLAST score ratio to False Positive/Negative dataframe as null/nan"
-        )
-        return np.nan
-
     # retrieve all rows containing data for the given protein
     if prediction_type == "FN":
-        protein_blast_scores_df = alignment_score_df[alignment_score_df["subject (Cazyme)"] == protein_accession]
+        protein_blast_scores_df = (
+            alignment_score_df[alignment_score_df["subject (Cazyme)"] == protein_accession]
+        )
     else:
-        protein_blast_scores_df = alignment_score_df[alignment_score_df["query (non-CAZyme)"] == protein_accession]
+        protein_blast_scores_df = (
+            alignment_score_df[alignment_score_df["query (non-CAZyme)"] == protein_accession]
+        )
 
     protein_blast_scores_df = protein_blast_scores_df.sort_values(by = "blast_score_ratio")
-    highest_score = protein_blast_scores_df.iloc[-1]
+    try:
+        highest_score = protein_blast_scores_df.iloc[-1]
+    except IndexError:
+        sys.exit(1)
     highest_score = highest_score["blast_score_ratio"]
 
     return highest_score
