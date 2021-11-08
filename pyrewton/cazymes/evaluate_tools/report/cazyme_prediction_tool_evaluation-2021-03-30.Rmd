@@ -177,14 +177,17 @@ kable(binary_summary_df, caption="Overall performance of CAZyme classifiers diff
 
 ### Specificity
 
-Specificity is the proportion of known negatives (in this case known non-CAZymes) which are correctly classified as negatives/non-CAZymes. Figure \@ref(fig:spec) is a graphical representation of the results calculated in table \@ref(tab:sumstats).
+Specificity is the proportion of known negatives (known non-CAZymes) which are correctly classified as negatives (non-CAZymes).
+
+Figure \@ref(fig:spec) is a graphical representation of the results calculated in table \@ref(tab:sumstats).
 
 ```{r spec, echo=FALSE, fig.cap="One-dimensional scatter plot of specificity scores of CAZyme and non-CAZyme predictions per test set, overlaying box plot of standard deviation."}
-subset.spec <- binary_stat_df[which(binary_stat_df$Statistic.parameter == "Specificity"), ]
-subset.spec$Prediction.tool <- factor(subset.spec$Prediction.tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
-# pdf(file = "binarySpec.pdf", width = 8.58, height = 5.5)
-p.spec = ggplot(subset.spec %>% group_by(Prediction.tool), aes(x=Prediction.tool, y=Statistic.value, fill=Prediction.tool)) +
+subset_spec$Prediction_tool <- factor(subset.spec$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+pdf(file = "binarySpec.pdf", width = 8.58, height = 5.5)
+p.binary.spec = ggplot(subset_spec %>% group_by(Prediction_tool),
+                aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
   geom_boxplot(outlier.shape=NA) +
   geom_jitter(width=0.1, height=0) +
   scale_fill_manual(values = colour_set) +
@@ -195,24 +198,24 @@ p.spec = ggplot(subset.spec %>% group_by(Prediction.tool), aes(x=Prediction.tool
   xlab("Classifier") + 
   ylab("Specificity") +
   scale_y_continuous(breaks = seq(0.7,1, by = 0.05))
-p.spec
-# dev.off()
+p.binary.spec
+dev.off()
 ```
 
-All tools showed a low probability of misclassifying non-CAZymes as CAZymes, inferring CAZyme predictions by these tools showed be treated as confident predictions. The weakest tools in this catagory were the k-mer methods Hotpep and eCAMI. The third k-mer method, CUPP, showed a similar performance to dbCAN.
+### Sensitivity
 
+Sensitivity (also known as recall) is the proportion of known positives (CAZymes) that are correctly identified as positives (CAZymes).
 
-### Recall
-
-Recall (also known as sensitivity) is the proportion of known CAZymes that are correctly identified as CAZymes. Figure \@ref(fig:recallbc) graphically represents of the results calculated in table \@ref(tab:sumstats).
+Figure \@ref(fig:recallbc) graphically represents of the results calculated in table \@ref(tab:sumstats).
 
 
 ```{r recallbc, echo=FALSE, fig.cap="One-dimensional scatter plot of recall (sensitivity) scores of CAZyme and non-CAZyme predictions per test set, overlaying box plot of standard deviation."}
-subset.recall <- binary_stat_df[which(binary_stat_df$Statistic.parameter == "Recall"), ]
-subset.recall$Prediction.tool <- factor(subset.recall$Prediction.tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
-# pdf(file = "binaryRecallSens.pdf", width = 8.58, height = 5.5)
-p.recall = ggplot(subset.recall %>% group_by(Prediction.tool), aes(x=Prediction.tool, y=Statistic.value, fill=Prediction.tool)) +
+subset_sens$Prediction.tool <- factor(subset.recall$Prediction.tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+
+pdf(file = "binarySensitivity.pdf", width = 8.58, height = 5.5)
+p.binary.sens = ggplot(subset_sens %>% group_by(Prediction_tool),
+                  aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
   geom_boxplot(outlier.shape=NA) +
   geom_jitter(width=0.1, height=0) +
   scale_fill_manual(values = colour_set) +
@@ -221,16 +224,11 @@ p.recall = ggplot(subset.recall %>% group_by(Prediction.tool), aes(x=Prediction.
         axis.text=element_text(size=10),
         axis.title=element_text(size=12,face="bold")) +
   xlab("Classifier") + 
-  ylab("Recall") +  # or change to sensitivity depending on preferencer
+  ylab("Sensitivity") +
   scale_y_continuous(breaks = seq(0.2,1, by = 0.1))
-p.recall
-# dev.off()
+p.binary.sens
+dev.off()
 ```
-
-DIAMOND demonstrated the best performance at correctly identifying known CAZymes as CAZymes, closely followed by dbCAN.  Hotpep showed the weakest performance. The mean recall across all test sets for eCAMI (0.8580 to 4 d.p.) was greater than mean recall of CUPP (0.8541 to 4 d.p.). However, the standard deviation of recall scores of eCAMI was greater than CUPP. Therefore, eCAMI potentially has a higher probability of correctly identifying a known CAZyme as a CAZyme, but the range in performance is less consistent than CUPP. Therefore, eCAMI could generate a significantly worse performance than CUPP if used for the identification of CAZymes in a proteome, with a recall as low as 0.8 from eCAMI, meaning approximately 20% of CAZymes could be misclassified as non-CAZymes and retrieving the complete CAZome is unlikely. The smaller standard deviation of CUPP means a fixed confidence score can be assigned to CAZyme predictions by the classifier, identifying the confidence that the CAZyme predictions are correct.
-
-The recall scores from all classifiers infers that it is unlikely the predictions tools will identify the complete CAZome from a candidate species, although the tools will identify the majority of CAZymes within the CAZyome. dbCAN and DIAMOND will identify at least 90% of CAZymes within the CAZome, although eCAMI has a tendency to identify approximately 80% of CAZymes within the CAZyome.
-
 
 ### Precision
 
