@@ -460,6 +460,8 @@ def get_blast_score_ratio(alignment_score_df, protein_accession, prediction_type
 
     Return the BLAST score ratio (str).
     """
+    logger = logging.getLogger(__name__)
+    
     # retrieve all rows containing data for the given protein
     if prediction_type == "FN":
         protein_blast_scores_df = (
@@ -474,7 +476,23 @@ def get_blast_score_ratio(alignment_score_df, protein_accession, prediction_type
     try:
         highest_score = protein_blast_scores_df.iloc[-1]
     except IndexError:
-        sys.exit(1)
+        if prediction_type == "FN":
+            protein_blast_scores_df = (
+                alignment_score_df[alignment_score_df["query (non-CAZyme)"] == protein_accession]
+            )
+        else:
+            protein_blast_scores_df = (
+                alignment_score_df[alignment_score_df["subject (Cazyme)"] == protein_accession]
+            )
+        try:
+            highest_score = protein_blast_scores_df.iloc[-1]
+        except IndexError:
+            logger.warning(
+                f"Could not retrieve Blast Score Ratio for {protein_accession}\n"
+                "Returning Blast Score Ratio of nan"
+            )
+            return np.nan
+            
     highest_score = highest_score["blast_score_ratio"]
 
     return highest_score
