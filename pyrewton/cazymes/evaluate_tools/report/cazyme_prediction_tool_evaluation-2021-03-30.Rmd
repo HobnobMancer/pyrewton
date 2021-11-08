@@ -590,16 +590,16 @@ cazy_class_specificity_df <- cazy_class_long_df[which(cazy_class_long_df$Statist
 names(cazy_class_specificity_df)[names(cazy_class_specificity_df) == "Statistic_value"] <- "Specificity"
 cazy_class_specificity_df <- cazy_class_specificity_df[c("Genomic_accession", "Prediction_tool", "CAZy_class", "Specificity")]
 
-cazy_class_recall_df <- cazy_class_long_df[which(cazy_class_long_df$Statistic_parameter == "Recall"), ]
-names(cazy_class_recall_df)[names(cazy_class_recall_df) == "Statistic_value"] <- "Recall"
-cazy_class_recall_df <- cazy_class_recall_df[c("Genomic_accession", "Prediction_tool", "CAZy_class", "Recall")]
+cazy_class_sens_df <- cazy_class_long_df[which(cazy_class_long_df$Statistic_parameter == "Recall"), ]
+names(cazy_class_sens_df)[names(cazy_class_sens_df) == "Statistic_value"] <- "Recall"
+cazy_class_sens_df <- cazy_class_sens_df[c("Genomic_accession", "Prediction_tool", "CAZy_class", "Recall")]
 
 # merge dataframes
-cazy_class_spec_recall_df <- merge(cazy_class_specificity_df, cazy_class_recall_df, by=c("Genomic_accession", "Prediction_tool", "CAZy_class"))
+cazy_class_spec_recall_df <- merge(cazy_class_specificity_df, cazy_class_sens_df, by=c("Genomic_accession", "Prediction_tool", "CAZy_class"))
 cazy_class_spec_recall_df  <- cazy_class_spec_recall_df[complete.cases(cazy_class_spec_recall_df), ]
 
 # this figure shows there is to much data to visualise on a single plot. Therefore, one plot per class with be made using facet_wrap by Prediciton_tool.
-p.class.spec.recall = ggplot(cazy_class_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity, color=Prediction_tool)) +
+p.class.spec.sense = ggplot(cazy_class_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity, color=Prediction_tool)) +
   geom_point() +
   scale_color_manual(values=color_set) +
   theme(plot.background = element_rect(fill = figbg, color = figbg),
@@ -608,16 +608,10 @@ p.class.spec.recall = ggplot(cazy_class_spec_recall_df %>% group_by(Prediction_t
         strip.text = element_text(size=11)) +
   labs(x = "Sensitivity", y = "Specificity", color="Classifer") +
   facet_wrap(~ CAZy_class)
-p.class.spec.recall
+p.class.spec.sense
 ```
 
-one per class, specificity vs sensitivity, one plot is one test set
-
-Specificity
-Sensitivity
-Precision
-Fbeta
-Accuracy
+Below the prediction sensitivity is plotted against the specificity for each CAZy class.
 
 #### GH
 
@@ -627,7 +621,7 @@ cazy_class_GH_spec_recall_df$Recall_percentage = cazy_class_GH_spec_recall_df$Re
 cazy_class_GH_spec_recall_df$Specificity_percentage = cazy_class_GH_spec_recall_df$Specificity * 100
 
 cazy_class_GH_spec_recall_df$Prediction_tool <- factor(cazy_class_GH_spec_recall_df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) 
-p.class.gh.spec.recall = ggplot(cazy_class_GH_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity)) +
+p.class.gh.spec.sens = ggplot(cazy_class_GH_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity)) +
   geom_density_2d_filled(alpha = 0.5) +
   geom_point() +
   scale_color_manual(values=color_set) +
@@ -637,11 +631,12 @@ p.class.gh.spec.recall = ggplot(cazy_class_GH_spec_recall_df %>% group_by(Predic
         strip.text = element_text(size=11)) +
   labs(x = "Sensitivity", y = "Specificity", color="Classifer") +
   facet_wrap(~ Prediction_tool)
-p.class.gh.spec.recall
+p.class.gh.spec.sens
 
 # why is the contour only hotpep + eCAMI (this is not position specific), try with an isolated prediction tool
 # becuase of Error in seq_len(n) : argument must be coercible to non-negative integer
 ```
+
 ```{r}
 test_df <- cazy_class_GH_spec_recall_df[which(cazy_class_GH_spec_recall_df$Prediction_tool == "dbCAN"), ]
 p.test = ggplot(test_df, aes(x=Recall, y=Specificity)) +
