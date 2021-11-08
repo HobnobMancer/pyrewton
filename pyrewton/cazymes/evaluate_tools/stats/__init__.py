@@ -144,7 +144,7 @@ def get_predictions(args):
 
         # build path to the FASTA file
         try:
-            fasta_path = path_dict[genomic_accession]
+            fasta_path = path_dict[genomic_accession]["testset"]
         except KeyError:
             logger.error(
                 f"No test set FASTA file found for {genomic_accession}\n"
@@ -152,11 +152,12 @@ def get_predictions(args):
             )
             continue
         try:
-            alignment_path = path_dict[genomic_accession]
+            alignment_path = path_dict[genomic_accession]["alignment"]
         except KeyError:
             logger.error(
                 f"No BLAST all vs all alignment score csv file found for {genomic_accession}"
             )
+            alignment_path = None
 
         # build dict of output paths
         output_paths = {}
@@ -200,6 +201,7 @@ def get_testset_alignment_paths(args):
             path_dict[genomic_accession]["testset"] = fasta_path
             logger.warning(f"Multiple test sets found with genomic accession: {genomic_accession}")
         except KeyError:
+            path_dict[genomic_accession] = {}
             path_dict[genomic_accession]["testset"] = fasta_path
     
     for alignment_path in all_align_score_paths:
@@ -212,6 +214,7 @@ def get_testset_alignment_paths(args):
             path_dict[genomic_accession]["alignment"] = alignment_path
         except KeyError:
             logger.warning(f"No test set FASTA file found for {genomic_accession}")
+            path_dict[genomic_accession] = {}
             path_dict[genomic_accession]["alignment"] = alignment_path
     
     return path_dict
@@ -447,7 +450,7 @@ def build_prediction_dataframes(predictions, time_stamp, cazy, data_source, args
             df=classifications_df,
             df_path=output_path,
             testset_path=test_set.fasta,
-            alignment_scores=test_set.alignemnt,
+            alignment_scores=test_set.alignment,
         ))
         # all_binary_c_nc_dfs used for bootstrapping accuracy of binary predictions
 
