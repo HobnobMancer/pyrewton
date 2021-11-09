@@ -54,6 +54,7 @@ def parse_ecami_output(ecami_output_path, fasta_path):
 
         # retrieve protein accession, removing the '>' prefix and stripping white space
         protein_accession = prediction_output[0][1:].strip()
+        protein_accession = protein_accession.split(' ')[0]
 
         # retrieve the CAZy family
         cazy_family = prediction_output[1].split(":")[0].strip()
@@ -202,8 +203,8 @@ def add_non_cazymes(ecami_predictions, fasta_path):
                     protein_accession,
                     cazyme_classification,
                 )
-    
-        logger.warning(
+
+    logger.info(
         f"Found {testset_proteins} proteins in test set FASTA:\n{fasta_path}\n"
         f"Parsing eCAMI output found {len(list(ecami_predictions.keys()))}"
     )
