@@ -49,6 +49,8 @@ import pandas as pd
 from pathlib import Path
 
 from Bio.Blast.Applications import NcbiblastpCommandline
+from Bio.SeqRecord import SeqRecord
+from Bio import SeqIO
 from tqdm import tqdm
 
 
@@ -149,10 +151,7 @@ def write_out_test_set(
     alignment_results.to_csv(csv_fh)
 
     selected_noncazyme_accessions = set()  # used to prevent introduction of duplicates
-
-    # create empty df to store selected non-CAZymes
-    headers = list(alignment_results.columns)
-    selected_non_cazymes = pd.DataFrame(columns=headers)
+    selected_non_cazymes = []  # list of Protein objects
 
     for row_index in tqdm(
         range(len(alignment_results["blast_score_ratio"])),
@@ -160,14 +159,17 @@ def write_out_test_set(
     ):
         df_row = alignment_results.iloc[row_index]
         accession = df_row['query (non-CAZyme)']
+
         if accession not in selected_noncazyme_accessions:
             selected_noncazyme_accessions.add(accession)
-            selected_non_cazymes = selected_non_cazymes.append(df_row)
-        if len(selected_non_cazymes["blast_score_ratio"]) == args.sample_size:
+            non_cazyme_protein = non_cazymes[accession]
+            selected_non_cazymes.append(non_cazyme_protein)
+
+        if len(selected_noncazyme_accessions) == args.sample_size:
             break
     
-    if len(selected_non_cazymes["blast_score_ratio"]) != args.sample_size:
-        noncazyme_count = len(selected_non_cazymes["blast_score_ratio"])
+    if len(selected_noncazyme_accessions) != args.sample_size:
+        noncazyme_count = len(selected_noncazyme_accessions)
         logger.error(
             f"Could not retrieve 100 non-CAZymes from {genomic_acc}\n"
             f"Only retrieved {noncazyme_count} non-CAZymes\n"
@@ -176,25 +178,20 @@ def write_out_test_set(
         return
 
     all_selected_proteins = []  # list of Protein instances
-
-    index = 0
-    for index in tqdm(
-        range(len(selected_non_cazymes["blast_score_ratio"])),
-        desc="Retrieving selected non-CAZymes",
-    ):
-        df_row = alignment_results.iloc[index]
-        protein_accession = df_row['query (non-CAZyme)']
-        all_selected_proteins.append(non_cazymes[protein_accession])  # retrieve Protein instance from dict
-
+    all_selected_proteins += selected_non_cazymes
     all_selected_proteins += selected_cazymes
     random.shuffle(all_selected_proteins)  # write out the test set in a random order
 
+    print(f"{len(all_selected_proteins)} proteins chosen for test set")
+
+    # convert to Bio.SeqRecords
+    protein_records = []
     for protein in all_selected_proteins:
-        seq = str(protein.sequence)
-        seq = "\n".join([seq[i : i + 60] for i in range(0, len(seq), 60)])
-        file_content = f">{protein.accession}\n{seq}\n"
-        with open(final_fasta, "a") as fh:
-            fh.write(file_content)
+        new_record = SeqRecord(protein.sequence, id=protein.accession)
+        protein_records.append(new_record)
+
+    # write out test set
+    SeqIO.write(protein_records, final_fasta, "fasta")
     
     with open(composition_log_path, 'a') as fh:
         for protein in selected_cazymes:
