@@ -26,7 +26,6 @@ import logging
 import re
 
 from Bio import SeqIO
-from Bio.SeqIO.FastaIO import FastaWriter
 from tqdm import tqdm
 
 from pyrewton.cazymes.evaluate_tools.parse import CazymeDomain, CazymeProteinPrediction
