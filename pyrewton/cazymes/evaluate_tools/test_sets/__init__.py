@@ -187,7 +187,11 @@ def write_out_test_set(
     # convert to Bio.SeqRecords
     protein_records = []
     for protein in all_selected_proteins:
-        new_record = SeqRecord(protein.sequence, id=protein.accession)
+        new_record = SeqRecord(
+            protein.sequence,
+            id=protein.accession,
+            description=f"cazyme_classification={protein.cazyme_classification}",
+        )
         protein_records.append(new_record)
 
     # write out test set
