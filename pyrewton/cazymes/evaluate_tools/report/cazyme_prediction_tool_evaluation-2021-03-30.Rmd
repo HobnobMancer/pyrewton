@@ -1661,9 +1661,6 @@ p.cbm.poor.fam
 ### Overall performance of CAZy family predictions
 
 
-Discuss results...
-
-
 ## Performance at the CAZy class level
 
 Each CAZy family is classified under on of the 6 CAZy classes: GH, GT, PL, CE, AA and CBM. We can look at the distribution of F1-scores across the CAZy families for each CAZy class to observe the typical peformance of each tool for each CAZy class. The CAZy classes contain different numbers of families and family members, the size of the plots represent the number of proteins analysed from the CAZy class.
