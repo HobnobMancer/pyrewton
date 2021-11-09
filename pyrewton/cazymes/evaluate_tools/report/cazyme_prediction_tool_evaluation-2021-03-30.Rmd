@@ -77,7 +77,7 @@ binary_stat_df <- read.csv("data/binary_classification_evaluation_2021_04_08.csv
 
 # import "binary_bootstrap_accuracy_evaluation_<date>.csv"
 # Contains the output from the bootstrap resampling of the binary classification of CAZymes/non-CAZymes
-bootstrap.results.df <- read.csv("data/binary_bootstrap_accuracy_evaluation_2021_04_08.csv")
+bootstrap_results_df <- read.csv("data/binary_bootstrap_accuracy_evaluation_2021_04_08.csv")
 
 # import "class_predicted_classifications_<date>.csv"
 # Contains the columns: Genomic_accession, Protein_accession, Prediciton_tool, one column per CAZy class, Rand_index and Adjusted_rand_index
@@ -362,31 +362,12 @@ The statistics evaluated above provide an idea of the general performance of the
 To compare the expected typical range in accuracies for each classifier, 6 test sets (identified by the source genomic assemblies) were selected at random. The CAZyme/non-CAZyme predictions for each classifier, for each test set, were bootstrap resampled 100 times each, and for each bootstrap sample the accuracy calculated. The accuracies of the bootstrap samples for each classifier were plotted on stacked histograms, shown in figure \@ref(fig:bsacc).
 
 ```{r bsacc, echo=FALSE, fig.cap="Stacked histograms of bootstrap sample accuracies of CAZyme classifiers' differentiation between CAZymes and non-CAZymes. 6 test sets (identified by their source genomic assembly) were selected at random. The CAZyme/non-CAZyme predictions for each classifier, for each test set, were bootstrap resampled 100 times. The accuracy of each of the 600 bootstrap samples per test set were plotted as a stacked histogram."}
-
-bootstrap.results.df$Prediction_tool <- factor(bootstrap.results.df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
-
-# This plot is incase you do not want the total count of each bin printed above it
-pdf(file = "binaryBootstrapAcc_noBinTotal.pdf", width = 10, height = 6)
-p.bs.noBinTotal = ggplot(bootstrap.results.df %>% group_by(Genomic_accession), aes(x=accuracy, fill=Genomic_accession)) +
-  geom_histogram(alpha=0.7, color="black", binwidth = 0.01) +
-  scale_fill_brewer(palette="Set1") +
-  theme(plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold"),
-        strip.text = element_text(size=12)) +
-  labs(x = "Accuracy", y = "Number of bootstrap samples", fill="Test set key") +
-  scale_y_continuous(breaks = seq(0,125, by = 25)) +
-  scale_x_continuous(breaks = seq(0.75,1, by = 0.05)) +
-  facet_wrap(~ Prediction_tool) 
-p.bs.noBinTotal
-dev.off()
+bootstrap_results_df$Prediction_tool <- factor(bootstrap_results_df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
 # plot generated to see the number of items in each bin for the figure above, and additional boxplots to represent the distribution of the data
-pdf(file = "binaryBootstrapAccAnnotated.pdf", width = 8.25, height = 11)
-svg(file = "binaryBootstrapAccAnnotated.svg", width = 8.25, height = 11)
-p.bs.annotated = ggplot(bootstrap.results.df %>% group_by(Genomic_accession), aes(x=accuracy)) +
+p.bs.annotated = ggplot(bootstrap_results_df %>% group_by(Genomic_accession), aes(x=accuracy)) +
   geom_histogram(alpha=0.7, color="black", binwidth = 0.01, aes(fill=Genomic_accession), position = ) +
-  geom_boxplot(outlier.shape=NA, width = 10, data=bootstrap.results.df, aes(x=accuracy, y=100), alpha=0.5) +
+  geom_boxplot(outlier.shape=NA, width = 10, data=bootstrap_results_df, aes(x=accuracy, y=100), alpha=0.5) +
   scale_fill_brewer(palette="Set1") +
   # stat_bin(aes(y=..count.. + 5, label=..count..), geom="text", binwidth = 0.01, size=3.5, angle=90) +
   theme(plot.background = element_rect(fill = figbg, color = figbg),
@@ -395,14 +376,22 @@ p.bs.annotated = ggplot(bootstrap.results.df %>% group_by(Genomic_accession), ae
         strip.text = element_text(size=12),
         legend.position="bottom") +
   labs(x = "Accuracy", y = "Number of bootstrap samples", fill="Test set key") +
-  scale_y_continuous(breaks = seq(0,125, by = 25)) +
-  scale_x_continuous(breaks = seq(0.75,1, by = 0.05)) +
+  # scale_y_continuous(breaks = seq(0,125, by = 25)) +
+  # scale_x_continuous(breaks = seq(0.75,1, by = 0.05)) +
   facet_wrap(~ Prediction_tool, ncol=2) 
   # remove the comment if you want to see the histogram with the total number per column printed
 p.bs.annotated
-dev.off()
 ```
 
+```{r saveBootstrap, include=FALSE}
+pdf(file = "binaryBootstrapAccAnnotated.pdf", width = 8.25, height = 11)
+p.bs.annotated
+dev.off()
+
+svg(file = "binaryBootstrapAccAnnotated.svg", width = 8.25, height = 11)
+p.bs.annotated
+dev.off()
+```
 
 ### Investigation of Non-CAZymes classified as CAZymes (False positives)
 
