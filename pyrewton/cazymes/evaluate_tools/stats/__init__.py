@@ -523,7 +523,7 @@ def get_fam_freq(args, cazy, timestamp, data_source):
         suffixes=['_test_set.fasta'],
     )
 
-    logger.warning(f"Found {len(all_test_sets)} test sets in {args.input}")
+    logger.warning(f"Found {len(all_test_sets)} test sets in {args.testset_dir}")
 
     # build a dictionary to add frequency data to, key by CAZy fam, value by frequency
     freq_dict = family_classifications.foundation_dict()
