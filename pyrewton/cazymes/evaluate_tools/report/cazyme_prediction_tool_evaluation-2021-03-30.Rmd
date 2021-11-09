@@ -70,20 +70,20 @@ large_colour_set = unlist(mapply(brewer.pal, qual_col$maxcolors, rownames(qual_c
 
 # import "binary_classification_evaluation_<date>.csv"
 # Written in long form, with the columns: Statistic_parameter, Genomic_assembly, Prediction_tool, Statistic_value
-binary_stat_df <- read.csv("binary_classification_evaluation_2021_03_31.csv")
+binary_stat_df <- read.csv("data/binary_classification_evaluation_2021_04_08.csv")
 
 # import "binary_bootstrap_accuracy_evaluation_<date>.csv"
 # Contains the output from the bootstrap resampling of the binary classification of CAZymes/non-CAZymes
-bootstrap.results.df <- read.csv("binary_bootstrap_accuracy_evaluation_2021_04_04.csv")
+bootstrap.results.df <- read.csv("data/binary_bootstrap_accuracy_evaluation_2021_04_08.csv")
 
 # import "class_predicted_classifications_<date>.csv"
 # Contains the columns: Genomic_accession, Protein_accession, Prediciton_tool, one column per CAZy class, Rand_index and Adjusted_rand_index
-class_ri_ari_raw_df <- read.csv("class_predicted_classifications_2021_04_23.csv")
+class_ri_ari_raw_df <- read.csv("data/class_predicted_classifications_2021_04_08.csv")
 
 # import "class_stats_per_test_set_<date>.csv"
 # Contains the calculated performance satistics when evaluating performance of CAZy class prediction per test set.
 # Written in long form with the columns: Genomic_accession, Prediction_tool, CAZy_class, Statistic_parameter, Statistic_value
-cazy_class_long_df <- read.csv("class_stats_per_test_set_time_stamp.csv")
+cazy_class_long_df <- read.csv("data/class_stats_across_all_test_sets_2021_04_08.csv")
 ```
 
 <div id="summary">
