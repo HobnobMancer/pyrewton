@@ -50,6 +50,7 @@ Uses a local CAZyme database to identify CAZy annotated CAZymes.
 import logging
 import random
 import shutil
+import sys
 
 from datetime import datetime
 from pathlib import Path
@@ -241,7 +242,8 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
     of proteins and CAZymes extracted from the genome.
     """
     logger = logging.getLogger(__name__)
-    cazymes = {} # {accession: Protein_instance}
+    cazyme_accessions = set()
+    cazymes = []
     non_cazymes = {}  # {accession: Protein_instance}
 
     # create temporary, empty dir for holding alignment input and output
@@ -267,31 +269,31 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
             # get the CAZyme classification, 1 = CAZyme, 0 = non-CAZyme
             try:
                 cazy_dict[accession]
+
                 cazyme_classification = 1
-                cazymes = [accession] = Protein(accession, sequence, cazyme_classification)
+                
+                if accession not in cazyme_accessions:
+                    cazymes.append(Protein(accession, sequence, cazyme_classification))
 
             except KeyError:
                 cazyme_classification = 0
                 non_cazymes[accession] = Protein(accession, sequence, cazyme_classification)
-                # write to FASTA file
+                # write to FASTA file for use in all-vs-all BLAST alignment
                 seq = str(sequence)
                 seq = "\n".join([seq[i : i + 60] for i in range(0, len(seq), 60)])
-                file_content = f">{accession} \n{seq}\n"
+                file_content = f">{accession}\n{seq}\n"
                 fh.write(file_content)
-
-    logger.info(f"Found {protein_count} in {Path(input_fasta).name}")
 
     # randomly selected n CAZymes
     try:
         selected_cazymes = random.sample(cazymes, args.sample_size)
-        # write selected CAZymes to FASTA file in temp dir
+        # write selected CAZymes to FASTA file in temp dir for all-vs-all BLAST alignment
         with open(cazyme_fasta, "w") as fh:
             for cazyme in tqdm(selected_cazymes, desc="Writing selected CAZymes to FASTA"):
-                # write query CAZyme to FASTA and build a database
                 seq = str(cazyme.sequence)
                 seq = "\n".join([seq[i : i + 60] for i in range(0, len(seq), 60)])
 
-                file_content = f">{cazyme.accession} \n{seq}\n"
+                file_content = f">{cazyme.accession}\n{seq}\n"
 
                 fh.write(file_content)
 
