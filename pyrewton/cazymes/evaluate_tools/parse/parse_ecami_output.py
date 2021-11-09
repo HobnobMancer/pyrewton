@@ -26,6 +26,7 @@ import logging
 import re
 
 from Bio import SeqIO
+from Bio.SeqIO.FastaIO import FastaWriter
 from tqdm import tqdm
 
 from pyrewton.cazymes.evaluate_tools.parse import CazymeDomain, CazymeProteinPrediction
@@ -177,33 +178,25 @@ def add_non_cazymes(ecami_predictions, fasta_path):
     """
     logger = logging.getLogger(__name__)
 
-    # Add non-CAZymes
-    # open the FASTA file containing the input protein sequences
-    with open(fasta_path, "r") as fh:
-        fasta = fh.read().splitlines()
-
     testset_proteins = 0
 
-    for line in tqdm(fasta, desc="Adding non-CAZymes"):
-        if line.startswith(">"):
+    # Add non-CAZymes from the original FASTA file test set
+    for record in SeqIO.parse(fasta_path, "fasta"):
+        protein_accession = record.id
+        testset_proteins += 1
 
-            # remove '>' prefix and white space
-            protein_accession = line[1:].strip()
-            protein_accession = protein_accession.split(' ')[0]
+        try:
+            ecami_predictions[protein_accession]
 
-            # check if the protein is already listed in the eCAMI predictions
-            try:
-                ecami_predictions[protein_accession]
+        except KeyError:  # raised of protein not in ecami_predictions
+            cazyme_classification = 0
+            ecami_predictions[protein_accession] = CazymeProteinPrediction(
+                "eCAMI",
+                protein_accession,
+                cazyme_classification,
+            )
 
-            except KeyError:  # raised of protein not in ecami_predictions
-                cazyme_classification = 0
-                ecami_predictions[protein_accession] = CazymeProteinPrediction(
-                    "eCAMI",
-                    protein_accession,
-                    cazyme_classification,
-                )
-
-    logger.info(
+    logger.warning(
         f"Found {testset_proteins} proteins in test set FASTA:\n{fasta_path}\n"
         f"Parsing eCAMI output found {len(list(ecami_predictions.keys()))}"
     )
