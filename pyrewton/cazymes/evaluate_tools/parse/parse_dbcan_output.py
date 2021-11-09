@@ -31,6 +31,7 @@ import re
 
 import numpy as np
 
+from Bio import SeqIO
 from tqdm import tqdm
 
 from pyrewton.cazymes.evaluate_tools.parse import CazymeDomain, CazymeProteinPrediction
@@ -638,32 +639,28 @@ def get_non_cazymes(fasta_path, overview_dict):
     """
     logger = logging.getLogger(__name__)
 
-    # open the FASTA path
-    with open(fasta_path) as fh:
-        fasta = fh.read().splitlines()
-
     testset_proteins = 0
 
-    for line in tqdm(fasta, desc="Adding non-CAZymes"):
-        if line.startswith(">"):
-            testset_proteins += 1
-            protein_accession = line.split(" ")[0].strip().replace(">","")
+    # Add non-CAZymes from the original FASTA file test set
+    for record in SeqIO.parse(fasta_path, "fasta"):
+        protein_accession = record.id
+        testset_proteins += 1
 
-            # check if the protein has been listed as a CAZyme by CUPP
-            try:
-                overview_dict[protein_accession]
-            except KeyError:
-                # protein not in predictions, inferring proten was not labelled as CAZyme
-                cazyme_classification = 0
-                overview_dict[protein_accession] = {}
-                for prediction_tool in ["HMMER", "Hotpep", "DIAMOND", "dbCAN"]:
-                    overview_dict[protein_accession][prediction_tool] = CazymeProteinPrediction(
-                        prediction_tool,
-                        protein_accession,
-                        cazyme_classification,
-                    )
+        # check if the protein has been listed as a CAZyme by CUPP
+        try:
+            overview_dict[protein_accession]
+        except KeyError:
+            # protein not in predictions, inferring proten was not labelled as CAZyme
+            cazyme_classification = 0
+            overview_dict[protein_accession] = {}
+            for prediction_tool in ["HMMER", "Hotpep", "DIAMOND", "dbCAN"]:
+                overview_dict[protein_accession][prediction_tool] = CazymeProteinPrediction(
+                    prediction_tool,
+                    protein_accession,
+                    cazyme_classification,
+                )
 
-    logger.info(
+    logger.warning(
         f"Found {testset_proteins} proteins in test set FASTA:\n{fasta_path}\n"
         f"Parsing dbCAN output found {len(list(overview_dict.keys()))}"
     )
