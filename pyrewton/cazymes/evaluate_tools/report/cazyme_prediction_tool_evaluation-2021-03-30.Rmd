@@ -124,7 +124,23 @@ The genomic assemblies were also chosen from a range of taxonomies to provide as
 
 Table \@ref(tab:gassembly) contains the genomic assemblies used to create the test sets for the evaluation. In total 81 assemblies were chose, 1 from an Oomycete species (more Oomycete species with greater than 100 CAZymes in CAZy could not be found), 25 fungal Ascomycetes species were selected, 13 Yeast, 2 Eukaryote microorganisms, 20 Gram positive bacteria, and 20 Gram negative bacteria.
 
-```{r CAZome coverage by test sets per test set, echo=FALSE, results='asis' ,fig.cap="Histogram of CAZome coverage of the test sets for each respective source genomic assembly, overlayed by a box and whisker plot of the percentage of the CAZome incorproated in the test set."}
+```{r cazomeCovStats, echo=FALSE}
+mean_genome_cov = mean(test_set_cov_df$Genome_CAZome_percentage)
+print("Mean percentage of genome incorporated in the CAZome across all test sets:")
+print(mean_genome_cov)
+sd_genome_cov = sd(test_set_cov_df$Genome_CAZome_percentage)
+print("Standard deviation of the percentage of genome incorporated in the CAZome across all test sets:")
+print(sd_genome_cov)
+
+mean_cazome_cov = mean(test_set_cov_df$CAZome_coverage_percentage)
+print("Mean percentage of CAZomes incorporated in the test set across all genomes:")
+print(mean_cazome_cov)
+sd_cazome_cov = sd(test_set_cov_df$CAZome_coverage_percentage)
+print("Standard deviation of the percentage of CAZome incorporated in the test set across all genomes:")
+print(sd_cazome_cov)
+```
+
+```{r cazomeCovHisto, echo=FALSE, results='asis' ,fig.cap="Histogram of CAZome coverage of the test sets for each respective source genomic assembly, overlayed by a box and whisker plot of the percentage of the CAZome incorproated in the test set."}
 ggplot(test_set_cov_df, aes(x=CAZome_coverage_percentage)) +
   geom_histogram(fill="#138d91", alpha=0.7, color="#0d4a4d") +
   geom_boxplot(
