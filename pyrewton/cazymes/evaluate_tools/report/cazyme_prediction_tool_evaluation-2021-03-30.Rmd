@@ -213,7 +213,6 @@ Figure \@ref(fig:spec) is a graphical representation of the results calculated i
 
 subset_spec$Prediction_tool <- factor(subset_spec$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
-# pdf(file = "binarySpec.pdf", width = 8.58, height = 5.5)
 p.binary.spec = ggplot(subset_spec %>% group_by(Prediction_tool),
                 aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
   geom_boxplot(outlier.shape=NA) +
@@ -226,9 +225,13 @@ p.binary.spec = ggplot(subset_spec %>% group_by(Prediction_tool),
   xlab("Classifier") + 
   ylab("Specificity")
 p.binary.spec
-# dev.off()
 ```
 
+```{r savebinarySpec, include=FALSE}
+pdf(file = "binarySpec.pdf", width = 8.58, height = 5.5)
+p.binary.spec
+dev.off()
+```
 
 ### Sensitivity
 
@@ -239,9 +242,8 @@ Figure \@ref(fig:recallbc) graphically represents of the results calculated in t
 
 ```{r recallbc, echo=FALSE, fig.cap="One-dimensional scatter plot of recall (sensitivity) scores of CAZyme and non-CAZyme predictions per test set, overlaying box plot of standard deviation."}
 
-subset_sens$Prediction_tool <- factor(subset.recall$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+subset_sens$Prediction_tool <- factor(subset_sens$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
-pdf(file = "binarySensitivity.pdf", width = 8.58, height = 5.5)
 p.binary.sens = ggplot(subset_sens %>% group_by(Prediction_tool),
                   aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
   geom_boxplot(outlier.shape=NA) +
@@ -252,8 +254,12 @@ p.binary.sens = ggplot(subset_sens %>% group_by(Prediction_tool),
         axis.text=element_text(size=10),
         axis.title=element_text(size=12,face="bold")) +
   xlab("Classifier") + 
-  ylab("Sensitivity") +
-  scale_y_continuous(breaks = seq(0.2,1, by = 0.1))
+  ylab("Sensitivity")
+p.binary.sens
+```
+
+```{r saveBinSens, include=FALSE}
+pdf(file = "binarySensitivity.pdf", width = 8.58, height = 5.5)
 p.binary.sens
 dev.off()
 ```
@@ -268,10 +274,9 @@ Figure \@ref(fig:precbc) is a visual representation of the results calculated in
 
 ```{r precbc, echo=FALSE, fig.cap="One-dimensional scatter plot of precision scores of CAZyme and non-CAZyme predictions per test set, overlaying box plot of standard deviation."}
 
-subset_prec$Prediction_tool <- factor(subset.prec$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+subset_prec$Prediction_tool <- factor(subset_prec$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
-pdf(file = "binaryPrec.pdf", width = 8.58, height = 5.5)
-p.binary.prec = ggplot(subset.prec %>% group_by(Prediction_tool),
+p.binary.prec = ggplot(subset_prec %>% group_by(Prediction_tool),
                        aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
   geom_boxplot(outlier.shape=NA) +
   geom_jitter(width=0.1, height=0) +
@@ -284,9 +289,13 @@ p.binary.prec = ggplot(subset.prec %>% group_by(Prediction_tool),
   ylab("Precision") +
   scale_y_continuous(breaks = seq(0.7,1, by = 0.05))
 p.binary.prec
-dev.off()
 ```
 
+```{r saveBinPrec, include=FALSE}
+pdf(file = "binaryPrec.pdf", width = 8.58, height = 5.5)
+p.binary.prec
+dev.off()
+```
 
 ### F1-score
 
