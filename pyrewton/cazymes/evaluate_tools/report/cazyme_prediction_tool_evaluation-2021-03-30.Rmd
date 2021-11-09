@@ -303,10 +303,9 @@ The F1-score is a harmonic (or weighted) average of recall and precision and pro
 
 ```{r f1bc, echo=FALSE, fig.cap="Bar chart of specificity of CAZyme classifiers differentiation between CAZymes and non-CAZymes."}
 
-subset_f1$Prediction_tool <- factor(subset.f1$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+subset_f1$Prediction_tool <- factor(subset_f1$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
-pdf(file = "binaryF1.pdf", width = 8.58, height = 5.5)
-p.binary.f1 = ggplot(subset.f1 %>% group_by(Prediction_tool),
+p.binary.f1 = ggplot(subset_f1 %>% group_by(Prediction_tool),
               aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
   geom_boxplot(outlier.shape=NA) +
   geom_jitter(width=0.1, height=0) +
@@ -319,9 +318,13 @@ p.binary.f1 = ggplot(subset.f1 %>% group_by(Prediction_tool),
   ylab("F1-score") +
   scale_y_continuous(breaks = seq(0.3,1, by = 0.1))
 p.binary.f1
-dev.off()
 ```
 
+```{r saveBinF1, include=FALSE}
+pdf(file = "binaryF1.pdf", width = 8.58, height = 5.5)
+p.binary.f1
+dev.off()
+```
 
 ### Accuracy
 
@@ -329,11 +332,9 @@ Accuarcy (calculated using (TP + TN) / (TP + TN + FP + FN) ) provides an idea of
 
 
 ```{r accbc, echo=FALSE, fig.cap="Bar chart of specificity of CAZyme classifiers differentiation between CAZymes and non-CAZymes."}
-subset.acc <- binary_stat_df[which(binary_stat_df$Statistic.parameter == "Accuracy"), ]
-subset.acc$Prediction_tool <- factor(subset.acc$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+subset_acc$Prediction_tool <- factor(subset_acc$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
-pdf(file = "binaryAcc.pdf", width = 8.58, height = 5.5)
-p.binary.acc = ggplot(subset.acc %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
+p.binary.acc = ggplot(subset_acc %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
   geom_boxplot(outlier.shape=NA) +
   geom_jitter(width=0.1, height=0) +
   scale_fill_manual(values = colour_set) +
@@ -345,21 +346,11 @@ p.binary.acc = ggplot(subset.acc %>% group_by(Prediction_tool), aes(x=Prediction
   ylab("Accuracy") +
   scale_y_continuous(breaks = seq(0.6,1, by = 0.05))
 p.binary.acc
-dev.off()
 ```
 
-
-```{r, include=FALSE}
-# build used to multi-plot of all the plots shown above
-svg("binary_multi_plot.svg")
-ggarrange(
-  p.binary.spec + rremove("x.text") + rremove("x.title"),
-  p.binary.sens + rremove("x.text") + rremove("x.title"),
-  p.binary.prec,
-  p.binary.f1,
-  labels = c("A", "B", "C", "D"),
-  ncol=2,
-  nrow=2)
+```{r saveBinAcc, include=FALSE}
+pdf(file = "binaryAcc.pdf", width = 8.58, height = 5.5)
+p.binary.acc
 dev.off()
 ```
 
