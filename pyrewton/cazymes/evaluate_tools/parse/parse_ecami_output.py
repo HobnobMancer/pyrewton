@@ -191,6 +191,7 @@ def add_non_cazymes(ecami_predictions, fasta_path):
 
             # remove '>' prefix and white space
             protein_accession = line[1:].strip()
+            protein_accession = protein_accession.split(' ')[0]
 
             # check if the protein is already listed in the eCAMI predictions
             try:

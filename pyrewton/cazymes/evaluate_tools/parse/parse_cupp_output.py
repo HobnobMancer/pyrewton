@@ -265,6 +265,7 @@ def add_non_cazymes(fasta_path, cupp_predictions):
         if line.startswith(">"):
             testset_proteins += 1
             protein_accession = line[1:].strip()
+            protein_accession = protein_accession.split(' ')[0]
             test_set_proteins.append(protein_accession)
 
             if protein_accession not in parsed_proteins:
