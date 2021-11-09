@@ -106,17 +106,17 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     Entrez.email = args.email
 
-    extract_seq_dir = args.output / "extracted_protein_seqs"
-    alignment_score_dir = args.output / "alignment_scores"
-    test_set_dir = args.output / "test_sets"
+    time_stamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
+
+    extract_seq_dir = args.output / f"extracted_protein_seqs_{time_stamp}"
+    alignment_score_dir = args.output / f"alignment_scores_{time_stamp}"
+    test_set_dir = args.output / f"test_sets_{time_stamp}"
     make_output_directory(extract_seq_dir, args.force, args.nodelete)
     make_output_directory(alignment_score_dir, args.force, args.nodelete)
     make_output_directory(test_set_dir, args.force, args.nodelete)
     if args.genomes is None:
-        genome_dir = args.output / "genomes"
+        genome_dir = args.output / f"genomes_{time_stamp}"
         make_output_directory(genome_dir, args.force, args.nodelete)
-
-    time_stamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
 
     header = (
         "Genomic_accession\t"
