@@ -52,6 +52,7 @@ import random
 import shutil
 
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional
 
 from Bio import Entrez, SeqIO
@@ -103,16 +104,14 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     Entrez.email = args.email
 
-    time_stamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
-
-    extract_seq_dir = args.output / f"extracted_protein_seqs_{time_stamp}"
-    alignment_score_dir = args.output / f"alignment_scores_{time_stamp}"
-    test_set_dir = args.output / f"test_sets_{time_stamp}"
+    extract_seq_dir = args.output / "extracted_protein_seqs"
+    alignment_score_dir = args.output / "alignment_scores"
+    test_set_dir = args.output / "test_sets"
     make_output_directory(extract_seq_dir, args.force, args.nodelete)
     make_output_directory(alignment_score_dir, args.force, args.nodelete)
     make_output_directory(test_set_dir, args.force, args.nodelete)
     if args.genomes is None:
-        genome_dir = args.output / f"genomes_{time_stamp}"
+        genome_dir = args.output / "genomes"
         make_output_directory(genome_dir, args.force, args.nodelete)
 
     # get the YAML file containing the genomic assemblies to be used for creating test sets
@@ -120,6 +119,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # get dict containing the genomic assemblies of all CAZymes in CAZy
     cazy_dict = io_create_eval_testsets.get_cazy_dict(args.cazy)
+
+    time_stamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
 
     header = (
         "Genomic_accession\t"
@@ -240,8 +241,7 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
     of proteins and CAZymes extracted from the genome.
     """
     logger = logging.getLogger(__name__)
-    cazyme_accessions = set()  # ott checking duplicate cazymes not selected
-    cazymes = []
+    cazymes = {} # {accession: Protein_instance}
     non_cazymes = {}  # {accession: Protein_instance}
 
     # create temporary, empty dir for holding alignment input and output
@@ -268,9 +268,7 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
             try:
                 cazy_dict[accession]
                 cazyme_classification = 1
-                if accession not in cazyme_accessions:
-                    cazyme_accessions.add(accession)
-                    cazymes.append(Protein(accession, sequence, cazyme_classification))
+                cazymes = [accession] = Protein(accession, sequence, cazyme_classification)
 
             except KeyError:
                 cazyme_classification = 0
@@ -280,9 +278,8 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
                 seq = "\n".join([seq[i : i + 60] for i in range(0, len(seq), 60)])
                 file_content = f">{accession} \n{seq}\n"
                 fh.write(file_content)
-    
-    total_proteins = len(cazymes) + len(list(non_cazymes.keys()))
-    total_cazymes = len(cazymes)
+
+    logger.info(f"Found {protein_count} in {Path(input_fasta).name}")
 
     # randomly selected n CAZymes
     try:
