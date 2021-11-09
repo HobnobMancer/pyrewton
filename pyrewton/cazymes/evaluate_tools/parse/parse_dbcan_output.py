@@ -663,7 +663,7 @@ def get_non_cazymes(fasta_path, overview_dict):
                         cazyme_classification,
                     )
 
-    logger.warning(
+    logger.info(
         f"Found {testset_proteins} proteins in test set FASTA:\n{fasta_path}\n"
         f"Parsing dbCAN output found {len(list(overview_dict.keys()))}"
     )
