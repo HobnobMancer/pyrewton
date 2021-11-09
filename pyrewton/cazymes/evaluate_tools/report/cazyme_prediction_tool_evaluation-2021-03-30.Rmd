@@ -167,31 +167,30 @@ The mean of each statistical parameter was calculated for each classifier across
 These results are presented in table \@ref(tab:sumstats).
 
 ```{r sumstats, echo=FALSE, fig.cap="Summary statistics of CAZyme classifiers performances of binary CAZyme/non-CAZyme prediction. Data collected is the mean of call calculated statistical parameters across all test sets, plus and minus the standard devliation. All figures are rounded to 4 decimal places."}
-
 # Calculate statistics
 subset_spec <- binary_stat_df[which(binary_stat_df$Statistic_parameter == "Specificity"), ]
-binary_specificity <- subset_spec %>% group_by(Prediction.tool) %>% summarise("Mean Specificity"=mean(Statistic.value), "Specificity Standard Deviation"=sd(Statistic.value))
+binary_specificity <- subset_spec %>% group_by(Prediction_tool) %>% summarise("Mean Specificity"=mean(Statistic_value), "Specificity Standard Deviation"=sd(Statistic_value))
 
-subset_sens <- binary_stat_df[which(binary_stat_df$Statistic_parameter == "Recall"), ]
-binary_sensitivity <- subset_sens %>% group_by(Prediction.tool) %>% summarise("Mean Recall"=mean(Statistic.value), "Recall Standard Deviation"=sd(Statistic.value))
+subset_sens <- binary_stat_df[which(binary_stat_df$Statistic_parameter == "Sensitivity"), ]
+binary_sensitivity <- subset_sens %>% group_by(Prediction_tool) %>% summarise("Mean Sensitivity"=mean(Statistic_value), "Sensitivity Standard Deviation"=sd(Statistic_value))
 
 subset_prec <- binary_stat_df[which(binary_stat_df$Statistic_parameter == "Precision"), ]
-binary_precision <- subset_prec %>% group_by(Prediction.tool) %>% summarise("Mean Precision"=mean(Statistic.value), "Precision Standard Deviation"=sd(Statistic.value))
+binary_precision <- subset_prec %>% group_by(Prediction_tool) %>% summarise("Mean Precision"=mean(Statistic_value), "Precision Standard Deviation"=sd(Statistic_value))
 
-subset_f1 <- binary_stat_df[which(binary_stat_df$Statistic_parameter == "F1-score"), ]
-binary_f1_score <- subset_f1 %>% group_by(Prediction.tool) %>% summarise("Mean F1-score"=mean(Statistic.value), "F1-score Standard Deviation"=sd(Statistic.value))
+subset_f1 <- binary_stat_df[which(binary_stat_df$Statistic_parameter == "FBeta-score"), ]
+binary_f1_score <- subset_f1 %>% group_by(Prediction_tool) %>% summarise("Mean F1-score"=mean(Statistic_value), "F1-score Standard Deviation"=sd(Statistic_value))
 
 subset_acc <- binary_stat_df[which(binary_stat_df$Statistic_parameter == "Accuracy"), ]
-binary_accuracy <- subset_acc %>% group_by(Prediction.tool) %>% summarise("Mean Accuracy"=mean(Statistic.value), "Accuracy Standard Deviation"=sd(Statistic.value))
+binary_accuracy <- subset_acc %>% group_by(Prediction_tool) %>% summarise("Mean Accuracy"=mean(Statistic_value), "Accuracy Standard Deviation"=sd(Statistic_value))
 
 # combine data and build a single dataframe
-binary_summary_df <- merge(binary_specificity, subset_sens)
+binary_summary_df <- merge(binary_specificity, binary_sensitivity)
 binary_summary_df <- merge(binary_summary_df, binary_precision)
 binary_summary_df <- merge(binary_summary_df, binary_f1_score)
 binary_summary_df <- merge(binary_summary_df, binary_accuracy)
 
 # define factors
-binary_summary_df$Prediction.tool <- factor(binary_summary_df$Prediction.tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+binary_summary_df$Prediction_tool <- factor(binary_summary_df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
 names(binary_summary_df)[names(binary_summary_df) == "Prediction_tool"] <- "Classifier"
 # reorder the rows
@@ -212,9 +211,9 @@ Figure \@ref(fig:spec) is a graphical representation of the results calculated i
 
 ```{r spec, echo=FALSE, fig.cap="One-dimensional scatter plot of specificity scores of CAZyme and non-CAZyme predictions per test set, overlaying box plot of standard deviation."}
 
-subset_spec$Prediction_tool <- factor(subset.spec$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+subset_spec$Prediction_tool <- factor(subset_spec$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
-pdf(file = "binarySpec.pdf", width = 8.58, height = 5.5)
+# pdf(file = "binarySpec.pdf", width = 8.58, height = 5.5)
 p.binary.spec = ggplot(subset_spec %>% group_by(Prediction_tool),
                 aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
   geom_boxplot(outlier.shape=NA) +
@@ -225,10 +224,9 @@ p.binary.spec = ggplot(subset_spec %>% group_by(Prediction_tool),
         axis.text=element_text(size=10),
         axis.title=element_text(size=12,face="bold")) +
   xlab("Classifier") + 
-  ylab("Specificity") +
-  scale_y_continuous(breaks = seq(0.7,1, by = 0.05))
+  ylab("Specificity")
 p.binary.spec
-dev.off()
+# dev.off()
 ```
 
 
@@ -241,7 +239,7 @@ Figure \@ref(fig:recallbc) graphically represents of the results calculated in t
 
 ```{r recallbc, echo=FALSE, fig.cap="One-dimensional scatter plot of recall (sensitivity) scores of CAZyme and non-CAZyme predictions per test set, overlaying box plot of standard deviation."}
 
-subset_sens$Prediction.tool <- factor(subset.recall$Prediction.tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+subset_sens$Prediction_tool <- factor(subset.recall$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
 pdf(file = "binarySensitivity.pdf", width = 8.58, height = 5.5)
 p.binary.sens = ggplot(subset_sens %>% group_by(Prediction_tool),
@@ -273,7 +271,7 @@ Figure \@ref(fig:precbc) is a visual representation of the results calculated in
 subset_prec$Prediction_tool <- factor(subset.prec$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
 pdf(file = "binaryPrec.pdf", width = 8.58, height = 5.5)
-p.binary.prec = ggplot(subset.prec %>% group_by(Prediction.tool),
+p.binary.prec = ggplot(subset.prec %>% group_by(Prediction_tool),
                        aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
   geom_boxplot(outlier.shape=NA) +
   geom_jitter(width=0.1, height=0) +
@@ -323,10 +321,10 @@ Accuarcy (calculated using (TP + TN) / (TP + TN + FP + FN) ) provides an idea of
 
 ```{r accbc, echo=FALSE, fig.cap="Bar chart of specificity of CAZyme classifiers differentiation between CAZymes and non-CAZymes."}
 subset.acc <- binary_stat_df[which(binary_stat_df$Statistic.parameter == "Accuracy"), ]
-subset.acc$Prediction.tool <- factor(subset.acc$Prediction.tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+subset.acc$Prediction_tool <- factor(subset.acc$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
 
 pdf(file = "binaryAcc.pdf", width = 8.58, height = 5.5)
-p.binary.acc = ggplot(subset.acc %>% group_by(Prediction.tool), aes(x=Prediction.tool, y=Statistic.value, fill=Prediction.tool)) +
+p.binary.acc = ggplot(subset.acc %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
   geom_boxplot(outlier.shape=NA) +
   geom_jitter(width=0.1, height=0) +
   scale_fill_manual(values = colour_set) +
@@ -777,7 +775,7 @@ class.fbeta.calc <- function(class.df){
   tools <- c("dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI")
   
   for (tool in tools) {
-    tool.subset <- class.df[which(class.df$Prediction.tool == tool), ]
+    tool.subset <- class.df[which(class.df$Prediction_tool == tool), ]
     scores <- as.numeric(tool.subset$fbeta.score)
 
     mean.res <- mean(scores, na.rm=TRUE)
@@ -845,11 +843,11 @@ for(i in 1:nrow(class.fbeta.scores)) {
 class.fbeta.scores$val.class <- val.class
 
 # set order data is presented
-class.fbeta.scores$Prediction.tool <- factor(class.fbeta.scores$Prediction.tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) 
+class.fbeta.scores$Prediction_tool <- factor(class.fbeta.scores$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) 
 class.fbeta.scores$val.class <- factor(class.fbeta.scores$val.class, levels = c('< 0', '[0.00]', '(0.00, 0.05]', '(0.05, 0.10]', '(0.10, 0.15]', '(0.15, 0.20]', '(0.20, 0.25]', '(0.25, 0.30]', '(0.30, 0.35]', '(0.35, 0.40]', '(0.40, 0.45]', '(0.45, 0.50]', '(0.50, 0.55]', '(0.55, 0.60]', '(0.60, 0.65]', '(0.65, 0.70]', '(0.75, 0.80]', '(0.85, 0.90]', '(0.90, 0.95]', '(0.95, 1.00]', '[1.00]'))
 
 # create dataframe with the number of CAZy families analysed by each classifier for each CAzy class (with true negative non-CAZyme predictions excluded)
-observations <- class.fbeta.scores %>% group_by(interaction(Prediction.tool, cazy.class)) %>% summarise(count=n())
+observations <- class.fbeta.scores %>% group_by(interaction(Prediction_tool, cazy.class)) %>% summarise(count=n())
 names(observations)[1] <- "inter"
 pt.names <- c("dbCAN","HMMER","Hotpep","DIAMOND","CUPP","eCAMI")
 pt.names <- rep(pt.names,6)
@@ -857,7 +855,7 @@ observations$p.tool <- pt.names
 observations$class <- c(rep("AA", 6), rep("CBM", 6), rep("CE", 6), rep("Gh", 6), rep("GT", 6), rep("PL", 6))
 
 # svg(file = "mlcFamF1.svg",  width = 8.25, height = 11)
-p.famF1 = ggally_count(class.fbeta.scores, mapping=ggplot2::aes(x=Prediction.tool, y=cazy.class, fill=val.class)) +
+p.famF1 = ggally_count(class.fbeta.scores, mapping=ggplot2::aes(x=Prediction_tool, y=cazy.class, fill=val.class)) +
   scale_fill_manual(values = colour_grad) +
   xlab("Classifier") + 
   ylab("CAZy class") +
@@ -896,8 +894,8 @@ calculate_ari <- function(predictions, ground.truths, tool) {
   }
 
   protein.accessions <- predictions[3:3]
-  Prediction.tool <-rep(tool, nrow(predictions))
-  ari.df <- data.frame(protein.accessions, Prediction.tool, ari.result)
+  Prediction_tool <-rep(tool, nrow(predictions))
+  ari.df <- data.frame(protein.accessions, Prediction_tool, ari.result)
   
   return(ari.df)
 }
@@ -934,13 +932,13 @@ ari.df <- rbind(ari.df, hotpep.ari.results)
 ari.df <- rbind(ari.df, diamond.ari.results)
 ari.df <- rbind(ari.df, cupp.ari.results)
 ari.df <- rbind(ari.df, ecami.ari.results)
-# ari.df columns = Protein_accession, Prediction.tool, ari.results
+# ari.df columns = Protein_accession, Prediction_tool, ari.results
 
 # set order data is presented
-ari.df$Prediction.tool <- factor(ari.df$Prediction.tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI'))
+ari.df$Prediction_tool <- factor(ari.df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI'))
 
 # pdf(file = "mlcARI.pdf", width = 8.58, height = 5.5)
-p.ari = ggplot(ari.df %>% group_by(Prediction.tool), aes(x=Prediction.tool, y=ari.result, fill=Prediction.tool)) +
+p.ari = ggplot(ari.df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=ari.result, fill=Prediction_tool)) +
   geom_violin() +
   geom_jitter(width=0.1, height=0) +
   scale_fill_manual(values = colour_set) +
