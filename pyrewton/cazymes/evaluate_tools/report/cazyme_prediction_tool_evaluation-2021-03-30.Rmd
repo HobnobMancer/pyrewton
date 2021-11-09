@@ -68,6 +68,9 @@ large_colour_set = unlist(mapply(brewer.pal, qual_col$maxcolors, rownames(qual_c
 # Import data files
 #
 
+# import file with test set coverage of genomes and CAZomes
+test_set_cov_df = read.table("data/cazome_coverage_2021_04_06-11_11_04.txt", sep="\t",header=TRUE)
+
 # import "binary_classification_evaluation_<date>.csv"
 # Written in long form, with the columns: Statistic_parameter, Genomic_assembly, Prediction_tool, Statistic_value
 binary_stat_df <- read.csv("data/binary_classification_evaluation_2021_04_08.csv")
@@ -121,18 +124,16 @@ The genomic assemblies were also chosen from a range of taxonomies to provide as
 
 Table \@ref(tab:gassembly) contains the genomic assemblies used to create the test sets for the evaluation. In total 81 assemblies were chose, 1 from an Oomycete species (more Oomycete species with greater than 100 CAZymes in CAZy could not be found), 25 fungal Ascomycetes species were selected, 13 Yeast, 2 Eukaryote microorganisms, 20 Gram positive bacteria, and 20 Gram negative bacteria.
 
-```{r gassembly, echo=FALSE, results='asis' ,fig.cap="Genomic assembiles selected for creation of high quality benchmarking test sets for the evaluation of the CAZyme classifiers dbCAN, CUPP and eCAMI."}
-# load in the species table
-gassemblies <- read.csv("genomic_sources_of_test_sets.csv")
-# rename the columns
-names(gassemblies)[names(gassemblies) == "ï..Group"] <- "Phylogeny"
-names(gassemblies)[names(gassemblies) == "NCBI.Taxonomy.ID"] <- "NCBI Taxonomy ID"
-names(gassemblies)[names(gassemblies) == "GenBank.Accession"] <- "GenBank Assembly Accession"
-names(gassemblies)[names(gassemblies) == "Number.of.CAZymes.in.CAZy"] <- "Number of CAZymes in CAZy"
-# print the table with formating
-kable(gassemblies[1:5], caption="Genomic assembiles selected for creation of high quality benchmarking test sets for the evaluation of the CAZyme classifiers dbCAN, CUPP and eCAMI", align='llccc')  %>% kable_styling(full_width = F)
-
-# write.csv(gassemblies[1:5], "test_sets_dataframe.csv", row.names=FALSE)
+```{r CAZome coverage by test sets per test set, echo=FALSE, results='asis' ,fig.cap="Histogram of CAZome coverage of the test sets for each respective source genomic assembly, overlayed by a box and whisker plot of the percentage of the CAZome incorproated in the test set."}
+ggplot(test_set_cov_df, aes(x=CAZome_coverage_percentage)) +
+  geom_histogram(fill="#138d91", alpha=0.7, color="#0d4a4d") +
+  geom_boxplot(
+    outlier.shape=NA,
+    width = 0.5,
+    data=test_set_cov_df,
+    aes(x=CAZome_coverage_percentage, y=5),
+    alpha=0.5) +
+  labs(x="CAZome coverage (%)", y="Number of test sets")
 ```
 
 
