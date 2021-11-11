@@ -54,7 +54,14 @@ figbg = "whitesmoke"
 # define small colour set, with one colour per CAZyme classifier
 colour_set <- c("#0a7a6d", "#d4af37", "#7844b8", "#acbf1b", "#c22176", "#3888e0")
 # colour gradient from red-orange-yellow-blue-gree
-colour_grad <- c("#4a1b00", "#620021", "#ba2922", "#D73027", "#F38345", "#FDBA67", "#FEE168", "#fff966", "#BCF9FC", "#98D0E4", "#66A5CC", "#3D7A99", "#2f5b61", "#2e5c39", "#328544", "#22b348", "#40c740", "#80e831", "#a5f200")
+colour_grad <- c(
+  "#1c0a00", "#620021", "#940113",
+  "#D73027", "#F38345", "#FDBA67",
+  "#FEE168", "#fff966", "#BCF9FC",
+  "#98D0E4", "#66A5CC", "#3D7A99",
+  "#2e5a6b", "#2e663b", "#228537",
+  "#1ba841", "#3fcc3f", "#6ddb1a",
+  "#a5f200")
 # define large colour set when many colours are needed
 n <- 60
 qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
@@ -79,14 +86,23 @@ binary_stat_df <- read.csv("data/binary_classification_evaluation_2021_04_08.csv
 # Contains the output from the bootstrap resampling of the binary classification of CAZymes/non-CAZymes
 bootstrap_results_df <- read.csv("data/binary_bootstrap_accuracy_evaluation_2021_04_08.csv")
 
+# import binary false positive and negative predictions
+binary_fp_predictions = read.csv("data/binary_false_positive_classifications_2021_11_09.csv")
+binary_fn_predictions = read.csv("data/binary_false_negative_classifications_2021_11_09.csv")
+
 # import "class_predicted_classifications_<date>.csv"
 # Contains the columns: Genomic_accession, Protein_accession, Prediciton_tool, one column per CAZy class, Rand_index and Adjusted_rand_index
 class_ri_ari_raw_df <- read.csv("data/class_predicted_classifications_2021_04_08.csv")
 
 # import "class_stats_per_test_set_<date>.csv"
-# Contains the calculated performance satistics when evaluating performance of CAZy class prediction per test set.
+# Contains the calculated performance statistics when evaluating performance of CAZy class prediction per test set.
 # Written in long form with the columns: Genomic_accession, Prediction_tool, CAZy_class, Statistic_parameter, Statistic_value
-cazy_class_long_df <- read.csv("data/class_stats_across_all_test_sets_2021_04_08.csv")
+cazy_class_df <- read.csv("data/class_stats_per_test_set_2021_11_09.csv")
+
+# import "family_long_form_stats_df_<date>.csv"
+# Contains the calculated performance satistics when evaluating performance of CAZy family prediction per test set.
+# Written in long form with the columns: CAZy_family, Prediction_tool, Statistical_parameter, Statistic_value
+cazy_family_long_df <- read.csv("data/family_long_form_stats_df_2021_11_09.csv")
 ```
 
 <div id="summary">
@@ -141,7 +157,7 @@ print(sd_cazome_cov)
 ```
 
 ```{r cazomeCovHisto, echo=FALSE, results='asis' ,fig.cap="Histogram of CAZome coverage of the test sets for each respective source genomic assembly, overlayed by a box and whisker plot of the percentage of the CAZome incorproated in the test set."}
-ggplot(test_set_cov_df, aes(x=CAZome_coverage_percentage)) +
+p.cazome.c <- ggplot(test_set_cov_df, aes(x=CAZome_coverage_percentage)) +
   geom_histogram(fill="#138d91", alpha=0.7, color="#0d4a4d") +
   geom_boxplot(
     outlier.shape=NA,
@@ -150,8 +166,14 @@ ggplot(test_set_cov_df, aes(x=CAZome_coverage_percentage)) +
     aes(x=CAZome_coverage_percentage, y=5),
     alpha=0.5) +
   labs(x="CAZome coverage (%)", y="Number of test sets")
+p.cazome.c
 ```
 
+```{r saveCov. include=FALSE}
+pdf(file = "cazomeCovHis.pdf", width = 8.58, height = 5.5)
+p.cazome.c
+dev.off()
+```
 
 # The Binary CAZyme/non-CAZyme classification
 
@@ -190,7 +212,7 @@ binary_summary_df <- merge(binary_summary_df, binary_f1_score)
 binary_summary_df <- merge(binary_summary_df, binary_accuracy)
 
 # define factors
-binary_summary_df$Prediction_tool <- factor(binary_summary_df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+binary_summary_df$Prediction_tool <- factor(binary_summary_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
 
 names(binary_summary_df)[names(binary_summary_df) == "Prediction_tool"] <- "Classifier"
 # reorder the rows
@@ -211,7 +233,7 @@ Figure \@ref(fig:spec) is a graphical representation of the results calculated i
 
 ```{r spec, echo=FALSE, fig.cap="One-dimensional scatter plot of specificity scores of CAZyme and non-CAZyme predictions per test set, overlaying box plot of standard deviation."}
 
-subset_spec$Prediction_tool <- factor(subset_spec$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+subset_spec$Prediction_tool <- factor(subset_spec$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
 
 p.binary.spec = ggplot(subset_spec %>% group_by(Prediction_tool),
                 aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
@@ -242,7 +264,7 @@ Figure \@ref(fig:recallbc) graphically represents of the results calculated in t
 
 ```{r recallbc, echo=FALSE, fig.cap="One-dimensional scatter plot of recall (sensitivity) scores of CAZyme and non-CAZyme predictions per test set, overlaying box plot of standard deviation."}
 
-subset_sens$Prediction_tool <- factor(subset_sens$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+subset_sens$Prediction_tool <- factor(subset_sens$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
 
 p.binary.sens = ggplot(subset_sens %>% group_by(Prediction_tool),
                   aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
@@ -274,7 +296,7 @@ Figure \@ref(fig:precbc) is a visual representation of the results calculated in
 
 ```{r precbc, echo=FALSE, fig.cap="One-dimensional scatter plot of precision scores of CAZyme and non-CAZyme predictions per test set, overlaying box plot of standard deviation."}
 
-subset_prec$Prediction_tool <- factor(subset_prec$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+subset_prec$Prediction_tool <- factor(subset_prec$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
 
 p.binary.prec = ggplot(subset_prec %>% group_by(Prediction_tool),
                        aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
@@ -286,8 +308,7 @@ p.binary.prec = ggplot(subset_prec %>% group_by(Prediction_tool),
         axis.text=element_text(size=10),
         axis.title=element_text(size=12,face="bold")) +
   xlab("Classifier") + 
-  ylab("Precision") +
-  scale_y_continuous(breaks = seq(0.7,1, by = 0.05))
+  ylab("Precision")
 p.binary.prec
 ```
 
@@ -303,7 +324,7 @@ The F1-score is a harmonic (or weighted) average of recall and precision and pro
 
 ```{r f1bc, echo=FALSE, fig.cap="Bar chart of specificity of CAZyme classifiers differentiation between CAZymes and non-CAZymes."}
 
-subset_f1$Prediction_tool <- factor(subset_f1$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+subset_f1$Prediction_tool <- factor(subset_f1$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
 
 p.binary.f1 = ggplot(subset_f1 %>% group_by(Prediction_tool),
               aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
@@ -315,8 +336,7 @@ p.binary.f1 = ggplot(subset_f1 %>% group_by(Prediction_tool),
         axis.text=element_text(size=10),
         axis.title=element_text(size=12,face="bold")) +
   xlab("Classifier") + 
-  ylab("F1-score") +
-  scale_y_continuous(breaks = seq(0.3,1, by = 0.1))
+  ylab("F1-score")
 p.binary.f1
 ```
 
@@ -332,7 +352,7 @@ Accuarcy (calculated using (TP + TN) / (TP + TN + FP + FN) ) provides an idea of
 
 
 ```{r accbc, echo=FALSE, fig.cap="Bar chart of specificity of CAZyme classifiers differentiation between CAZymes and non-CAZymes."}
-subset_acc$Prediction_tool <- factor(subset_acc$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+subset_acc$Prediction_tool <- factor(subset_acc$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
 
 p.binary.acc = ggplot(subset_acc %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
   geom_boxplot(outlier.shape=NA) +
@@ -343,8 +363,7 @@ p.binary.acc = ggplot(subset_acc %>% group_by(Prediction_tool), aes(x=Prediction
         axis.text=element_text(size=10),
         axis.title=element_text(size=12,face="bold")) +
   xlab("Classifier") + 
-  ylab("Accuracy") +
-  scale_y_continuous(breaks = seq(0.6,1, by = 0.05))
+  ylab("Accuracy") 
 p.binary.acc
 ```
 
@@ -354,6 +373,78 @@ p.binary.acc
 dev.off()
 ```
 
+Below is a combination (3x2) plot of the above plots for evaluating the binary CAZyme/non-CAZyme classification performance of the CAZyme classifiers.
+
+```{r binaryCombo, include=FALSE}
+axis_values = seq(0.3,1, by = 0.05)
+mp.binary.spec = ggplot(subset_spec %>% group_by(Prediction_tool),
+                aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
+  geom_boxplot(outlier.shape=NA) +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=8),
+        axis.title=element_text(size=9,face="bold"),
+        axis.text.x=element_text(angle=-90)) +
+  xlab("Classifier") +
+  ylab("Specificity") + 
+  scale_y_continuous(limits = c(0.3, 1), breaks = seq(0.3,1.0,0.1))
+mp.binary.sens = ggplot(subset_sens %>% group_by(Prediction_tool),
+                  aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
+  geom_boxplot(outlier.shape=NA) +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=8),
+        axis.title=element_text(size=9,face="bold")) +
+  xlab("Classifier") +
+  ylab("Sensitivity") +
+  scale_y_continuous(limits = c(0.3, 1), breaks = seq(0.3,1.0,0.1))
+mp.binary.prec = ggplot(subset_prec %>% group_by(Prediction_tool),
+                       aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
+  geom_boxplot(outlier.shape=NA) +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=8),
+        axis.title=element_text(size=9,face="bold")) +
+  xlab("Classifier") +
+  ylab("Precision") +
+  scale_y_continuous(limits = c(0.3, 1), breaks = seq(0.3,1.0,0.1))
+mp.binary.f1 = ggplot(subset_f1 %>% group_by(Prediction_tool),
+              aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
+  geom_boxplot(outlier.shape=NA) +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=8),
+        axis.title=element_text(size=9,face="bold")) +
+  xlab("Classifier") +
+  ylab("F1-score") + 
+  scale_y_continuous(limits = c(0.3, 1), breaks = seq(0.3,1.0,0.1))
+mp.binary.acc = ggplot(subset_acc %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Statistic_value, fill=Prediction_tool)) +
+  geom_boxplot(outlier.shape=NA) +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=8),
+        axis.title=element_text(size=9,face="bold")) +
+  xlab("Classifier") +
+  ylab("Accuracy") + 
+  scale_y_continuous(limits = c(0.3, 1), breaks = seq(0.3,1.0,0.1))
+plot_grid(mp.binary.spec, mp.binary.sens, mp.binary.prec, mp.binary.f1, mp.binary.acc, labes='AUTO', ncol=3)
+```
+
+```{r saveBinMuliPlot, indluce=FALSE}
+png("binary_multiplot.png", units='in', width=8, height=6,res=900)
+plot_grid(mp.binary.spec, mp.binary.sens, mp.binary.prec, mp.binary.f1, mp.binary.acc, labes='AUTO', ncol=3)
+dev.off()
+```
 
 ## Expected Range of Accruacy
 
@@ -362,7 +453,7 @@ The statistics evaluated above provide an idea of the general performance of the
 To compare the expected typical range in accuracies for each classifier, 6 test sets (identified by the source genomic assemblies) were selected at random. The CAZyme/non-CAZyme predictions for each classifier, for each test set, were bootstrap resampled 100 times each, and for each bootstrap sample the accuracy calculated. The accuracies of the bootstrap samples for each classifier were plotted on stacked histograms, shown in figure \@ref(fig:bsacc).
 
 ```{r bsacc, echo=FALSE, fig.cap="Stacked histograms of bootstrap sample accuracies of CAZyme classifiers' differentiation between CAZymes and non-CAZymes. 6 test sets (identified by their source genomic assembly) were selected at random. The CAZyme/non-CAZyme predictions for each classifier, for each test set, were bootstrap resampled 100 times. The accuracy of each of the 600 bootstrap samples per test set were plotted as a stacked histogram."}
-bootstrap_results_df$Prediction_tool <- factor(bootstrap_results_df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+bootstrap_results_df$Prediction_tool <- factor(bootstrap_results_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
 
 # plot generated to see the number of items in each bin for the figure above, and additional boxplots to represent the distribution of the data
 p.bs.annotated = ggplot(bootstrap_results_df %>% group_by(Genomic_accession), aes(x=accuracy)) +
@@ -400,8 +491,10 @@ Few of the known non-CAZymes were classified as CAZymes by the CAZyme classifier
 First the equation to calcualte the correlation must be determined. Either the Pearson correlation or Spearman's correlation coefficients could be calculated. Pearson's correlation assumes the data is normally distributed, Spearman's correlation is a nonparametric statistic becuase it does not presume a normal distribution. Figure \@ref(fig:fp.cor)[A] shows a histogram of the number of prediciton tools that generated false positives and figure \@ref(fig:fp.cor)[B] a boxplot of the highest BLAST score ratios of false positives against CAZymes in the same test set. Both plots demonstrate the data is not normally distributed. Additionally, figure \@ref(fig:fp.cor)[B] shows the data contains outliers, which Pearson's correlation is also sensitive to. Therefore, the Spearman's correlation coefficient was calculated, which is shown in \@ref(fig:fp.cor)[C].
 
 ```{r fp.cor, echo=FALSE, fig.cap="Correlation between BLAST score ratio between the number of CAZyme classifiers that incorrectly identified a known non-CAZymes as a CAZyme and the highest BLAST score ratio of the known non-CAZyme and a known CAZyme fromt the same test set."}
-false_positive <- read.csv("false_positive_binary_predictions.csv")
-false_positive_dfs <- false_positive[!duplicated(false_positive), ]
+binary_fp_predictions <- false_positive[!duplicated(false_positive), ]
+binary_fp_predictions
+p.total.fp <- ggplot(binary_fp_predictions, )
+# plot bar charts to show wish tools produced the most fp and fn predictions
 # find correlation between number of tools and BLAST score ratio
 # Calculate Spearman rank correlation not Pearson correlation becuase do not want to apply assumption that the data is normally distributed
 nt_bsr_cor = cor(false_positive_dfs$Number_of_tools, false_positive_dfs$BLAST_score_ratio, method = "spearman")  
@@ -451,26 +544,6 @@ plot_grid(left_panel, p.fp.cor, ncol=2, labels = c("", "C"), rel_widths = c(0.75
 # dev.off()
 ```
 
-The Spearman's correlation coefficient of 0.141 infers a very weak monotonic relationship between the number of prediciton tools that misclassifed the non-CAZyme as a CAZyme and the highest BLAST score ratio between the non-CAZyme and a CAZyme in the same test set. It might have been presumed that more tools would struggle to correctly classify a non-CAZyme with an increasing sequence similarity with known CAZymes, however, the Spearman's correlation coefficient infers this is not the case.
-
-We can also look to see if the classifiers struggled with a particular test set but looking at the number of false positives per test set, as illustrated in figure \@ref(fig:gcfp). However, most test sets had only one false positive. The test set from genomic assembly GCA_001315015 had the most false positives but this was still only 5% of all proteins anaysed in the test set.
-
-```{r gcfp, echo=FALSE, fig.cap="Source of false positive CAZyme predictions from test sets."}
-# look to see if more TNs arouse from certain genomic assemblies, and thus CAZy is unlikely to contain the complete CAZome of the genomic assembly and/or CAZy had a nissue with the genomic assembly and/or sequences from this species.
-
-p.gc = ggplot(false_positive_dfs %>% group_by(Genomic_accession), aes(x=false_positive_dfs$Genomic_accession, fill=false_positive_dfs$Genomic_accession)) +
-  geom_bar() +
-  scale_fill_manual(values=large_colour_set) +
-  theme(legend.position = "none",
-        legend.background = element_rect(fill = figbg, color = figbg),
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text.x = element_text(angle = 90)) +
-  xlab("Number of False Positives") +
-  ylab("Test Set")
-p.gc
-```
-
-
 ## Conclusions on the Binary CAZyme/non-CAZyme Prediction Performance
 
 Overall, all tools show a low probability of producing false positives (misclassifying a non-CAZyme as a CAZyme), and few of the positive predictions are false positives. Therefore, we can be confident in that the CAZyme predictions made by each of these tools are most likely (typically 90-100%) correct. However, all the classifiers demonstrated a consistent behaviour to not identify all CAZymes within a CAZome. Therefore, we can be confident in the CAZyme predictions, but should not presume all non-CAZyme predictions are correct; these classifiers are unlikely to identify the complete CAZome although a near-complete CAZome will be accuracetly identified.
@@ -489,9 +562,23 @@ A single CAZyme can be included in multiple CAZy classes leading to the multilab
 
 The RI is the measure of accuracy across all potential classifications of a protein. The RI ranges from 0 (no correct annotations) to 1 (all annotations correct). The ARI is the RI adjusted for chance, where 0 is the equivalent to assigning the CAZy class annotations randomly, -1 where the annotations are systematically handed out incorrectly and 1 where the annotations are all correct.
 
+```{r riCalc, echoFALSE}
+class_ri_ari_raw_df$Prediction_tool <- factor(class_ri_ari_raw_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
+
+class_ri_stats_df <- class_ri_ari_raw_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Rand_index), "Standard Deviation"=sd(Rand_index))
+
+kable(class_ri_stats_df, caption="Rand Index of CAZyme classifier classification of CAZy class annotations", align='c', digits = 4) %>% kable_styling(full_width = F)
+```
+
+```{r ariCalc, echoFALSE}
+class_ari_stats_df <- class_ri_ari_raw_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
+
+kable(class_ari_stats_df, caption="Rand Index of CAZyme classifier classification of CAZy class annotations", align='c', digits = 4) %>% kable_styling(full_width = F)
+```
+
 ```{r classRI, echo=FALSE, fig.cap="Violin plot of Rand Index (RI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy classes."}
 
-class_ri_ari_raw_df$Prediction_tool <- factor(class_ri_ari_raw_df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+class_ri_ari_raw_df$Prediction_tool <- factor(class_ri_ari_raw_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
 
 # plot RI
 p.ri.class = ggplot(class_ri_ari_raw_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Rand_index, fill=Prediction_tool)) +
@@ -532,48 +619,52 @@ p.ari.class
 Fbeta scores by test set, proportional area plot
 
 ```{r}
-# retrieve the Fbeta scores
-cazy_class_fbeta_df <- cazy_class_long_df[which(cazy_class_long_df$Statistic_parameter == "Fbeta_score"), ]
-cazy_class_fbeta_df$Prediction_tool <- factor(cazy_class_fbeta_df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) # set order data is presented
+cazy_class_df$Prediction_tool <- factor(cazy_class_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
 
-cazy_class_fbeta_df  <- cazy_class_fbeta_df[complete.cases(cazy_class_fbeta_df), ]
+# subset Fbeta-scores
+class_fbeta_subset <- cazy_class_df[which(cazy_class_df$Statistic_parameter == "Fbeta_score"), ]
+
+# Not every CAZy class is present in every test set, where it was not present a value of NA was given.
+# these rows need to be dropped so that the proportional area plot represents the number of test sets containing
+# that CAZy class
+class_fbeta_subset  <- class_fbeta_subset[complete.cases(class_fbeta_subset), ]
 
 # classify the Fbeta-scores into bins
 val.class <- vector()
 
-for(i in 1:nrow(cazy_class_fbeta_df)) {
-  if(cazy_class_fbeta_df[i, 6] == 1){val.class <- append(val.class, '[1.00]')} 
-  else if (cazy_class_fbeta_df[i, 6] == 0){val.class <- append(val.class, '[0.00]')}
-  else if (cazy_class_fbeta_df[i, 6] < 1 && cazy_class_fbeta_df[i, 6] >= 0.95){val.class <- append(val.class, '(0.95, 1.00]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.95 && cazy_class_fbeta_df[i, 6] >= 0.9){val.class <- append(val.class, '(0.90, 0.95]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.90 && cazy_class_fbeta_df[i, 6] >= 0.85){val.class <- append(val.class, '(0.85, 0.90]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.85 && cazy_class_fbeta_df[i, 6] >= 0.80){val.class <- append(val.class, '(0.80, 0.85]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.80 && cazy_class_fbeta_df[i, 6] >= 0.75){val.class <- append(val.class, '(0.75, 0.80]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.75 && cazy_class_fbeta_df[i, 6] >= 0.70){val.class <- append(val.class, '(0.70, 0.75]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.70 && cazy_class_fbeta_df[i, 6] >= 0.65){val.class <- append(val.class, '(0.65, 0.70]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.65 && cazy_class_fbeta_df[i, 6] >= 0.60){val.class <- append(val.class, '(0.60, 0.65]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.60 && cazy_class_fbeta_df[i, 6] >= 0.55){val.class <- append(val.class, '(0.55, 0.60]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.55 && cazy_class_fbeta_df[i, 6] >= 0.50){val.class <- append(val.class, '(0.50, 0.55]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.50 && cazy_class_fbeta_df[i, 6] >= 0.45){val.class <- append(val.class, '(0.45, 0.50]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.45 && cazy_class_fbeta_df[i, 6] >= 0.40){val.class <- append(val.class, '(0.40, 0.45]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.40 && cazy_class_fbeta_df[i, 6] >= 0.35){val.class <- append(val.class, '(0.35, 0.40]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.35 && cazy_class_fbeta_df[i, 6] >= 0.30){val.class <- append(val.class, '(0.30, 0.35]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.30 && cazy_class_fbeta_df[i, 6] >= 0.25){val.class <- append(val.class, '(0.25, 0.30]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.25 && cazy_class_fbeta_df[i, 6] >= 0.20){val.class <- append(val.class, '(0.20, 0.25]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.20 && cazy_class_fbeta_df[i, 6] >= 0.15){val.class <- append(val.class, '(0.15, 0.20]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.15 && cazy_class_fbeta_df[i, 6] >= 0.10){val.class <- append(val.class, '(0.10, 0.15]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.10 && cazy_class_fbeta_df[i, 6] >= 0.05){val.class <- append(val.class, '(0.05, 0.10]')}
-  else if (cazy_class_fbeta_df[i, 6] < 0.05 && cazy_class_fbeta_df[i, 6] > 0){val.class <- append(val.class, '(0.00, 0.05]')}
+for(i in 1:nrow(class_fbeta_subset)) {
+  if(class_fbeta_subset[i, 6] == 1){val.class <- append(val.class, '[1.00]')} 
+  else if (class_fbeta_subset[i, 6] == 0){val.class <- append(val.class, '[0.00]')}
+  else if (class_fbeta_subset[i, 6] < 1 && class_fbeta_subset[i, 6] >= 0.95){val.class <- append(val.class, '(0.95, 1.00]')}
+  else if (class_fbeta_subset[i, 6] < 0.95 && class_fbeta_subset[i, 6] >= 0.9){val.class <- append(val.class, '(0.90, 0.95]')}
+  else if (class_fbeta_subset[i, 6] < 0.90 && class_fbeta_subset[i, 6] >= 0.85){val.class <- append(val.class, '(0.85, 0.90]')}
+  else if (class_fbeta_subset[i, 6] < 0.85 && class_fbeta_subset[i, 6] >= 0.80){val.class <- append(val.class, '(0.80, 0.85]')}
+  else if (class_fbeta_subset[i, 6] < 0.80 && class_fbeta_subset[i, 6] >= 0.75){val.class <- append(val.class, '(0.75, 0.80]')}
+  else if (class_fbeta_subset[i, 6] < 0.75 && class_fbeta_subset[i, 6] >= 0.70){val.class <- append(val.class, '(0.70, 0.75]')}
+  else if (class_fbeta_subset[i, 6] < 0.70 && class_fbeta_subset[i, 6] >= 0.65){val.class <- append(val.class, '(0.65, 0.70]')}
+  else if (class_fbeta_subset[i, 6] < 0.65 && class_fbeta_subset[i, 6] >= 0.60){val.class <- append(val.class, '(0.60, 0.65]')}
+  else if (class_fbeta_subset[i, 6] < 0.60 && class_fbeta_subset[i, 6] >= 0.55){val.class <- append(val.class, '(0.55, 0.60]')}
+  else if (class_fbeta_subset[i, 6] < 0.55 && class_fbeta_subset[i, 6] >= 0.50){val.class <- append(val.class, '(0.50, 0.55]')}
+  else if (class_fbeta_subset[i, 6] < 0.50 && class_fbeta_subset[i, 6] >= 0.45){val.class <- append(val.class, '(0.45, 0.50]')}
+  else if (class_fbeta_subset[i, 6] < 0.45 && class_fbeta_subset[i, 6] >= 0.40){val.class <- append(val.class, '(0.40, 0.45]')}
+  else if (class_fbeta_subset[i, 6] < 0.40 && class_fbeta_subset[i, 6] >= 0.35){val.class <- append(val.class, '(0.35, 0.40]')}
+  else if (class_fbeta_subset[i, 6] < 0.35 && class_fbeta_subset[i, 6] >= 0.30){val.class <- append(val.class, '(0.30, 0.35]')}
+  else if (class_fbeta_subset[i, 6] < 0.30 && class_fbeta_subset[i, 6] >= 0.25){val.class <- append(val.class, '(0.25, 0.30]')}
+  else if (class_fbeta_subset[i, 6] < 0.25 && class_fbeta_subset[i, 6] >= 0.20){val.class <- append(val.class, '(0.20, 0.25]')}
+  else if (class_fbeta_subset[i, 6] < 0.20 && class_fbeta_subset[i, 6] >= 0.15){val.class <- append(val.class, '(0.15, 0.20]')}
+  else if (class_fbeta_subset[i, 6] < 0.15 && class_fbeta_subset[i, 6] >= 0.10){val.class <- append(val.class, '(0.10, 0.15]')}
+  else if (class_fbeta_subset[i, 6] < 0.10 && class_fbeta_subset[i, 6] >= 0.05){val.class <- append(val.class, '(0.05, 0.10]')}
+  else if (class_fbeta_subset[i, 6] < 0.05 && class_fbeta_subset[i, 6] >= 0){val.class <- append(val.class, '(0.00, 0.05]')}
   else {val.class <- append(val.class, '< 0')}
 }
-cazy_class_fbeta_df$val.class <- val.class
+class_fbeta_subset$val.class <- val.class
 
 # set order data is presented
-cazy_class_fbeta_df$Prediction_tool <- factor(cazy_class_fbeta_df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) 
-cazy_class_fbeta_df$val.class <- factor(cazy_class_fbeta_df$val.class, levels = c('< 0', '[0.00]', '(0.00, 0.05]', '(0.05, 0.10]', '(0.10, 0.15]', '(0.15, 0.20]', '(0.20, 0.25]', '(0.25, 0.30]', '(0.30, 0.35]', '(0.35, 0.40]', '(0.40, 0.45]', '(0.45, 0.50]', '(0.50, 0.55]', '(0.55, 0.60]', '(0.60, 0.65]', '(0.65, 0.70]', '(0.75, 0.80]', '(0.85, 0.90]', '(0.90, 0.95]', '(0.95, 1.00]', '[1.00]'))
+class_fbeta_subset$Prediction_tool <- factor(class_fbeta_subset$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) 
+class_fbeta_subset$CAZy_class <- factor(class_fbeta_subset$CAZy_class, levels = c('CBM', 'AA', 'CE', 'PL', 'GT', 'GH'))
+class_fbeta_subset$val.class <- factor(class_fbeta_subset$val.class, levels = c('< 0', '[0.00]', '(0.00, 0.05]', '(0.05, 0.10]', '(0.10, 0.15]', '(0.15, 0.20]', '(0.20, 0.25]', '(0.25, 0.30]', '(0.30, 0.35]', '(0.35, 0.40]', '(0.40, 0.45]', '(0.45, 0.50]', '(0.50, 0.55]', '(0.55, 0.60]', '(0.60, 0.65]', '(0.65, 0.70]', '(0.75, 0.80]', '(0.85, 0.90]', '(0.90, 0.95]', '(0.95, 1.00]', '[1.00]'))
 
-# svg(file = "mlcClassF1.svg",  width = 8.25, height = 11)
-p.classF1 = ggally_count(cazy_class_fbeta_df, mapping=ggplot2::aes(x=Prediction_tool, y=CAZy_class, fill=val.class)) +
+p.classF1 = ggally_count(class_fbeta_subset, mapping=ggplot2::aes(x=Prediction_tool, y=CAZy_class, fill=val.class)) +
   scale_fill_manual(values = colour_grad) +
   xlab("Classifier") + 
   ylab("CAZy class") +
@@ -586,7 +677,46 @@ p.classF1 = ggally_count(cazy_class_fbeta_df, mapping=ggplot2::aes(x=Prediction_
   labs(fill = expression(paste("F", beta, "-score"))) +
   guides(fill = guide_legend(reverse = TRUE))
 p.classF1
-# dev.off()
+```
+
+```{r saveCazyClassFbeta, include=FALSE}
+svg(file = "mlcClassF1.svg",  width = 8.25, height = 11)
+p.classF1
+dev.off()
+```
+
+Calculate sample sizes per test set, per prediction tool.
+
+```{r calcCazyClassSamples, echo=FALSE}
+class_fbeta_subset$Prediction_tool <- factor(class_fbeta_subset$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
+
+calc_class_sample_size <- function(class_df, tool) {
+  tool_data <- c(tool)
+  tool_df = class_df[which(class_df$Prediction_tool == tool), ]
+  cazy_classes = c('GH', 'GT', 'PL', 'CE', 'AA', 'CBM')
+  for (cazy_class in cazy_classes) {
+    sample_size <- sum(tool_df$CAZy_class == cazy_class)
+    tool_data = c(tool_data, sample_size)
+  }
+  tool_data_m = matrix(tool_data,nrow=1)
+  return(tool_data_m)
+}
+
+dbcan_row = calc_class_sample_size(class_fbeta_subset, 'dbCAN')
+hmmer_row = calc_class_sample_size(class_fbeta_subset, 'HMMER')
+diamond_row = calc_class_sample_size(class_fbeta_subset, 'DIAMOND')
+hotpep_row = calc_class_sample_size(class_fbeta_subset, 'Hotpep')
+cupp_row = calc_class_sample_size(class_fbeta_subset, 'CUPP')
+ecami_row = calc_class_sample_size(class_fbeta_subset, 'eCAMI')
+
+cazy_class_sample_size <- rbind(dbcan_row, hmmer_row)
+cazy_class_sample_size <- rbind(cazy_class_sample_size, diamond_row)
+cazy_class_sample_size <- rbind(cazy_class_sample_size, hotpep_row)
+cazy_class_sample_size <- rbind(cazy_class_sample_size, cupp_row)
+cazy_class_sample_size <- rbind(cazy_class_sample_size, ecami_row)
+cazy_class_sample_size_df <- as.data.frame(cazy_class_sample_size)
+names(cazy_class_sample_size_df) <- c('Prediction_tool', 'GH', 'GT', 'PL', 'CE', 'AA', 'CBM')
+cazy_class_sample_size_df
 ```
 
 ```{r}
@@ -624,7 +754,7 @@ cazy_class_GH_spec_recall_df <- cazy_class_spec_recall_df[which(cazy_class_spec_
 cazy_class_GH_spec_recall_df$Recall_percentage = cazy_class_GH_spec_recall_df$Recall * 100
 cazy_class_GH_spec_recall_df$Specificity_percentage = cazy_class_GH_spec_recall_df$Specificity * 100
 
-cazy_class_GH_spec_recall_df$Prediction_tool <- factor(cazy_class_GH_spec_recall_df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) 
+cazy_class_GH_spec_recall_df$Prediction_tool <- factor(cazy_class_GH_spec_recall_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) 
 p.class.gh.spec.sens = ggplot(cazy_class_GH_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity)) +
   geom_density_2d_filled(alpha = 0.5) +
   geom_point() +
@@ -832,7 +962,7 @@ for(i in 1:nrow(class.fbeta.scores)) {
 class.fbeta.scores$val.class <- val.class
 
 # set order data is presented
-class.fbeta.scores$Prediction_tool <- factor(class.fbeta.scores$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI')) 
+class.fbeta.scores$Prediction_tool <- factor(class.fbeta.scores$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) 
 class.fbeta.scores$val.class <- factor(class.fbeta.scores$val.class, levels = c('< 0', '[0.00]', '(0.00, 0.05]', '(0.05, 0.10]', '(0.10, 0.15]', '(0.15, 0.20]', '(0.20, 0.25]', '(0.25, 0.30]', '(0.30, 0.35]', '(0.35, 0.40]', '(0.40, 0.45]', '(0.45, 0.50]', '(0.50, 0.55]', '(0.55, 0.60]', '(0.60, 0.65]', '(0.65, 0.70]', '(0.75, 0.80]', '(0.85, 0.90]', '(0.90, 0.95]', '(0.95, 1.00]', '[1.00]'))
 
 # create dataframe with the number of CAZy families analysed by each classifier for each CAzy class (with true negative non-CAZyme predictions excluded)
@@ -924,7 +1054,7 @@ ari.df <- rbind(ari.df, ecami.ari.results)
 # ari.df columns = Protein_accession, Prediction_tool, ari.results
 
 # set order data is presented
-ari.df$Prediction_tool <- factor(ari.df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI'))
+ari.df$Prediction_tool <- factor(ari.df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI'))
 
 # pdf(file = "mlcARI.pdf", width = 8.58, height = 5.5)
 p.ari = ggplot(ari.df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=ari.result, fill=Prediction_tool)) +
@@ -951,7 +1081,7 @@ To evaluate the performance of predicting each CAZy family independent of all ot
 fam.stat.df <-read.csv("fam_stats_df_single_2021_04_21.csv")
 
 fam.stat.df  <- fam.stat.df[complete.cases(fam.stat.df), ]
-fam.stat.df$Prediction_tool <- factor(fam.stat.df$Prediction_tool, levels = c('dbCAN','HMMER','Hotpep','DIAMOND','CUPP','eCAMI'))
+fam.stat.df$Prediction_tool <- factor(fam.stat.df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI'))
 
 # split out by CAZy class
 fam.names <- colnames(dbcan.predicted_fams[5:458])
