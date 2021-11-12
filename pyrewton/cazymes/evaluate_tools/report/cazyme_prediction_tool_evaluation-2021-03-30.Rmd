@@ -616,9 +616,9 @@ p.ari.class
 
 -- stats table
 
-Fbeta scores by test set, proportional area plot
+Below a proportional area plot representing the F-beta score for each CAZyme classifier for each test set is generated. each square is sized proportional to the relative sample size. Every class was not included in every sample, resulting in different sample sizes between CAZy classes, the same between classifiers.
 
-```{r}
+```{r statsFbeta echo=FALSE}
 cazy_class_df$Prediction_tool <- factor(cazy_class_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
 
 # subset Fbeta-scores
@@ -685,7 +685,7 @@ p.classF1
 dev.off()
 ```
 
-Calculate sample sizes per test set, per prediction tool.
+A dataframe of the number of test sets containing each CAZy class is generated.
 
 ```{r calcCazyClassSamples, echo=FALSE}
 class_fbeta_subset$Prediction_tool <- factor(class_fbeta_subset$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
@@ -719,76 +719,175 @@ names(cazy_class_sample_size_df) <- c('Prediction_tool', 'GH', 'GT', 'PL', 'CE',
 cazy_class_sample_size_df
 ```
 
-```{r}
-cazy_class_specificity_df <- cazy_class_long_df[which(cazy_class_long_df$Statistic_parameter == "Specificity"), ]
+The sensitivity of each CAZyme classifier can be plotted against the specificity for each CAZy class, however plotting all CAZy classes in a single plot produces an overally cramped plot, unless very few test sets were used.
+
+```{r cazyClassSpecVsSens, echo=FALSE}
+# subset specificity scores
+cazy_class_specificity_df <- cazy_class_df[which(cazy_class_df$Statistic_parameter == "Specificity"), ]
+# rename columns
 names(cazy_class_specificity_df)[names(cazy_class_specificity_df) == "Statistic_value"] <- "Specificity"
 cazy_class_specificity_df <- cazy_class_specificity_df[c("Genomic_accession", "Prediction_tool", "CAZy_class", "Specificity")]
 
-cazy_class_sens_df <- cazy_class_long_df[which(cazy_class_long_df$Statistic_parameter == "Recall"), ]
-names(cazy_class_sens_df)[names(cazy_class_sens_df) == "Statistic_value"] <- "Recall"
-cazy_class_sens_df <- cazy_class_sens_df[c("Genomic_accession", "Prediction_tool", "CAZy_class", "Recall")]
+# subset sensitivity scores
+cazy_class_sens_df <- cazy_class_df[which(cazy_class_df$Statistic_parameter == "Sensitivity"), ]
+names(cazy_class_sens_df)[names(cazy_class_sens_df) == "Statistic_value"] <- "Sensitivity"
+cazy_class_sens_df <- cazy_class_sens_df[c("Genomic_accession", "Prediction_tool", "CAZy_class", "Sensitivity")]
 
 # merge dataframes
-cazy_class_spec_recall_df <- merge(cazy_class_specificity_df, cazy_class_sens_df, by=c("Genomic_accession", "Prediction_tool", "CAZy_class"))
-cazy_class_spec_recall_df  <- cazy_class_spec_recall_df[complete.cases(cazy_class_spec_recall_df), ]
+cazy_class_spec_sense_df <- merge(cazy_class_specificity_df, cazy_class_sens_df, by=c("Genomic_accession", "Prediction_tool", "CAZy_class"))
 
-# this figure shows there is to much data to visualise on a single plot. Therefore, one plot per class with be made using facet_wrap by Prediciton_tool.
-p.class.spec.sense = ggplot(cazy_class_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity, color=Prediction_tool)) +
+# specificity was not predicted for every CAZy class in eveyr test set, this is the result of the CAZy class not being present in the test set and the classifier not predicting the presence of the CAZy class in the test set
+# In these cases specificity is NA
+# NA values are removed
+cazy_class_spec_sense_df  <- cazy_class_spec_sense_df[complete.cases(cazy_class_spec_sense_df), ]
+
+# one plot per class with be made using facet_wrap by Prediciton_tool.
+p.class.spec.sense = ggplot(cazy_class_spec_sense_df %>% group_by(Prediction_tool), aes(x=Sensitivity, y=Specificity, color=Prediction_tool)) +
   geom_point() +
-  scale_color_manual(values=color_set) +
+  scale_color_manual(values=colour_set) +
   theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
         axis.title=element_text(size=11,face="bold"),
         strip.text = element_text(size=11)) +
   labs(x = "Sensitivity", y = "Specificity", color="Classifer") +
-  facet_wrap(~ CAZy_class)
+  facet_wrap(~CAZy_class)
 p.class.spec.sense
 ```
 
-Below the prediction sensitivity is plotted against the specificity for each CAZy class.
+Below the prediction sensitivity is plotted against the specificity for each classifier, and a separate plot is generated for each CAZy class.
 
-#### GH
+The scatter plots of sensitivity against specificity overlay a coloured contour to highlight the distribution of the points. When too many points have the same value a contour cannot be generated. In order to plot a contour noise is added to the data. The original data is used to plot the scatter plot and the data with added noise is used to plot the contour.
 
-```{r}
-cazy_class_GH_spec_recall_df <- cazy_class_spec_recall_df[which(cazy_class_spec_recall_df$CAZy_class == "GH"), ]
-cazy_class_GH_spec_recall_df$Recall_percentage = cazy_class_GH_spec_recall_df$Recall * 100
-cazy_class_GH_spec_recall_df$Specificity_percentage = cazy_class_GH_spec_recall_df$Specificity * 100
+The percentage of the data points which need noise to be added to them in order to generate a contour varies from data set to data set. To change the percentage of the data points with noise added to them, change the third value of call to the function `plot.class.sens.vs.spec()`, which is used to generate the plots. The third value is the percentage of data points to add noise to, written in decimal form.
 
-cazy_class_GH_spec_recall_df$Prediction_tool <- factor(cazy_class_GH_spec_recall_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) 
-p.class.gh.spec.sens = ggplot(cazy_class_GH_spec_recall_df %>% group_by(Prediction_tool), aes(x=Recall, y=Specificity)) +
-  geom_density_2d_filled(alpha = 0.5) +
-  geom_point() +
-  scale_color_manual(values=color_set) +
-  theme(plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=11,face="bold"),
-        strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity", color="Classifer") +
-  facet_wrap(~ Prediction_tool)
+```{r addNoise, echo=FALSE}
+# When plotting scatter plots overlaying a coloured contour, contours cannot be ploted if too many data points have the same value
+# To sort this add noise to the data
+
+add_noise <- function(data, corrupt_percent, min.val, max.val){
+  corrupt <- rbinom(length(data), 1, corrupt_percent)    # choose an average of <corrupt_percent>% to corrupt at random
+  corrupt <- as.logical(corrupt)
+  noise <- rnorm(sum(corrupt), min.val, max.val) # generate the noise to add
+  data[corrupt] <- data[corrupt] - noise      # about 10% of x has been corrupted
+  return(data)
+}
+
+```
+
+```{r buildClassSensVsSpecPlot, echo=FALSE}
+plot.class.sens.vs.spec <- function(class.data.df, cazy_class, corruption_size, min.val, max.val){
+  # subset rows containing data for the given CAZy class
+  class.subset.df <- class.data.df[which(class.data.df$CAZy_class == cazy_class), ]
+  
+  # set the order prediction tools are plotted in the plot
+  class.subset.df$Prediction_tool <- factor(class.subset.df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI'))
+
+  # subset and add noise to the data to enable plotting contours, contours cannot be plotted if too many data points have the same value
+  class.sens.data <- class.subset.df$Sensitivity
+  class.sens.data.noise <- add_noise(class.sens.data, corruption_size, min.val, max.val)
+
+  class.spec.data <- class.subset.df$Specificity
+  class.spec.data.noise <- add_noise(class.spec.data, corruption_size, min.val, max.val)
+  
+  # add the data with noise as new columns to the df
+  class.subset.df$Sens_noise <- class.sens.data.noise
+  class.subset.df$Spec_noise <- class.spec.data.noise
+  
+  # generate the plot
+  p.class.sens.spec = ggplot(class.subset.df %>% group_by(Prediction_tool), aes(x=Sensitivity, y=Specificity)) +
+    geom_density_2d_filled(alpha = 0.5, aes(x=Sens_noise, y=Spec_noise)) +
+    geom_point() +
+    scale_color_manual(values=colour_set) +
+    theme(plot.background = element_rect(fill = figbg, color = figbg),
+          axis.text=element_text(size=10),
+          axis.title=element_text(size=11,face="bold"),
+          strip.text = element_text(size=11)) +
+    labs(x = "Sensitivity", y = "Specificity", color="Classifer", fill="Density") +
+    xlim(0.4, 1.0) +
+    ylim(0.9, 1.0) +
+    facet_wrap(~ Prediction_tool)
+  p.class.sens.spec
+}
+```
+
+#### CAZy class classification for GH
+
+```{r classGhSpecSens, echo=FALSE}
+p.class.gh.spec.sens <- plot.class.sens.vs.spec(cazy_class_spec_sense_df, 'GH', 0.3, 0.001, 0.01)
 p.class.gh.spec.sens
-
-# why is the contour only hotpep + eCAMI (this is not position specific), try with an isolated prediction tool
-# becuase of Error in seq_len(n) : argument must be coercible to non-negative integer
 ```
 
-```{r}
-test_df <- cazy_class_GH_spec_recall_df[which(cazy_class_GH_spec_recall_df$Prediction_tool == "dbCAN"), ]
-p.test = ggplot(test_df, aes(x=Recall, y=Specificity)) +
-  geom_density_2d_filled(alpha = 0.5) +
-  geom_point() +
-  theme(plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=11,face="bold")) +
-  labs(x = "Sensitivity", y = "Specificity")
-p.test
+```{r saveclassGhSpecSens, echo=FALSE}
+pdf(file = "classGhSpecVsSens", width = 11.25, height = 7)
+p.class.gh.spec.sens
+dev.off()
 ```
 
+#### CAZy class classification for GT
 
-#### GT
-#### PL
-#### CE
-#### AA
-#### CBM
+```{r classGhSpecSens, echo=FALSE}
+p.class.gt.spec.sens <- plot.class.sens.vs.spec(cazy_class_spec_sense_df, 'GT', 0.5, 0.001, 0.01)
+p.class.gt.spec.sens
+```
+
+```{r saveclassGhSpecSens, echo=FALSE}
+pdf(file = "classGtSpecVsSens", width = 11.25, height = 7)
+p.class.gt.spec.sens
+dev.off()
+```
+
+#### CAZy class classification for PL
+
+```{r classGhSpecSens, echo=FALSE}
+p.class.pl.spec.sens <- plot.class.sens.vs.spec(cazy_class_spec_sense_df, 'PL', 0.5, 0.001, 0.01)
+p.class.pl.spec.sens
+```
+
+```{r saveclassGhSpecSens, echo=FALSE}
+pdf(file = "classPlSpecVsSens", width = 11.25, height = 7)
+p.class.pl.spec.sens
+dev.off()
+```
+
+#### CAZy class classification for CE
+
+```{r classGhSpecSens, echo=FALSE}
+p.class.ce.spec.sens <- plot.class.sens.vs.spec(cazy_class_spec_sense_df, 'CE', 0.4, 0.001, 0.01)
+p.class.ce.spec.sens
+```
+
+```{r saveclassGhSpecSens, echo=FALSE}
+pdf(file = "classCeSpecVsSens", width = 11.25, height = 7)
+p.class.ce.spec.sens
+dev.off()
+```
+
+#### CAZy class classification for AA
+
+```{r classGhSpecSens, echo=FALSE}
+p.class.aa.spec.sens <- plot.class.sens.vs.spec(cazy_class_spec_sense_df, 'AA', 0.3, 0.001, 0.01)
+p.class.aa.spec.sens
+```
+
+```{r saveclassGhSpecSens, echo=FALSE}
+pdf(file = "classAaSpecVsSens", width = 11.25, height = 7)
+p.class.aa.spec.sens
+dev.off()
+```
+
+#### CAZy class classification for CBM
+
+```{r classGhSpecSens, echo=FALSE}
+p.class.cbm.spec.sens <- plot.class.sens.vs.spec(cazy_class_spec_sense_df, 'CBM', 0.3, 0.001, 0.01)
+p.class.cbm.spec.sens
+```
+
+```{r saveclassGhSpecSens, echo=FALSE}
+pdf(file = "classCbmSpecVsSens", width = 11.25, height = 7)
+p.class.cbm.spec.sens
+dev.off()
+```
+
 
 # Evaluation of the Multilabel Classification of CAZy Families
 
@@ -1133,7 +1232,7 @@ fam.class.df$Recall_percentage <- fam.class.df$Recall * 100
 # pdf(file = "mlcSensRecallVspec.pdf", width = 11.25, height = 7)
 p.fam = ggplot(fam.class.df %>% group_by(Prediction_tool), aes(x=Recall_percentage, y=Specificity_percentage, color=Prediction_tool)) +
   geom_point() +
-  scale_color_manual(values=color_set) +
+  scale_color_manual(values=colour_set) +
   theme(plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
         axis.title=element_text(size=11,face="bold"),
@@ -1300,7 +1399,7 @@ gh.fam.subset$Recall_percentage <- gh.fam.subset$Recall * 100
 # pdf(file = "mlcGHfamsSpecSens.pdf", width = 11.25, height = 7)
 p.gh.fam = ggplot(gh.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) +
   geom_point() +
-  scale_color_manual(values=color_set) +
+  scale_color_manual(values=colour_set) +
   theme(legend.position = "none",
         plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
@@ -1381,7 +1480,7 @@ gt.fam.subset$Recall_percentage <- gt.fam.subset$Recall * 100
 # pdf(file = "mlcGTfamsSpecSens.pdf", width = 11.25, height = 7)
 p.gt.fam = ggplot(gt.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) +
   geom_point() +
-  scale_color_manual(values=color_set) +
+  scale_color_manual(values=colour_set) +
   theme(legend.position = "none",
         plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
@@ -1466,7 +1565,7 @@ pl.fam.subset$Recall_percentage <- pl.fam.subset$Recall * 100
 # pdf(file = "mlcPLfamsSpecSens.pdf", width = 11.25, height = 7)
 p.pl.fam = ggplot(pl.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) +
   geom_point() +
-  scale_color_manual(values=color_set) +
+  scale_color_manual(values=colour_set) +
   theme(legend.position = "none",
         plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
@@ -1550,7 +1649,7 @@ ce.fam.subset$Recall_percentage <- ce.fam.subset$Recall * 100
 # pdf(file = "mlcCEfamsSpecSens.pdf", width = 11.25, height = 7)
 p.ce.fam = ggplot(ce.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) +
   geom_point() +
-  scale_color_manual(values=color_set) +
+  scale_color_manual(values=colour_set) +
   theme(legend.position = "none",
         plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
@@ -1634,7 +1733,7 @@ aa.fam.subset$Recall_percentage <- aa.fam.subset$Recall * 100
 # pdf(file = "mlcAAfamsSpecSens.pdf", width = 11.25, height = 7)
 p.aa.fam = ggplot(aa.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) +
   geom_point() +
-  scale_color_manual(values=color_set) +
+  scale_color_manual(values=colour_set) +
   theme(legend.position = "none",
         plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
@@ -1718,7 +1817,7 @@ cbm.fam.subset$Recall_percentage <- cbm.fam.subset$Recall * 100
 # pdf(file = "mlcCBMfamsSpecSens.pdf", width = 11.25, height = 7)
 p.cbm.fam = ggplot(cbm.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) +
   geom_point() +
-  scale_color_manual(values=color_set) +
+  scale_color_manual(values=colour_set) +
   theme(legend.position = "none",
         plot.background = element_rect(fill = figbg, color = figbg),
         axis.text=element_text(size=10),
