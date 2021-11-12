@@ -105,6 +105,11 @@ cazy_class_df <- read.csv("data/class_stats_per_test_set_2021_11_09.csv")
 # Contains the calculated performance satistics when evaluating performance of CAZy family prediction per test set.
 # Written in long form with the columns: CAZy_family, Prediction_tool, Statistical_parameter, Statistic_value
 cazy_family_long_df <- read.csv("data/family_long_form_stats_df_2021_11_09.csv")
+
+# import "family_predicted_classifications_<date>.csv
+# Contains the CAZy family epredictions for every protein for every CAZy family, and includes the 
+# Rand indx and Adjusted Rand Index for every protein
+fam_classification_df <- read.csv ("data/family_predicted_classifications_2021_11_09.csv")
 ```
 
 <div id="summary">
@@ -901,7 +906,7 @@ kable(class_ri_stats_df, caption="Rand Index of CAZyme classifier classification
 ```{r ariCalc, echoFALSE}
 class_ari_stats_df <- class_ri_ari_raw_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
 
-kable(class_ari_stats_df, caption="Rand Index of CAZyme classifier classification of CAZy class annotations", align='c', digits = 4) %>% kable_styling(full_width = F)
+kable(class_ari_stats_df, caption="Adjusted Rand Index of CAZyme classifier classification of CAZy class annotations", align='c', digits = 4) %>% kable_styling(full_width = F)
 ```
 
 Plot are violin plots underlying scatter plots, presenting the RI and ARI for every protein across all test sets.
@@ -1847,12 +1852,6 @@ p.cbm.poor.fam
 # dev.off()
 ```
 
-....
-
-
-### Overall performance of CAZy family predictions
-
-
 
 ## Evaluation of multi-label CAZy family classification performance
 
@@ -1860,130 +1859,48 @@ CAZy annotates proteins in a domain-wise manner. Consequently, a single protein 
 
 The CAZy family multi-label classification performance is represented by the Rand Index (RI) and Adjusted Rand Index (ARI). The RI is a quantitive measure of similarity between two clusterings by considering all pairs of samples and counting pairs that are assigned in the same or different clusters in the predicted and true clusterings. In this case the two clusters are the predicted and groud truth CAZy family annotations. The raw RI score is then “adjusted for chance” into the ARI score using the following scheme:  
 `ARI = (RI - Expected_RI) / (max(RI) - Expected_RI)`
+This produces a score between 1 and -1. A score of 1 is produced if all predicted and known CAZy family annotations are identical, 0 if completely random clustering of -1 if systematically incorrect clustering and the number of incorrect classifications of proteins is greater than would be expected from randomly annotating proteins with CAZy families.
 
-```{r, include=FALSE}
-# load in dataframes of CAZy family prediction annotations and Fbeta score calculated per CAZy family (except for True Negatives)
-# The last row of these dataframs contain the Fbeta-scores of each CAZy family
-dbcan.fbeta.df <-read.csv("dbcan_fam_prediction_df_2021_03_31.csv")
-hmmer.fbeta.df <-read.csv("hmmer_fam_prediction_df_2021_03_31.csv")
-hotpep.fbeta.df <-read.csv("hotpep_fam_prediction_df_2021_03_31.csv")
-diamond.fbeta.df <-read.csv("diamond_fam_prediction_df_2021_03_31.csv")
-cupp.fbeta.df <-read.csv("cupp_fam_prediction_df_2021_03_31.csv")
-ecami.fbeta.df <-read.csv("ecami_fam_prediction_df_2021_03_31.csv")
-write.csv(cupp.fbeta.df ,"cupp_test.csv", row.names = FALSE)
-# load in dataframes containing predicted and known CAZy family annotations for all classifiers
-mlc_predictions <- read.csv("mlc_evaluation_2021_03_31.csv")
-mlc_ground_truths <- read.csv("mlc_ground_truths_2021_03_31.csv")
+```{r famRi, echo=FALSE}
+fam_classification_df$Prediction_tool <- factor(fam_classification_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
 
-# find fams not included in evaluation -- all(df1$col2 == 0, na.rm = TRUE)
-mlc_ground_truths.fams <- mlc_ground_truths[5:458]
-non.evaluated.fams <- mlc_ground_truths.fams[,(which(colSums(mlc_ground_truths.fams) == 0))] 
-names(non.evaluated.fams)  # names of fams not included in the evaluation
-length(names(non.evaluated.fams))  # number of fams not included in the evaluation
+fam_ri_stats_df <- fam_classification_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Rand_index), "Standard Deviation"=sd(Rand_index))
 
-for.finding.TP.count <- mlc_ground_truths.fams[which(mlc_ground_truths$Prediction_tool == "dbCAN"), ]
- # remove non_cazymes (rows were all values are 0)
-for.finding.TP.count <- for.finding.TP.count[(which(rowSums(for.finding.TP.count) != 0)), ]
-sum(for.finding.TP.count$GH123)
+kable(fam_ri_stats_df, caption="Rand Index of CAZyme classifier classification of CAZy family annotations", align='c', digits = 4) %>% kable_styling(full_width = F)
+```
 
-get.tool.subset <- function (complete.df, tool) {
-  fams <- complete.df[which(complete.df$Prediction_tool == tool), ]
-  return(fams)
-}
+```{r famAriCalc, echoFALSE}
+fam_ari_stats_df <- fam_classification_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
 
-# separate out the CAZy Family predicted and known annotations by CAZyme classifier for the stasistical analysis
-dbcan.predicted_fams <- get.tool.subset(mlc_predictions, "dbCAN")
-dbcan.known_fams <- get.tool.subset(mlc_ground_truths, "dbCAN")
-
-hmmer.predicted_fams <- get.tool.subset(mlc_predictions, "HMMER")
-hmmer.known_fams <- get.tool.subset(mlc_ground_truths, "HMMER")
-
-hotpep.predicted_fams <- get.tool.subset(mlc_predictions, "Hotpep")
-hotpep.known_fams <- get.tool.subset(mlc_ground_truths, "Hotpep")
-
-diamond.predicted_fams <- get.tool.subset(mlc_predictions, "DIAMOND")
-diamond.known_fams <- get.tool.subset(mlc_ground_truths, "DIAMOND")
-
-cupp.predicted_fams <- get.tool.subset(mlc_predictions, "CUPP")
-cupp.known_fams <- get.tool.subset(mlc_ground_truths, "CUPP")
-
-ecami.predicted_fams <- get.tool.subset(mlc_predictions, "eCAMI")
-ecami.known_fams <- get.tool.subset(mlc_ground_truths, "eCAMI")
-
-# All the dataframes loaded and created here have the columns:
-# X (index column), Genomic_accession, Protein_accession, Prediction_tool, then one column per CAZy family
+kable(fam_ari_stats_df, caption="Adjusted Rand Index of CAZyme classifier classification of CAZy family annotations", align='c', digits = 4) %>% kable_styling(full_width = F)
 ```
 
 Multilabel classification raises when a single instance can be assinged to multiple classes. In this evaluation a single instance is a protein and the classes are CAZy families, a single CAZyme can be assigned to multiple CAZy families. This is important to take into consideration because the same approaches for statistical evaluation of binary classification provided a limited view of the performance of the classifiers when applied to multilabel classification.
 
+Plot are violin plots overlayed by scatter plots of the Rand Index and Adjusted Rand Index for every protein in every test set, excluding true negatives.
 
-## Adjusted Rand Index for MultiLabel Classification
+```{r famRI, echo=FALSE, fig.cap="Violin plot of Rand Index (RI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy classes."}
 
-The Rand Index if a statistical measure of similarity between two clustered datasets. The Adjusted Rand Index (ARI) is the Rand Index corrected for chance and produce a score of 1 if identical, 0 if completely random clustering of -1 if systematically incorrect clustering and the number of incorrect classifications of proteins is greater than would be expected from randomly annotating proteins with CAZy families.
+fam_classification_df$Prediction_tool <- factor(fam_classification_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
 
-The ARI was calculated for every protein for each CAZyme classifier. Looking at \@ref(fig:ari), Hotpep (0.8716 $\pm$3136 standard deviation (sd))) showed the weakest performance. dbCAN (mean 0.9305 $\pm$0.2511 sd) and DIAMOND (mean 0.9324 $\pm$0.2500 sd) showed the strongest performances. HMMER (0.9188 $\pm$0.2654 sd) showed a fractionally stronger perforamnce than CUPP (0.9038 $\pm$0.2805 sd) and eCAMI(0.9029 $\pm$0.2840), with fewer proteins scoring an ARI of less than 0.6.
+# plot RI
+p.ri.class = ggplot(fam_classification_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Rand_index, fill=Prediction_tool)) +
+  geom_violin() +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  xlab("Classifier") + 
+  ylab("Rand Index") +
+  scale_y_continuous(breaks = seq(0,1, by = 0.1))
+p.ri.class
+```
 
-```{r ari, echo=FALSE, fig.cap="Violin plot of the adjusted rand index of CAZyme classifiers."}
+```{r classRI, echo=FALSE, fig.cap="Violin plot of Adjusted Rand Index (ARI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy classes."}
 
-calculate_ari <- function(predictions, ground.truths, tool) {
-  # Calculate the adjusted rand index for each protein, each unique protein is stored in a unique row of the dataframe
-
-  ari.result <- vector()  # store all calculated ARIs
-  
-  predictions.df <- predictions[5:458]
-  ground.truths.df <- ground.truths[5:458]
-
-  for(i in 1:nrow(predictions)) {
-    ari.score <- adjustedRandIndex(as.numeric(predictions.df[i, ]), as.numeric(ground.truths.df[i, ]))
-    ari.result <- append(ari.result, ari.score)
-  }
-
-  protein.accessions <- predictions[3:3]
-  Prediction_tool <-rep(tool, nrow(predictions))
-  ari.df <- data.frame(protein.accessions, Prediction_tool, ari.result)
-  
-  return(ari.df)
-}
-# create dataframes: protein.accession, ari.result
-dbcan.ari.results <- calculate_ari(dbcan.predicted_fams, dbcan.known_fams, "dbCAN")
-hmmer.ari.results <- calculate_ari(hmmer.predicted_fams, hmmer.known_fams, "HMMER")
-hotpep.ari.results <- calculate_ari(hotpep.predicted_fams, hotpep.known_fams, "Hotpep")
-diamond.ari.results <- calculate_ari(diamond.predicted_fams, diamond.known_fams, "DIAMOND")
-cupp.ari.results <- calculate_ari(cupp.predicted_fams, cupp.known_fams, "CUPP")
-ecami.ari.results <- calculate_ari(ecami.predicted_fams, ecami.known_fams, "eCAMI")
-
-dbcan.mean.ari <- mean(dbcan.ari.results$ari.result)
-dbcan.sd.ari <- sd(dbcan.ari.results$ari.result)
-
-hmmer.mean.ari <- mean(hmmer.ari.results$ari.result)
-hmmer.sd.ari <- sd(hmmer.ari.results$ari.result)
-
-hotpep.mean.ari <- mean(hotpep.ari.results$ari.result)
-hotpep.sd.ari <- sd(hotpep.ari.results$ari.result)
-
-diamond.mean.ari <- mean(diamond.ari.results$ari.result)
-diamond.sd.ari <- sd(diamond.ari.results$ari.result)
-
-cupp.mean.ari <- mean(cupp.ari.results$ari.result)
-cupp.sd.ari <- sd(cupp.ari.results$ari.result)
-
-ecami.mean.ari <- mean(ecami.ari.results$ari.result)
-ecami.sd.ari <- sd(ecami.ari.results$ari.result)
-
-# build a single dataframe of all Adjusted Rand Index
-ari.df <- dbcan.ari.results
-ari.df <- rbind(ari.df, hmmer.ari.results)
-ari.df <- rbind(ari.df, hotpep.ari.results)
-ari.df <- rbind(ari.df, diamond.ari.results)
-ari.df <- rbind(ari.df, cupp.ari.results)
-ari.df <- rbind(ari.df, ecami.ari.results)
-# ari.df columns = Protein_accession, Prediction_tool, ari.results
-
-# set order data is presented
-ari.df$Prediction_tool <- factor(ari.df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI'))
-
-# pdf(file = "mlcARI.pdf", width = 8.58, height = 5.5)
-p.ari = ggplot(ari.df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=ari.result, fill=Prediction_tool)) +
+p.ari.class = ggplot(fam_classification_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Adjusted_Rand_index, fill=Prediction_tool)) +
   geom_violin() +
   geom_jitter(width=0.1, height=0) +
   scale_fill_manual(values = colour_set) +
@@ -1993,12 +1910,9 @@ p.ari = ggplot(ari.df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=ar
         axis.title=element_text(size=12,face="bold")) +
   xlab("Classifier") + 
   ylab("Adjusted Rand Index") +
-  scale_y_continuous(breaks = seq(0,1, by = 0.1))
-p.ari
-# dev.off()
+  scale_y_continuous(breaks = c(-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1))
+p.ari.class
 ```
-
-
 
 # Conclusions
 
