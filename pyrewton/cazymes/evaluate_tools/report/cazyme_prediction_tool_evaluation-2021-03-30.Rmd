@@ -227,7 +227,7 @@ kable(binary_summary_df, caption="Overall performance of CAZyme classifiers diff
 ```
 
 
-### Specificity
+## Specificity
 
 Specificity is the proportion of known negatives (known non-CAZymes) which are correctly classified as negatives (non-CAZymes).
 
@@ -257,7 +257,7 @@ p.binary.spec
 dev.off()
 ```
 
-### Sensitivity
+## Sensitivity
 
 Sensitivity (also known as recall) is the proportion of known positives (CAZymes) that are correctly identified as positives (CAZymes).
 
@@ -288,7 +288,7 @@ p.binary.sens
 dev.off()
 ```
 
-### Precision
+## Precision
 
 Precision is the proportion of positive predictions by the classifiers that are correct.
 
@@ -320,7 +320,7 @@ p.binary.prec
 dev.off()
 ```
 
-### F1-score
+## F1-score
 
 The F1-score is a harmonic (or weighted) average of recall and precision and provides an idea of the overall performance of the tool, 0 being the lowest and 1 being the best performance. Figure \@ref(fig:f1bc) shows the F1-score from each test set, for each classifier.
 
@@ -348,7 +348,7 @@ p.binary.f1
 dev.off()
 ```
 
-### Accuracy
+## Accuracy
 
 Accuarcy (calculated using (TP + TN) / (TP + TN + FP + FN) ) provides an idea of the overall performance of the classifiers as a measure of the degree to which their CAZyme/non-CAZyme predictions conforms to the correct result. Figure \@ref(fig:accbc) is a plot of respective data from table \@ref(tab:sumstats).
 
@@ -962,7 +962,7 @@ fam_sensitivity <- fam_subset_sens %>% group_by(Prediction_tool) %>% summarise("
 
 fam_subset_prec <- cazy_family_long_df[which(cazy_family_long_df$Statistical_parameter == "Precision"), ]
 fam_subset_prec  <- fam_subset_prec[complete.cases(fam_subset_prec), ]
-fam_precision <- class_subset_prec %>% group_by(Prediction_tool) %>% summarise("Mean Precision"=mean(Statistic_value), "Precision Standard Deviation"=sd(Statistic_value))
+fam_precision <- fam_subset_prec %>% group_by(Prediction_tool) %>% summarise("Mean Precision"=mean(Statistic_value), "Precision Standard Deviation"=sd(Statistic_value))
 
 fam_subset_f1 <- cazy_family_long_df[which(cazy_family_long_df$Statistical_parameter == "Fbeta_score"), ]
 fam_subset_f1  <- fam_subset_f1[complete.cases(fam_subset_f1), ]
@@ -1127,9 +1127,114 @@ cazy_class_fam_sample_size_df
 
 ## Performance per CAZy family
 
-To evaluate the performance of predicting each CAZy family independent of all other CAZy families, the specificity and recall for each CAZy family, for each CAZyme pediction tool, was calculated and plotted against each other (Fig.\@ref(fig:famrllvspc)). No CAZyme classifier produced a specificity score of less than 0.99, however the calculated recalls range significantly from 0 to 1.
+To evaluate the performance of predicting each CAZy family independent of all other CAZy families, the sensitivity and precision for each CAZy family, for each CAZyme classifier was calculated and plotted against each other (Fig.\@ref(fig:famrllvspc)). Whereas sensitivity was plotted against sensitivity for CAZy classes, owing to the extremely small variation in specificity scores, sensitivity was plotted as a percentage against log10 of the specificity percentage.
+
+```{r prepPerformancePerFam, echo=FALSE}
+# func for adding CAZy class column for a given CAZy class
+add_parent_class <- function(fam.df, fam.names, cazy.class){
+  fam.df.subset <- fam.df[which(fam.df$CAZy_family %in% fam.names), ]
+  class.names <- rep(cazy.class, nrow(fam.df.subset))
+  fam.df.subset$CAZy_class <- class.names
+  return(fam.df.subset)
+}
+
+# add parent CAZy classes to the sensitivity and precision data
+fam_subset_sens.gh <- add_parent_class(fam_subset_sens, gh.names, 'GH')
+fam_subset_sens.gt <- add_parent_class(fam_subset_sens, gt.names, 'GT')
+fam_subset_sens.pl <- add_parent_class(fam_subset_sens, pl.names, 'PL')
+fam_subset_sens.ce <- add_parent_class(fam_subset_sens, ce.names, 'CE')
+fam_subset_sens.aa <- add_parent_class(fam_subset_sens, aa.names, 'AA')
+fam_subset_sens.cbm <- add_parent_class(fam_subset_sens, cbm.names, 'CBM')
+
+fam_subset_spec.gh <- add_parent_class(fam_subset_spec, gh.names, 'GH')
+fam_subset_spec.gt <- add_parent_class(fam_subset_spec, gt.names, 'GT')
+fam_subset_spec.pl <- add_parent_class(fam_subset_spec, pl.names, 'PL')
+fam_subset_spec.ce <- add_parent_class(fam_subset_spec, ce.names, 'CE')
+fam_subset_spec.aa <- add_parent_class(fam_subset_spec, aa.names, 'AA')
+fam_subset_spec.cbm <- add_parent_class(fam_subset_spec, cbm.names, 'CBM')
+
+# recombine the dataframes
+fam_subset_sens_all <- rbind(fam_subset_sens.gh, fam_subset_sens.gt)
+fam_subset_sens_all <- rbind(fam_subset_sens_all, fam_subset_sens.pl)
+fam_subset_sens_all <- rbind(fam_subset_sens_all, fam_subset_sens.ce)
+fam_subset_sens_all <- rbind(fam_subset_sens_all, fam_subset_sens.aa)
+fam_subset_sens_all <- rbind(fam_subset_sens_all, fam_subset_sens.cbm)
+
+fam_subset_spec_all <- rbind(fam_subset_spec.gh, fam_subset_spec.gt)
+fam_subset_spec_all <- rbind(fam_subset_spec_all, fam_subset_spec.pl)
+fam_subset_spec_all <- rbind(fam_subset_spec_all, fam_subset_spec.ce)
+fam_subset_spec_all <- rbind(fam_subset_spec_all, fam_subset_spec.aa)
+fam_subset_spec_all <- rbind(fam_subset_spec_all, fam_subset_spec.cbm)
+
+# rename columns to faciltate merging
+names(fam_subset_sens_all)[names(fam_subset_sens_all) == "Statistic_value"] <- "Sensitivity"
+names(fam_subset_spec_all)[names(fam_subset_spec_all) == "Statistic_value"] <- "Specificity"
+
+# drop the column called X - from the index number created by pandas in Python
+fam_subset_sens_all <- fam_subset_sens_all[c("CAZy_family", "Prediction_tool", "Sensitivity", "CAZy_class")]
+fam_subset_spec_all <- fam_subset_spec_all[c("CAZy_family", "Prediction_tool", "Specificity", "CAZy_class")]
+
+# merge the dataframes
+cazy_fam_spec_sense_df <- merge(
+  fam_subset_sens_all,
+  fam_subset_spec_all,
+  by=c("Prediction_tool", "CAZy_class", "CAZy_family")
+)
+
+# set order data is presented
+cazy_fam_spec_sense_df$Prediction_tool <- factor(cazy_fam_spec_sense_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) 
+cazy_fam_spec_sense_df$CAZy_class <- factor(cazy_fam_spec_sense_df$CAZy_class, levels = c('CBM', 'AA', 'CE', 'PL', 'GT', 'GH'))
+
+# calculate sensitivity and specificity as a percentage
+cazy_fam_spec_sense_df$Sens_percent <- cazy_fam_spec_sense_df$Sensitivity * 100
+cazy_fam_spec_sense_df$Spec_percent <- cazy_fam_spec_sense_df$Specificity * 100
+
+# log10 of specificity is calculated when plotting the chart
+# define func for plotting sens % vs spec % log10
+plot_fam_sens_vs_spec <- function(
+  fam.class.df,
+  cazy.class,
+  noise.sample.size,
+  noise.min.val,
+  noise.max.value,
+  lower.limit,
+  upper.limit){
+  # subset for the class of interest
+  fam.class.df.class.subset <- fam.class.df[which(fam.class.df$CAZy_class == cazy.class), ]
+  
+  # add noise to the data for plotting the contour
+  sens_perc_data <- fam.class.df.class.subset$Sens_percent
+  class.sens.data.noise <- add_noise(sens_perc_data, noise.sample.size, noise.min.val, noise.max.value)
+  spec_perc_data <- fam.class.df.class.subset$Spec_percent
+  class.spec.data.noise <- add_noise(spec_perc_data, noise.sample.size, noise.min.val, noise.max.value)
+  
+  # add the data with noise as new columns to the df
+  fam.class.df.class.subset$Sens_noise <- class.sens.data.noise
+  fam.class.df.class.subset$Spec_noise <- class.spec.data.noise
+  
+  # generate the plot
+  p.fam = ggplot(fam.class.df.class.subset %>% group_by(Prediction_tool), aes(
+      x=Sens_percent,
+      y=Spec_percent
+    )) +
+    geom_density_2d_filled(alpha = 0.5, aes(x=Sens_noise, y=Spec_noise)) +
+    geom_point() +
+    scale_color_manual(values=colour_set) +
+    theme(plot.background = element_rect(fill = figbg, color = figbg),
+          axis.text=element_text(size=10),
+          axis.title=element_text(size=11,face="bold"),
+          strip.text = element_text(size=11)) +
+    labs(x = "Sensitivity (%)", y = "Specificity (log10)", color="Classifer", fill="Density") +
+    scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x), labels = trans_format("log10", math_format(10^.x)), limits=c(lower.limit,upper.limit)) +
+    coord_trans(y="log10") +
+    facet_wrap(~ Prediction_tool)
+  
+  return(p.fam)
+}
+```
 
 ```{r famrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier."}
+# data already subset into fam_subset_sens and fam_subset_prec for sensitivity and precision scores
 fam.stat.df <-read.csv("fam_stats_df_single_2021_04_21.csv")
 
 fam.stat.df  <- fam.stat.df[complete.cases(fam.stat.df), ]
@@ -1199,7 +1304,7 @@ p.fam
 # dev.off()
 ```
 
-For better resolution we can group the CAZy families by their parent CAzy classes, and compare the performances of the tools CAZy class, by CAZy class. Owing to the minimial variation in specificity scores, specificity was plotted as the percentage specificity log10.
+For better resolution we can group the CAZy families by their parent CAzy classes, and compare the performances of the tools CAZy class, by CAZy class. Owing to the minimal variation in specificity scores, specificity was plotted as the percentage specificity log10.
 
 ```{r include=FALSE}
 # This code is for preparing the data for looking at the individual families for which the majoirty of classifiers struggled to perform well
@@ -1342,30 +1447,93 @@ cbm.poor.fams$CAZy.family <- factor(cbm.poor.fams$CAZy.family, levels=c(
 Figure \@ref(fig:ghfamrllvspc) shows the plotting of sensitivity against specificity for each Glycoside Hydrolase CAZy family.
 
 ```{r ghfamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Glycoside Hydrolases."}
-gh.fam.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% gh.names), ]
-gh.fam.subset <- gh.fam.subset[complete.cases(gh.fam.subset), ]
-
-gh.fam.subset$Prediction_tool <- factor(gh.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI'))
-gh.fam.subset$Specificity_percentage <- gh.fam.subset$Specificity * 100
-gh.fam.subset$Recall_percentage <- gh.fam.subset$Recall * 100
-
-# pdf(file = "mlcGHfamsSpecSens.pdf", width = 11.25, height = 7)
-p.gh.fam = ggplot(gh.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) +
-  geom_point() +
-  scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=11,face="bold"),
-        strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-          labels = trans_format("log10", math_format(10^.x))) +
-  coord_trans(y="log10") +
-  facet_wrap(~ Prediction_tool)
-p.gh.fam
-# dev.off()
+p.gh.sens.spec.fam <- plot_fam_sens_vs_spec(cazy_fam_spec_sense_df, 'GH', 0.8, 0.1, 0.8, 99.7, 100)
+p.gh.sens.spec.fam
 ```
+
+```{r saveGhSensSpec, echo=FALSE}
+pdf(file = "famSpecSensGh.pdf", width = 11.25, height = 7)
+p.gh.sens.spec.fam
+dev.off()
+```
+
+### Glycosyltransferases
+
+Figure \@ref(fig:gtfamrllvspc) shows the plotting of sensitivity against specificity for each Glycosyltransferases CAZy family.
+
+```{r gtfamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Glycosyltransferases"}
+p.gt.sens.spec.fam <- plot_fam_sens_vs_spec(cazy_fam_spec_sense_df, 'GT', 0.8, 0.1, 0.8, 99.8, 100)
+p.gt.sens.spec.fam
+```
+
+```{r saveGtSensSpec, echo=FALSE}
+pdf(file = "famSpecSensGt.pdf", width = 11.25, height = 7)
+p.gt.sens.spec.fam
+dev.off()
+```
+
+### Polysaccharide Lyases
+
+Figure \@ref(fig:ghfamrllvspc) shows the plotting of sensitivity against specificity for each Polysaccharide Lyases CAZy family.
+
+```{r plfamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Polysaccharide Lyases"}
+p.pl.sens.spec.fam <- plot_fam_sens_vs_spec(cazy_fam_spec_sense_df, 'PL', 0.9, 0.1, 0.4, 99.9, 100)
+p.pl.sens.spec.fam
+```
+
+```{r savePlSensSpec, echo=FALSE}
+pdf(file = "famSpecSensPl.pdf", width = 11.25, height = 7)
+p.pl.sens.spec.fam
+dev.off()
+```
+
+### Carbohydrate Esterases
+
+Figure \@ref(fig:cefamrllvspc) shows the plotting of sensitivity against specificity for each Carbohydrate Esterases CAZy family.
+
+```{r cefamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Carbohydrate Esterases"}
+p.ce.sens.spec.fam <- plot_fam_sens_vs_spec(cazy_fam_spec_sense_df, 'CE', 0.8, 0.1, 0.5, 99.7, 100)
+p.ce.sens.spec.fam
+```
+
+```{r saveCeSensSpec, echo=FALSE}
+pdf(file = "famSpecSensCe.pdf", width = 11.25, height = 7)
+p.ce.sens.spec.fam
+dev.off()
+```
+
+### Auxillary Activities
+
+Figure \@ref(fig:afamrllvspc) shows the plotting of sensitivity against specificity for each Auxillary Activities CAZy family.
+
+```{r aafamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Auxillary Activities"}
+p.aa.sens.spec.fam <- plot_fam_sens_vs_spec(cazy_fam_spec_sense_df, 'AA', 0.8, 0.1, 0.7, 99.7, 100)
+p.aa.sens.spec.fam
+```
+
+```{r saveAaSensSpec, echo=FALSE}
+pdf(file = "famSpecSensAa.pdf", width = 11.25, height = 7)
+p.aa.sens.spec.fam
+dev.off()
+```
+
+
+### Carbohydate Binding Modules
+
+Figure \@ref(fig:cbmfamrllvspc) shows the plotting of sensitivity against specificity for each Carbohydrate Binding Module CAZy family.
+
+```{r cbmfamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Carbohydrate Binding Modules"}
+p.cbm.sens.spec.fam <- plot_fam_sens_vs_spec(cazy_fam_spec_sense_df, 'CBM', 0.8, 0.1, 1, 99.4, 100)
+p.cbm.sens.spec.fam
+```
+
+```{r saveCbmSensSpec, echo=FALSE}
+pdf(file = "famSpecSensCbm.pdf", width = 11.25, height = 7)
+p.cbm.sens.spec.fam
+dev.off()
+```
+
+## Consistently poor performing CAZy families
 
 We then pulled out the CAZy families with a sensitivity score less than 0.75, which there were only 10.
 
