@@ -92,6 +92,8 @@ binary_fn_predictions = read.csv("data/binary_false_negative_classifications_202
 
 # import "class_predicted_classifications_<date>.csv"
 # Contains the columns: Genomic_accession, Protein_accession, Prediciton_tool, one column per CAZy class, Rand_index and Adjusted_rand_index
+# Contains the clasifications (0/1) for each prediction tool for every protein across all test sets
+# Includes the calculated rand index and adjusted rand index
 class_ri_ari_raw_df <- read.csv("data/class_predicted_classifications_2021_04_08.csv")
 
 # import "class_stats_per_test_set_<date>.csv"
@@ -175,7 +177,7 @@ p.cazome.c
 dev.off()
 ```
 
-# The Binary CAZyme/non-CAZyme classification
+# Evaluation of binary CAZyme/non-CAZyme classification
 
 The assignment of CAZy family annotations to proteins that meet specific criteria by a CAZyme classifier identifies the protein as a CAZyme. If no CAZy family annotations are assigned to a protein by a CAZyme classifier, the tool has identified the protein as a non-CAZyme. This notebook evaluates the performance of the CAZyme classifiers dbCAN (which incorporates HMMER, Hotpep and DIAMOND), CUPP and eCAMI for this binary CAZyme/non-CAZyme classification.
 
@@ -551,70 +553,59 @@ Overall, all tools show a low probability of producing false positives (misclass
 dbCAN consistently demonstrated the strongest performance in all catagories, inferring that eCAMI and CUPP are not suitable replacements of the CAZyme classifier. Hotpep consistently demonstrated the weakest performance, and is incorporated within dbCAN. Therefore, substituting eCAMI and/or CUPP into dbCAN instead of Hotpep may futher improve the performance of dbCAN. The new k-mer based methods, eCAMI and CUPP demonstrated similar performances. CUPP showed a more consistent performance and eCAMI demonstrating a greater range in performance although its mean performance was fractionally greater than that of CUPP. However, more bootstrap calculated accuracy scores feel within the range of 0.9-1.0 for CUPP than eCAMI. This infers that a CUPP may typically provide a better performance than eCAMI, although eCAMI does have the potential on some occations to out perform CUPP, depending on the test set.
 
 
-# Evaluation of the Multilabel Classification of CAZy Classes
+# Evaluation of CAZy Class classification performance
 
 CAZy groups CAZymes into CAZy families by sequence similarity, and CAZy families are grouped into one of 6 functional classes. The CAZyme classifiers predict the CAZy family annotations of predicted CAZymes, but it is of interest to see what the level of performance of the classiferis is at the CAZy class level. Specifically, a classifier may struggle to predict the correct CAZy class for a CAZyme but consistently predict the correct CAZy class. Therefore, the aim of this part of the evaluation is to evaluate the performance of the classifiers to predict the correct CAZy class of predict CAZymes.
 
 
-## Rand Index and Adjusted Rand Index of CAZy Class Prediction
+## General trends in CAZy class classification performance
 
-A single CAZyme can be included in multiple CAZy classes leading to the multilabel classification of CAZymes. To address this and evaluate the multilabel classification of CAZy classes the Rand Index (RI) and Adjusted Rand Index (ARI) were calculated.
+Below is a table summary all statistical parameters calculated in order to evaluate the performance of the CAZy class classification for each prediction tool across all CAZy classes.
 
-The RI is the measure of accuracy across all potential classifications of a protein. The RI ranges from 0 (no correct annotations) to 1 (all annotations correct). The ARI is the RI adjusted for chance, where 0 is the equivalent to assigning the CAZy class annotations randomly, -1 where the annotations are systematically handed out incorrectly and 1 where the annotations are all correct.
+```{r cazyClassStasTable, echo=FALSE}
+# Calculate statistics
+class_subset_spec <- cazy_class_df[which(cazy_class_df$Statistic_parameter == "Specificity"), ]
+class_subset_spec  <- class_subset_spec[complete.cases(class_subset_spec), ]
+class_specificity <- class_subset_spec %>% group_by(Prediction_tool) %>% summarise("Mean Specificity"=mean(Statistic_value), "Specificity Standard Deviation"=sd(Statistic_value))
 
-```{r riCalc, echoFALSE}
-class_ri_ari_raw_df$Prediction_tool <- factor(class_ri_ari_raw_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
+class_subset_sens <- cazy_class_df[which(cazy_class_df$Statistic_parameter == "Sensitivity"), ]
+class_subset_sens  <- class_subset_sens[complete.cases(class_subset_sens), ]
+class_sensitivity <- class_subset_sens %>% group_by(Prediction_tool) %>% summarise("Mean Sensitivity"=mean(Statistic_value), "Sensitivity Standard Deviation"=sd(Statistic_value))
 
-class_ri_stats_df <- class_ri_ari_raw_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Rand_index), "Standard Deviation"=sd(Rand_index))
+class_subset_prec <- cazy_class_df[which(cazy_class_df$Statistic_parameter == "Precision"), ]
+class_subset_prec  <- class_subset_prec[complete.cases(class_subset_prec), ]
+class_precision <- class_subset_prec %>% group_by(Prediction_tool) %>% summarise("Mean Precision"=mean(Statistic_value), "Precision Standard Deviation"=sd(Statistic_value))
 
-kable(class_ri_stats_df, caption="Rand Index of CAZyme classifier classification of CAZy class annotations", align='c', digits = 4) %>% kable_styling(full_width = F)
+class_subset_f1 <- cazy_class_df[which(cazy_class_df$Statistic_parameter == "Fbeta_score"), ]
+class_subset_f1  <- class_subset_f1[complete.cases(class_subset_f1), ]
+class_f1_score <- class_subset_f1 %>% group_by(Prediction_tool) %>% summarise("Mean F1-score"=mean(Statistic_value), "F1-score Standard Deviation"=sd(Statistic_value))
+
+class_subset_acc <- cazy_class_df[which(cazy_class_df$Statistic_parameter == "Accuracy"), ]
+class_subset_acc  <- class_subset_acc[complete.cases(class_subset_acc), ]
+class_accuracy <- class_subset_acc %>% group_by(Prediction_tool) %>% summarise("Mean Accuracy"=mean(Statistic_value), "Accuracy Standard Deviation"=sd(Statistic_value))
+
+# combine data and build a single dataframe
+class_summary_df <- merge(class_specificity, class_sensitivity)
+class_summary_df <- merge(class_summary_df, class_precision)
+class_summary_df <- merge(class_summary_df, class_f1_score)
+class_summary_df <- merge(class_summary_df, class_accuracy)
+
+# define factors
+class_summary_df$Prediction_tool <- factor(class_summary_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
+
+names(class_summary_df)[names(class_summary_df) == "Prediction_tool"] <- "Classifier"
+# reorder the rows
+
+class_summary_df <- class_summary_df[c(2,5,6,3,1,4), ]
+row.names(class_summary_df) = NULL  # hides row names which are added by reordering the rows
+
+kable(
+  class_summary_df,
+  caption="Overall performance of CAZyme classifiers CAZy class classification performance",
+  align='c',
+  digits = 4) %>% kable_styling(full_width = F)
+
 ```
-
-```{r ariCalc, echoFALSE}
-class_ari_stats_df <- class_ri_ari_raw_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
-
-kable(class_ari_stats_df, caption="Rand Index of CAZyme classifier classification of CAZy class annotations", align='c', digits = 4) %>% kable_styling(full_width = F)
-```
-
-```{r classRI, echo=FALSE, fig.cap="Violin plot of Rand Index (RI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy classes."}
-
-class_ri_ari_raw_df$Prediction_tool <- factor(class_ri_ari_raw_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
-
-# plot RI
-p.ri.class = ggplot(class_ri_ari_raw_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Rand_index, fill=Prediction_tool)) +
-  geom_violin() +
-  geom_jitter(width=0.1, height=0) +
-  scale_fill_manual(values = colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold")) +
-  xlab("Classifier") + 
-  ylab("Rand Index") +
-  scale_y_continuous(breaks = seq(0,1, by = 0.1))
-p.ri.class
-```
-
-
-```{r classRI, echo=FALSE, fig.cap="Violin plot of Adjusted Rand Index (ARI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy classes."}
-
-p.ari.class = ggplot(class_ri_ari_raw_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Adjusted_Rand_index, fill=Prediction_tool)) +
-  geom_violin() +
-  geom_jitter(width=0.1, height=0) +
-  scale_fill_manual(values = colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold")) +
-  xlab("Classifier") + 
-  ylab("Adjusted Rand Index") +
-  scale_y_continuous(breaks = c(-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1))
-p.ari.class
-```
-
-## Performance per CAZy class
-
--- stats table
 
 Below a proportional area plot representing the F-beta score for each CAZyme classifier for each test set is generated. each square is sized proportional to the relative sample size. Every class was not included in every sample, resulting in different sample sizes between CAZy classes, the same between classifiers.
 
@@ -754,6 +745,9 @@ p.class.spec.sense = ggplot(cazy_class_spec_sense_df %>% group_by(Prediction_too
 p.class.spec.sense
 ```
 
+
+## Performance per CAZy class
+
 Below the prediction sensitivity is plotted against the specificity for each classifier, and a separate plot is generated for each CAZy class.
 
 The scatter plots of sensitivity against specificity overlay a coloured contour to highlight the distribution of the points. When too many points have the same value a contour cannot be generated. In order to plot a contour noise is added to the data. The original data is used to plot the scatter plot and the data with added noise is used to plot the contour.
@@ -889,7 +883,228 @@ dev.off()
 ```
 
 
-# Evaluation of the Multilabel Classification of CAZy Families
+
+## Rand Index and Adjusted Rand Index of CAZy Class Prediction
+
+A single CAZyme can be included in multiple CAZy classes leading to the multilabel classification of CAZymes. To address this and evaluate the multilabel classification of CAZy classes the Rand Index (RI) and Adjusted Rand Index (ARI) were calculated.
+
+The RI is the measure of accuracy across all potential classifications of a protein. The RI ranges from 0 (no correct annotations) to 1 (all annotations correct). The ARI is the RI adjusted for chance, where 0 is the equivalent to assigning the CAZy class annotations randomly, -1 where the annotations are systematically handed out incorrectly and 1 where the annotations are all correct.
+
+```{r riCalc, echoFALSE}
+class_ri_ari_raw_df$Prediction_tool <- factor(class_ri_ari_raw_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
+
+class_ri_stats_df <- class_ri_ari_raw_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Rand_index), "Standard Deviation"=sd(Rand_index))
+
+kable(class_ri_stats_df, caption="Rand Index of CAZyme classifier classification of CAZy class annotations", align='c', digits = 4) %>% kable_styling(full_width = F)
+```
+
+```{r ariCalc, echoFALSE}
+class_ari_stats_df <- class_ri_ari_raw_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
+
+kable(class_ari_stats_df, caption="Rand Index of CAZyme classifier classification of CAZy class annotations", align='c', digits = 4) %>% kable_styling(full_width = F)
+```
+
+Plot are violin plots underlying scatter plots, presenting the RI and ARI for every protein across all test sets.
+
+```{r classRI, echo=FALSE, fig.cap="Violin plot of Rand Index (RI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy classes."}
+
+class_ri_ari_raw_df$Prediction_tool <- factor(class_ri_ari_raw_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
+
+# plot RI
+p.ri.class = ggplot(class_ri_ari_raw_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Rand_index, fill=Prediction_tool)) +
+  geom_violin() +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  xlab("Classifier") + 
+  ylab("Rand Index") +
+  scale_y_continuous(breaks = seq(0,1, by = 0.1))
+p.ri.class
+```
+
+```{r classRI, echo=FALSE, fig.cap="Violin plot of Adjusted Rand Index (ARI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy classes."}
+
+p.ari.class = ggplot(class_ri_ari_raw_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Adjusted_Rand_index, fill=Prediction_tool)) +
+  geom_violin() +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+        plot.background = element_rect(fill = figbg, color = figbg),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  xlab("Classifier") + 
+  ylab("Adjusted Rand Index") +
+  scale_y_continuous(breaks = c(-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1))
+p.ari.class
+```
+
+
+# Evaluation CAZy family classification performance
+
+The following section evaluates the performance of the CAZyme classifiers to predict CAZy family classifications.
+
+## General trends in performance across all CAZy families
+
+Below is a table summarising the overall CAZy family classifications for each test set across all CAZy families.
+
+```{r cazyClassStasTable, echo=FALSE}
+# Calculate statistics
+fam_subset_spec <- cazy_family_long_df[which(cazy_family_long_df$Statistical_parameter == "Specificity"), ]
+fam_subset_spec  <- fam_subset_spec[complete.cases(fam_subset_spec), ]
+fam_specificity <- fam_subset_spec %>% group_by(Prediction_tool) %>% summarise("Mean Specificity"=mean(Statistic_value), "Specificity Standard Deviation"=sd(Statistic_value))
+
+fam_subset_sens <- cazy_family_long_df[which(cazy_family_long_df$Statistical_parameter == "Sensitivity"), ]
+fam_subset_sens  <- fam_subset_sens[complete.cases(fam_subset_sens), ]
+fam_sensitivity <- fam_subset_sens %>% group_by(Prediction_tool) %>% summarise("Mean Sensitivity"=mean(Statistic_value), "Sensitivity Standard Deviation"=sd(Statistic_value))
+
+fam_subset_prec <- cazy_family_long_df[which(cazy_family_long_df$Statistical_parameter == "Precision"), ]
+fam_subset_prec  <- fam_subset_prec[complete.cases(fam_subset_prec), ]
+fam_precision <- class_subset_prec %>% group_by(Prediction_tool) %>% summarise("Mean Precision"=mean(Statistic_value), "Precision Standard Deviation"=sd(Statistic_value))
+
+fam_subset_f1 <- cazy_family_long_df[which(cazy_family_long_df$Statistical_parameter == "Fbeta_score"), ]
+fam_subset_f1  <- fam_subset_f1[complete.cases(fam_subset_f1), ]
+fam_f1_score <- fam_subset_f1 %>% group_by(Prediction_tool) %>% summarise("Mean F1-score"=mean(Statistic_value), "F1-score Standard Deviation"=sd(Statistic_value))
+
+fam_subset_acc <- cazy_family_long_df[which(cazy_family_long_df$Statistical_parameter == "Accuracy"), ]
+fam_subset_acc  <- fam_subset_acc[complete.cases(fam_subset_acc), ]
+fam_accuracy <- fam_subset_acc %>% group_by(Prediction_tool) %>% summarise("Mean Accuracy"=mean(Statistic_value), "Accuracy Standard Deviation"=sd(Statistic_value))
+
+# combine data and build a single dataframe
+fam_summary_df <- merge(fam_specificity, fam_sensitivity)
+fam_summary_df <- merge(fam_summary_df, fam_precision)
+fam_summary_df <- merge(fam_summary_df, fam_f1_score)
+fam_summary_df <- merge(fam_summary_df, fam_accuracy)
+
+# define factors
+fam_summary_df$Prediction_tool <- factor(fam_summary_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
+
+names(fam_summary_df)[names(fam_summary_df) == "Prediction_tool"] <- "Classifier"
+# reorder the rows
+
+fam_summary_df <- fam_summary_df[c(2,5,6,3,1,4), ]
+row.names(fam_summary_df) = NULL  # hides row names which are added by reordering the rows
+
+kable(
+  fam_summary_df,
+  caption="Overall performance of CAZyme classifiers CAZy family classification performance across all CAZy families",
+  align='c',
+  digits = 4) %>% kable_styling(full_width = F)
+
+```
+
+The evaluate the overall performance of each classifier, for each CAZy family, the F1-score was calculated for every family. Families were grouped by their parent CAZy class and the distribution of the F1-scores is shown in figure \@ref(fig:fbetaclass). RESULTS discussion...
+
+```{r fbetaclass, echo=FALSE, fig.cap="Proportaional area plot of F1-score per CAZy distribution per CAZy class."}
+# F-beta scores already subset previously, and are stored in the var fam_subset_f1
+
+# classify the Fbeta-scores into bins
+val.fam <- vector()
+
+for(i in 1:nrow(fam_subset_f1)){
+  if(fam_subset_f1[i, 5] == 1){val.fam <- append(val.fam, '[1.00]')} 
+  else if (fam_subset_f1[i, 5] == 0){val.fam <- append(val.fam, '[0.00]')}
+  else if (fam_subset_f1[i, 5] < 1 && fam_subset_f1[i, 5] >= 0.95){val.fam <- append(val.fam, '(0.95, 1.00]')}
+  else if (fam_subset_f1[i, 5] < 0.95 && fam_subset_f1[i, 5] >= 0.9){val.fam <- append(val.fam, '(0.90, 0.95]')}
+  else if (fam_subset_f1[i, 5] < 0.90 && fam_subset_f1[i, 5] >= 0.85){val.fam <- append(val.fam, '(0.85, 0.90]')}
+  else if (fam_subset_f1[i, 5] < 0.85 && fam_subset_f1[i, 5] >= 0.80){val.fam <- append(val.fam, '(0.80, 0.85]')}
+  else if (fam_subset_f1[i, 5] < 0.80 && fam_subset_f1[i, 5] >= 0.75){val.fam <- append(val.fam, '(0.75, 0.80]')}
+  else if (fam_subset_f1[i, 5] < 0.75 && fam_subset_f1[i, 5] >= 0.70){val.fam <- append(val.fam, '(0.70, 0.75]')}
+  else if (fam_subset_f1[i, 5] < 0.70 && fam_subset_f1[i, 5] >= 0.65){val.fam <- append(val.fam, '(0.65, 0.70]')}
+  else if (fam_subset_f1[i, 5] < 0.65 && fam_subset_f1[i, 5] >= 0.60){val.fam <- append(val.fam, '(0.60, 0.65]')}
+  else if (fam_subset_f1[i, 5] < 0.60 && fam_subset_f1[i, 5] >= 0.55){val.fam <- append(val.fam, '(0.55, 0.60]')}
+  else if (fam_subset_f1[i, 5] < 0.55 && fam_subset_f1[i, 5] >= 0.50){val.fam <- append(val.fam, '(0.50, 0.55]')}
+  else if (fam_subset_f1[i, 5] < 0.50 && fam_subset_f1[i, 5] >= 0.45){val.fam <- append(val.fam, '(0.45, 0.50]')}
+  else if (fam_subset_f1[i, 5] < 0.45 && fam_subset_f1[i, 5] >= 0.40){val.fam <- append(val.fam, '(0.40, 0.45]')}
+  else if (fam_subset_f1[i, 5] < 0.40 && fam_subset_f1[i, 5] >= 0.35){val.fam <- append(val.fam, '(0.35, 0.40]')}
+  else if (fam_subset_f1[i, 5] < 0.35 && fam_subset_f1[i, 5] >= 0.30){val.fam <- append(val.fam, '(0.30, 0.35]')}
+  else if (fam_subset_f1[i, 5] < 0.30 && fam_subset_f1[i, 5] >= 0.25){val.fam <- append(val.fam, '(0.25, 0.30]')}
+  else if (fam_subset_f1[i, 5] < 0.25 && fam_subset_f1[i, 5] >= 0.20){val.fam <- append(val.fam, '(0.20, 0.25]')}
+  else if (fam_subset_f1[i, 5] < 0.20 && fam_subset_f1[i, 5] >= 0.15){val.fam <- append(val.fam, '(0.15, 0.20]')}
+  else if (fam_subset_f1[i, 5] < 0.15 && fam_subset_f1[i, 5] >= 0.10){val.fam <- append(val.fam, '(0.10, 0.15]')}
+  else if (fam_subset_f1[i, 5] < 0.10 && fam_subset_f1[i, 5] >= 0.05){val.fam <- append(val.fam, '(0.05, 0.10]')}
+  else if (fam_subset_f1[i, 5] < 0.05 && fam_subset_f1[i, 5] >= 0){val.fam <- append(val.fam, '(0.00, 0.05]')}
+  else {val.fam <- append(val.fam, '< 0')}
+}
+# add the bins to the df
+fam_subset_f1$val.fam <- val.fam
+
+# add the parent CAZy class to the df for facet wrapping
+
+# retrieve all the family names
+dbcan.fam.subset <- cazy_family_long_df[which(cazy_family_long_df$Prediction_tool == "dbCAN"), ]
+tn.dbcan.fam.subset <- dbcan.fam.subset[which(dbcan.fam.subset$Statistical_parameter == "TNs"), ]
+
+# separate names into one vector per CAZy class
+gh.names = tn.dbcan.fam.subset[1:172,]$CAZy_family
+gt.names = tn.dbcan.fam.subset[173:287,]$CAZy_family
+pl.names = tn.dbcan.fam.subset[288:329,]$CAZy_family
+ce.names = tn.dbcan.fam.subset[330:348,]$CAZy_family
+aa.names = tn.dbcan.fam.subset[349:365,]$CAZy_family
+cbm.names = tn.dbcan.fam.subset[366:454,]$CAZy_family
+
+# create subsets by CAZy class and associated each data set with the name of its CAZy class
+gh.subset <- fam_subset_f1[which(fam_subset_f1$CAZy_family %in% gh.names), ]
+gh.class <- rep('GH', nrow(gh.subset))
+gh.subset$CAZy_class <- gh.class
+
+gt.subset <- fam_subset_f1[which(fam_subset_f1$CAZy_family %in% gt.names), ]
+gt.class <- rep('GT', nrow(gt.subset))
+gt.subset$CAZy_class <- gt.class
+  
+pl.subset <- fam_subset_f1[which(fam_subset_f1$CAZy_family %in% pl.names), ]
+pl.class <- rep('PL', nrow(pl.subset))
+pl.subset$CAZy_class <- pl.class
+  
+ce.subset <- fam_subset_f1[which(fam_subset_f1$CAZy_family %in% ce.names), ]
+ce.class <- rep('CE', nrow(ce.subset))
+ce.subset$CAZy_class <- ce.class
+  
+aa.subset <- fam_subset_f1[which(fam_subset_f1$CAZy_family %in% aa.names), ]
+aa.class <- rep('AA', nrow(aa.subset))
+aa.subset$CAZy_class <- aa.class
+  
+cbm.subset <- fam_subset_f1[which(fam_subset_f1$CAZy_family %in% cbm.names), ]
+cbm.class <- rep('CBM', nrow(cbm.subset))
+cbm.subset$CAZy_class <- cbm.class
+
+# combine the class dfs in to one
+fam_fbeta_df <- rbind(gh.subset, gt.subset)
+fam_fbeta_df <- rbind(fam_fbeta_df, pl.subset)
+fam_fbeta_df <- rbind(fam_fbeta_df, ce.subset)
+fam_fbeta_df <- rbind(fam_fbeta_df, aa.subset)
+fam_fbeta_df <- rbind(fam_fbeta_df, cbm.subset)
+
+# set order data is presented
+fam_fbeta_df$Prediction_tool <- factor(fam_fbeta_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) 
+fam_fbeta_df$CAZy_class <- factor(fam_fbeta_df$CAZy_class, levels = c('CBM', 'AA', 'CE', 'PL', 'GT', 'GH'))
+fam_fbeta_df$val.fam <- factor(fam_fbeta_df$val.fam, levels = c('< 0', '[0.00]', '(0.00, 0.05]', '(0.05, 0.10]', '(0.10, 0.15]', '(0.15, 0.20]', '(0.20, 0.25]', '(0.25, 0.30]', '(0.30, 0.35]', '(0.35, 0.40]', '(0.40, 0.45]', '(0.45, 0.50]', '(0.50, 0.55]', '(0.55, 0.60]', '(0.60, 0.65]', '(0.65, 0.70]', '(0.75, 0.80]', '(0.85, 0.90]', '(0.90, 0.95]', '(0.95, 1.00]', '[1.00]'))
+
+p.famF1 = ggally_count(fam_fbeta_df, mapping=ggplot2::aes(x=Prediction_tool, y=CAZy_class, fill=val.fam)) +
+  scale_fill_manual(values = colour_grad) +
+  xlab("Classifier") + 
+  ylab("CAZy class") +
+  theme(legend.background = element_rect(fill = figbg, color = figbg),
+        plot.background = element_rect(fill = figbg, color = figbg),
+        legend.text=element_text(size=10),
+        legend.title=element_text(size=12),
+        axis.text=element_text(size=10),
+        axis.title=element_text(size=12,face="bold")) +
+  labs(fill = expression(paste("F", beta, "-score"))) +
+  guides(fill = guide_legend(reverse = TRUE))
+p.famF1
+```
+
+
+
+## Evaluation of multi-label CAZy family classification performance
+
+CAZy annotates proteins in a domain-wise manner. Consequently, a single protein may be assigned to multiple CAZy families. The ability of a classifier to assign all the correct CAZy family annotations for a given protein when only evaluating the CAZy family classification performance per CAZy family, independently of all other CAZy classes.
+
+The CAZy family multi-label classification performance is represented by the Rand Index (RI) and Adjusted Rand Index (ARI). The RI is a quantitive measure of similarity between two clusterings by considering all pairs of samples and counting pairs that are assigned in the same or different clusters in the predicted and true clusterings. In this case the two clusters are the predicted and groud truth CAZy family annotations. The raw RI score is then “adjusted for chance” into the ARI score using the following scheme:  
+`ARI = (RI - Expected_RI) / (max(RI) - Expected_RI)`
 
 ```{r, include=FALSE}
 # load in dataframes of CAZy family prediction annotations and Fbeta score calculated per CAZy family (except for True Negatives)
@@ -945,149 +1160,6 @@ ecami.known_fams <- get.tool.subset(mlc_ground_truths, "eCAMI")
 ```
 
 Multilabel classification raises when a single instance can be assinged to multiple classes. In this evaluation a single instance is a protein and the classes are CAZy families, a single CAZyme can be assigned to multiple CAZy families. This is important to take into consideration because the same approaches for statistical evaluation of binary classification provided a limited view of the performance of the classifiers when applied to multilabel classification.
-
-
-## General trends in performance across all CAZy families
-
-The evaluate the overall performance of each classifier, for each CAZy family, the F1-score was calculated for every family. Families were grouped by their parent CAZy class and the distribution of the F1-scores is shown in figure \@ref(fig:fbetaclass). RESULTS discussion...
-
-```{r fbetaclass, echo=FALSE, fig.cap="Proportaional area plot of F1-score per CAZy distribution per CAZy class."}
-# present the Fbeta scores for each CAZy family for each classifier
-fam.names <- colnames(dbcan.predicted_fams[5:458])
-# group CAZy family names by CAZy class
-gh.names = fam.names[1:172]
-gt.names = fam.names[173:287]
-pl.names = fam.names[288:329]
-ce.names = fam.names[330:348]
-aa.names = fam.names[349:365]
-cbm.names = fam.names[366:454]
-
-# create subsets by CAZy class and associated each data set with the name of its CAZy class
-gh.subset <- all.fam.df[which(all.fam.df$CAZy.family %in% gh.names), ]
-cazy.class <- rep('GH', nrow(gh.subset))
-gh.subset$cazy.class <- cazy.class
-
-gt.subset <- all.fam.df[which(all.fam.df$CAZy.family %in% gt.names), ]
-cazy.class <- rep('GT', nrow(gt.subset))
-gt.subset$cazy.class <- cazy.class
-  
-pl.subset <- all.fam.df[which(all.fam.df$CAZy.family %in% pl.names), ]
-cazy.class <- rep('PL', nrow(pl.subset))
-pl.subset$cazy.class <- cazy.class
-  
-ce.subset <- all.fam.df[which(all.fam.df$CAZy.family %in% ce.names), ]
-cazy.class <- rep('CE', nrow(ce.subset))
-ce.subset$cazy.class <- cazy.class
-  
-aa.subset <- all.fam.df[which(all.fam.df$CAZy.family %in% aa.names), ]
-cazy.class <- rep('AA', nrow(aa.subset))
-aa.subset$cazy.class <- cazy.class
-  
-cbm.subset <- all.fam.df[which(all.fam.df$CAZy.family %in% cbm.names), ]
-cazy.class <- rep('CBM', nrow(cbm.subset))
-cbm.subset$cazy.class <- cazy.class
-
-# calculate the mean Fbeta-score +/- standard deviation per class for each classifier
-class.fbeta.calc <- function(class.df){
-  results <- c()
-  tools <- c("dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI")
-  
-  for (tool in tools) {
-    tool.subset <- class.df[which(class.df$Prediction_tool == tool), ]
-    scores <- as.numeric(tool.subset$fbeta.score)
-
-    mean.res <- mean(scores, na.rm=TRUE)
-    sd <- sd(scores, na.rm=TRUE)
-    
-    results <- append(results, mean.res)
-    results <- append(results, sd)
-  }
-  
-  return(results)
-}
-
-gh.fbeta.stats <- class.fbeta.calc(gh.subset)
-gt.fbeta.stats <- class.fbeta.calc(gt.subset)
-pl.fbeta.stats <- class.fbeta.calc(pl.subset)
-ce.fbeta.stats <- class.fbeta.calc(ce.subset)
-aa.fbeta.stats <- class.fbeta.calc(aa.subset)
-cbm.fbeta.stats <- class.fbeta.calc(cbm.subset)
-
-Fbeta_observations <- c("dbCAN Mean", "dbCAN SD", "HMMER Mean", "HMMER SD", "Hotpep Mean", "Hotpep SD", "DIAMOND Mean", "DIAMOND SD", "CUPP Mean", "CUPP SD", "eCAMI Mean", "eCAMI SD")
-
-class.fbeta.stats <- data.frame(Fbeta_observations, gh.fbeta.stats, gt.fbeta.stats, pl.fbeta.stats, ce.fbeta.stats, aa.fbeta.stats, cbm.fbeta.stats)
-
-# join the CAZy class datasets together into a single dataframe
-class.fbeta.scores <- gh.subset
-class.fbeta.scores <- rbind(class.fbeta.scores, gt.subset)
-class.fbeta.scores <- rbind(class.fbeta.scores, pl.subset)
-class.fbeta.scores <- rbind(class.fbeta.scores, ce.subset)
-class.fbeta.scores <- rbind(class.fbeta.scores, aa.subset)
-class.fbeta.scores <- rbind(class.fbeta.scores, cbm.subset)
-class.fbeta.scores  <- class.fbeta.scores[complete.cases(class.fbeta.scores), ]
-
-overall.fam.fbeta.stats <- class.fbeta.calc(class.fbeta.scores)
-
-# calculate the mean Fbeta-score +/- standard deviation for each classifier
-
-
-# classify the Fbeta-scores into bins
-val.class <- vector()
-for(i in 1:nrow(class.fbeta.scores)) {
-  if(class.fbeta.scores[i, 3] == 1){val.class <- append(val.class, '[1.00]')} 
-  else if (class.fbeta.scores[i, 3] == 0){val.class <- append(val.class, '[0.00]')}
-  else if (class.fbeta.scores[i, 3] < 1 && class.fbeta.scores[i, 3] >= 0.95){val.class <- append(val.class, '(0.95, 1.00]')}
-  else if (class.fbeta.scores[i, 3] < 0.95 && class.fbeta.scores[i, 3] >= 0.9){val.class <- append(val.class, '(0.90, 0.95]')}
-  else if (class.fbeta.scores[i, 3] < 0.90 && class.fbeta.scores[i, 3] >= 0.85){val.class <- append(val.class, '(0.85, 0.90]')}
-  else if (class.fbeta.scores[i, 3] < 0.85 && class.fbeta.scores[i, 3] >= 0.80){val.class <- append(val.class, '(0.80, 0.85]')}
-  else if (class.fbeta.scores[i, 3] < 0.80 && class.fbeta.scores[i, 3] >= 0.75){val.class <- append(val.class, '(0.75, 0.80]')}
-  else if (class.fbeta.scores[i, 3] < 0.75 && class.fbeta.scores[i, 3] >= 0.70){val.class <- append(val.class, '(0.70, 0.75]')}
-  else if (class.fbeta.scores[i, 3] < 0.70 && class.fbeta.scores[i, 3] >= 0.65){val.class <- append(val.class, '(0.65, 0.70]')}
-  else if (class.fbeta.scores[i, 3] < 0.65 && class.fbeta.scores[i, 3] >= 0.60){val.class <- append(val.class, '(0.60, 0.65]')}
-  else if (class.fbeta.scores[i, 3] < 0.60 && class.fbeta.scores[i, 3] >= 0.55){val.class <- append(val.class, '(0.55, 0.60]')}
-  else if (class.fbeta.scores[i, 3] < 0.55 && class.fbeta.scores[i, 3] >= 0.50){val.class <- append(val.class, '(0.50, 0.55]')}
-  else if (class.fbeta.scores[i, 3] < 0.50 && class.fbeta.scores[i, 3] >= 0.45){val.class <- append(val.class, '(0.45, 0.50]')}
-  else if (class.fbeta.scores[i, 3] < 0.45 && class.fbeta.scores[i, 3] >= 0.40){val.class <- append(val.class, '(0.40, 0.45]')}
-  else if (class.fbeta.scores[i, 3] < 0.40 && class.fbeta.scores[i, 3] >= 0.35){val.class <- append(val.class, '(0.35, 0.40]')}
-  else if (class.fbeta.scores[i, 3] < 0.35 && class.fbeta.scores[i, 3] >= 0.30){val.class <- append(val.class, '(0.30, 0.35]')}
-  else if (class.fbeta.scores[i, 3] < 0.30 && class.fbeta.scores[i, 3] >= 0.25){val.class <- append(val.class, '(0.25, 0.30]')}
-  else if (class.fbeta.scores[i, 3] < 0.25 && class.fbeta.scores[i, 3] >= 0.20){val.class <- append(val.class, '(0.20, 0.25]')}
-  else if (class.fbeta.scores[i, 3] < 0.20 && class.fbeta.scores[i, 3] >= 0.15){val.class <- append(val.class, '(0.15, 0.20]')}
-  else if (class.fbeta.scores[i, 3] < 0.15 && class.fbeta.scores[i, 3] >= 0.10){val.class <- append(val.class, '(0.10, 0.15]')}
-  else if (class.fbeta.scores[i, 3] < 0.10 && class.fbeta.scores[i, 3] >= 0.05){val.class <- append(val.class, '(0.05, 0.10]')}
-  else if (class.fbeta.scores[i, 3] < 0.05 && class.fbeta.scores[i, 3] > 0){val.class <- append(val.class, '(0.00, 0.05]')}
-  else {val.class <- append(val.class, '< 0')}
-}
-class.fbeta.scores$val.class <- val.class
-
-# set order data is presented
-class.fbeta.scores$Prediction_tool <- factor(class.fbeta.scores$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) 
-class.fbeta.scores$val.class <- factor(class.fbeta.scores$val.class, levels = c('< 0', '[0.00]', '(0.00, 0.05]', '(0.05, 0.10]', '(0.10, 0.15]', '(0.15, 0.20]', '(0.20, 0.25]', '(0.25, 0.30]', '(0.30, 0.35]', '(0.35, 0.40]', '(0.40, 0.45]', '(0.45, 0.50]', '(0.50, 0.55]', '(0.55, 0.60]', '(0.60, 0.65]', '(0.65, 0.70]', '(0.75, 0.80]', '(0.85, 0.90]', '(0.90, 0.95]', '(0.95, 1.00]', '[1.00]'))
-
-# create dataframe with the number of CAZy families analysed by each classifier for each CAzy class (with true negative non-CAZyme predictions excluded)
-observations <- class.fbeta.scores %>% group_by(interaction(Prediction_tool, cazy.class)) %>% summarise(count=n())
-names(observations)[1] <- "inter"
-pt.names <- c("dbCAN","HMMER","Hotpep","DIAMOND","CUPP","eCAMI")
-pt.names <- rep(pt.names,6)
-observations$p.tool <- pt.names
-observations$class <- c(rep("AA", 6), rep("CBM", 6), rep("CE", 6), rep("Gh", 6), rep("GT", 6), rep("PL", 6))
-
-# svg(file = "mlcFamF1.svg",  width = 8.25, height = 11)
-p.famF1 = ggally_count(class.fbeta.scores, mapping=ggplot2::aes(x=Prediction_tool, y=cazy.class, fill=val.class)) +
-  scale_fill_manual(values = colour_grad) +
-  xlab("Classifier") + 
-  ylab("CAZy class") +
-  theme(legend.background = element_rect(fill = figbg, color = figbg),
-        plot.background = element_rect(fill = figbg, color = figbg),
-        legend.text=element_text(size=14),
-        legend.title=element_text(size=16),
-        axis.text=element_text(size=14),
-        axis.title=element_text(size=16,face="bold")) +
-  labs(fill = expression(paste("F", beta, "-score"))) +
-  guides(fill = guide_legend(reverse = TRUE))
-p.famF1
-# dev.off()
-```
 
 
 ## Adjusted Rand Index for MultiLabel Classification
