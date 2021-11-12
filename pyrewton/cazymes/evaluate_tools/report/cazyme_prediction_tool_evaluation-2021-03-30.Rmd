@@ -1231,216 +1231,54 @@ plot_fam_sens_vs_spec <- function(
   
   return(p.fam)
 }
+
+plot.fam.sens.jitter <- function(fam.class.df, cazy.class){
+  # subset for the class of interest
+  fam.class.df.class.subset <- fam.class.df[which(fam.class.df$CAZy_class == cazy.class), ]
+  
+  p.fam.sens <- ggplot(fam.class.df.class.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Sensitivity, fill=Prediction_tool)) +
+	  geom_boxplot(outlier.shape=NA) +
+	  geom_jitter(width=0.1, height=0) +
+	  scale_fill_manual(values = colour_set) +
+	  theme(legend.position = "none",
+		plot.background = element_rect(fill = figbg, color = figbg),
+		axis.text=element_text(size=10),
+		axis.title=element_text(size=12,face="bold")) +
+	  xlab("Classifier") + 
+	  ylab("Sensitivity") 
+  
+  return(p.fam.sens)
+}
 ```
 
-```{r famrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier."}
-# data already subset into fam_subset_sens and fam_subset_prec for sensitivity and precision scores
-fam.stat.df <-read.csv("fam_stats_df_single_2021_04_21.csv")
+Later on in this report the sensitivity for each CAZy family is plotted against specificity, as was done with CAZy class. However, owing to extremely small different in specificity, with no tool producing a specificity less than 0.995 it is extremely difficult to separate performance by specificity, so a boxplot and scatter plot for each is plotted. Each point represents one test set, and test sets are grouped by CAZyme classifier and facet wrapped by the parent CAZy class.
 
-fam.stat.df  <- fam.stat.df[complete.cases(fam.stat.df), ]
-fam.stat.df$Prediction_tool <- factor(fam.stat.df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI'))
+```{r famsSense, echo=FALSE, fig.cap="Scatter plot of overlaying a one-dimensional box-and-whisker plot of sensitivity for each CAZy family for each CAZyme classifier."}
+# set order data is presented
+cazy_fam_spec_sense_df$Prediction_tool <- factor(cazy_fam_spec_sense_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) 
+cazy_fam_spec_sense_df$CAZy_class <- factor(cazy_fam_spec_sense_df$CAZy_class, levels = c('GH', 'GT', 'PL', 'CE', 'AA', 'CBM'))
 
-# split out by CAZy class
-fam.names <- colnames(dbcan.predicted_fams[5:458])
-gh.names = fam.names[1:172]
-gt.names = fam.names[173:287]
-pl.names = fam.names[288:329]
-ce.names = fam.names[330:348]
-aa.names = fam.names[349:365]
-cbm.names = fam.names[366:454]
+p.fam.sens <- ggplot(cazy_fam_spec_sense_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Sensitivity, fill=Prediction_tool)) +
+  geom_boxplot(outlier.shape=NA) +
+  geom_jitter(width=0.1, height=0) +
+  scale_fill_manual(values = colour_set) +
+  theme(legend.position = "none",
+	plot.background = element_rect(fill = figbg, color = figbg),
+	axis.text=element_text(size=10),
+	axis.title=element_text(size=12,face="bold")) +
+  xlab("Classifier") + 
+  ylab("Sensitivity") +
+  facet_wrap(~ CAZy_class)
+p.fam.sens
+```
 
-# create subsets by CAZy class and associated each data set with the name of its CAZy class
-gh.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% gh.names), ]
-cazy.class <- rep('Glycoside Hydrolases', nrow(gh.subset))
-gh.subset$cazy.class <- cazy.class
-
-gt.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% gt.names), ]
-cazy.class <- rep('GlycosylTransferases', nrow(gt.subset))
-gt.subset$cazy.class <- cazy.class
-
-pl.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% pl.names), ]
-cazy.class <- rep('Polysaccharide Lyases', nrow(pl.subset))
-pl.subset$cazy.class <- cazy.class
-
-ce.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% ce.names), ]
-cazy.class <- rep('Carbohydrate Esterases', nrow(ce.subset))
-ce.subset$cazy.class <- cazy.class
-
-aa.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% aa.names), ]
-cazy.class <- rep('Auxiliary Activities', nrow(aa.subset))
-aa.subset$cazy.class <- cazy.class
-
-cbm.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% cbm.names), ]
-cazy.class <- rep('Carbohydrate-Binding Modules', nrow(cbm.subset))
-cbm.subset$cazy.class <- cazy.class
-
-# combine the dataframes
-fam.class.df <- gh.subset
-fam.class.df <- rbind(fam.class.df, gt.subset)
-fam.class.df <- rbind(fam.class.df, pl.subset)
-fam.class.df <- rbind(fam.class.df, ce.subset)
-fam.class.df <- rbind(fam.class.df, aa.subset)
-fam.class.df <- rbind(fam.class.df, cbm.subset)
-fam.class.df <- fam.class.df[complete.cases(fam.class.df), ]
-
-fam.class.df$cazy.class <- factor(fam.class.df$cazy.class, levels = c('Glycoside Hydrolases','GlycosylTransferases','Polysaccharide Lyases','Carbohydrate Esterases','Auxiliary Activities','Carbohydrate-Binding Modules'))
-fam.class.df$Specificity_percentage <- fam.class.df$Specificity * 100
-fam.class.df$Recall_percentage <- fam.class.df$Recall * 100
-
-# pdf(file = "mlcSensRecallVspec.pdf", width = 11.25, height = 7)
-p.fam = ggplot(fam.class.df %>% group_by(Prediction_tool), aes(x=Recall_percentage, y=Specificity_percentage, color=Prediction_tool)) +
-  geom_point() +
-  scale_color_manual(values=colour_set) +
-  theme(plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=11,face="bold"),
-        strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)", color="Classifer") +
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-          labels = trans_format("log10", math_format(10^.x))) +
-  coord_trans(y="log10") +
-  facet_wrap(~ cazy.class)
-p.fam
-# dev.off()
+```{r saveFamSensBoxplot, echo=FALSE}
+pdf(file = "famSensBoxplots.pdf", width = 11.25, height = 7)
+p.fam.sens
+dev.off()
 ```
 
 For better resolution we can group the CAZy families by their parent CAzy classes, and compare the performances of the tools CAZy class, by CAZy class. Owing to the minimal variation in specificity scores, specificity was plotted as the percentage specificity log10.
-
-```{r include=FALSE}
-# This code is for preparing the data for looking at the individual families for which the majoirty of classifiers struggled to perform well
-dbcan.fbeta.df <-read.csv("dbcan_fam_prediction_df_2021_03_31.csv")
-hmmer.fbeta.df <-read.csv("hmmer_fam_prediction_df_2021_03_31.csv")
-hotpep.fbeta.df <-read.csv("hotpep_fam_prediction_df_2021_03_31.csv")
-diamond.fbeta.df <-read.csv("diamond_fam_prediction_df_2021_03_31.csv")
-cupp.fbeta.df <-read.csv("cupp_fam_prediction_df_2021_03_31.csv")
-ecami.fbeta.df <-read.csv("ecami_fam_prediction_df_2021_03_31.csv")
-
-dbcan.fam.fbeta <- tail(dbcan.fbeta.df, n=1)
-hmmer.fam.fbeta <- tail(hmmer.fbeta.df, n=1)
-hotpep.fam.fbeta <- tail(hotpep.fbeta.df, n=1)
-diamond.fam.fbeta <- tail(diamond.fbeta.df, n=1)
-cupp.fam.fbeta <- tail(cupp.fbeta.df, n=1)
-ecami.fam.fbeta <- tail(ecami.fbeta.df, n=1)
-
-all.fam.fbetas <- dbcan.fam.fbeta[5:458]
-all.fam.fbetas <- rbind(all.fam.fbetas, hmmer.fam.fbeta[5:458])
-all.fam.fbetas <- rbind(all.fam.fbetas, hotpep.fam.fbeta[5:458])
-all.fam.fbetas <- rbind(all.fam.fbetas, diamond.fam.fbeta[5:458])
-all.fam.fbetas <- rbind(all.fam.fbetas, cupp.fam.fbeta[5:458])
-all.fam.fbetas <- rbind(all.fam.fbetas, ecami.fam.fbeta[5:458])
-tools <- c("dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI")
-
-dbCAN <- as.numeric(dbcan.fam.fbeta[5:458])
-HMMER <- as.numeric(hmmer.fam.fbeta[5:458])
-Hotpep <- as.numeric(hotpep.fam.fbeta[5:458])
-DIAMOND <- as.numeric(diamond.fam.fbeta[5:458])
-CUPP <- as.numeric(cupp.fam.fbeta[5:458])
-eCAMI <- as.numeric(ecami.fam.fbeta[5:458])
-
-df.fbeta <- data.frame(colnames(dbcan.fam.fbeta[5:458]), dbCAN, HMMER, Hotpep, DIAMOND, CUPP, eCAMI)
-names(df.fbeta)[names(df.fbeta) == "colnames.dbcan.fam.fbeta.5.458.."] <- "CAZy.family"
-
-fam.names <- colnames(dbcan.predicted_fams[5:458])
-# group CAZy family names by CAZy class
-gh.names = fam.names[1:172]
-gt.names = fam.names[173:287]
-pl.names = fam.names[288:329]
-ce.names = fam.names[330:348]
-aa.names = fam.names[349:365]
-cbm.names = fam.names[366:454]
-
-# create subsets by CAZy class and associated each data set with the name of its CAZy class
-gh.subset <- df.fbeta[which(df.fbeta$CAZy.family %in% gh.names), ]
-cazy.class <- rep('GH', nrow(gh.subset))
-gh.subset$cazy.class <- cazy.class
-
-gt.subset <- df.fbeta[which(df.fbeta$CAZy.family %in% gt.names), ]
-cazy.class <- rep('GT', nrow(gt.subset))
-gt.subset$cazy.class <- cazy.class
-  
-pl.subset <- df.fbeta[which(df.fbeta$CAZy.family %in% pl.names), ]
-cazy.class <- rep('PL', nrow(pl.subset))
-pl.subset$cazy.class <- cazy.class
-  
-ce.subset <- df.fbeta[which(df.fbeta$CAZy.family %in% ce.names), ]
-cazy.class <- rep('CE', nrow(ce.subset))
-ce.subset$cazy.class <- cazy.class
-  
-aa.subset <- df.fbeta[which(df.fbeta$CAZy.family %in% aa.names), ]
-cazy.class <- rep('AA', nrow(aa.subset))
-aa.subset$cazy.class <- cazy.class
-  
-cbm.subset <- df.fbeta[which(df.fbeta$CAZy.family %in% cbm.names), ]
-cazy.class <- rep('CBM', nrow(cbm.subset))
-cbm.subset$cazy.class <- cazy.class
-
-# join the CAZy class datasets together into a single dataframe
-class.fbeta.scores <- gh.subset
-class.fbeta.scores <- rbind(class.fbeta.scores, gt.subset)
-class.fbeta.scores <- rbind(class.fbeta.scores, pl.subset)
-class.fbeta.scores <- rbind(class.fbeta.scores, ce.subset)
-class.fbeta.scores <- rbind(class.fbeta.scores, aa.subset)
-class.fbeta.scores <- rbind(class.fbeta.scores, cbm.subset)
-class.fbeta.scores  <- class.fbeta.scores[complete.cases(class.fbeta.scores), ]
-# take all rows where one result has an fbeta score less than 0.75
-# heat map with fams on y and tools on x
-
-fam.mel <- melt(class.fbeta.scores, id.vars=c("CAZy.family", "cazy.class"))
-
-p.fam.fbeta = ggplot(fam.class.df  %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Fbeta_score, color=Fbeta_score)) +
-  geom_point() +
-  geom_line(aes(group=CAZy_family)) +
-  facet_wrap(~ cazy.class)
-p.fam.fbeta
-
-# shows too many families to plot all of them
-poor.fam <- fam.class.df[fam.class.df$Fbeta_score < 0.75, ]
-p = ggplot(fam.class.df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, color=Fbeta_score)) + geom_tile()
-p
-
-class.fbeta.scores[apply(class.fbeta.scores<0.75,1,any),]
-class.fbeta.scores$Poor_performance <- rowSums(class.fbeta.scores<0.75)
-
-poor.fam.0.75 <- class.fbeta.scores[class.fbeta.scores$Poor_performance >= 3, ]  # at least three tools with Sens<0.75
-
-# turn data into long form
-poor.fam.melt <- melt(poor.fam.0.75, id.vars=c("CAZy.family","cazy.class","Poor_performance"), )
-
-
-# separate data by CAZy class
-gh.poor.fams <- poor.fam.melt[poor.fam.melt$cazy.class == "GH", ]
-gh.poor.fams <- gh.poor.fams %>% arrange(Poor_performance)
-gh.poor.fams$CAZy.family <- factor(gh.poor.fams$CAZy.family, levels = c("GH170", "GH166", "GH163", "GH138", "GH135", "GH123", "GH50", "GH45", "GH24", "GH0"))
-
-gt.poor.fams <- poor.fam.melt[poor.fam.melt$cazy.class == "GT", ]
-gt.poor.fams <- gt.poor.fams %>% arrange(Poor_performance)
-# unique(gt.poor.fams[c("CAZy.family")])
-gt.poor.fams$CAZy.family <- factor(gt.poor.fams$CAZy.family, levels=c("GT113", "GT111", "GT109", "GT80", "GT61", "GT60", "GT52", "GT47", "GT31", "GT29", "GT23", "GT10", "GT0"))
-
-pl.poor.fams <- poor.fam.melt[poor.fam.melt$cazy.class == "PL", ]
-pl.poor.fams <- pl.poor.fams %>% arrange(Poor_performance)
-# unique(pl.poor.fams[c("CAZy.family")])
-pl.poor.fams$CAZy.family <- factor(pl.poor.fams$CAZy.family, levels=c("PL38", "PL33", "PL31", "PL29", "PL0"))
-
-ce.poor.fams <- poor.fam.melt[poor.fam.melt$cazy.class == "CE", ]
-ce.poor.fams <- ce.poor.fams %>% arrange(Poor_performance)
-# unique(ce.poor.fams[c("CAZy.family")])
-ce.poor.fams$CAZy.family <- factor(ce.poor.fams$CAZy.family, levels=c("CE18", "CE16", "CE1", "CE0"))
-
-aa.poor.fams <- poor.fam.melt[poor.fam.melt$cazy.class == "AA", ]
-aa.poor.fams <- aa.poor.fams %>% arrange(Poor_performance)
-# unique(aa.poor.fams[c("CAZy.family")])
-aa.poor.fams$CAZy.family <- factor(aa.poor.fams$CAZy.family, levels=c("AA14", "AA8", "AA7", "AA2", "AA0"))
-
-cbm.poor.fams <- poor.fam.melt[poor.fam.melt$cazy.class == "CBM", ]
-cbm.poor.fams <- cbm.poor.fams %>% arrange(Poor_performance)
-unique(cbm.poor.fams[c("CAZy.family")])
-cbm.poor.fams$CAZy.family <- factor(cbm.poor.fams$CAZy.family, levels=c(
-  "CBM87", "CBM67", "CBM61", "CBM57", "CBM56", "CBM54", "CBM51", "CBM50", "CBM47", "CBM45", "CBM44", "CBM42", "CBM41", "CBM38", "CBM36", "CBM35", "CBM30", "CBM32",
-  "CBM26", "CBM25", "CBM24", "CBM22", "CBM20", "CBM19", "CBM16", "CBM14", "CBM13", "CBM12", "CBM11", "CBM10", "CBM9", "CBM6", "CBM5", "CBM4", "CBM3", "CBM2",
-  "CBM1",    "CBM0"
-))
-```
 
 ### Glycoside Hydrolases
 
