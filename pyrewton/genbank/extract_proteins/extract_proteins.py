@@ -48,7 +48,7 @@ from typing import List, Optional
 
 import pandas as pd
 
-from Bio import SeqIO
+from Bio import SeqIO, SeqRecord
 from saintBioutils.utilities.file_io import get_paths
 from tqdm import tqdm
 
@@ -416,24 +416,14 @@ def get_record_feature(feature, qualifier, accession):
 def write_fasta(df_row, args, filestem="genbank_proteins"):
     """Write out FASTA file.
 
-    :param df_row: row from pandas df of UniProt search results
+    :param df_row: row from pandas df
     :param filestem: str, FASTA file name
-    :param args: parser arguments
+    :param args: cmd-line args parser
 
     Returns nothing.
     """
-    # Create file content
-
-    # FASTA sequences have 60 characters per line, add line breakers into protein sequence
-    # to match FASTA format
     sequence = df_row["Protein Sequence"]
-    sequence = "\n".join([sequence[i : i + 60] for i in range(0, len(sequence), 60)])
-    # Retrieve protein ID
     protein_id = df_row["NCBI Protein ID"] + " " + df_row["Locus Tag"]
-
-    file_content = f">{protein_id} \n{sequence}\n"
-
-    # Create file name
 
     # Retrieve Taxonomy ID and add txid prefix is present
     tax_id = str(df_row["NCBI Taxonomy ID"])
@@ -442,20 +432,30 @@ def write_fasta(df_row, args, filestem="genbank_proteins"):
     else:
         tax_id = tax_id.replace("NCBI:txid", "txid")
     tax_id.replace(" ", "_")
-    # Retrieve accession number
+    
     accession = df_row["NCBI Accession Number"]
+
     # remove characters that could make file names invalid
     invalid_file_name_characters = re.compile(r'[,;./ "*#<>?|\\:]')
     tax_id = re.sub(invalid_file_name_characters, "_", tax_id)
     accession = re.sub(invalid_file_name_characters, "_", accession)
 
-    # Create output path
+    description = f"{accession} {tax_id} {df_row['Genus']} {df_row['Species']}"
+
     if args.output is not sys.stdout:
         output_path = args.output / f"{filestem}_{tax_id}_{accession}.fasta"
-        # Write out data to Fasta file
-        with open(output_path, "a") as fh:
-            fh.write(file_content)
+        
+        protein_record = SeqRecord(
+            sequence,
+            id=protein_id,
+            description=description,
+        )
+
+        SeqIO.write([protein_record], output_path, 'fasta')
+
     else:
+        sequence = "\n".join([sequence[i : i + 60] for i in range(0, len(sequence), 60)])
+        file_content = f">{protein_id} \n{sequence}\n"
         binary_file_content = bytearray(file_content, "utf8")
         sys.stdout.buffer.write(binary_file_content)
 
