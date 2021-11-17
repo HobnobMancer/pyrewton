@@ -49,6 +49,7 @@ from typing import List, Optional
 import pandas as pd
 
 from Bio import SeqIO
+from saintBioutils.utilities.file_io import get_paths
 from tqdm import tqdm
 
 from pyrewton.utilities import config_logger
@@ -85,6 +86,9 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # Build dataframe
     protein_annotation_df = create_dataframe(input_df, args)
 
+    # build dict of genomic assembly paths {acc: path}
+    genome_dict = get_genomic_assembly_paths(args)
+
     # Write out dataframe
     if args.output_df is not None:
         write_out_dataframe(protein_annotation_df, args.output_df, args.force)
@@ -99,6 +103,47 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         index += 1
 
     logger.info("Programme finsihed. Terminating.")
+
+
+def get_genomic_assembly_paths(args):
+    """Compile dict of paths to genomic assemblies
+    
+    :param args: cmd-line args parser
+    
+    Return dict {accession: Path}
+    """
+    logger = logging.getLogger(__name__)
+
+    # retrieve path to all genomic assemblies in the input dir
+    genome_paths = get_paths.get_file_paths(args.genbank, suffixes=[".gbff.gz"])
+
+    if len(genome_paths) == 0:
+        logger.error(
+            f"No genomic assemblies retrieved from {args.genbank}\n"
+            "Make sure the input path is correct\n"
+            "Terminating program"
+        )
+        sys.exit(1)
+
+    genome_dict = {}  # {accession: Path}
+    
+    for _path in genome_paths:
+        # extract the accession
+        accession = f"{_path.name.split('_')[0]}_{_path.name.split('_')[1]}.{_path.name.split('_')[2]}"
+
+        try:
+            genome_dict[accession]
+            logger.warning(
+                f"Retrieved multiple genomic assemblies with the accession {accession}\n"
+                f"Will extract proteins from the file {_path}\n"
+                f"NOT {_path}\n"
+                "As this was the first genome retrieved with this accession"
+            )
+        
+        except KeyError:
+            genome_dict[accession] = _path
+
+    return genome_dict
 
 
 def create_dataframe(input_df, args):
