@@ -53,7 +53,7 @@ from saintBioutils.utilities.file_io import get_paths
 from tqdm import tqdm
 
 from pyrewton.utilities import config_logger
-from pyrewton.utilities.parsers.cmd_parser_get_genbank_annotations import build_parser
+from pyrewton.utilities.parsers.cmd_parser_compile_annotations import build_parser
 from pyrewton.utilities.file_io import make_output_directory, write_out_dataframe
 
 
@@ -83,11 +83,11 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     logger.info("Opening input dataframe %s", args.input_df)
     input_df = pd.read_csv(args.input_df, header=0, index_col=0)
 
-    # Build dataframe
-    protein_annotation_df = create_dataframe(input_df, args)
-
     # build dict of genomic assembly paths {acc: path}
     genome_dict = get_genomic_assembly_paths(args)
+
+    # Build dataframe containing extracted proteome data
+    protein_annotation_df = create_dataframe(input_df, genome_dict, args)
 
     # Write out dataframe
     if args.output_df is not None:
@@ -146,7 +146,7 @@ def get_genomic_assembly_paths(args):
     return genome_dict
 
 
-def create_dataframe(input_df, args):
+def create_dataframe(input_df, genome_dict, args):
     """Build datafame containing all protein annotations in GenBank files.
 
     Iterate over input dataframe row wise. This allows for converting human
@@ -160,6 +160,8 @@ def create_dataframe(input_df, args):
     risk of data missalignment or over writing.
 
     :param input_df: pandas dataframe
+    :param genome_dict: dict keyed by GenBank accession and valued by Path() instance to a genomic
+        assembly
     :param args: parser arguments
 
     Return dataframe.
@@ -183,7 +185,7 @@ def create_dataframe(input_df, args):
     df_index = 0
     for df_index in range(len(input_df["Genus"])):
         protein_annotation_df = protein_annotation_df.append(
-            get_genbank_annotations(input_df.iloc[df_index], args),
+            compile_annotations(input_df.iloc[df_index], genome_dict, args),
             ignore_index=True,
         )
         df_index += 1
@@ -191,7 +193,7 @@ def create_dataframe(input_df, args):
     return protein_annotation_df
 
 
-def get_genbank_annotations(df_row, args):
+def compile_annotations(df_row, genome_dict, args):
     """Prepare row data to create dataframe.
 
     Coordinate retrieval of protein data from GenBank files for every accession number for the
@@ -208,6 +210,8 @@ def get_genbank_annotations(df_row, args):
     df_row[3] = "Accession list" - this is human readable list, stored as a str.
 
     :param df_row: row from input_df (dataframe)
+    :param genome_dict: dict keyed by GenBank accession and valued by Path() instance to a genomic
+        assembly
     :param args: parser arguments
 
     Return dataframe.
@@ -237,7 +241,7 @@ def get_genbank_annotations(df_row, args):
     # list in the tuple containing data for a unique protein
 
     for accession in accession_list:
-        protein_data = get_annotations(accession, args)  # tuple
+        protein_data = get_annotations(accession, genome_dict, args)  # list
 
         # check if any data retrieved
         if len(protein_data) == 0:
@@ -289,7 +293,7 @@ def get_genbank_annotations(df_row, args):
     return protein_data_df
 
 
-def get_annotations(accession_number, args):
+def get_annotations(accession_number, genome_dict, args):
     """Retrieve protein ID, locus tag and function from GenBank file.
 
     From each record the protein ID, locus tag, location and annotated function is retrieved, and
@@ -297,6 +301,8 @@ def get_annotations(accession_number, args):
     to retrieve data will be returned as pandas null value 'NA'.
 
     :param accession_number: str
+    :param genome_dict: dict keyed by GenBank accession and valued by Path() instance to a genomic
+        assembly
     :param genbank_input: path, path to directory containing GenBank files
 
     Return tuple.
@@ -312,34 +318,38 @@ def get_annotations(accession_number, args):
         )
         return ["NA", "NA", "NA", "NA", "NA"]
 
-    # retrieve GenBank file for accession number
-    gb_file = get_genbank_file(accession_number, args)  # list with GenBank file with index [0]
-    # If retrieving of GenBank file failed, return 'NA' for all protein data
-    # for accession number
-    if gb_file is None:
-        # error logging performd in get_genbank_file()
+    try:
+        gb_file = genome_dict[accession_number]
+    except KeyError:
+        # no genomic assembly retrieved for this accession
         return ["NA", "NA", "NA", "NA", "NA"]
 
     # create empty list to store protein data
     all_protein_data = []
 
     # Retrieve protein data from GenBank file
+
     with gzip.open(gb_file, "rt") as handle:
-        # create list to store all protein data retrieved from GenBank file, making it a tuple
         for gb_record in SeqIO.parse(handle, "genbank"):
             for (index, feature) in enumerate(gb_record.features):
                 # empty protein data list so as not to contaminate data of next protein
                 protein_data = []
+                
                 # Parse over only protein encoding features (type = 'CDS')
                 if feature.type == "CDS":
-                    # extract protein ID
-                    protein_data.append(get_record_feature(feature, "protein_id", accession_number))
-                    # extract locus tag
-                    protein_data.append(get_record_feature(feature, "locus_tag", accession_number))
-                    # extract location
-                    protein_data.append(get_record_feature(feature, "location", accession_number))
+                    protein_data.append(
+                        get_record_feature(feature, "protein_id", accession_number)
+                    )
+                    protein_data.append(
+                        get_record_feature(feature, "locus_tag", accession_number)
+                    )
+                    protein_data.append(
+                        get_record_feature(feature, "location", accession_number)
+                    )
                     # extract annotated function of product
-                    protein_data.append(get_record_feature(feature, "product", accession_number))
+                    protein_data.append(
+                        get_record_feature(feature, "product", accession_number)
+                    )
                     # extract protein sequence
                     protein_data.append(
                         get_record_feature(feature, "translation", accession_number)
@@ -351,11 +361,8 @@ def get_annotations(accession_number, args):
                         # and don't add to all_protein_data list
                         if protein_data == ["NA", "NA", "NA", "NA", "NA"]:
                             logger.warning(
-                                (
                                     f"No data retrieved from CDS type feature, index: {index}, "
-                                    "accession: {accession_number}"
-                                ),
-                                exc_info=1,
+                                    f"accession: {accession_number}"
                             )
                         # if some data retrieved, add to all_protein_list
                         else:
@@ -371,56 +378,6 @@ def get_annotations(accession_number, args):
                         )
 
     return all_protein_data
-
-
-def get_genbank_file(accession, args):
-    """Retrieve GenBank file for accession number in local dir.
-
-    :param accession: str, accession number of GenBank file
-    :param args: parser arguments
-
-    Return list of length 1, containing path to GenBank file.
-    """
-    logger = logging.getLogger(__name__)
-    # replace '.' with '_' to match format in GenBank file name
-    file_stem = accession.replace(".", "_")
-
-    # create empty list to store file entries, to allow checking if multiple files were retrieved
-    gb_file = []
-
-    # retrieve all files from directory
-    files_in_entries = (
-        entry for entry in Path(args.genbank).iterdir() if entry.is_file()
-    )
-    for item in files_in_entries:
-        # search for accession number's GenBank file
-        if item.name.startswith(f"{file_stem}") and item.name.endswith(".gbff.gz"):
-            gb_file.append(item)
-
-    # check file was retrieved, not multiple or none
-    if len(gb_file) == 0:
-        logger.warning(
-            f"Retrieved 0 files for {accession}.\n"
-            "Returning null ('NA') value for all protein data"
-        )
-        return None
-
-    elif len(gb_file) > 1:
-        logger.warning(
-            f"Retrieved multiple files for {accession}.\n"
-            "Returning null ('NA') value for all protein data"
-        )
-        return None
-
-    # check if files is empty
-    if gb_file[0].stat().st_size == 0:
-        logger.warning(
-            f"GenBank file retrieved for {accession} is empty.\n"
-            "Returning null ('NA' value for all protein data"
-        )
-        return None
-
-    return gb_file[0]
 
 
 def get_record_feature(feature, qualifier, accession):
