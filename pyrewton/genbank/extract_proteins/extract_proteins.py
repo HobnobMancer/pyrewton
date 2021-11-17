@@ -43,18 +43,18 @@ import logging
 import re
 import sys
 
-from pathlib import Path
 from typing import List, Optional
 
 import pandas as pd
 
 from Bio import SeqIO, SeqRecord
+from saintBioutils.utilities import file_io
 from saintBioutils.utilities.file_io import get_paths
 from tqdm import tqdm
 
 from pyrewton.utilities import config_logger
-from pyrewton.utilities.parsers.cmd_parser_compile_annotations import build_parser
-from pyrewton.utilities.file_io import make_output_directory, write_out_dataframe
+from pyrewton.utilities.parsers.cmd_parser_extract_proteins import build_parser
+from pyrewton.utilities.file_io import write_out_dataframe
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
@@ -77,7 +77,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # If specified output directory, create output directory to write FASTA files too
     if args.output is not sys.stdout:
-        make_output_directory(args.output, args.force, args.nodelete)
+        file_io.make_output_directory(args.output, args.force, args.nodelete)
 
     # Open input dataframe
     logger.info("Opening input dataframe %s", args.input_df)
