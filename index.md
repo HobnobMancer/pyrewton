@@ -38,6 +38,7 @@ When using `pyrewton` please cite:
 
 ## Table of Contents
 
+<!-- TOC -->
 - [pyrewton](#pyrewton)
 - [Citation](#citation)
 - [Program overview and installation](#program-overview-and-installation)
@@ -45,13 +46,14 @@ When using `pyrewton` please cite:
   - [Installation](#installation)
   - [Requirements](#requirements)
 - [Independent evaluation of CAZyme classifiers](#independent-evaluation-of-cazyme-classifiers)
-  - [Creation of the test sets](#creation-of-test-sets)
+  - [Creation of the test sets](#creation-of-the-test-sets)
   - [Invoking the classifiers](#invoking-the-classifiers)
   - [Calculating the statistics](#calculating-the-statistics)
   - [Presenting the findings](#presenting-the-findings)
 - [Creating a local CAZome database](#creating-a-local-cazome-database)
 - [Notebooks](#notebooks)
 - [Help](#help)
+<!-- /TOC -->
 
 ## Program overview and installation
 
@@ -205,7 +207,7 @@ python3 calculate_stats_from_*.py \
   <path to JSON or SQLite3 database file of CAZy family annotations from CAZy>
 ```
 
-`python3 calculate_stats_from_*.py` produces several output files, which can be grouped to 5 differet levels of evaluating/benchmarking CAZyme classifier performance:
+`python3 calculate_stats_from_*.py` produces several output files, which can be grouped to 3 levels of evaluating/benchmarking CAZyme classifier performance:
 
 **Binary CAZyme/non-CAZyme differentiation:** 
 1. The directory `binary_classifications` contains a `.csv` file per input test set, with contains a unique protien on each row, listing the Protein_accession, Genomic_accession and binary CAZyme (1) and non-CAZyme (0) classifictaion per CAZyme prediciton tool and the ground truth retrieved from CAZy.
