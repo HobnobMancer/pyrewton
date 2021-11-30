@@ -319,12 +319,18 @@ def evaluate_performance(predictions, cazy, data_source, args):
     all_family_predictions.to_csv(output_path)   # USED FOR EVALUATION IN R
 
     # evaluate the performance of predicting the correct CAZy family ACROSS ALL test sets
-    family_classifications.calc_fam_stats(
+    fam_stats_df, fams_longform_df = family_classifications.calc_fam_stats(
         all_family_predictions,
         all_family_ground_truths,
         time_stamp,
         args,
     )  # creates a dataframe USED FOR EVALUATION IN R
+
+    output_path = args.output / f"family_per_row_stats_{time_stamp}.csv"
+    fam_stats_df.to_csv(output_path)
+
+    output_path = args.output / f"family_long_form_stats_df_{time_stamp}.csv"
+    fams_longform_df.to_csv(output_path)
 
     if args.tax_groups is not None:  # compare perforamnce between taxonomy groups
         evaluate_tax_group_performance(
@@ -600,14 +606,23 @@ def add_fam_freq(testset, freq_dict, cazy, data_source):
     return freq_dict
 
 
-def evaluate_tax_group_performance(binary_c_nc_statistics, all_family_predictions, time_stamp, args):
+def evaluate_tax_group_performance(
+    binary_c_nc_statistics,
+    all_family_predictions,
+    all_family_ground_truths,
+    time_stamp,
+    args,
+):
     """Evaluate the performance of the CAZyme classifiers between the taxonomy groups.
     
     :param binary_c_nc_statistics: Pandas df, of binary evaluation
         columns: Statistic_parameter, Genomic_assembly, Prediction_tool, Statistic_value
     :param all_family_predictions: Pandas df, 
         columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy family
-            denoting if annotationed predicted (1) or not predicted (0), Rand_index and Adjusted_rand_index
+            denoting if annotation predicted (1) or not predicted (0), Rand_index and Adjusted_rand_index
+    :param all_family_ground_truths: Pandas df, 
+        columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy family
+            denoting if annotation given by CAZy (1) or not  (0)
     :param time_stamp: str, date and time evaluation was invoked
     :param args: cmd-line args parser
     
@@ -628,6 +643,44 @@ def evaluate_tax_group_performance(binary_c_nc_statistics, all_family_prediction
 
     output_path = args.output / f"family_classification_tax_comparison_{time_stamp}.csv"
     all_family_predictions_tax.to_csv(output_path)  # USED FOR EVALUATION IN R
+
+    # create empty dfs to store rows of interest
+    gt_col_names = list(all_family_ground_truths.columns)
+    gt_col_names.append('Tax_group')
+    tax_ground_truths = pd.DataFrame(columns=gt_col_names)
+
+    pred_col_names = list(all_family_predictions.columns)
+    pred_col_names.append('Tax_group')
+    tax_predictions = pd.DataFrame(columns=pred_col_names)
+
+    # evaluate performance per tax group per family
+    for tax_group in tqdm(tax_dict, 'Evaluating performance per tax group per CAZy family'):
+        genomic_accessions = tax_dict[tax_group]
+
+        for accession in genomic_accessions:
+            grnd_trth_df = tax_ground_truths.loc[tax_ground_truths["Genomic_accession"] == accession]
+            pred_df = tax_predictions.loc[tax_predictions["Genomic_accession"] == accession]
+
+            # add tax_group column
+            gt_tax_group_col = [tax_group] * len(grnd_trth_df['Genomic_accession'])
+            pred_tax_group_col = [tax_group] * len(pred_df['Genomic_accession'])
+
+            grnd_trth_df['Tax_group'] = gt_tax_group_col
+            pred_df['Tax_group'] = pred_tax_group_col
+
+            tax_ground_truths = tax_ground_truths.append(grnd_trth_df)
+            tax_predictions = tax_predictions.append(pred_df)
+
+    # evaluate performance per CAZy family
+    fam_stats_df, fam_longform_df = family_classifications.calc_fam_stats(tax_predictions, tax_ground_truths, time_stamp, args)
+
+    output_path = args.output / f"family_per_row_stats_tax_comparison_{time_stamp}.csv"
+    fam_stats_df.to_csv(output_path)
+
+    output_path = args.output / f"family_long_form_stats_tax_comparison_{time_stamp}.csv"
+    fam_longform_df.to_csv(output_path)
+
+
     
 
 def add_tax_group(df, tax_dict, column_name):
@@ -644,7 +697,7 @@ def add_tax_group(df, tax_dict, column_name):
     # add on taxonomy group column to the binary_c_nc_statistics df
     tax_groups = []  # new content for the tax_group column
     index = 0
-    for index in range(len(df[column_name])):
+    for index in tqdm(range(len(df[column_name])), desc='Adding tax group to df'):
         row = df.iloc[index]
         genomic_accession = row[column_name]
         tax_group = None

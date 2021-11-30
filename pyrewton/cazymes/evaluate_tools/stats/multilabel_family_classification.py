@@ -187,7 +187,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
     :param time_stamp: str, time evaluation was started
     :param args: cmd_line args parser
 
-    Return nothing, instead write out the created dataframes to disk.
+    Return two pandas dfs
     """
     specific_logger = build_logger(args.output, "cazy_family_performance.log")
     logger = logging.getLogger(__name__)
@@ -378,19 +378,13 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
         ],
     )
 
-    output_path = args.output / f"family_per_row_stats_{time_stamp}.csv"
-    stats_df.to_csv(output_path)
-
     # build long form dataframe
     longform_df = pd.DataFrame(
         long_dataframe_data,
         columns=["CAZy_family", "Prediction_tool", "Statistical_parameter", "Statistic_value"],
     )
 
-    output_path = args.output / f"family_long_form_stats_df_{time_stamp}.csv"
-    longform_df.to_csv(output_path)
-
-    return
+    return stats_df, longform_df
 
 
 def foundation_dict():
