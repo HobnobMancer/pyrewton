@@ -28,7 +28,6 @@
 import json
 import re
 import logging
-import sys
 
 import pandas as pd
 
@@ -36,7 +35,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from scraper.sql.sql_orm import CazyFamily, Genbank, Session
+# from scraper.sql.sql_orm import CazyFamily, Genbank, Session
 from saintBioutils.utilities.file_io import get_paths
 from tqdm import tqdm
 
@@ -648,12 +647,12 @@ def evaluate_tax_group_performance(
 
     # add tax group column to binary classificaiton evaluation df
     binary_c_nc_statistics_tax = add_tax_group(binary_c_nc_statistics, tax_dict, 'Genomic_assembly')
-
+    
     output_path = args.output / f'binary_classification_tax_comparison_{time_stamp}.csv'
     binary_c_nc_statistics_tax.to_csv(output_path)  # USED FOR EVALUATION IN R
 
     # add tax group column to family classification df
-    class_predictions_df_tax = add_tax_group(class_predictions_df, tax_dict, 'Genomic_assembly')
+    class_predictions_df_tax = add_tax_group(class_predictions_df, tax_dict, 'Genomic_accession')
 
     output_path = args.output / f"class_classification_tax_comparison_{time_stamp}.csv"
     class_predictions_df_tax.to_csv(output_path)  # USED IN R EVALUATION
@@ -668,7 +667,7 @@ def evaluate_tax_group_performance(
     )
 
     # add tax group column to family classification df
-    all_family_predictions_tax = add_tax_group(all_family_predictions, tax_dict, 'Genomic_assembly')
+    all_family_predictions_tax = add_tax_group(all_family_predictions, tax_dict, 'Genomic_accession')
 
     output_path = args.output / f"family_classification_tax_comparison_{time_stamp}.csv"
     all_family_predictions_tax.to_csv(output_path)  # USED FOR EVALUATION IN R
