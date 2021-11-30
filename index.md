@@ -48,7 +48,7 @@ When using `pyrewton` please cite:
 - [Independent evaluation of CAZyme classifiers](#independent-evaluation-of-cazyme-classifiers)
   - [Creation of the test sets](#creation-of-the-test-sets)
   - [Invoking the classifiers](#invoking-the-classifiers)
-  - [Calculating the statistics](#calculating-the-statistics)
+  - [Calculating the statistics](#calculating-statistics)
   - [Presenting the findings](#presenting-the-findings)
 - [Creating a local CAZome database](#creating-a-local-cazome-database)
 - [Notebooks](#notebooks)
