@@ -55,9 +55,9 @@ from datetime import datetime
 from typing import List, Optional
 
 from Bio import Entrez, SeqIO
-from saintBioutils.file_io import get_paths
 from saintBioutils.genbank import get_genomes, parse_genomes
-from saintBioutils.utilities import config_logger
+from saintBioutils.file_io import get_paths
+from saintBioutils.utilities.logger import config_logger
 from tqdm import tqdm
 
 from pyrewton.cazymes.evaluate_tools.test_sets import (
