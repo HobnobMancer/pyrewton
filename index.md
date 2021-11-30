@@ -215,14 +215,14 @@ python3 calculate_stats_from_*.py \
 5. `binary_false_negative_classifications_<date>.csv`, with the columns: Genomic_accession, Protein_accession, then one column per prediction tool (listing a 0 if the tool did not annotate the protien as a CAZyme and a 1 if it did), BLAST_score_ratio (from creating the test sets), CAZyme_subject (the CAZyme if had the greatest sequence identitiy with in the genome when creating the test set).
 
 **CAZy class annotation prediction:**. Evaluating per CAZy class indpendent of other CAZy classes, and the CAZy class multi-label classification.  
-1. `class_predicted_classification_<date>.csv`, written in long form with the columns: Genomic_accession, Protein_accession, Prediction_tool, then one column per CAZy clas (which are scored as 0 if not predicted to be in the class, and 1 if predicted to be in the CAZy class), Rand_index and Adjusted_rand_index
+1. `class_predicted_classification_<date>.csv`, written in long form with the columns: Genomic_accession, Protein_accession, Prediction_tool, then one column per CAZy class (which are scored as 0 if not predicted to be in the class, and 1 if predicted to be in the CAZy class), Rand_index and Adjusted_rand_index
 2. `class_classification_stats_per_test_set_<date>.csv`, written in long form with the columns: Genomic_accession, Prediction_tool, CAZy_class, Statistic_parameter, Statistic_value. Statistical parameters calcualted are specificity, sensitivity, precition, F1-score and accuracy.
 3. `class_ground_truths_classifications_<date>.csv` containing the CAZy class annotations from CAZy for every protein across all input tests sets.
 4. `class_stats_across_all_test_sets_<date>.csv` contains performance statistics calculated when pooling all test sets into a single test set. Contains the columns: Prediction_tool, CAZy_class, Specificity, Sensitivity, Precision, Fbeta_score, and accuracy.
 5. `class_stats_per_test_set_<date>.csv` contains the calculated performance statistics when evaluating performance per test set. Written in long form, and contains the columns: Genomic_accession, Prediction_tool, CAZy_class, Statistic_parameter, Statistic_value.
 
 **CAZy family annotation prediction:**. Evaluating per CAZy family indpendent of other CAZy families, and the CAZy family multi-label classification.  
-1. `family_predicted_classification_<date>.csv`, written in long form with the columns: Genomic_accession, Protein_accession, Prediction_tool, then one column per CAZy clas (which are scored as 0 if not predicted to be in the class, and 1 if predicted to be in the CAZy class), Rand_index and Adjusted_rand_index
+1. `family_predicted_classification_<date>.csv`, written in long form with the columns: Genomic_accession, Protein_accession, Prediction_tool, then one column per CAZy family (which are scored as 0 if not predicted to be in the class, and 1 if predicted to be in the CAZy class), Rand_index and Adjusted_rand_index
 2. `family_long_form_stats_df_<date>.csv`, written in long form with the columns: CAZy_family, Prediction_tool, Statistical_parameter, Statistic_value. The statistic patermeters included are:
   - Specificity
   - Sensitivity
@@ -239,6 +239,61 @@ python3 calculate_stats_from_*.py \
 7. `CAZy_fam_testset_freq_<date>.json` keyed by CAZy family and valued by interget listing the number of occurences of the respective CAZy family across all test sets.
 
 By default `python3 calculate_stats_from_*.py` writes the output to the cwd. To specify a different output directory, add the `--output` flag to the command, followed by the path to the output directory. The output directory and its parent directories do not need to already exist, these can be created `pyrewton`.
+
+#### Optional outputs
+
+In addition to the default outputs, additional evaluations can be performed.
+
+**Comparing performance per taxonomy group:**
+The test sets may cover a range of taxonomy groups. `pyrewton` can be used to evaluate the perforamnce across all test sets as well as per user-defined taxonomy group.
+
+Taxonomy groups can be defined using a `YAML` file, keyed by the name of the taxonomy group, and valued by a list of the genomic accessions of test sets. For example:
+```yaml
+"Bacteria":
+    - GCA_000021645.1
+    - GCA_000015865.1
+    - GCA_000237085.1
+    - GCA_016406125.1
+    - GCA_013283915.1
+"Eukaryote":
+    - GCA_014784225.1
+    - GCA_009017415.1
+    - GCA_016861735.1
+    - GCA_013426205.1
+    - GCA_001592805.2
+    - GCA_016767815.1
+```
+The taxonmy group file is provided to `pyrewton` using `--tax_groups` flag. For example:
+```bash
+python3 calculate_stats_from_*.py \
+  predicted_cazymes \
+  test_sets_dir \
+  cazy.db \
+  --tax_groups evaluation_tax_groups.yaml
+```
+
+The yaml file of CAZyme classifier combinations presented in Hobbs _et al_., 2021 is stored in `supplementary/test_set_tax_groups.yaml`.
+
+**Recombine classifiers:**
+`pyrewton` can evaluate the performance of the concensus result of any three CAZyme classifiers evaluated by `pyrewton` (where the consensus result is defined as the result at least two of the three tools agree upon). For example, Hotpep in dbCAN, cam be substituted for eCAMI and/or CUPP, to determine if using the newer k-mer CAZyme classifiers improves the performance of dbCAN.
+
+To define the three classifiers, use the ``--recombine`` flag and pass a text file with a unique combination of CAZy classifiers on each line. For example, the input file may contain:  
+```bash
+DIAMOND,HMMER,CUPP
+DIAMOND,HMMER,eCAMI
+```
+to evaluate the impact of substituting Hotpep for newer k-mer-based CAZyme classifiers on dbCAN perforamnce.
+
+Below is an example command for using `pyrewton` to recombine the CAZyme classifiers:
+```bash
+python3 calculate_stats_from_*.py \
+  predicted_cazymes \
+  test_sets_dir \
+  cazy.db \
+  --recombine cazyme_classifiers_combiations.txt
+```
+
+The text file of CAZyme classifier combinations presented in Hobbs _et al_., 2021 is stored in `supplementary/cazyme_classification_recombinations.txt`.
 
 ### Presenting the findings
 
