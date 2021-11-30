@@ -179,15 +179,14 @@ def calculate_family_ari_ri(prediction_df, ground_truth_df, time_stamp):
     return prediction_df
 
 
-def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
+def calc_fam_stats(predictions_df, ground_truths_df, args):
     """Calculate the Specificity, Sensitivity, Precision, Fbeta, and accuracy for each CAZy family.
 
     :param predictions_df: df of predicted CAZy family annotations from all prediction tools
     :param ground_truths_df: df of CAZy annotations of proteins
-    :param time_stamp: str, time evaluation was started
     :param args: cmd_line args parser
 
-    Return nothing, instead write out the created dataframes to disk.
+    Return two pandas dfs
     """
     specific_logger = build_logger(args.output, "cazy_family_performance.log")
     logger = logging.getLogger(__name__)
@@ -378,19 +377,13 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
         ],
     )
 
-    output_path = args.output / f"family_per_row_stats_{time_stamp}.csv"
-    stats_df.to_csv(output_path)
-
     # build long form dataframe
     longform_df = pd.DataFrame(
         long_dataframe_data,
         columns=["CAZy_family", "Prediction_tool", "Statistical_parameter", "Statistic_value"],
     )
 
-    output_path = args.output / f"family_long_form_stats_df_{time_stamp}.csv"
-    longform_df.to_csv(output_path)
-
-    return
+    return stats_df, longform_df
 
 
 def foundation_dict():
@@ -444,3 +437,70 @@ def foundation_dict():
         'CBM79': 0, 'CBM80': 0, 'CBM81': 0, 'CBM82': 0, 'CBM83': 0, 'CBM84': 0, 'CBM85': 0, 'CBM86': 0, 'CBM87': 0, 'CBM88': 0, 'CBM0': 0
     }
     return foundation_dict
+
+
+def evaluate_taxa_performance(
+    all_family_ground_truths,
+    all_family_predictions,
+    tax_dict,
+    time_stamp,
+    args,
+):
+    """Evaluate performance per CAZy family per tax group
+    
+    :param all_family_predictions: Pandas df, 
+        columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy family
+            denoting if annotation predicted (1) or not predicted (0), Rand_index and Adjusted_rand_index
+    :param all_family_ground_truths: Pandas df, 
+        columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy family
+            denoting if annotation given by CAZy (1) or not  (0)
+    :param class_predictions_df: Pandas df,
+        columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy class
+            denoting if annotation predicted (1) or not predicted (0), Rand_index and Adjusted_rand_index
+    :param tax_dict: dict of tax groups, keyed by tax group name, values by list of genomic accessions
+    :param time_stamp: str, date and time evaluation was invoked
+    :param args: cmd-line args parser
+    
+    Return nothing.
+    """
+    # evaluate performance per tax group per family
+    for tax_group in tqdm(tax_dict, 'Evaluating performance per tax group per CAZy family'):
+        genomic_accessions = tax_dict[tax_group]
+
+        # create empty dfs to store rows of interest
+        gt_col_names = list(all_family_ground_truths.columns)
+        gt_col_names.append('Tax_group')
+        tax_ground_truths = pd.DataFrame(columns=gt_col_names)
+
+        pred_col_names = list(all_family_predictions.columns)
+        pred_col_names.append('Tax_group')
+        tax_predictions = pd.DataFrame(columns=pred_col_names)
+
+        for accession in genomic_accessions:
+            grnd_trth_df = tax_ground_truths.loc[tax_ground_truths["Genomic_accession"] == accession]
+            pred_df = tax_predictions.loc[tax_predictions["Genomic_accession"] == accession]
+
+            # add tax_group column
+            gt_tax_group_col = [tax_group] * len(grnd_trth_df['Genomic_accession'])
+            pred_tax_group_col = [tax_group] * len(pred_df['Genomic_accession'])
+
+            grnd_trth_df['Tax_group'] = gt_tax_group_col
+            pred_df['Tax_group'] = pred_tax_group_col
+
+            tax_ground_truths = tax_ground_truths.append(grnd_trth_df)
+            tax_predictions = tax_predictions.append(pred_df)
+
+        # evaluate performance per CAZy family for the tax group
+        fam_stats_df, fam_longform_df = calc_fam_stats(
+            tax_predictions,
+            tax_ground_truths,
+            args,
+        )
+
+        output_path = args.output / f"family_per_row_stats_tax_comparison_{tax_group}_{time_stamp}.csv"
+        fam_stats_df.to_csv(output_path)
+
+        output_path = args.output / f"family_long_form_stats_tax_comparison_{tax_group}_{time_stamp}.csv"
+        fam_longform_df.to_csv(output_path)
+    
+    return

@@ -123,6 +123,14 @@ def build_parser(argv: Optional[List] = None):
         default=6,
         help="Number of test sets used for bootstrapping CAZyme/non-CAZyme predictions",
     )
+    # add option for evaluating performance per taxonomy group
+    parser.add_argument(
+        "-t",
+        "--tax_groups",
+        type=Path,
+        default=None,
+        help="Path to YAML file containing taxonomy groups of the source genomes",
+    )
     # Add option for more detail (verbose) logging
     parser.add_argument(
         "-v",
