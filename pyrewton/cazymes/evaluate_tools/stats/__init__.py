@@ -327,7 +327,12 @@ def evaluate_performance(predictions, cazy, data_source, args):
     )  # creates a dataframe USED FOR EVALUATION IN R
 
     if args.tax_groups is not None:  # compare perforamnce between taxonomy groups
-        evaluate_tax_group_performance(binary_c_nc_statistics)
+        evaluate_tax_group_performance(
+            binary_c_nc_statistics,
+            all_family_predictions,
+            time_stamp,
+            args,
+        )
 
     return
 
@@ -595,11 +600,14 @@ def add_fam_freq(testset, freq_dict, cazy, data_source):
     return freq_dict
 
 
-def evaluate_tax_group_performance(binary_c_nc_statistics, time_stamp, args):
+def evaluate_tax_group_performance(binary_c_nc_statistics, all_family_predictions, time_stamp, args):
     """Evaluate the performance of the CAZyme classifiers between the taxonomy groups.
     
     :param binary_c_nc_statistics: Pandas df, of binary evaluation
         columns: Statistic_parameter, Genomic_assembly, Prediction_tool, Statistic_value
+    :param all_family_predictions: Pandas df, 
+        columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy family
+            denoting if annotationed predicted (1) or not predicted (0), Rand_index and Adjusted_rand_index
     :param time_stamp: str, date and time evaluation was invoked
     :param args: cmd-line args parser
     
@@ -609,18 +617,42 @@ def evaluate_tax_group_performance(binary_c_nc_statistics, time_stamp, args):
 
     tax_dict = {}  # keyed by tax group name, valued by genomic accessions
 
+    # add tax group column to binary classificaiton evaluation df
+    binary_c_nc_statistics_tax = add_tax_group(binary_c_nc_statistics, tax_dict, 'Genomic_assembly')
+
+    output_path = args.output / f'binary_classification_tax_comparison_{time_stamp}.csv'
+    binary_c_nc_statistics_tax.to_csv(output_path)  # USED FOR EVALUATION IN R
+
+    # add tax group column to family classification df
+    all_family_predictions_tax = add_tax_group(all_family_predictions, tax_dict, 'Genomic_assembly')
+
+    output_path = args.output / f"family_classification_tax_comparison_{time_stamp}.csv"
+    all_family_predictions_tax.to_csv(output_path)  # USED FOR EVALUATION IN R
+    
+
+def add_tax_group(df, tax_dict, column_name):
+    """Add tax_group column to and existing dataframe
+    
+    :param df: Pandas df
+    :param tax_dict: dict, keyed by tax group name, values by list of genomic accessions
+    :param column_name: str, name of column containing the genomic accessions
+    
+    return df with added tax_group column
+    """
+    logger = logging.getLogger(__name__)
+
     # add on taxonomy group column to the binary_c_nc_statistics df
     tax_groups = []  # new content for the tax_group column
     index = 0
-    for index in range(len(binary_c_nc_statistics['Statistic_parameter'])):
-        row = binary_c_nc_statistics.iloc[index]
-        genomic_accession = row['Genomic_assembly']
+    for index in range(len(df[column_name])):
+        row = df.iloc[index]
+        genomic_accession = row[column_name]
         tax_group = None
         for taxa in tax_dict:
-            try:
-                tax_group = tax_dict[taxa][genomic_accession]
-            except KeyError:
-                pass
+            tax_genomic_accs = tax_dict[taxa]
+            if genomic_accession in tax_genomic_accs:
+                tax_group = taxa
+
         if tax_group is None:
             logger.warning(
                 f'Accession {genomic_accession} retrieved from test sets but not included in tax group data\n'
@@ -630,8 +662,6 @@ def evaluate_tax_group_performance(binary_c_nc_statistics, time_stamp, args):
         else:
             tax_groups.append(tax_group)
     
-    binary_c_nc_statistics['Tax_group'] = tax_groups
+    df['Tax_group'] = tax_groups
 
-    output_path = args.output / f'binary_classification_tax_comparison_{time_stamp}.csv'
-    binary_c_nc_statistics.to_csv(output_path)  # USED FOR EVALUATION IN R
-    
+    return df
