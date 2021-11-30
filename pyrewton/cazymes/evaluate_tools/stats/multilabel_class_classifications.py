@@ -162,7 +162,6 @@ def calculate_class_ari_ri(
 def calculate_class_stats(
     ground_truth_df,
     prediction_df,
-    time_stamp,
     args,
     class_list=["GH", "GT", "PL", "CE", "AA", "CBM"],
 ):
@@ -300,16 +299,12 @@ def calculate_class_stats(
         ],
     )
 
-    output_path = args.output / f"class_stats_across_all_test_sets_{time_stamp}.csv"
-    class_stats_df.to_csv(output_path)
-
-    return
+    return class_stats_df
 
 
 def calculate_class_stats_by_testsets(
     ground_truth_df,
     prediction_df,
-    time_stamp,
     args,
     class_list=["GH", "GT", "PL", "CE", "AA", "CBM"],
 ):
@@ -485,7 +480,77 @@ def calculate_class_stats_by_testsets(
         ],
     )
 
-    output_path = args.output / f"class_stats_per_test_set_{time_stamp}.csv"
-    class_stats_df.to_csv(output_path)
+    return class_stats_df
+
+
+def evaluate_taxa_performance(
+    all_ground_truths,
+    all_predictions,
+    tax_dict,
+    time_stamp,
+    args,
+):
+    """Evaluate performance per CAZy family per tax group
+    
+    :param all_predictions: Pandas df, 
+        columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy family
+            denoting if annotation predicted (1) or not predicted (0), Rand_index and Adjusted_rand_index
+    :param all_ground_truths: Pandas df, 
+        columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy family
+            denoting if annotation given by CAZy (1) or not  (0)
+    :param class_predictions_df: Pandas df,
+        columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy class
+            denoting if annotation predicted (1) or not predicted (0), Rand_index and Adjusted_rand_index
+    :param tax_dict: dict of tax groups, keyed by tax group name, values by list of genomic accessions
+    :param time_stamp: str, date and time evaluation was invoked
+    :param args: cmd-line args parser
+    
+    Return nothing.
+    """
+    # evaluate performance per tax group per family
+    for tax_group in tqdm(tax_dict, 'Evaluating performance per tax group per CAZy class'):
+        genomic_accessions = tax_dict[tax_group]
+
+        # create empty dfs to store rows of interest
+        gt_col_names = list(all_ground_truths.columns)
+        gt_col_names.append('Tax_group')
+        tax_ground_truths = pd.DataFrame(columns=gt_col_names)
+
+        pred_col_names = list(all_predictions.columns)
+        pred_col_names.append('Tax_group')
+        tax_predictions = pd.DataFrame(columns=pred_col_names)
+
+        for accession in genomic_accessions:
+            grnd_trth_df = tax_ground_truths.loc[tax_ground_truths["Genomic_accession"] == accession]
+            pred_df = tax_predictions.loc[tax_predictions["Genomic_accession"] == accession]
+
+            # add tax_group column
+            gt_tax_group_col = [tax_group] * len(grnd_trth_df['Genomic_accession'])
+            pred_tax_group_col = [tax_group] * len(pred_df['Genomic_accession'])
+
+            grnd_trth_df['Tax_group'] = gt_tax_group_col
+            pred_df['Tax_group'] = pred_tax_group_col
+
+            tax_ground_truths = tax_ground_truths.append(grnd_trth_df)
+            tax_predictions = tax_predictions.append(pred_df)
+
+        class_stats_df = calculate_class_stats(
+            tax_ground_truths,
+            tax_predictions,
+            args,
+        )
+
+        output_path = args.output / f"class_stats_all_test_sets_tax_comparison_{tax_group}_{time_stamp}.csv"
+        class_stats_df.to_csv(output_path)
+
+        class_stats_df_testset = calculate_class_stats_by_testsets(
+            tax_ground_truths,
+            tax_predictions,
+            args,
+        )
+
+        output_path = args.output / f"class_stats_per_test_set_tax_comparison_{tax_group}_{time_stamp}.csv"
+        class_stats_df_testset.to_csv(output_path)
 
     return
+

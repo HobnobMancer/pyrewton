@@ -293,19 +293,23 @@ def evaluate_performance(predictions, cazy, data_source, args):
 
     # Calculate Fbeta, Sens, Spec and Acc for predicting each CAZy class
     # calculate the fbeta_score, sensitivity(recall), specificity and accuracy per CAZy class
-    class_classifications.calculate_class_stats(
+    class_stats_df = class_classifications.calculate_class_stats(
         class_ground_truths_df,
         class_predictions_df,
-        time_stamp,
         args,
     )
 
-    class_classifications.calculate_class_stats_by_testsets(
+    output_path = args.output / f"class_stats_across_all_test_sets_{time_stamp}.csv"
+    class_stats_df.to_csv(output_path)
+
+    class_stats_df_testset = class_classifications.calculate_class_stats_by_testsets(
         class_ground_truths_df,
         class_predictions_df,
-        time_stamp,
         args,
     )
+
+    output_path = args.output / f"class_stats_per_test_set_{time_stamp}.csv"
+    class_stats_df_testset.to_csv(output_path)
 
     # Evaluate the performance of CAZy Family predictions
     # Calculate ARI and RI for multilabel evaluation, and add to CAZy family prediction dataframe
@@ -337,6 +341,7 @@ def evaluate_performance(predictions, cazy, data_source, args):
             all_family_predictions,
             all_family_ground_truths,
             class_predictions_df,
+            class_ground_truths_df,
             time_stamp,
             args,
         )
@@ -612,6 +617,7 @@ def evaluate_tax_group_performance(
     all_family_predictions,
     all_family_ground_truths,
     class_predictions_df,
+    class_ground_truths_df,
     time_stamp,
     args,
 ):
@@ -628,6 +634,9 @@ def evaluate_tax_group_performance(
     :param class_predictions_df: Pandas df,
         columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy class
             denoting if annotation predicted (1) or not predicted (0), Rand_index and Adjusted_rand_index
+    :param class_ground_truths_df: Pandas df, 
+        columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy class
+            denoting if annotation given by CAZy (1) or not  (0)
     :param time_stamp: str, date and time evaluation was invoked
     :param args: cmd-line args parser
     
@@ -644,18 +653,36 @@ def evaluate_tax_group_performance(
     binary_c_nc_statistics_tax.to_csv(output_path)  # USED FOR EVALUATION IN R
 
     # add tax group column to family classification df
+    class_predictions_df_tax = add_tax_group(class_predictions_df, tax_dict, 'Genomic_assembly')
+
+    output_path = args.output / f"class_classification_tax_comparison_{time_stamp}.csv"
+    class_predictions_df_tax.to_csv(output_path)  # USED IN R EVALUATION
+
+    # evaluate performance per cazy class per tax group
+    class_classifications.evaluate_taxa_performance(
+        class_predictions_df,
+        class_ground_truths_df,
+        tax_dict,
+        time_stamp,
+        args,
+    )
+
+    # add tax group column to family classification df
     all_family_predictions_tax = add_tax_group(all_family_predictions, tax_dict, 'Genomic_assembly')
 
     output_path = args.output / f"family_classification_tax_comparison_{time_stamp}.csv"
     all_family_predictions_tax.to_csv(output_path)  # USED FOR EVALUATION IN R
 
+    # evaluate performance per cazy family per tax group
+    family_classifications.evaluate_taxa_performance(
+        all_family_predictions,
+        all_family_ground_truths,
+        tax_dict,
+        time_stamp,
+        args,
+    )
 
-
-    # add tax group column to family classification df
-    class_predictions_df_tax = add_tax_group(class_predictions_df, tax_dict, 'Genomic_assembly')
-
-    output_path = args.output / f"class_classification_tax_comparison_{time_stamp}.csv"
-    class_predictions_df_tax.to_csv(output_path)  # USED IN R EVALUATION
+    return
 
 
 def add_tax_group(df, tax_dict, column_name):
