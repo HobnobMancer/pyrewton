@@ -54,6 +54,7 @@ from pyrewton.cazymes.evaluate_tools.stats import (
 from pyrewton.cazymes.evaluate_tools.stats import (
     multilabel_class_classifications as class_classifications
 )
+from pyrewton.utilities.file_io.parse_configuration import parse_eval_classifiers_tax_groups
 
 
 @dataclass
@@ -644,7 +645,9 @@ def evaluate_tax_group_performance(
     """
     logger = logging.getLogger(__name__)
 
-    tax_dict = {}  # keyed by tax group name, valued by genomic accessions
+    tax_dict = parse_eval_classifiers_tax_groups(args)  # keyed by tax group name, valued by genomic accessions
+    if tax_dict is None:
+        return
 
     # add tax group column to binary classificaiton evaluation df
     binary_c_nc_statistics_tax = add_tax_group(binary_c_nc_statistics, tax_dict, 'Genomic_assembly')
