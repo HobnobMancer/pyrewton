@@ -273,8 +273,17 @@ python3 calculate_stats_from_*.py \
   cazy.db \
   --tax_groups evaluation_tax_groups.yaml
 ```
-
 The yaml file of CAZyme classifier combinations presented in Hobbs _et al_., 2021 is stored in `supplementary/test_set_tax_groups.yaml`.
+
+Using the `--tax_groups` flag results in `pyrewton` producing additional output:
+
+1. `binary_classification_tax_comparison_<date>.csv`, which is the same as the `binary_classification_evaluation_<date>.csv` dataframe with an additional 'Tax_group' column, listing the taxonomy group as defined in the `YAML` file for each genomic assembly.
+2. `class_classification_tax_comparison_<date>.csv`, which is the same as the `class_predicted_classification_<date>.csv` dataframe with an additional 'Tax_group' column, listing the taxonomy group as defined in the `YAML` file for each genomic assembly.
+3. `class_stats_all_test_sets_tax_comparison_<tax_group>_<time_stamp>.csv`, which is the same as the `class_stats_across_all_test_sets_<data>.csv` dataframe with an additional 'Tax_group' column and statistics calculated for only test sets belong to the given taxonomy group, as defined in the `YAML` file. One dataframe is generated for each taxonomy group in the `YAML` file.
+4. `class_stats_per_test_set_tax_comparison_<tax_group>_<time_stamp>.csv`, which is the same as the `class_stats_per_test_set_<data>.csv` dataframe with an additional 'Tax_group' column and statistics calculated for only test sets belong to the given taxonomy group, as defined in the `YAML` file. One dataframe is generated for each taxonomy group in the `YAML` file.
+5. `family_classification_tax_comparison_<date>.csv`, which is the same as the `family_predicted_classification_<date>.csv` dataframe but with an additional 'Tax_group' column, listing the taxonomy group as defined in the `YAML` file for each genomic assembly.
+6. `family_per_row_stats_tax_comparison_<tax_group>_<date>.csv`, which is the same as the `family_per_row_stats_df_<date>.csv` dataframe but only contains the statistical parameters for test sets belonging to given taxonomy group, as defined in the `YAML` file. One dataframe is generated for each taxonomy group in the `YAML` file.
+7. `family_long_form_stats_tax_comparison_<tax_group>_<date>.csv`, which is the same as the `family_long_form_stats_df_<date>.csv` dataframe but only contains the statistical parameters for test sets belonging to given taxonomy group, as defined in the `YAML` file. One dataframe is generated for each taxonomy group in the `YAML` file.
 
 **Recombine classifiers:**
 `pyrewton` can evaluate the performance of the concensus result of any three CAZyme classifiers evaluated by `pyrewton` (where the consensus result is defined as the result at least two of the three tools agree upon). For example, Hotpep in dbCAN, cam be substituted for eCAMI and/or CUPP, to determine if using the newer k-mer CAZyme classifiers improves the performance of dbCAN.
