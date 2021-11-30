@@ -322,7 +322,6 @@ def evaluate_performance(predictions, cazy, data_source, args):
     fam_stats_df, fams_longform_df = family_classifications.calc_fam_stats(
         all_family_predictions,
         all_family_ground_truths,
-        time_stamp,
         args,
     )  # creates a dataframe USED FOR EVALUATION IN R
 
@@ -672,13 +671,19 @@ def evaluate_tax_group_performance(
             tax_predictions = tax_predictions.append(pred_df)
 
     # evaluate performance per CAZy family
-    fam_stats_df, fam_longform_df = family_classifications.calc_fam_stats(tax_predictions, tax_ground_truths, time_stamp, args)
+    fam_stats_df, fam_longform_df = family_classifications.calc_fam_stats(
+        tax_predictions,
+        tax_ground_truths,
+        args,
+    )
 
     output_path = args.output / f"family_per_row_stats_tax_comparison_{time_stamp}.csv"
     fam_stats_df.to_csv(output_path)
 
     output_path = args.output / f"family_long_form_stats_tax_comparison_{time_stamp}.csv"
     fam_longform_df.to_csv(output_path)
+
+
 
 
     

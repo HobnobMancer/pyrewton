@@ -179,12 +179,11 @@ def calculate_family_ari_ri(prediction_df, ground_truth_df, time_stamp):
     return prediction_df
 
 
-def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
+def calc_fam_stats(predictions_df, ground_truths_df, args):
     """Calculate the Specificity, Sensitivity, Precision, Fbeta, and accuracy for each CAZy family.
 
     :param predictions_df: df of predicted CAZy family annotations from all prediction tools
     :param ground_truths_df: df of CAZy annotations of proteins
-    :param time_stamp: str, time evaluation was started
     :param args: cmd_line args parser
 
     Return two pandas dfs
