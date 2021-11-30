@@ -643,18 +643,18 @@ def evaluate_tax_group_performance(
     output_path = args.output / f"family_classification_tax_comparison_{time_stamp}.csv"
     all_family_predictions_tax.to_csv(output_path)  # USED FOR EVALUATION IN R
 
-    # create empty dfs to store rows of interest
-    gt_col_names = list(all_family_ground_truths.columns)
-    gt_col_names.append('Tax_group')
-    tax_ground_truths = pd.DataFrame(columns=gt_col_names)
-
-    pred_col_names = list(all_family_predictions.columns)
-    pred_col_names.append('Tax_group')
-    tax_predictions = pd.DataFrame(columns=pred_col_names)
-
     # evaluate performance per tax group per family
     for tax_group in tqdm(tax_dict, 'Evaluating performance per tax group per CAZy family'):
         genomic_accessions = tax_dict[tax_group]
+
+        # create empty dfs to store rows of interest
+        gt_col_names = list(all_family_ground_truths.columns)
+        gt_col_names.append('Tax_group')
+        tax_ground_truths = pd.DataFrame(columns=gt_col_names)
+
+        pred_col_names = list(all_family_predictions.columns)
+        pred_col_names.append('Tax_group')
+        tax_predictions = pd.DataFrame(columns=pred_col_names)
 
         for accession in genomic_accessions:
             grnd_trth_df = tax_ground_truths.loc[tax_ground_truths["Genomic_accession"] == accession]
@@ -670,18 +670,20 @@ def evaluate_tax_group_performance(
             tax_ground_truths = tax_ground_truths.append(grnd_trth_df)
             tax_predictions = tax_predictions.append(pred_df)
 
-    # evaluate performance per CAZy family
-    fam_stats_df, fam_longform_df = family_classifications.calc_fam_stats(
-        tax_predictions,
-        tax_ground_truths,
-        args,
-    )
+        # evaluate performance per CAZy family for the tax group
+        fam_stats_df, fam_longform_df = family_classifications.calc_fam_stats(
+            tax_predictions,
+            tax_ground_truths,
+            args,
+        )
 
-    output_path = args.output / f"family_per_row_stats_tax_comparison_{time_stamp}.csv"
-    fam_stats_df.to_csv(output_path)
+        output_path = args.output / f"family_per_row_stats_tax_comparison_{tax_group}_{time_stamp}.csv"
+        fam_stats_df.to_csv(output_path)
 
-    output_path = args.output / f"family_long_form_stats_tax_comparison_{time_stamp}.csv"
-    fam_longform_df.to_csv(output_path)
+        output_path = args.output / f"family_long_form_stats_tax_comparison_{tax_group}_{time_stamp}.csv"
+        fam_longform_df.to_csv(output_path)
+    
+    
 
 
 
