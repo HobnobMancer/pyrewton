@@ -28,6 +28,7 @@ import re
 
 import numpy as np
 
+from Bio import SeqIO
 from tqdm import tqdm
 
 from pyrewton.cazymes.evaluate_tools.parse import CazymeDomain, CazymeProteinPrediction
@@ -57,6 +58,7 @@ def parse_cupp_output(log_file_path, fasta_path):
         # retrieve the CAZyme classification and predicted CAZy family
         cazyme_classification = 1  # all proteins included in the file are identified as CAZymes
         protein_accession = prediction_output[0]
+        protein_accession = protein_accession.split(' ')[0]
         cazy_family = prediction_output[1]  # This is selected from the CUPP 'Best function'
     
         # retrieve the predicted domain range if given
@@ -251,24 +253,29 @@ def add_non_cazymes(fasta_path, cupp_predictions):
 
     Return a dictionary valued by protein accessions and keyed by their respective CUPPprediction instance.
     """
-    # open the FASTA path
-    with open(fasta_path) as fh:
-        fasta = fh.read().splitlines()
+    logger = logging.getLogger(__name__)
 
-    for line in tqdm(fasta, desc="Adding non-CAZymes"):
-        if line.startswith(">"):
-            protein_accession = line[1:].strip()
+    testset_proteins = 0
 
-            # check if the protein has been listed as a CAZyme by CUPP
-            try:
-                cupp_predictions[protein_accession]
-            except KeyError:
-                # raised if protein not in cupp_predictions, inferring proten was not labelled as CAZyme
-                cazyme_classification = 0
-                cupp_predictions[protein_accession] = CazymeProteinPrediction(
-                    "CUPP",
-                    protein_accession,
-                    cazyme_classification,
-                )
+    # Add non-CAZymes from the original FASTA file test set
+    for record in SeqIO.parse(fasta_path, "fasta"):
+        protein_accession = record.id
+        testset_proteins += 1
 
+        try:
+            cupp_predictions[protein_accession]
+        
+        except KeyError:
+            cazyme_classification = 0
+            cupp_predictions[protein_accession] = CazymeProteinPrediction(
+                "CUPP",
+                protein_accession,
+                cazyme_classification,
+            )
+
+    logger.warning(
+        f"Found {testset_proteins} proteins in test set FASTA:\n{fasta_path}\n"
+        f"Parsing CUPP output found {len(list(cupp_predictions.keys()))}"
+    )
+    
     return cupp_predictions

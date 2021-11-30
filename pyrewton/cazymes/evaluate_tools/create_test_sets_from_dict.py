@@ -50,13 +50,15 @@ Uses a local CAZyme database to identify CAZy annotated CAZymes.
 import logging
 import random
 import shutil
+import sys
 
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional
 
 from Bio import Entrez, SeqIO
 from saintBioutils.genbank import get_genomes, parse_genomes
-from saintBioutils.file_io import get_paths
+from saintBioutils.utilities.file_io import get_paths, make_output_directory
 from saintBioutils.utilities.logger import config_logger
 from tqdm import tqdm
 
@@ -65,7 +67,7 @@ from pyrewton.cazymes.evaluate_tools.test_sets import (
     compile_output_file_path,
     write_out_test_set,
 )
-from pyrewton.utilities.file_io import make_output_directory, io_create_eval_testsets
+from pyrewton.utilities.file_io import io_create_eval_testsets
 from pyrewton.utilities.parsers.cmd_parser_create_eval_test_sets import build_parser_dict
 
 
@@ -113,20 +115,13 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         genome_dir = args.output / "genomes"
         make_output_directory(genome_dir, args.force, args.nodelete)
 
-    # create file for storing CAZome coverage
-    headers = (
-        f"Genomic accession\tTotal proteins\tTotal cazymes\tGenome CAZome percent\t"
-        "CAZome sample size\tCAZome coverage percent\n"
-    )
-    cazome_coverage_path = args.output / "cazome_coverage.txt"
-    with open(cazome_coverage_path,"w") as fh:
-        fh.write(headers)
-
     # get the YAML file containing the genomic assemblies to be used for creating test sets
     assembly_dict = io_create_eval_testsets.retrieve_assemblies_dict(args.yaml)
 
     # get dict containing the genomic assemblies of all CAZymes in CAZy
     cazy_dict = io_create_eval_testsets.get_cazy_dict(args.cazy)
+
+    time_stamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
 
     header = (
         "Genomic_accession\t"
@@ -136,11 +131,18 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         "CAZome_coverage_percentage\t"
         "CAZyme_sample_size\n"
     )
-    time_stamp = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
     coverage_log_path = args.output / f"cazome_coverage_{time_stamp}.txt"
     with open(coverage_log_path, 'a') as fh:
         fh.write(header)
-
+    
+    headers = (
+        "Genomic_accession\t"
+        "Protein_accession\t"
+        "CAZyme_classification\n"
+    )
+    composition_log_path = args.output / f"test_set_composition_{time_stamp}.txt"
+    with open(composition_log_path, 'a') as fh:
+        fh.write(headers)
 
     temp_alignment_dir = args.output / "temp_alignment_dir"
 
@@ -174,8 +176,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 assembly_path,
                 assembly[0],
                 txid,
-                args.output,
-                subfolder="extracted_protein_seqs",
+                extract_seq_dir,
             )
 
             # differentiate between CAZymes and non-CAZymes and get test set of 100 known CAZymes
@@ -191,6 +192,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 fasta_path,
                 temp_alignment_dir,
                 assembly[0],
+                args,
             )
 
             if selected_cazymes is None:
@@ -215,6 +217,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 total_proteins,
                 total_cazymes,
                 coverage_log_path,
+                composition_log_path,
                 args,
             )
 
@@ -239,7 +242,7 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
     of proteins and CAZymes extracted from the genome.
     """
     logger = logging.getLogger(__name__)
-    cazyme_accessions = set()  # ott checking duplicate cazymes not selected
+    cazyme_accessions = set()
     cazymes = []
     non_cazymes = {}  # {accession: Protein_instance}
 
@@ -266,34 +269,31 @@ def separate_cazymes_and_noncazymes(cazy_dict, input_fasta, temp_alignment_dir, 
             # get the CAZyme classification, 1 = CAZyme, 0 = non-CAZyme
             try:
                 cazy_dict[accession]
+
                 cazyme_classification = 1
+                
                 if accession not in cazyme_accessions:
-                    cazyme_accessions.add(accession)
                     cazymes.append(Protein(accession, sequence, cazyme_classification))
 
             except KeyError:
                 cazyme_classification = 0
                 non_cazymes[accession] = Protein(accession, sequence, cazyme_classification)
-                # write to FASTA file
+                # write to FASTA file for use in all-vs-all BLAST alignment
                 seq = str(sequence)
                 seq = "\n".join([seq[i : i + 60] for i in range(0, len(seq), 60)])
-                file_content = f">{accession} \n{seq}\n"
+                file_content = f">{accession}\n{seq}\n"
                 fh.write(file_content)
-    
-    total_proteins = len(cazymes) + len(list(non_cazymes.keys()))
-    total_cazymes = len(cazymes)
 
     # randomly selected n CAZymes
     try:
         selected_cazymes = random.sample(cazymes, args.sample_size)
-        # write selected CAZymes to FASTA file in temp dir
+        # write selected CAZymes to FASTA file in temp dir for all-vs-all BLAST alignment
         with open(cazyme_fasta, "w") as fh:
             for cazyme in tqdm(selected_cazymes, desc="Writing selected CAZymes to FASTA"):
-                # write query CAZyme to FASTA and build a database
                 seq = str(cazyme.sequence)
                 seq = "\n".join([seq[i : i + 60] for i in range(0, len(seq), 60)])
 
-                file_content = f">{cazyme.accession} \n{seq}\n"
+                file_content = f">{cazyme.accession}\n{seq}\n"
 
                 fh.write(file_content)
 

@@ -22,11 +22,10 @@
 :func get_ecami_additional_info: Retrieve predicted EC numbers and additional domains
 """
 
+import logging
 import re
 
-import pandas as pd
-import numpy as np
-
+from Bio import SeqIO
 from tqdm import tqdm
 
 from pyrewton.cazymes.evaluate_tools.parse import CazymeDomain, CazymeProteinPrediction
@@ -53,6 +52,7 @@ def parse_ecami_output(ecami_output_path, fasta_path):
 
         # retrieve protein accession, removing the '>' prefix and stripping white space
         protein_accession = prediction_output[0][1:].strip()
+        protein_accession = protein_accession.split(' ')[0]
 
         # retrieve the CAZy family
         cazy_family = prediction_output[1].split(":")[0].strip()
@@ -175,27 +175,29 @@ def add_non_cazymes(ecami_predictions, fasta_path):
 
     Return a dictionary keyed by protein accession and valued by corresponding ECAMIprediction instance.
     """
-    # Add non-CAZymes
-    # open the FASTA file containing the input protein sequences
-    with open(fasta_path, "r") as fh:
-        fasta = fh.read().splitlines()
+    logger = logging.getLogger(__name__)
 
-    for line in tqdm(fasta, desc="Adding non-CAZymes"):
-        if line.startswith(">"):
+    testset_proteins = 0
 
-            # remove '>' prefix and white space
-            protein_accession = line[1:].strip()
+    # Add non-CAZymes from the original FASTA file test set
+    for record in SeqIO.parse(fasta_path, "fasta"):
+        protein_accession = record.id
+        testset_proteins += 1
 
-            # check if the protein is already listed in the eCAMI predictions
-            try:
-                ecami_predictions[protein_accession]
+        try:
+            ecami_predictions[protein_accession]
 
-            except KeyError:  # raised of protein not in ecami_predictions
-                cazyme_classification = 0
-                ecami_predictions[protein_accession] = CazymeProteinPrediction(
-                    "eCAMI",
-                    protein_accession,
-                    cazyme_classification,
-                )
+        except KeyError:  # raised of protein not in ecami_predictions
+            cazyme_classification = 0
+            ecami_predictions[protein_accession] = CazymeProteinPrediction(
+                "eCAMI",
+                protein_accession,
+                cazyme_classification,
+            )
+
+    logger.warning(
+        f"Found {testset_proteins} proteins in test set FASTA:\n{fasta_path}\n"
+        f"Parsing eCAMI output found {len(list(ecami_predictions.keys()))}"
+    )
 
     return ecami_predictions

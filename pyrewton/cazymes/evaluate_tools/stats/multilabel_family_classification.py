@@ -26,7 +26,7 @@ import pandas as pd
 
 from tqdm import tqdm
 
-from cazy_webscraper.sql.sql_orm import CazyFamily, Genbank, Session
+from scraper.sql.sql_orm import CazyFamily, Genbank, Session
 from sklearn.metrics import fbeta_score, confusion_matrix, recall_score, precision_score
 from sklearn.metrics.cluster import rand_score, adjusted_rand_score
 
@@ -119,7 +119,7 @@ def get_family_classifications(predictions, prediciton_tool, cazy, data_source, 
         else:
             # retrieve the ground thruth (CAZy determined) CAZy family annotations for the protein
             try:
-                cazy_annotations = cazy_dict[protein.protein_accession]
+                cazy_annotations = cazy[protein.protein_accession]
                 try:
                     for fam in cazy_annotations:
                         fam = fam.strip()
@@ -193,7 +193,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
     logger = logging.getLogger(__name__)
 
     stats_orientated_df_data = []  # [[CAZyFam, Prediction_Tool, Specificity, Recall, Fbeta, Accuracy]]
-    long_dataframe_data = []  # [[CAZyFam, StatParameter, PredicitonTool, StatValue]]
+    long_dataframe_data = []  # [[CAZyFam, PredictionTool, StatParam, StatValue]]
 
     family_names = foundation_dict()
     family_names = list(family_names.keys())
@@ -237,11 +237,11 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
             if (1 not in y_true) and (1 not in y_pred):
                 # do not include in statistics
                 logger.warning(
-                    f"{fam} not predicted by {tool} and not in known annotations\n"
+                    f"{fam} not predicted by {tool} and not in known annotations for the protein\n"
                     f"Excluding {fam} from evaluation by setting all stats results as NaN"
                 )
                 specific_logger.warning(
-                    f"{fam} not predicted by {tool} and not in known annotations. "
+                    f"{fam} not predicted by {tool} and not in known annotations for the protein.\n"
                     f"Excluding {fam} from evaluation by setting all stats results as NaN"
                 )
                 specificity = np.nan
@@ -264,13 +264,18 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
 
                 for stat in [
                     [specificity, "Specificity"],
-                    [recall, "Recall"],
+                    [recall, "Sensitivity"],
                     [precision, "Precision"],
                     [fbeta, "Fbeta_score"],
                     [accuracy, "Accuracy"],
+                    [np.nan, "TNs"],
+                    [np.nan, "FNs"],
+                    [np.nan, "TPs"],
+                    [np.nan, "FPs"],
+                    [np.nan, "Sensitivity_sample_size"],
                 ]:
                     # [[CAZyFam, StatParameter, PredicitonTool, StatValue]]
-                    longform_row = [fam, stat[1], tool, stat[0]]
+                    longform_row = [fam, tool, stat[1], stat[0]]
                     long_dataframe_data.append(longform_row)
 
                 continue
@@ -279,13 +284,13 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
 
             # recall aka sensitivity
             recall = recall_score(y_true, y_pred)
-            long_dataframe_data.append([fam, "Recall", tool, recall])
+            long_dataframe_data.append([fam, tool, "Sensitivity", recall])
 
             precision = precision_score(y_true, y_pred)
-            long_dataframe_data.append([fam, "Precision", tool, recall])
+            long_dataframe_data.append([fam, tool, "Precision", precision])
 
             fbeta = fbeta_score(y_true, y_pred, beta=args.beta)
-            long_dataframe_data.append([fam, "Fbeta_score", tool, fbeta])
+            long_dataframe_data.append([fam, tool, "Fbeta_score", fbeta])
 
             # create confusion matrix for calculating Specificty and Accuracy
             cm = confusion_matrix(y_true, y_pred)
@@ -307,10 +312,10 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
                 )
 
                 specificity = np.nan
-                long_dataframe_data.append([fam, "Specificity", tool, specificity])
+                long_dataframe_data.append([fam, tool, "Specificity", specificity])
 
                 accuracy = np.nan
-                long_dataframe_data.append([fam, "Accuracy", tool, accuracy])
+                long_dataframe_data.append([fam, tool, "Accuracy", accuracy])
 
                 # [[CAZyFam, Prediction_Tool, Specificity, Recall, Fbeta, Accuracy]]
                 stats_orientated_row = [
@@ -324,12 +329,18 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
                 ]
                 stats_orientated_df_data.append(stats_orientated_row)
 
+                for group in ['TNs', 'FNs', 'TPs', 'FPs']:
+                    longform_row = [fam, tool, group, np.nan]
+                    long_dataframe_data.append(longform_row)
+
+                continue
+
             # calculate specificity and accuracy
             specificity = tn / (tn + fp)
-            long_dataframe_data.append([fam, "Specificity", tool, specificity])
+            long_dataframe_data.append([fam, tool, "Specificity", specificity])
 
             accuracy = (tp + tn)/(tp + fp + fn + tn)
-            long_dataframe_data.append([fam, "Accuracy", tool, accuracy])
+            long_dataframe_data.append([fam, tool, "Accuracy", accuracy])
 
             # [[CAZyFam, Prediction_Tool, Specificity, Recall, Fbeta, Accuracy]]
             stats_orientated_row = [
@@ -343,6 +354,16 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
             ]
             stats_orientated_df_data.append(stats_orientated_row)
 
+            for group in [
+                ['TNs', tn],
+                ['FNs', fn],
+                ['TPs', tp],
+                ['FPs', fp],
+            ]:
+                longform_row = [fam, tool, group[0], group[1]]
+                long_dataframe_data.append(longform_row)
+
+
     # build statistics orientated datafrae
     stats_df = pd.DataFrame(
         stats_orientated_df_data,
@@ -350,23 +371,23 @@ def calc_fam_stats(predictions_df, ground_truths_df, time_stamp, args):
             "CAZy_family",
             "Prediction_tool",
             "Specificity",
-            "Recall",
+            "Sensitivity",
             "Precision",
             "Fbeta_score",
             "Accuracy",
         ],
     )
 
-    output_path = args.output / f"cazy_fam_stats_fam_per_row_{time_stamp}.csv"
+    output_path = args.output / f"family_per_row_stats_{time_stamp}.csv"
     stats_df.to_csv(output_path)
 
     # build long form dataframe
     longform_df = pd.DataFrame(
         long_dataframe_data,
-        columns=["CAZy_family", "Stat_parameter", "Prediction_tool", "Stat_value"],
+        columns=["CAZy_family", "Prediction_tool", "Statistical_parameter", "Statistic_value"],
     )
 
-    output_path = args.output / f"cazy_fam_long_form_stats_df_{time_stamp}.csv"
+    output_path = args.output / f"family_long_form_stats_df_{time_stamp}.csv"
     longform_df.to_csv(output_path)
 
     return

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# :args $1: absolute path to pyrewton prediction/tools dir
+# :args 1: path to pyrewton/cazymes/evaluate_tools dir
 
 # Installing the CAZyme prediciton tools dbCAN, eCAMI and CUPP
 # Requirements for these tools are installed via requirements.txt
@@ -8,6 +8,8 @@
 cd $1
 
 # install dbCAN
+echo "Installing dbCAN"
+
 test -d dbcan || mkdir dbcan
 cd dbcan
 
@@ -25,13 +27,24 @@ cd db \
 # To check the installtion of dbCAN has worked, navigate to the dbCAN directory and run:
 # run_dbcan.py EscheriaColiK12MG1655.fna prok --out_dir output_EscheriaColiK12MG1655
 
+echo "Finished installing dbCAN"
+
 # download eCAMI
+echo "Installing eCAMI"
 cd $1
 git clone https://github.com/zhanglabNKU/eCAMI.git ecami
 
+echo "Finished install eCAMI"
+
 # download CUPP
+echo "Installing CUPP"
+cd $1
+
 curl -o CUPP_v1.0.14.tar.gz "https://files.dtu.dk/fss/public/link/public/stream/read/CUPP_v1.0.14.tar.gz?linkToken=hLin6ni4p-SWuKfp&itemName=CUPP_program"
 tar -xzf CUPP_v1.0.14.tar.gz
+# rename the dir
 mv CUPP_v1.0.14 cupp
 # delete old file
 rm CUPP_v1.0.14.tar.gz
+
+echo "Finished install CUPP"

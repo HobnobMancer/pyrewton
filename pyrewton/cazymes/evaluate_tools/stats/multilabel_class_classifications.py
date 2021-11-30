@@ -220,36 +220,34 @@ def calculate_class_stats(
             y_pred = list(tp_fp_fn_predictions[cazy_class])
 
             # check if the CAZy class was included in predictions and ground truths
-            # if not exclude the class from the evaluation
+            # if not, exclude the class from the evaluation
             if (1 not in y_true) and (1 not in y_pred):
                 # do not include in statistics
                 logger.warning(
-                    f"{cazy_class} not predicted by {tool} in {accession} and not in known "
+                    f"{cazy_class} not predicted by {tool} and not in known "
                     f"annotations\nExcluding {cazy_class} from evaluation by setting all "
                     "stats results as NaN"
                 )
                 specific_logger.warning(
-                    f"{cazy_class} not predicted by {tool} in {accession} and not in known "
+                    f"{cazy_class} not predicted by {tool} and not in known "
                     f"annotations\nExcluding {cazy_class} from evaluation by setting all "
                     "stats results as NaN"
                 )
 
                 specificity = np.nan
-                class_stats_data.append(
-                    [accession, tool, cazy_class, "Specificity", specificity],
-                )
+                across_all_test_sets_data.append([tool, cazy_class, "Specificity", specificity])
 
                 sensitivity = np.nan
-                class_stats_data.append([accession, tool, cazy_class, "Recall", recall])
+                across_all_test_sets_data.append([tool, cazy_class, "Sensitivity", sensitivity])
                 
                 precision = np.nan
-                class_stats_data.append([accession, tool, cazy_class, "Precision", precision])
+                across_all_test_sets_data.append([tool, cazy_class, "Precision", precision])
                 
                 fbeta = np.nan
-                class_stats_data.append([accession, tool, cazy_class, "Fbeta_score", fbeta])
+                across_all_test_sets_data.append([tool, cazy_class, "Fbeta_score", fbeta])
                 
                 accuracy = np.nan
-                class_stats_data.append([accession, tool, cazy_class, "Accuracy", accuracy])
+                across_all_test_sets_data.append([tool, cazy_class, "Accuracy", accuracy])
 
                 continue
 
@@ -295,7 +293,7 @@ def calculate_class_stats(
             "Prediction_tool",
             "CAZy_class",
             "Specificity",
-            "Recall",
+            "Sensitivity",
             "Precision",
             "Fbeta_score",
             "Accuracy",
@@ -406,7 +404,7 @@ def calculate_class_stats_by_testsets(
                     )
 
                     sensitivity = np.nan
-                    class_stats_data.append([accession, tool, cazy_class, "Recall", recall])
+                    class_stats_data.append([accession, tool, cazy_class, "Sensitivity", sensitivity])
                     
                     precision = np.nan
                     class_stats_data.append([accession, tool, cazy_class, "Precision", precision])
@@ -420,7 +418,7 @@ def calculate_class_stats_by_testsets(
                     continue
 
                 recall = recall_score(y_true, y_pred)
-                class_stats_data.append([accession, tool, cazy_class, "Recall", recall])
+                class_stats_data.append([accession, tool, cazy_class, "Sensitivity", recall])
 
                 precision = precision_score(y_true, y_pred)
                 class_stats_data.append([accession, tool, cazy_class, "Precision", precision])

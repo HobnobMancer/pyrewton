@@ -20,7 +20,6 @@
 
 import argparse
 import os
-import sys
 
 from pathlib import Path
 from typing import List, Optional
@@ -39,16 +38,22 @@ def build_parser(argv: Optional[List] = None):
 
     # Add path to input fasta files
     parser.add_argument(
-        "input",
+        "prediction_dir",
         type=Path,
-        metavar="input directory",
         help="Path to directory containing outputs from prediction tools and test sets fasta files",
+    )
+    parser.add_argument(
+        "testset_dir",
+        type=Path,
+        help=(
+            "Path to directory containing test set dir from create_test_sets_*.py,\n"
+            "containing the dirs 'alignment_scores' and 'test_sets'"
+        ),
     )
     parser.add_argument(
         "cazy",
         type=Path,
-        metavar="cazy annotations dict",
-        help="Path to JSON file of CAZy annotations of proteins (ground truths)",
+        help="Path to JSON file or local CAZyme db of CAZy annotations of proteins (ground truths)",
     )
 
     # Add optional arguments to parser

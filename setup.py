@@ -47,7 +47,7 @@ class InstallCPTs(Command):
     def run(self):
         """Run command"""
         installation_path = self.pyrewton_dir + "/installation.sh"
-        tools_dir = self.pyrewton_dir + "/pyrewton/cazymes/prediction/tools"
+        tools_dir = self.pyrewton_dir + "/pyrewton/cazymes/evaluate_tools/tools"
         subprocess.check_call([installation_path, tools_dir])
 
 
@@ -102,8 +102,10 @@ setuptools.setup(
         "bioservices>=1.7.9",
         "numpy>=1.19.4",
         "pandas>=1.0.3",
+        "psutil",
         "pyyaml>=5.3.1",
         "run-dbcan==2.0.11",
+        "saintBioutils",
         "scipy>=1.5.4",
         "sqlalchemy>=1.4.2",
         "tqdm>=4.53.0",

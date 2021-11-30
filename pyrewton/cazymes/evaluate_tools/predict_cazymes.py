@@ -48,13 +48,13 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from saintBioutils.utilities import config_logger
+from saintBioutils.utilities.file_io import get_paths, make_output_directory
+from saintBioutils.utilities.logger import config_logger
 from tqdm import tqdm
 from typing import List, Optional
 
 from pyrewton.cazymes.evaluate_tools.tools import invoke_prediction_tools
 from pyrewton.utilities.parsers.cmd_parser_predict_cazymes import build_parser
-from pyrewton.utilities.file_io import make_output_directory, io_get_paths
 
 
 @dataclass
@@ -105,8 +105,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     check_cwd()
 
     # If specified output directory for genomic files, create output directory
-    if args.output is not sys.stdout:
-        make_output_directory(args.output, args.force, args.nodelete)
+    make_output_directory(args.output, args.force, args.nodelete)
 
     # invoke prediction tools and build prediciton Proteome instances
     get_predictions(args)
@@ -117,24 +116,24 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 def check_cwd():
     """Check user invoked script in correct directory so can access the prediciton tools.
 
-    If user is not within any of pyrewton/cazymes/prediction module directories then
+    If user is not within any of pyrewton/cazymes/evaluate_tools module directories then
     raise error and terminate program. Excepted directories for starting at:
-    pyrewton/cazymes/prediction
-    pyrewton/cazymes/tools
+    pyrewton/cazymes/evaluate_tools
+    pyrewton/cazymes/evaluate_tools/tools
 
     Return nothing.
     """
     logger = logging.getLogger(__name__)
     current_path = os.getcwd()
 
-    if current_path.endswith("pyrewton/cazymes/prediction"):
+    if current_path.endswith("pyrewton/cazymes/evaluate_tools"):
         return
 
-    elif current_path.endswith("pyrewton/cazymes/prediction/tools"):
+    elif current_path.endswith("pyrewton/cazymes/evaluate_tools/tools"):
         logger.warning(
             (
                 "Script invoked in 'tools' directory.\n"
-                "Changed current working directory to pyrewton/cazymes/prediction."
+                "Changed current working directory to pyrewton/cazymes/evaluate_tools."
             )
         )
         os.chdir('..')
@@ -144,8 +143,9 @@ def check_cwd():
         logger.error(
             (
                 "Script invokved in wrong directory.\n"
+                f"CWD: {current_path}\n"
                 "To be able to access dbCAN, CUPP and eCAMI please invokve script when cwd is\n"
-                "pyrewton/cazymes/prediction within the pyrewton programm. Terminating program."
+                "pyrewton/cazymes/evaluate_tools within the pyrewton programm. Terminating program."
             )
         )
         sys.exit(1)
@@ -159,10 +159,7 @@ def get_predictions(args):
     Return list of Proteome class objects, queries to prediction tools.
     """
     # create list of paths to all fasta files in input directory
-    all_fasta_paths = io_get_paths.get_fasta_paths(args)
-
-    # create empty list to store all instances of Proteome class objects
-    predictions = []
+    all_fasta_paths = get_paths.get_file_paths(args.input, suffixes=[".fasta", ".fa"])
 
     # for each FASTA file invoke dbCAN, CUPP and eCAMI
     for file_path in tqdm(all_fasta_paths, desc="Invoking tools for FASTA file"):  # make tqdm
@@ -188,12 +185,7 @@ def get_predictions(args):
         # invoke prediction tools and retrieve paths to the prediction tools outputs
         full_outdir_path = invoke_prediction_tools(prediction_tool_query)
 
-        # update outdir path with full path
-        prediction_tool_query.prediction_paths["dir"] = full_outdir_path
-
-        predictions.append(prediction_tool_query)
-
-    return predictions
+    return
 
 
 def get_protein_source(file_path):

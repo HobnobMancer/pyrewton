@@ -3,7 +3,9 @@ biopython
 bioservices
 numpy
 pandas
+psutil
 pyyaml
+saintBioutils
 scipy
 sqlalchemy>=1.4.2
 tqdm

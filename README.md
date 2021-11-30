@@ -51,27 +51,28 @@ The easiest method is to use pip to install `pyrewton` and all requirements.
 
 1. Create a virtual environment with dependencies, then activate the environment - _where venv_name is an chosen name for the virtual environment_
 ```bash
-`conda create -n <venv_name> python=3.8 diamond hmmer prodigal -c conda-forge -c bioconda`   
-`conda activate <venv_name>`
+conda create -n <venv_name> python=3.8 diamond hmmer prodigal -c conda-forge -c bioconda  
+conda activate <venv_name>
 ```
 
 2. Clone the repository
 ```bash
-`git clone https://github.com/HobnobMancer/pyrewton.git`
+git clone https://github.com/HobnobMancer/pyrewton.git
+cd pyrewton  # navigate into the repo root
 ```
 
 3. Install pyrewton:
 ```bash
-`pip3 install -e <path to directory containing setup.py file>` 
+pip3 install -e . 
 ```  
 Do not forget to use the **-e** option when install using pip3, otherwise each time pyrewton is invoked a ModuleNotFound error will be raised. Pass the path to the **directory** containign the setup.py file not the path to the setup.py file; if you are currently in the root directory of the repoistory where the file is located, simply use '.' to indicate the current working directory.
 
 4. Install the third party CAZyme prediction tools
 The easiest way to do this, and ensure they are installed into the correct directories is to use:
 ```bash  
-`python3 <path to pyrewton setup.py> cpt -p <path to root pyrewton dir`
+python3 . cpt -p .
 ```
-For example, if the cwd is the root `pyrewton` dir, use the following command:
+For example, if the cwd is the root `pyrewton` dir, use the following command:python3 setup.py cpt -p .
 ```bash
 python3 setup.py cpt -p .
 ```
