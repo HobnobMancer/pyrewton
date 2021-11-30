@@ -326,6 +326,9 @@ def evaluate_performance(predictions, cazy, data_source, args):
         args,
     )  # creates a dataframe USED FOR EVALUATION IN R
 
+    if args.tax_groups is not None:  # compare perforamnce between taxonomy groups
+        evaluate_tax_group_performance(binary_c_nc_statistics)
+
     return
 
 
@@ -590,3 +593,45 @@ def add_fam_freq(testset, freq_dict, cazy, data_source):
                     )
 
     return freq_dict
+
+
+def evaluate_tax_group_performance(binary_c_nc_statistics, time_stamp, args):
+    """Evaluate the performance of the CAZyme classifiers between the taxonomy groups.
+    
+    :param binary_c_nc_statistics: Pandas df, of binary evaluation
+        columns: Statistic_parameter, Genomic_assembly, Prediction_tool, Statistic_value
+    :param time_stamp: str, date and time evaluation was invoked
+    :param args: cmd-line args parser
+    
+    Return nothing.
+    """
+    logger = logging.getLogger(__name__)
+
+    tax_dict = {}  # keyed by tax group name, valued by genomic accessions
+
+    # add on taxonomy group column to the binary_c_nc_statistics df
+    tax_groups = []  # new content for the tax_group column
+    index = 0
+    for index in range(len(binary_c_nc_statistics['Statistic_parameter'])):
+        row = binary_c_nc_statistics.iloc[index]
+        genomic_accession = row['Genomic_assembly']
+        tax_group = None
+        for taxa in tax_dict:
+            try:
+                tax_group = tax_dict[taxa][genomic_accession]
+            except KeyError:
+                pass
+        if tax_group is None:
+            logger.warning(
+                f'Accession {genomic_accession} retrieved from test sets but not included in tax group data\n'
+                'Setting tax_group as NaN for test set'
+            )
+            tax_groups.append(tax_group)
+        else:
+            tax_groups.append(tax_group)
+    
+    binary_c_nc_statistics['Tax_group'] = tax_groups
+
+    output_path = args.output / f'binary_classification_tax_comparison_{time_stamp}.csv'
+    binary_c_nc_statistics.to_csv(output_path)  # USED FOR EVALUATION IN R
+    
