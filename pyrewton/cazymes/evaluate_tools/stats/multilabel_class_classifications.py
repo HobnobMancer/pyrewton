@@ -233,20 +233,18 @@ def calculate_class_stats(
                     "stats results as NaN"
                 )
 
-                specificity = np.nan
-                across_all_test_sets_data.append([tool, cazy_class, "Specificity", specificity])
-
                 sensitivity = np.nan
-                across_all_test_sets_data.append([tool, cazy_class, "Sensitivity", sensitivity])
-                
+                data.append(sensitivity)
+                specificity = np.nan
+                data.append(specificity)
                 precision = np.nan
-                across_all_test_sets_data.append([tool, cazy_class, "Precision", precision])
-                
+                data.append(precision)
                 fbeta = np.nan
-                across_all_test_sets_data.append([tool, cazy_class, "Fbeta_score", fbeta])
-                
+                data.append(fbeta)
                 accuracy = np.nan
-                across_all_test_sets_data.append([tool, cazy_class, "Accuracy", accuracy])
+                data.append(accuracy)
+
+                across_all_test_sets_data.append(data)
 
                 continue
 
