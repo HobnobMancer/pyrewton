@@ -2172,4 +2172,12 @@ kable(fam_classification_df_tax.ari.complete, caption="Adjusted Rand Index of CA
 
 # Conclusions
 
+Overall, all CAZyme classifiers showed strong performances at all three levels of CAZyme classification (CAZyme/non-CAZyme. CAZy class and CAZy family).
+
+Performance was extremely strong for CAZyme classifiers for across all levels of CAZyme classification, performance in CAZyme classifiers varied most greatly for sensitivity.
+
+In general, the CAZyme/non-CAZyme, CAZy class and CAZy family classifications were accurate for all CAZyme classifiers (i.e. when a classification is predicted it was frequently correct). however, the CAZyme classifiers do not predict a comprehensive CAZome. CAZyme classifiers performance differed most greatly by sensitivity, which indicated an non-comprehensive annotation of the CAZome, CAZy class members and CAZy family members.
+
+Classifying Bacterial or Eukaryote had neglebialbe impact on the performance of the CAZyme classification at at every level of classification (CAZyme/non-CAZyme. CAZy class and CAZy family).
+
 
