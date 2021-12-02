@@ -184,7 +184,7 @@ p.cazome.c <- ggplot(test_set_cov_df, aes(x=CAZome_coverage_percentage)) +
 p.cazome.c
 ```
 
-```{r saveCov, echo=FALSE}
+```{r saveCov, include=FALSE}
 pdf(file = "cazomeCovHis.pdf", width = 8.58, height = 5.5)
 p.cazome.c
 dev.off()
@@ -456,7 +456,7 @@ mp.binary.acc = ggplot(subset_acc %>% group_by(Prediction_tool), aes(x=Predictio
 plot_grid(mp.binary.spec, mp.binary.sens, mp.binary.prec, mp.binary.f1, mp.binary.acc, labes='AUTO', ncol=3)
 ```
 
-```{r saveBinMuliPlot, indluce=FALSE}
+```{r saveBinMuliPlot, include=FALSE}
 png("binary_multiplot.png", units='in', width=8, height=6,res=900)
 plot_grid(mp.binary.spec, mp.binary.sens, mp.binary.prec, mp.binary.f1, mp.binary.acc, labes='AUTO', ncol=3)
 dev.off()
@@ -904,7 +904,7 @@ A single CAZyme can be included in multiple CAZy classes leading to the multilab
 
 The RI is the measure of accuracy across all potential classifications of a protein. The RI ranges from 0 (no correct annotations) to 1 (all annotations correct). The ARI is the RI adjusted for chance, where 0 is the equivalent to assigning the CAZy class annotations randomly, -1 where the annotations are systematically handed out incorrectly and 1 where the annotations are all correct.
 
-```{r riCalc, echoFALSE}
+```{r riCalc, include=FALSE}
 class_ri_ari_raw_df$Prediction_tool <- factor(class_ri_ari_raw_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
 
 class_ri_stats_df <- class_ri_ari_raw_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Rand_index), "Standard Deviation"=sd(Rand_index))
@@ -912,7 +912,7 @@ class_ri_stats_df <- class_ri_ari_raw_df %>% group_by(Prediction_tool) %>% summa
 kable(class_ri_stats_df, caption="Rand Index of CAZyme classifier classification of CAZy class annotations", align='c', digits = 4) %>% kable_styling(full_width = F)
 ```
 
-```{r ariCalc, echoFALSE}
+```{r ariCalc, echo=FALSE}
 class_ari_stats_df <- class_ri_ari_raw_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
 
 kable(class_ari_stats_df, caption="Adjusted Rand Index of CAZyme classifier classification of CAZy class annotations", align='c', digits = 4) %>% kable_styling(full_width = F)
@@ -1379,7 +1379,7 @@ p.cbm.sens.spec.fam <- plot_fam_sens_vs_spec(cazy_fam_spec_sense_df, 'CBM', 0.8,
 p.cbm.sens.spec.fam
 ```
 
-```{r saveCbmSensSpec, echo=FALSE}
+```{r saveCbmSensSpec, include=FALSE}
 pdf(file = "famSpecSensCbm.pdf", width = 11.25, height = 7)
 p.cbm.sens.spec.fam
 dev.off()
@@ -1850,7 +1850,7 @@ fam_ri_stats_df <- fam_classification_df %>% group_by(Prediction_tool) %>% summa
 kable(fam_ri_stats_df, caption="Rand Index of CAZyme classifier classification of CAZy family annotations", align='c', digits = 4) %>% kable_styling(full_width = F)
 ```
 
-```{r famAriCalc, echoFALSE}
+```{r famAriCalc, echo=FALSE}
 fam_ari_stats_df <- fam_classification_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
 
 kable(fam_ari_stats_df, caption="Adjusted Rand Index of CAZyme classifier classification of CAZy family annotations", align='c', digits = 4) %>% kable_styling(full_width = F)
