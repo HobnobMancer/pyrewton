@@ -129,6 +129,11 @@ euk.cazy_class_df <- read.csv("data/class_stats_per_test_set_tax_comparison_Euka
 # import class_classification_tax_comparison_<date>.csv
 # df containing CAZy class RI and ARI
 class_tax_ri_ari_df <- read.csv("data/class_classification_tax_comparison_2021_12_01.csv")
+
+# import "family_classification_tax_comparison_<date>.csv
+# Contains the CAZy family predictions for every protein for every CAZy family, and includes the 
+# Rand index and Adjusted Rand Index for every protein
+fam_classification_df_tax <- read.csv ("data/family_classification_tax_comparison_2021_12_01.csv")
 ```
 
 <div id="summary">
@@ -2094,13 +2099,14 @@ stat.bact.class_tax_ri_ari_df <- bact.class_tax_ri_ari_df %>% group_by(Predictio
 stat.euk.class_tax_ri_ari_df <- euk.class_tax_ri_ari_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Rand_index), "Standard Deviation"=sd(Rand_index))
 stat.all.class_tax_ri_ari_df <- all.class_tax_ri_ari_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Rand_index), "Standard Deviation"=sd(Rand_index))
 
-tax.class_tax_ri_ari_df <- stat.bact.class_tax_ri_ari_df
-tax.class_tax_ri_ari_df$`Eukaryote Mean` <- stat.euk.class_tax_ri_ari_df$Mean
-tax.class_tax_ri_ari_df$`Eukaryote Standard Deviation` <- stat.euk.class_tax_ri_ari_df$`Standard Deviation`
-tax.class_tax_ri_ari_df$`All Mean` <- stat.all.class_tax_ri_ari_df$Mean
-tax.class_tax_ri_ari_df$`All Standard Deviation` <- stat.all.class_tax_ri_ari_df$`Standard Deviation`
+tax.class_tax_ri_df <- stat.bact.class_tax_ri_ari_df
+tax.class_tax_ri_df$`Eukaryote Mean` <- stat.euk.class_tax_ri_ari_df$Mean
+tax.class_tax_ri_df$`Eukaryote Standard Deviation` <- stat.euk.class_tax_ri_ari_df$`Standard Deviation`
+tax.class_tax_ri_df$`All Mean` <- stat.all.class_tax_ri_ari_df$Mean
+tax.class_tax_ri_df$`All Standard Deviation` <- stat.all.class_tax_ri_ari_df$`Standard Deviation`
 
-kable(tax.class_tax_ri_ari_df, caption="Overall performance of CAZy class classification (represented by the Rand Index) by CAZy classifiers per taxonomy group", align='c', digits = 4) %>% kable_styling(full_width = F)
+tax.class_tax_ri_df$Prediction_tool <- factor(tax.class_tax_ri_df$Prediction_tool, levels=c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
+kable(tax.class_tax_ri_df, caption="Overall performance of CAZy class classification (represented by the Rand Index) by CAZy classifiers per taxonomy group", align='c', digits = 4) %>% kable_styling(full_width = F)
 
 ```
 
@@ -2112,17 +2118,57 @@ stat.bact.class_tax_ri_ari_df <- bact.class_tax_ri_ari_df %>% group_by(Predictio
 stat.euk.class_tax_ri_ari_df <- euk.class_tax_ri_ari_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
 stat.all.class_tax_ri_ari_df <- all.class_tax_ri_ari_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
 
-tax.class_tax_ri_ari_df <- stat.bact.class_tax_ri_ari_df
-tax.class_tax_ri_ari_df$`Eukaryote Mean` <- stat.euk.class_tax_ri_ari_df$Mean
-tax.class_tax_ri_ari_df$`Eukaryote Standard Deviation` <- stat.euk.class_tax_ri_ari_df$`Standard Deviation`
-tax.class_tax_ri_ari_df$`All Mean` <- stat.all.class_tax_ri_ari_df$Mean
-tax.class_tax_ri_ari_df$`All Standard Deviation` <- stat.all.class_tax_ri_ari_df$`Standard Deviation`
+tax.class_tax_ari_df <- stat.bact.class_tax_ri_ari_df
+tax.class_tax_ari_df$`Eukaryote Mean` <- stat.euk.class_tax_ri_ari_df$Mean
+tax.class_tax_ari_df$`Eukaryote Standard Deviation` <- stat.euk.class_tax_ri_ari_df$`Standard Deviation`
+tax.class_tax_ari_df$`All Mean` <- stat.all.class_tax_ri_ari_df$Mean
+tax.class_tax_ari_df$`All Standard Deviation` <- stat.all.class_tax_ri_ari_df$`Standard Deviation`
 
-kable(tax.class_tax_ri_ari_df, caption="Overall performance of CAZy class classification (represented by the Adjusted Rand Index) by CAZy classifiers per taxonomy group", align='c', digits = 4) %>% kable_styling(full_width = F)
+tax.class_tax_ari_df$Prediction_tool <- factor(tax.class_tax_ari_df$Prediction_tool, levels=c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
+kable(tax.class_tax_ari_df, caption="Overall performance of CAZy class classification (represented by the Adjusted Rand Index) by CAZy classifiers per taxonomy group", align='c', digits = 4) %>% kable_styling(full_width = F)
 
 ```
 
 ## CAZy family classification
+
+```{r famRi, echo=FALSE}
+fam_classification_df_tax.bact <- fam_classification_df_tax[which(fam_classification_df_tax$Tax_group == "Bacteria"), ]
+fam_classification_df_tax.euk <- fam_classification_df_tax[which(fam_classification_df_tax$Tax_group == "Eukaryote"), ]
+
+all.vector <- rep("All", nrow(fam_classification_df_tax))
+fam_classification_df_tax.all <- fam_classification_df_tax
+fam_classification_df_tax.all$Tax_group <- all.vector
+
+fam_classification_df_tax.ri.bact <- fam_classification_df_tax.bact %>% group_by(Prediction_tool) %>% summarise("Bacteria Mean"=mean(Rand_index), "Bacteria Standard Deviation"=sd(Rand_index))
+fam_classification_df_tax.ri.euk <- fam_classification_df_tax.euk %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Rand_index), "Standard Deviation"=sd(Rand_index))
+fam_classification_df_tax.ri.all <- fam_classification_df_tax.all %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Rand_index), "Standard Deviation"=sd(Rand_index))
+
+fam_classification_df_tax.ri.complete <- fam_classification_df_tax.ri.bact
+fam_classification_df_tax.ri.complete$`Eukaryote Mean` <- fam_classification_df_tax.ri.euk$`Mean`
+fam_classification_df_tax.ri.complete$`Eukaryote Standard Deviation` <- fam_classification_df_tax.ri.euk$`Standard Deviation`
+fam_classification_df_tax.ri.complete$`All Mean` <- fam_classification_df_tax.ri.all$`Mean`
+fam_classification_df_tax.ri.complete$`All Standard Deviation` <- fam_classification_df_tax.ri.all$`Standard Deviation`
+
+fam_classification_df_tax.ri.complete$Prediction_tool <- factor(fam_classification_df_tax.ri.complete$Prediction_tool, levels=c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
+
+kable(fam_classification_df_tax.ri.complete, caption="Rand Index of CAZyme classifier classification of CAZy family annotations per taxonomt group", align='c', digits = 4) %>% kable_styling(full_width = F)
+```
+
+```{r famAriCalc, echo=FALSE}
+fam_classification_df_tax.ari.bact <- fam_classification_df_tax.bact %>% group_by(Prediction_tool) %>% summarise("Bacteria Mean"=mean(Adjusted_Rand_index), "Bacteria Standard Deviation"=sd(Adjusted_Rand_index))
+fam_classification_df_tax.ari.euk <- fam_classification_df_tax.euk %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
+fam_classification_df_tax.ari.all <- fam_classification_df_tax.all %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
+
+fam_classification_df_tax.ari.complete <- fam_classification_df_tax.ari.bact
+fam_classification_df_tax.ari.complete$`Eukaryote Mean` <- fam_classification_df_tax.ari.euk$`Mean`
+fam_classification_df_tax.ari.complete$`Eukaryote Standard Deviation` <- fam_classification_df_tax.ari.euk$`Standard Deviation`
+fam_classification_df_tax.ari.complete$`All Mean` <- fam_classification_df_tax.ari.all$`Mean`
+fam_classification_df_tax.ari.complete$`All Standard Deviation` <- fam_classification_df_tax.ari.all$`Standard Deviation`
+
+fam_classification_df_tax.ari.complete$Prediction_tool <- factor(fam_classification_df_tax.ari.complete$Prediction_tool, levels=c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
+
+kable(fam_classification_df_tax.ari.complete, caption="Adjusted Rand Index of CAZyme classifier classification of CAZy family annotations per taxonomt group", align='c', digits = 4) %>% kable_styling(full_width = F)
+```
 
 # Conclusions
 
