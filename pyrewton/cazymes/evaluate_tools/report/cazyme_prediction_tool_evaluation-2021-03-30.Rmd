@@ -355,11 +355,6 @@ p.binary.f1 = ggplot(subset_f1 %>% group_by(Prediction_tool),
 p.binary.f1
 ```
 
-```{r saveBinF1, include=FALSE}
-pdf(file = "binaryF1.pdf", width = 8.58, height = 5.5)
-p.binary.f1
-dev.off()
-```
 
 ```{r saveBinF1, include=FALSE}
 png(file = "binaryF1.png", units = 'in', width = 8.58, height = 5.5, res=900)
@@ -1910,10 +1905,39 @@ The evaluation per classifier per taxonomy group, versus all test sets pooled to
 
 ## Binary classification of CAZymes and non-CAZymes
 
+Here we calculate the mean plus and minus the standard deviation of the F1-score of each prediction tool for each taxonomy group, to represent the overall performance per taxonomy group.
+
+```{r summaryTaxGroupBinary, echo=FALSE}
+tax_binary_f1_df <- binary_tax_df[which(binary_stat_df$Statistic_parameter == "FBeta-score"), ]
+
+tax_binary_f1_df.bact <- tax_binary_f1_df[which(tax_binary_f1_df$Tax_group == "Bacteria"), ]
+tax_binary_f1_df.euk <- tax_binary_f1_df[which(tax_binary_f1_df$Tax_group == "Eukaryote"), ]
+
+# create dataframe with tax_group set as "All"
+all.vector <- rep("All", nrow(tax_binary_f1_df))
+all.tax_binary_f1_df <- tax_binary_f1_df
+all.tax_binary_f1_df$Tax_group <- all.vector
+
+bact.tax_binary_f1_mean_sd <- tax_binary_f1_df.bact %>% group_by(Prediction_tool) %>% summarise("Bacterial Mean"=mean(Statistic_value), "Bacterial Standard Deviation"=sd(Statistic_value))
+euk.tax_binary_f1_mean_sd <- tax_binary_f1_df.euk %>% group_by(Prediction_tool) %>% summarise("Eukaryote Mean"=mean(Statistic_value), "Eukaryote Standard Deviation"=sd(Statistic_value))
+all.tax_binary_f1_mean_sd <- all.tax_binary_f1_df %>% group_by(Prediction_tool) %>% summarise("All Mean"=mean(Statistic_value), "All Standard Deviation"=sd(Statistic_value))
+
+tax_binary_f1_mean_sd <- bact.tax_binary_f1_mean_sd
+tax_binary_f1_mean_sd$`Eukaryote Mean` <- euk.tax_binary_f1_mean_sd$`Eukaryote Mean`
+tax_binary_f1_mean_sd$`Eukaryote Standard Deviation` <- euk.tax_binary_f1_mean_sd$`Eukaryote Standard Deviation`
+tax_binary_f1_mean_sd$`All Mean` <- all.tax_binary_f1_mean_sd$`All Mean`
+tax_binary_f1_mean_sd$`All Standard Deviation` <- all.tax_binary_f1_mean_sd$`All Standard Deviation`
+
+tax_binary_f1_mean_sd$Prediction_tool <- factor(tax_binary_f1_mean_sd$Prediction_tool, levels=c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
+
+kable(tax_binary_f1_mean_sd, caption="Overall performance of binary CAZyme/non-CAZyme classification by CAZy classifiers per taxonomy group", align='c', digits = 4) %>% kable_styling(full_width = F)
+
+```
+
 ```{r buildTaxGroupBinaryPlots, include=FALSE}
 build.tax.group.binary.plot <- function(stat_parameter, tax.df){
   # subset stat parameter
-  tax_binary_stat <- tax.df[which(binary_stat_df$Statistic_parameter == stat_parameter), ]
+  tax_binary_stat <- tax.df[which(tax.df$Statistic_parameter == stat_parameter), ]
   
   tax_binary_stat$Prediction_tool <- factor(tax_binary_stat$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
   
