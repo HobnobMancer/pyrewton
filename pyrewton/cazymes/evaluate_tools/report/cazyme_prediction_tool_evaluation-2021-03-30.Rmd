@@ -110,6 +110,14 @@ cazy_family_long_df <- read.csv("data/family_long_form_stats_df_2021_11_09.csv")
 # Contains the CAZy family epredictions for every protein for every CAZy family, and includes the 
 # Rand indx and Adjusted Rand Index for every protein
 fam_classification_df <- read.csv ("data/family_predicted_classifications_2021_11_09.csv")
+
+#
+# Load in data for taxonomy group comparison
+#
+
+# import binary_classification_tax_comparison_2021_12_01.csv
+# Contains the same data as binary_stat_df with the additional 'Tax_group' column
+binary_tax_df <- read.csv("data/binary_classification_tax_comparison_2021_12_01.csv")
 ```
 
 <div id="summary">
@@ -176,7 +184,7 @@ p.cazome.c <- ggplot(test_set_cov_df, aes(x=CAZome_coverage_percentage)) +
 p.cazome.c
 ```
 
-```{r saveCov. include=FALSE}
+```{r saveCov, echo=FALSE}
 pdf(file = "cazomeCovHis.pdf", width = 8.58, height = 5.5)
 p.cazome.c
 dev.off()
@@ -353,6 +361,12 @@ p.binary.f1
 dev.off()
 ```
 
+```{r saveBinF1, include=FALSE}
+png(file = "binaryF1.png", units = 'in', width = 8.58, height = 5.5, res=900)
+p.binary.f1
+dev.off()
+```
+
 ## Accuracy
 
 Accuarcy (calculated using (TP + TN) / (TP + TN + FP + FN) ) provides an idea of the overall performance of the classifiers as a measure of the degree to which their CAZyme/non-CAZyme predictions conforms to the correct result. Figure \@ref(fig:accbc) is a plot of respective data from table \@ref(tab:sumstats).
@@ -491,64 +505,64 @@ p.bs.annotated
 dev.off()
 ```
 
-### Investigation of Non-CAZymes classified as CAZymes (False positives)
+## Investigation of Non-CAZymes classified as CAZymes (False positives)
 
 Few of the known non-CAZymes were classified as CAZymes by the CAZyme classifiers. The cause of the non-CAZymes being classified as CAZymes may be because of a very high sequence similarity between the non-CAZyme and known CAZymes, and/or CAZy incorrectly classifying the non-CAZyme as a CAZyme and not a CAZyme. The latter case maybe true if all 6 classifiers classify the non-CAZyme as a CAZyme.
 
 First the equation to calcualte the correlation must be determined. Either the Pearson correlation or Spearman's correlation coefficients could be calculated. Pearson's correlation assumes the data is normally distributed, Spearman's correlation is a nonparametric statistic becuase it does not presume a normal distribution. Figure \@ref(fig:fp.cor)[A] shows a histogram of the number of prediciton tools that generated false positives and figure \@ref(fig:fp.cor)[B] a boxplot of the highest BLAST score ratios of false positives against CAZymes in the same test set. Both plots demonstrate the data is not normally distributed. Additionally, figure \@ref(fig:fp.cor)[B] shows the data contains outliers, which Pearson's correlation is also sensitive to. Therefore, the Spearman's correlation coefficient was calculated, which is shown in \@ref(fig:fp.cor)[C].
 
 ```{r fp.cor, echo=FALSE, fig.cap="Correlation between BLAST score ratio between the number of CAZyme classifiers that incorrectly identified a known non-CAZymes as a CAZyme and the highest BLAST score ratio of the known non-CAZyme and a known CAZyme fromt the same test set."}
-binary_fp_predictions <- false_positive[!duplicated(false_positive), ]
-binary_fp_predictions
-p.total.fp <- ggplot(binary_fp_predictions, )
-# plot bar charts to show wish tools produced the most fp and fn predictions
-# find correlation between number of tools and BLAST score ratio
-# Calculate Spearman rank correlation not Pearson correlation becuase do not want to apply assumption that the data is normally distributed
-nt_bsr_cor = cor(false_positive_dfs$Number_of_tools, false_positive_dfs$BLAST_score_ratio, method = "spearman")  
-
-p.nt = ggplot(false_positive_dfs, aes(x=Number_of_tools, fill=Number_of_tools)) +
-  geom_histogram(alpha=0.7, color="black") +
-  scale_fill_manual(values=col_vector) +
-  theme(legend.position = "none",
-        legend.background = element_rect(fill = figbg, color = figbg),
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold"),
-        strip.text = element_text(size=12)) +
-  xlab("Number of Classifiers") +
-  ylab("Number of Proteins")
-
-p.bsr = ggplot(false_positive_dfs, aes(x="", y=BLAST_score_ratio)) +
-  geom_boxplot(outlier.shape=NA) +
-  geom_jitter(width=0.1, height=0) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold"),
-        strip.text = element_text(size=12)) +
-  ylab("BLAST Score Ratio") +
-  xlab("All BLAST Score Ratios")
-
-# pdf(file = "binaryNonCAZymes.pdf", width = 8.58, height = 5.5)
-p.fp.cor = ggplot(false_positive_dfs, aes(x=Number_of_tools, y=BLAST_score_ratio, colour=BLAST_score_ratio)) +
-  geom_point() +
-  geom_smooth(method="lm", color="#cc1b70") +
-  annotate("text", x=5.5, y=2.1,
-            label=paste("rs = ", format(nt_bsr_cor, digits=3)), color="#cc1b70") + 
-  theme(legend.background = element_rect(fill = figbg, color = figbg),
-        legend.position="bottom",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold"),
-        strip.text = element_text(size=12)) +
-  labs(x = "Number of Classifiers", y = "BLAST Score Ratio", color="BLAST Score Ratio")
-# p.fp.cor
-# dev.off()
-
-# pdf(file = "binaryNonCAZymesFull.pdf", width = 8.58, height = 5.5)
-left_panel <- plot_grid(p.nt, p.bsr, nrow=2, labels=c("A", "B"))
-plot_grid(left_panel, p.fp.cor, ncol=2, labels = c("", "C"), rel_widths = c(0.75,2))
-# dev.off()
+# binary_fp_predictions <- false_positive[!duplicated(false_positive), ]
+# binary_fp_predictions
+# p.total.fp <- ggplot(binary_fp_predictions, )
+# # plot bar charts to show wish tools produced the most fp and fn predictions
+# # find correlation between number of tools and BLAST score ratio
+# # Calculate Spearman rank correlation not Pearson correlation becuase do not want to apply assumption that the data is normally distributed
+# nt_bsr_cor = cor(false_positive_dfs$Number_of_tools, false_positive_dfs$BLAST_score_ratio, method = "spearman")  
+# 
+# p.nt = ggplot(false_positive_dfs, aes(x=Number_of_tools, fill=Number_of_tools)) +
+#   geom_histogram(alpha=0.7, color="black") +
+#   scale_fill_manual(values=col_vector) +
+#   theme(legend.position = "none",
+#         legend.background = element_rect(fill = figbg, color = figbg),
+#         plot.background = element_rect(fill = figbg, color = figbg),
+#         axis.text=element_text(size=10),
+#         axis.title=element_text(size=12,face="bold"),
+#         strip.text = element_text(size=12)) +
+#   xlab("Number of Classifiers") +
+#   ylab("Number of Proteins")
+# 
+# p.bsr = ggplot(false_positive_dfs, aes(x="", y=BLAST_score_ratio)) +
+#   geom_boxplot(outlier.shape=NA) +
+#   geom_jitter(width=0.1, height=0) +
+#   theme(legend.position = "none",
+#         plot.background = element_rect(fill = figbg, color = figbg),
+#         axis.text=element_text(size=10),
+#         axis.title=element_text(size=12,face="bold"),
+#         strip.text = element_text(size=12)) +
+#   ylab("BLAST Score Ratio") +
+#   xlab("All BLAST Score Ratios")
+# 
+# # pdf(file = "binaryNonCAZymes.pdf", width = 8.58, height = 5.5)
+# p.fp.cor = ggplot(false_positive_dfs, aes(x=Number_of_tools, y=BLAST_score_ratio, colour=BLAST_score_ratio)) +
+#   geom_point() +
+#   geom_smooth(method="lm", color="#cc1b70") +
+#   annotate("text", x=5.5, y=2.1,
+#             label=paste("rs = ", format(nt_bsr_cor, digits=3)), color="#cc1b70") + 
+#   theme(legend.background = element_rect(fill = figbg, color = figbg),
+#         legend.position="bottom",
+#         plot.background = element_rect(fill = figbg, color = figbg),
+#         axis.text=element_text(size=10),
+#         axis.title=element_text(size=12,face="bold"),
+#         strip.text = element_text(size=12)) +
+#   labs(x = "Number of Classifiers", y = "BLAST Score Ratio", color="BLAST Score Ratio")
+# # p.fp.cor
+# # dev.off()
+# 
+# # pdf(file = "binaryNonCAZymesFull.pdf", width = 8.58, height = 5.5)
+# left_panel <- plot_grid(p.nt, p.bsr, nrow=2, labels=c("A", "B"))
+# plot_grid(left_panel, p.fp.cor, ncol=2, labels = c("", "C"), rel_widths = c(0.75,2))
+# # dev.off()
 ```
 
 ## Conclusions on the Binary CAZyme/non-CAZyme Prediction Performance
@@ -614,7 +628,7 @@ kable(
 
 Below a proportional area plot representing the F-beta score for each CAZyme classifier for each test set is generated. each square is sized proportional to the relative sample size. Every class was not included in every sample, resulting in different sample sizes between CAZy classes, the same between classifiers.
 
-```{r statsFbeta echo=FALSE}
+```{r statsFbeta, echo=FALSE}
 cazy_class_df$Prediction_tool <- factor(cazy_class_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
 
 # subset Fbeta-scores
@@ -824,12 +838,12 @@ dev.off()
 
 #### CAZy class classification for GT
 
-```{r classGhSpecSens, echo=FALSE}
+```{r classGtSpecSens, echo=FALSE}
 p.class.gt.spec.sens <- plot.class.sens.vs.spec(cazy_class_spec_sense_df, 'GT', 0.5, 0.001, 0.01)
 p.class.gt.spec.sens
 ```
 
-```{r saveclassGhSpecSens, echo=FALSE}
+```{r saveclassGtSpecSens, echo=FALSE}
 pdf(file = "classGtSpecVsSens", width = 11.25, height = 7)
 p.class.gt.spec.sens
 dev.off()
@@ -837,12 +851,12 @@ dev.off()
 
 #### CAZy class classification for PL
 
-```{r classGhSpecSens, echo=FALSE}
+```{r classPlSpecSens, echo=FALSE}
 p.class.pl.spec.sens <- plot.class.sens.vs.spec(cazy_class_spec_sense_df, 'PL', 0.5, 0.001, 0.01)
 p.class.pl.spec.sens
 ```
 
-```{r saveclassGhSpecSens, echo=FALSE}
+```{r saveclassPlSpecSens, echo=FALSE}
 pdf(file = "classPlSpecVsSens", width = 11.25, height = 7)
 p.class.pl.spec.sens
 dev.off()
@@ -850,12 +864,12 @@ dev.off()
 
 #### CAZy class classification for CE
 
-```{r classGhSpecSens, echo=FALSE}
+```{r classCeSpecSens, echo=FALSE}
 p.class.ce.spec.sens <- plot.class.sens.vs.spec(cazy_class_spec_sense_df, 'CE', 0.4, 0.001, 0.01)
 p.class.ce.spec.sens
 ```
 
-```{r saveclassGhSpecSens, echo=FALSE}
+```{r saveclassCeSpecSens, echo=FALSE}
 pdf(file = "classCeSpecVsSens", width = 11.25, height = 7)
 p.class.ce.spec.sens
 dev.off()
@@ -863,12 +877,12 @@ dev.off()
 
 #### CAZy class classification for AA
 
-```{r classGhSpecSens, echo=FALSE}
+```{r classAaSpecSens, echo=FALSE}
 p.class.aa.spec.sens <- plot.class.sens.vs.spec(cazy_class_spec_sense_df, 'AA', 0.3, 0.001, 0.01)
 p.class.aa.spec.sens
 ```
 
-```{r saveclassGhSpecSens, echo=FALSE}
+```{r saveclassAaSpecSens, echo=FALSE}
 pdf(file = "classAaSpecVsSens", width = 11.25, height = 7)
 p.class.aa.spec.sens
 dev.off()
@@ -876,12 +890,12 @@ dev.off()
 
 #### CAZy class classification for CBM
 
-```{r classGhSpecSens, echo=FALSE}
+```{r classCbmSpecSens, echo=FALSE}
 p.class.cbm.spec.sens <- plot.class.sens.vs.spec(cazy_class_spec_sense_df, 'CBM', 0.3, 0.001, 0.01)
 p.class.cbm.spec.sens
 ```
 
-```{r saveclassGhSpecSens, echo=FALSE}
+```{r saveclassCbmSpecSens, echo=FALSE}
 pdf(file = "classCbmSpecVsSens", width = 11.25, height = 7)
 p.class.cbm.spec.sens
 dev.off()
@@ -930,7 +944,7 @@ p.ri.class = ggplot(class_ri_ari_raw_df %>% group_by(Prediction_tool), aes(x=Pre
 p.ri.class
 ```
 
-```{r classRI, echo=FALSE, fig.cap="Violin plot of Adjusted Rand Index (ARI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy classes."}
+```{r classARI, echo=FALSE, fig.cap="Violin plot of Adjusted Rand Index (ARI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy classes."}
 
 p.ari.class = ggplot(class_ri_ari_raw_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Adjusted_Rand_index, fill=Prediction_tool)) +
   geom_violin() +
@@ -955,7 +969,7 @@ The following section evaluates the performance of the CAZyme classifiers to pre
 
 Below is a table summarising the overall CAZy family classifications for each test set across all CAZy families.
 
-```{r cazyClassStasTable, echo=FALSE}
+```{r cazyFamStasTable, echo=FALSE}
 # Calculate statistics
 fam_subset_spec <- cazy_family_long_df[which(cazy_family_long_df$Statistical_parameter == "Specificity"), ]
 fam_subset_spec  <- fam_subset_spec[complete.cases(fam_subset_spec), ]
@@ -1134,7 +1148,7 @@ cazy_class_fam_sample_size_df
 
 To evaluate the performance of predicting each CAZy family independent of all other CAZy families, the sensitivity and precision for each CAZy family, for each CAZyme classifier was calculated and plotted against each other (Fig.\@ref(fig:famrllvspc)). Whereas sensitivity was plotted against sensitivity for CAZy classes, owing to the extremely small variation in specificity scores, sensitivity was plotted as a percentage against log10 of the specificity percentage.
 
-```{r prepPerformancePerFam, echo=FALSE}
+```{r prepPerformancePerFam, include=FALSE}
 # func for adding CAZy class column for a given CAZy class
 add_parent_class <- function(fam.df, fam.names, cazy.class){
   fam.df.subset <- fam.df[which(fam.df$CAZy_family %in% fam.names), ]
@@ -1258,7 +1272,7 @@ plot.fam.sens.jitter <- function(fam.class.df, cazy.class){
 
 Later on in this report the sensitivity for each CAZy family is plotted against specificity, as was done with CAZy class. However, owing to extremely small different in specificity, with no tool producing a specificity less than 0.995 it is extremely difficult to separate performance by specificity, so a boxplot and scatter plot for each is plotted. Each point represents one test set, and test sets are grouped by CAZyme classifier and facet wrapped by the parent CAZy class.
 
-```{r famsSense, echo=FALSE, fig.cap="Scatter plot of overlaying a one-dimensional box-and-whisker plot of sensitivity for each CAZy family for each CAZyme classifier."}
+```{r famsSense, echo=FALSE, fig.cap="Scatter plot of overlaying a one-dimensional box-and-whisker plot of sensitivity for each CAZy family for each CAZyme classifier. Each CAZy family is represented as a single point on the plot."}
 # set order data is presented
 cazy_fam_spec_sense_df$Prediction_tool <- factor(cazy_fam_spec_sense_df$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) 
 cazy_fam_spec_sense_df$CAZy_class <- factor(cazy_fam_spec_sense_df$CAZy_class, levels = c('GH', 'GT', 'PL', 'CE', 'AA', 'CBM'))
@@ -1277,7 +1291,7 @@ p.fam.sens <- ggplot(cazy_fam_spec_sense_df %>% group_by(Prediction_tool), aes(x
 p.fam.sens
 ```
 
-```{r saveFamSensBoxplot, echo=FALSE}
+```{r saveFamSensBoxplot, include=FALSE}
 pdf(file = "famSensBoxplots.pdf", width = 11.25, height = 7)
 p.fam.sens
 dev.off()
@@ -1289,12 +1303,12 @@ For better resolution we can group the CAZy families by their parent CAzy classe
 
 Figure \@ref(fig:ghfamrllvspc) shows the plotting of sensitivity against specificity for each Glycoside Hydrolase CAZy family.
 
-```{r ghfamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Glycoside Hydrolases."}
+```{r ghfamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Glycoside Hydrolases. Each GH CAZy family is represented as a single point on the plot."}
 p.gh.sens.spec.fam <- plot_fam_sens_vs_spec(cazy_fam_spec_sense_df, 'GH', 0.8, 0.1, 0.8, 99.7, 100)
 p.gh.sens.spec.fam
 ```
 
-```{r saveGhSensSpec, echo=FALSE}
+```{r saveGhSensSpec, include=FALSE}
 pdf(file = "famSpecSensGh.pdf", width = 11.25, height = 7)
 p.gh.sens.spec.fam
 dev.off()
@@ -1304,12 +1318,12 @@ dev.off()
 
 Figure \@ref(fig:gtfamrllvspc) shows the plotting of sensitivity against specificity for each Glycosyltransferases CAZy family.
 
-```{r gtfamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Glycosyltransferases"}
+```{r gtfamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Glycosyltransferases. Each GT CAZy family is represented as a single point on the plot."}
 p.gt.sens.spec.fam <- plot_fam_sens_vs_spec(cazy_fam_spec_sense_df, 'GT', 0.8, 0.1, 0.8, 99.8, 100)
 p.gt.sens.spec.fam
 ```
 
-```{r saveGtSensSpec, echo=FALSE}
+```{r saveGtSensSpec, include=FALSE}
 pdf(file = "famSpecSensGt.pdf", width = 11.25, height = 7)
 p.gt.sens.spec.fam
 dev.off()
@@ -1319,12 +1333,12 @@ dev.off()
 
 Figure \@ref(fig:ghfamrllvspc) shows the plotting of sensitivity against specificity for each Polysaccharide Lyases CAZy family.
 
-```{r plfamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Polysaccharide Lyases"}
+```{r plfamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Polysaccharide Lyases. Each PL CAZy family is represented as a single point on the plot."}
 p.pl.sens.spec.fam <- plot_fam_sens_vs_spec(cazy_fam_spec_sense_df, 'PL', 0.9, 0.1, 0.4, 99.9, 100)
 p.pl.sens.spec.fam
 ```
 
-```{r savePlSensSpec, echo=FALSE}
+```{r savePlSensSpec, include=FALSE}
 pdf(file = "famSpecSensPl.pdf", width = 11.25, height = 7)
 p.pl.sens.spec.fam
 dev.off()
@@ -1334,12 +1348,12 @@ dev.off()
 
 Figure \@ref(fig:cefamrllvspc) shows the plotting of sensitivity against specificity for each Carbohydrate Esterases CAZy family.
 
-```{r cefamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Carbohydrate Esterases"}
+```{r cefamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Carbohydrate Esterases. Each CE CAZy family is represented as a single point on the plot."}
 p.ce.sens.spec.fam <- plot_fam_sens_vs_spec(cazy_fam_spec_sense_df, 'CE', 0.8, 0.1, 0.5, 99.7, 100)
 p.ce.sens.spec.fam
 ```
 
-```{r saveCeSensSpec, echo=FALSE}
+```{r saveCeSensSpec, include=FALSE}
 pdf(file = "famSpecSensCe.pdf", width = 11.25, height = 7)
 p.ce.sens.spec.fam
 dev.off()
@@ -1349,12 +1363,12 @@ dev.off()
 
 Figure \@ref(fig:afamrllvspc) shows the plotting of sensitivity against specificity for each Auxillary Activities CAZy family.
 
-```{r aafamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Auxillary Activities"}
+```{r aafamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Auxillary Activities. Each AA CAZy family is represented as a single point on the plot."}
 p.aa.sens.spec.fam <- plot_fam_sens_vs_spec(cazy_fam_spec_sense_df, 'AA', 0.8, 0.1, 0.7, 99.7, 100)
 p.aa.sens.spec.fam
 ```
 
-```{r saveAaSensSpec, echo=FALSE}
+```{r saveAaSensSpec, include=FALSE}
 pdf(file = "famSpecSensAa.pdf", width = 11.25, height = 7)
 p.aa.sens.spec.fam
 dev.off()
@@ -1365,7 +1379,7 @@ dev.off()
 
 Figure \@ref(fig:cbmfamrllvspc) shows the plotting of sensitivity against specificity for each Carbohydrate Binding Module CAZy family.
 
-```{r cbmfamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Carbohydrate Binding Modules"}
+```{r cbmfamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Carbohydrate Binding Modules. Each CBM CAZy family is represented as a single point on the plot."}
 p.cbm.sens.spec.fam <- plot_fam_sens_vs_spec(cazy_fam_spec_sense_df, 'CBM', 0.8, 0.1, 1, 99.4, 100)
 p.cbm.sens.spec.fam
 ```
@@ -1380,477 +1394,449 @@ dev.off()
 
 We then pulled out the CAZy families with a sensitivity score less than 0.75, which there were only 10.
 
-```{r ghfamPoorFam, echo=FALSE, fig.cap="GH families which at least 3 tools scored and Fbeta-score of less than 0.75. The nubmer in bold next to each CAZy family is the number of known CAZymes from the CAZy family included across all test sets."}
-# pdf(file = "mlcGHpoorFams.pdf", width = 8.58, height = 4.8)
-gh.poor.fam.names <- gh.poor.fams$CAZy.family
-
-gh.poor.fam.subset <- gh.fam.subset[which(gh.fam.subset$CAZy_family %in% gh.poor.fam.names), ]
-
-gh.poor.fam.subset$Prediction_tool <- factor(gh.poor.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI'))
-gh.poor.fam.subset$CAZy_family <- factor(gh.poor.fam.subset$CAZy_family, levels = c("GH170", "GH166", "GH163", "GH138", "GH135", "GH123", "GH50", "GH45", "GH24", "GH0"))
-
-poor.fam.populations <- rep(c(19436, 17656, 463, 1080, 471, 640, 112, 22, 973, 4879), 6)
-
-# This table is manual cropped to add data to the plot below
-# tiff(file = "mlcPoorGHSupplement.tiff", width = 8, height = 5.5, units="in", res=700)
-p.gh.poor.pops <- ggplot(gh.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family)) +
-  xlab("Classifier") +
-  ylab("CAZy family") +
-    theme(legend.background = element_rect(fill = figbg, color = figbg),
-        plot.background = element_rect(fill = figbg, color = figbg),
-        text = element_text(size=10),
-        legend.text=element_text(size=10),
-        legend.title=element_text(size=12),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold")) +
-  labs(fill = expression(paste("F", beta, "-score"))) +
-  coord_cartesian(clip="off") +
-  geom_text(aes(label=poor.fam.populations, x="Family Population")) +
-  geom_text(data=gh.poor.fam.subset, aes(label=Recall_sample_size, x="CAZymes"))
-# p.gh.poor.pops
-# dev.off()
-
-# tiff(file = "mlcPoorGHFams.tiff", width = 7, height = 5.5, units="in", res=700)
-p.gh.poor.fam <- ggplot(gh.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=Fbeta_score)) +
-  geom_tile() +
-  scale_fill_viridis_c() +
-  xlab("Classifier") +
-  ylab("CAZy family") +
-  geom_text(data=gh.poor.fam.subset, aes(label=round(Fbeta_score, digits=3))) +
-    theme(legend.background = element_rect(fill = figbg, color = figbg),
-        plot.background = element_rect(fill = figbg, color = figbg),
-        text = element_text(size=10),
-        legend.text=element_text(size=10),
-        legend.title=element_text(size=12),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold")) +
-  labs(fill = expression(paste("F", beta, "-score")))
-p.gh.poor.fam
-# dev.off()
-```
-
-### GlycosylTransferases
-
-....
-
-```{r gtfamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class GlycosylTransferases."}
-gt.fam.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% gt.names), ]
-gt.fam.subset <- gt.fam.subset[complete.cases(gt.fam.subset), ]
-
-gt.fam.subset$Prediction_tool <- factor(gt.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI'))
-gt.fam.subset$Specificity_percentage <- gt.fam.subset$Specificity * 100
-gt.fam.subset$Recall_percentage <- gt.fam.subset$Recall * 100
-
-# pdf(file = "mlcGTfamsSpecSens.pdf", width = 11.25, height = 7)
-p.gt.fam = ggplot(gt.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) +
-  geom_point() +
-  scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=11,face="bold"),
-        strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-          labels = trans_format("log10", math_format(10^.x))) +
-  coord_trans(y="log10") +
-  facet_wrap(~ Prediction_tool)
-p.gt.fam
-# dev.off()
-```
-
-.....
-
-
-```{r gtfamPoorFam, echo=FALSE, fig.cap="GT families which at least 3 tools scored and Fbeta-score of less than 0.75. The nubmer in bold next to each CAZy family is the number of known CAZymes from the CAZy family included across all test sets."}
-
-gt.poor.fam.names <- gt.poor.fams$CAZy.family
-
-gt.poor.fam.subset <- gt.fam.subset[which(gt.fam.subset$CAZy_family %in% gt.poor.fam.names), ]
-
-gt.poor.fam.subset$Prediction_tool <- factor(gt.poor.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI'))
-gt.poor.fam.subset$CAZy_family <- factor(gt.poor.fam.subset$CAZy_family, levels=c("GT113", "GT111", "GT109", "GT80", "GT61", "GT60", "GT52", "GT47", "GT31", "GT29", "GT23", "GT10", "GT0"))
-
-gt.poor.fam.populations <- rep(c(1091, 1735, 99, 196, 6385, 388, 889, 1206, 2171, 959, 839, 1365, 20258), 6)
-
-# This table is manual cropped to add data to the plot below
-# tiff(file = "mlcPoorGTSupplement.tiff", width = 8, height = 5.5, units="in", res=700)
-p.gt.poor.pops <- ggplot(gt.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family)) +
-  xlab("Classifier") +
-  ylab("CAZy family") +
-    theme(legend.background = element_rect(fill = figbg, color = figbg),
-        plot.background = element_rect(fill = figbg, color = figbg),
-        text = element_text(size=10),
-        legend.text=element_text(size=10),
-        legend.title=element_text(size=12),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold")) +
-  labs(fill = expression(paste("F", beta, "-score"))) +
-  coord_cartesian(clip="off") +
-  geom_text(aes(label=gt.poor.fam.populations, x="Family Population")) +
-  geom_text(data=gt.poor.fam.subset, aes(label=Recall_sample_size, x="CAZymes"))
-p.gt.poor.pops
-# dev.off()
-
-# tiff(file = "mlcPoorGTFams.tiff", width = 7, height = 5.5, units="in", res=700)
-p.gt.poor.fam <- ggplot(gt.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=Fbeta_score)) +
-  geom_tile() +
-  scale_fill_viridis_c() +
-  xlab("Classifier") +
-  ylab("CAZy family") +
-  geom_text(data=gt.poor.fam.subset, aes(label=round(Fbeta_score, digits=3))) +
-    theme(legend.background = element_rect(fill = figbg, color = figbg),
-        plot.background = element_rect(fill = figbg, color = figbg),
-        text = element_text(size=10),
-        legend.text=element_text(size=10),
-        legend.title=element_text(size=12),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold"),
-        legend.position = "bottom") +
-  labs(fill = expression(paste("F", beta, "-score")))
-p.gt.poor.fam
-# dev.off()
-```
-
-...
-
-### Polysaccharide Lyases
-
-....
-
-```{r plfamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Polysaccharide Lyases."}
-pl.fam.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% pl.names), ]
-pl.fam.subset <- pl.fam.subset[complete.cases(pl.fam.subset), ]
-
-pl.fam.subset$Prediction_tool <- factor(pl.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI'))
-pl.fam.subset$Specificity_percentage <- pl.fam.subset$Specificity * 100
-pl.fam.subset$Recall_percentage <- pl.fam.subset$Recall * 100
-
-# pdf(file = "mlcPLfamsSpecSens.pdf", width = 11.25, height = 7)
-p.pl.fam = ggplot(pl.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) +
-  geom_point() +
-  scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=11,face="bold"),
-        strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-          labels = trans_format("log10", math_format(10^.x))) +
-  coord_trans(y="log10") +
-  facet_wrap(~ Prediction_tool)
-p.pl.fam
-# dev.off()
-```
-
-.....
-
-
-```{r plfamPoorFam, echo=FALSE, fig.cap="PL families which at least 3 tools scored and Fbeta-score of less than 0.75. The nubmer in bold next to each CAZy family is the number of known CAZymes from the CAZy family included across all test sets."}
-pdf(file = "mlcPLpoorFams.pdf", width = 8.58, height = 4.8)
-pl.poor.fam.names <- pl.poor.fams$CAZy.family
-
-pl.poor.fam.subset <- pl.fam.subset[which(pl.fam.subset$CAZy_family %in% pl.poor.fam.names), ]
-
-pl.poor.fam.subset$Prediction_tool <- factor(pl.poor.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI'))
-pl.poor.fam.subset$CAZy_family <- factor(pl.poor.fam.subset$CAZy_family, levels=c("PL38", "PL33", "PL31", "PL29", "PL0"))
-
-pl.poor.fam.populations <- rep(c(1108, 521, 270, 91, 1967), (length(pl.poor.fam.subset$Prediction_tool)/6))
-
-# This table is manual cropped to add data to the plot below
-# tiff(file = "mlcPoorPLSupplement.tiff", width = 8, height = 5.5, units="in", res=700)
-p.pl.poor.pops <- ggplot(pl.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family)) +
-  xlab("Classifier") +
-  ylab("CAZy family") +
-    theme(legend.background = element_rect(fill = figbg, color = figbg),
-        plot.background = element_rect(fill = figbg, color = figbg),
-        text = element_text(size=10),
-        legend.text=element_text(size=10),
-        legend.title=element_text(size=12),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold")) +
-  labs(fill = expression(paste("F", beta, "-score"))) +
-  coord_cartesian(clip="off") +
-  geom_text(aes(label=pl.poor.fam.populations, x="Family Population")) +
-  geom_text(data=pl.poor.fam.subset, aes(label=Recall_sample_size, x="CAZymes"))
-# p.pl.poor.pops
-# dev.off()
-
-# tiff(file = "mlcPoorPLFams.tiff", width = 7, height = 5.5, units="in", res=700)
-p.pl.poor.fam <- ggplot(pl.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=Fbeta_score)) +
-  geom_tile() +
-  scale_fill_viridis_c() +
-  xlab("Classifier") +
-  ylab("CAZy family") +
-  geom_text(data=pl.poor.fam.subset, aes(label=round(Fbeta_score, digits=3))) +
-    theme(legend.background = element_rect(fill = figbg, color = figbg),
-        plot.background = element_rect(fill = figbg, color = figbg),
-        text = element_text(size=10),
-        legend.text=element_text(size=10),
-        legend.title=element_text(size=12),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold")) +
-  labs(fill = expression(paste("F", beta, "-score")))
-p.pl.poor.fam
-# dev.off()
-```
-
-...
-
-### Carbohydrate Esterases
-
-....
-
-```{r cefamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Carbohydrate Esterases."}
-ce.fam.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% ce.names), ]
-ce.fam.subset <- ce.fam.subset[complete.cases(ce.fam.subset), ]
-
-ce.fam.subset$Prediction_tool <- factor(ce.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI'))
-ce.fam.subset$Specificity_percentage <- ce.fam.subset$Specificity * 100
-ce.fam.subset$Recall_percentage <- ce.fam.subset$Recall * 100
-
-# pdf(file = "mlcCEfamsSpecSens.pdf", width = 11.25, height = 7)
-p.ce.fam = ggplot(ce.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) +
-  geom_point() +
-  scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=11,face="bold"),
-        strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-          labels = trans_format("log10", math_format(10^.x))) +
-  coord_trans(y="log10") +
-  facet_wrap(~ Prediction_tool)
-p.ce.fam
-# dev.off()
-```
-
-.....
-
-
-```{r cefamPoorFam, echo=FALSE, fig.cap="CE families which at least 3 tools scored and Fbeta-score of less than 0.75. The nubmer in bold next to each CAZy family is the number of known CAZymes from the CAZy family included across all test sets."}
-
-ce.poor.fam.names <- ce.poor.fams$CAZy.family
-
-ce.poor.fam.subset <- ce.fam.subset[which(ce.fam.subset$CAZy_family %in% ce.poor.fam.names), ]
-
-ce.poor.fam.subset$Prediction_tool <- factor(ce.poor.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI'))
-ce.poor.fam.subset$CAZy_family <- factor(ce.poor.fam.subset$CAZy_family, levels=c("CE18", "CE16", "CE1", "CE0"))
-
-ce.poor.fam.populations <- rep(c(33, 182, 5102, 2688), (length(ce.poor.fam.subset$Prediction_tool)/6))
-
-# This table is manual cropped to add data to the plot below
-# tiff(file = "mlcPoorCESupplement.tiff", width = 8, height = 5.5, units="in", res=700)
-p.ce.poor.pops <- ggplot(ce.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family)) +
-  xlab("Classifier") +
-  ylab("CAZy family") +
-    theme(legend.background = element_rect(fill = figbg, color = figbg),
-        plot.background = element_rect(fill = figbg, color = figbg),
-        text = element_text(size=10),
-        legend.text=element_text(size=10),
-        legend.title=element_text(size=12),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold")) +
-  labs(fill = expression(paste("F", beta, "-score"))) +
-  coord_cartesian(clip="off") +
-  geom_text(aes(label=ce.poor.fam.populations, x="Family Population")) +
-  geom_text(data=ce.poor.fam.subset, aes(label=Recall_sample_size, x="CAZymes"))
-# p.ce.poor.pops
-# dev.off()
-
-# tiff(file = "mlcPoorCEFams.tiff", width = 7, height = 4, units="in", res=700)
-p.ce.poor.fam <- ggplot(ce.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=Fbeta_score)) +
-  geom_tile() +
-  scale_fill_viridis_c() +
-  xlab("Classifier") +
-  ylab("CAZy family") +
-  geom_text(data=ce.poor.fam.subset, aes(label=round(Fbeta_score, digits=3))) +
-    theme(legend.background = element_rect(fill = figbg, color = figbg),
-        plot.background = element_rect(fill = figbg, color = figbg),
-        text = element_text(size=10),
-        legend.text=element_text(size=10),
-        legend.title=element_text(size=12),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold")) +
-  labs(fill = expression(paste("F", beta, "-score")))
-p.ce.poor.fam
-# dev.off()
-```
-
-...
-
-### Auxiliary Activities
-
-....
-
-```{r aafamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Auxiliary Activities."}
-aa.fam.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% aa.names), ]
-aa.fam.subset <- aa.fam.subset[complete.cases(aa.fam.subset), ]
-
-aa.fam.subset$Prediction_tool <- factor(aa.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI'))
-aa.fam.subset$Specificity_percentage <- aa.fam.subset$Specificity * 100
-aa.fam.subset$Recall_percentage <- aa.fam.subset$Recall * 100
-
-# pdf(file = "mlcAAfamsSpecSens.pdf", width = 11.25, height = 7)
-p.aa.fam = ggplot(aa.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) +
-  geom_point() +
-  scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=11,face="bold"),
-        strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-          labels = trans_format("log10", math_format(10^.x))) +
-  coord_trans(y="log10") +
-  facet_wrap(~ Prediction_tool)
-p.aa.fam
-# dev.off()
-```
-
-.....
-
-
-```{r aafamPoorFam, echo=FALSE, fig.cap="AA families which at least 3 tools scored and Fbeta-score of less than 0.75. The nubmer in bold next to each CAZy family is the number of known CAZymes from the CAZy family included across all test sets."}
-
-aa.poor.fam.names <- aa.poor.fams$CAZy.family
-
-aa.poor.fam.subset <- aa.fam.subset[which(aa.fam.subset$CAZy_family %in% aa.poor.fam.names), ]
-
-aa.poor.fam.subset$Prediction_tool <- factor(aa.poor.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI'))
-aa.poor.fam.subset$CAZy_family <- factor(aa.poor.fam.subset$CAZy_family, levels=c("AA14", "AA8", "AA7", "AA2", "AA0"))
-
-aa.poor.fam.populations <- rep(c(38, 176, 702, 77), (length(aa.poor.fam.subset$Prediction_tool)/6))
-
-# This table is manual cropped to add data to the plot below
-# tiff(file = "mlcPoorAASupplement.tiff", width = 8, height = 5.5, units="in", res=700)
-p.aa.poor.pops <- ggplot(aa.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family)) +
-  xlab("Classifier") +
-  ylab("CAZy family") +
-    theme(legend.background = element_rect(fill = figbg, color = figbg),
-        plot.background = element_rect(fill = figbg, color = figbg),
-        text = element_text(size=10),
-        legend.text=element_text(size=10),
-        legend.title=element_text(size=12),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold")) +
-  labs(fill = expression(paste("F", beta, "-score"))) +
-  coord_cartesian(clip="off") +
-  geom_text(aes(label=aa.poor.fam.populations, x="Family Population")) +
-  geom_text(data=aa.poor.fam.subset, aes(label=Recall_sample_size, x="CAZymes"))
-# p.aa.poor.pops
-# dev.off()
-
- #tiff(file = "mlcPoorAAFams.tiff", width = 7, height = 4, units="in", res=700)
-p.aa.poor.fam <- ggplot(aa.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=Fbeta_score)) +
-  geom_tile() +
-  scale_fill_viridis_c() +
-  xlab("Classifier") +
-  ylab("CAZy family") +
-  geom_text(data=aa.poor.fam.subset, aes(label=round(Fbeta_score, digits=3))) +
-    theme(legend.background = element_rect(fill = figbg, color = figbg),
-        plot.background = element_rect(fill = figbg, color = figbg),
-        text = element_text(size=10),
-        legend.text=element_text(size=10),
-        legend.title=element_text(size=12),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold")) +
-  labs(fill = expression(paste("F", beta, "-score")))
-p.aa.poor.fam
-# dev.off()
-```
-
-...
-
-### Carbohydrate-Binding Module
-
-....
-
-```{r cbmfamrllvspc, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Carbohydrate-Binding Module."}
-cbm.fam.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% cbm.names), ]
-cbm.fam.subset <- cbm.fam.subset[complete.cases(cbm.fam.subset), ]
-
-cbm.fam.subset$Prediction_tool <- factor(cbm.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI'))
-cbm.fam.subset$Specificity_percentage <- cbm.fam.subset$Specificity * 100
-cbm.fam.subset$Recall_percentage <- cbm.fam.subset$Recall * 100
-
-# pdf(file = "mlcCBMfamsSpecSens.pdf", width = 11.25, height = 7)
-p.cbm.fam = ggplot(cbm.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) +
-  geom_point() +
-  scale_color_manual(values=colour_set) +
-  theme(legend.position = "none",
-        plot.background = element_rect(fill = figbg, color = figbg),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=11,face="bold"),
-        strip.text = element_text(size=11)) +
-  labs(x = "Sensitivity", y = "Specificity (log10)") +
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-          labels = trans_format("log10", math_format(10^.x))) +
-  coord_trans(y="log10") +
-  facet_wrap(~ Prediction_tool)
-p.cbm.fam
-# dev.off()
-```
-
-.....
-
-
-```{r cbmfamPoorFam, echo=FALSE, fig.cap="CBM families which at least 3 tools scored and Fbeta-score of less than 0.75. The nubmer in bold next to each CAZy family is the number of known CAZymes from the CAZy family included across all test sets."}
-
-cbm.poor.fam.names <- cbm.poor.fams$CAZy.family
-
-cbm.poor.fam.subset <- cbm.fam.subset[which(cbm.fam.subset$CAZy_family %in% cbm.poor.fam.names), ]
-
-cbm.poor.fam.subset$Prediction_tool <- factor(cbm.poor.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI'))
-cbm.poor.fam.subset$CAZy_family <- factor(cbm.poor.fam.subset$CAZy_family, levels=c(
-  "CBM87", "CBM67", "CBM61", "CBM57", "CBM56", "CBM54", "CBM51", "CBM50", "CBM47", "CBM45", "CBM44", "CBM42", "CBM41", "CBM38", "CBM36", "CBM35", "CBM32", "CBM30",
-  "CBM26", "CBM25", "CBM24", "CBM22", "CBM20", "CBM19", "CBM16", "CBM14", "CBM13", "CBM12", "CBM11", "CBM10", "CBM9", "CBM6", "CBM5", "CBM4", "CBM3", "CBM2",
-  "CBM1",    "CBM0"
-))
-
-cbm.poor.fam.populations <- rep(c(33, 713, 776, 946, 241, 251, 113191, 1117, 189, 26, 903, 597, 135, 4359, 10217, 38, 889, 712, 202, 1418, 2376, 160, 994, 3570, 10811, 2675, 169, 333, 627, 4491, 12516, 1195, 2046, 7150, 1671, 1394), (length(cbm.poor.fam.subset$Prediction_tool)/6))
-
-# This table is manual cropped to add data to the plot below
-# tiff(file = "mlcPoorCBMSupplement.tiff", width = 8, height = 5.5, units="in", res=700)
-p.cbm.poor.pops <- ggplot(cbm.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family)) +
-  xlab("Classifier") +
-  ylab("CAZy family") +
-    theme(legend.background = element_rect(fill = figbg, color = figbg),
-        plot.background = element_rect(fill = figbg, color = figbg),
-        text = element_text(size=10),
-        legend.text=element_text(size=10),
-        legend.title=element_text(size=12),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold")) +
-  labs(fill = expression(paste("F", beta, "-score"))) +
-  coord_cartesian(clip="off") +
-  geom_text(aes(label=cbm.poor.fam.populations, x="Family Population")) +
-  geom_text(data=cbm.poor.fam.subset, aes(label=Recall_sample_size, x="CAZymes"))
-# p.cbm.poor.pops
-# dev.off()
-
-# tiff(file = "mlcPoorCBMFams.tiff", width = 7, height = 6, units="in", res=700)
-p.cbm.poor.fam <- ggplot(cbm.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=Fbeta_score)) +
-  geom_tile() +
-  scale_fill_viridis_c() +
-  xlab("Classifier") +
-  ylab("CAZy family") +
-  geom_text(data=cbm.poor.fam.subset, aes(label=round(Fbeta_score, digits=3))) +
-    theme(legend.background = element_rect(fill = figbg, color = figbg),
-        plot.background = element_rect(fill = figbg, color = figbg),
-        text = element_text(size=10),
-        legend.text=element_text(size=10),
-        legend.title=element_text(size=12),
-        axis.text=element_text(size=10),
-        axis.title=element_text(size=12,face="bold")) +
-  labs(fill = expression(paste("F", beta, "-score")))
-p.cbm.poor.fam
-# dev.off()
-```
+<!-- ```{r ghfamPoorFam, echo=FALSE, fig.cap="GH families which at least 3 tools scored and Fbeta-score of less than 0.75. The nubmer in bold next to each CAZy family is the number of known CAZymes from the CAZy family included across all test sets."} -->
+<!-- # pdf(file = "mlcGHpoorFams.pdf", width = 8.58, height = 4.8) -->
+<!-- gh.poor.fam.names <- gh.poor.fams$CAZy.family -->
+
+<!-- gh.poor.fam.subset <- gh.fam.subset[which(gh.fam.subset$CAZy_family %in% gh.poor.fam.names), ] -->
+
+<!-- gh.poor.fam.subset$Prediction_tool <- factor(gh.poor.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI')) -->
+<!-- gh.poor.fam.subset$CAZy_family <- factor(gh.poor.fam.subset$CAZy_family, levels = c("GH170", "GH166", "GH163", "GH138", "GH135", "GH123", "GH50", "GH45", "GH24", "GH0")) -->
+
+<!-- poor.fam.populations <- rep(c(19436, 17656, 463, 1080, 471, 640, 112, 22, 973, 4879), 6) -->
+
+<!-- # This table is manual cropped to add data to the plot below -->
+<!-- # tiff(file = "mlcPoorGHSupplement.tiff", width = 8, height = 5.5, units="in", res=700) -->
+<!-- p.gh.poor.pops <- ggplot(gh.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family)) + -->
+<!--   xlab("Classifier") + -->
+<!--   ylab("CAZy family") + -->
+<!--     theme(legend.background = element_rect(fill = figbg, color = figbg), -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         text = element_text(size=10), -->
+<!--         legend.text=element_text(size=10), -->
+<!--         legend.title=element_text(size=12), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=12,face="bold")) + -->
+<!--   labs(fill = expression(paste("F", beta, "-score"))) + -->
+<!--   coord_cartesian(clip="off") + -->
+<!--   geom_text(aes(label=poor.fam.populations, x="Family Population")) + -->
+<!--   geom_text(data=gh.poor.fam.subset, aes(label=Recall_sample_size, x="CAZymes")) -->
+<!-- # p.gh.poor.pops -->
+<!-- # dev.off() -->
+
+<!-- # tiff(file = "mlcPoorGHFams.tiff", width = 7, height = 5.5, units="in", res=700) -->
+<!-- p.gh.poor.fam <- ggplot(gh.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=Fbeta_score)) + -->
+<!--   geom_tile() + -->
+<!--   scale_fill_viridis_c() + -->
+<!--   xlab("Classifier") + -->
+<!--   ylab("CAZy family") + -->
+<!--   geom_text(data=gh.poor.fam.subset, aes(label=round(Fbeta_score, digits=3))) + -->
+<!--     theme(legend.background = element_rect(fill = figbg, color = figbg), -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         text = element_text(size=10), -->
+<!--         legend.text=element_text(size=10), -->
+<!--         legend.title=element_text(size=12), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=12,face="bold")) + -->
+<!--   labs(fill = expression(paste("F", beta, "-score"))) -->
+<!-- p.gh.poor.fam -->
+<!-- # dev.off() -->
+<!-- ``` -->
+
+<!-- ### GlycosylTransferases -->
+
+<!-- ```{r gtfamPoorFam1, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class GlycosylTransferases."} -->
+<!-- gt.fam.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% gt.names), ] -->
+<!-- gt.fam.subset <- gt.fam.subset[complete.cases(gt.fam.subset), ] -->
+
+<!-- gt.fam.subset$Prediction_tool <- factor(gt.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI')) -->
+<!-- gt.fam.subset$Specificity_percentage <- gt.fam.subset$Specificity * 100 -->
+<!-- gt.fam.subset$Recall_percentage <- gt.fam.subset$Recall * 100 -->
+
+<!-- # pdf(file = "mlcGTfamsSpecSens.pdf", width = 11.25, height = 7) -->
+<!-- p.gt.fam = ggplot(gt.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) + -->
+<!--   geom_point() + -->
+<!--   scale_color_manual(values=colour_set) + -->
+<!--   theme(legend.position = "none", -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=11,face="bold"), -->
+<!--         strip.text = element_text(size=11)) + -->
+<!--   labs(x = "Sensitivity", y = "Specificity (log10)") + -->
+<!--   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x), -->
+<!--           labels = trans_format("log10", math_format(10^.x))) + -->
+<!--   coord_trans(y="log10") + -->
+<!--   facet_wrap(~ Prediction_tool) -->
+<!-- p.gt.fam -->
+<!-- # dev.off() -->
+<!-- ``` -->
+
+<!-- ```{r gtfamPoorFam2, echo=FALSE, fig.cap="GT families which at least 3 tools scored and Fbeta-score of less than 0.75. The nubmer in bold next to each CAZy family is the number of known CAZymes from the CAZy family included across all test sets."} -->
+
+<!-- gt.poor.fam.names <- gt.poor.fams$CAZy.family -->
+
+<!-- gt.poor.fam.subset <- gt.fam.subset[which(gt.fam.subset$CAZy_family %in% gt.poor.fam.names), ] -->
+
+<!-- gt.poor.fam.subset$Prediction_tool <- factor(gt.poor.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI')) -->
+<!-- gt.poor.fam.subset$CAZy_family <- factor(gt.poor.fam.subset$CAZy_family, levels=c("GT113", "GT111", "GT109", "GT80", "GT61", "GT60", "GT52", "GT47", "GT31", "GT29", "GT23", "GT10", "GT0")) -->
+
+<!-- gt.poor.fam.populations <- rep(c(1091, 1735, 99, 196, 6385, 388, 889, 1206, 2171, 959, 839, 1365, 20258), 6) -->
+
+<!-- # This table is manual cropped to add data to the plot below -->
+<!-- # tiff(file = "mlcPoorGTSupplement.tiff", width = 8, height = 5.5, units="in", res=700) -->
+<!-- p.gt.poor.pops <- ggplot(gt.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family)) + -->
+<!--   xlab("Classifier") + -->
+<!--   ylab("CAZy family") + -->
+<!--     theme(legend.background = element_rect(fill = figbg, color = figbg), -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         text = element_text(size=10), -->
+<!--         legend.text=element_text(size=10), -->
+<!--         legend.title=element_text(size=12), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=12,face="bold")) + -->
+<!--   labs(fill = expression(paste("F", beta, "-score"))) + -->
+<!--   coord_cartesian(clip="off") + -->
+<!--   geom_text(aes(label=gt.poor.fam.populations, x="Family Population")) + -->
+<!--   geom_text(data=gt.poor.fam.subset, aes(label=Recall_sample_size, x="CAZymes")) -->
+<!-- p.gt.poor.pops -->
+<!-- # dev.off() -->
+
+<!-- # tiff(file = "mlcPoorGTFams.tiff", width = 7, height = 5.5, units="in", res=700) -->
+<!-- p.gt.poor.fam <- ggplot(gt.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=Fbeta_score)) + -->
+<!--   geom_tile() + -->
+<!--   scale_fill_viridis_c() + -->
+<!--   xlab("Classifier") + -->
+<!--   ylab("CAZy family") + -->
+<!--   geom_text(data=gt.poor.fam.subset, aes(label=round(Fbeta_score, digits=3))) + -->
+<!--     theme(legend.background = element_rect(fill = figbg, color = figbg), -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         text = element_text(size=10), -->
+<!--         legend.text=element_text(size=10), -->
+<!--         legend.title=element_text(size=12), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=12,face="bold"), -->
+<!--         legend.position = "bottom") + -->
+<!--   labs(fill = expression(paste("F", beta, "-score"))) -->
+<!-- p.gt.poor.fam -->
+<!-- # dev.off() -->
+<!-- ``` -->
+
+
+<!-- ### Polysaccharide Lyases -->
+
+<!-- ```{r plfamPoorFam1, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Polysaccharide Lyases."} -->
+<!-- pl.fam.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% pl.names), ] -->
+<!-- pl.fam.subset <- pl.fam.subset[complete.cases(pl.fam.subset), ] -->
+
+<!-- pl.fam.subset$Prediction_tool <- factor(pl.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI')) -->
+<!-- pl.fam.subset$Specificity_percentage <- pl.fam.subset$Specificity * 100 -->
+<!-- pl.fam.subset$Recall_percentage <- pl.fam.subset$Recall * 100 -->
+
+<!-- # pdf(file = "mlcPLfamsSpecSens.pdf", width = 11.25, height = 7) -->
+<!-- p.pl.fam = ggplot(pl.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) + -->
+<!--   geom_point() + -->
+<!--   scale_color_manual(values=colour_set) + -->
+<!--   theme(legend.position = "none", -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=11,face="bold"), -->
+<!--         strip.text = element_text(size=11)) + -->
+<!--   labs(x = "Sensitivity", y = "Specificity (log10)") + -->
+<!--   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x), -->
+<!--           labels = trans_format("log10", math_format(10^.x))) + -->
+<!--   coord_trans(y="log10") + -->
+<!--   facet_wrap(~ Prediction_tool) -->
+<!-- p.pl.fam -->
+<!-- # dev.off() -->
+<!-- ``` -->
+
+
+<!-- ```{r plfamPoorFam2, echo=FALSE, fig.cap="PL families which at least 3 tools scored and Fbeta-score of less than 0.75. The nubmer in bold next to each CAZy family is the number of known CAZymes from the CAZy family included across all test sets."} -->
+<!-- pdf(file = "mlcPLpoorFams.pdf", width = 8.58, height = 4.8) -->
+<!-- pl.poor.fam.names <- pl.poor.fams$CAZy.family -->
+
+<!-- pl.poor.fam.subset <- pl.fam.subset[which(pl.fam.subset$CAZy_family %in% pl.poor.fam.names), ] -->
+
+<!-- pl.poor.fam.subset$Prediction_tool <- factor(pl.poor.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI')) -->
+<!-- pl.poor.fam.subset$CAZy_family <- factor(pl.poor.fam.subset$CAZy_family, levels=c("PL38", "PL33", "PL31", "PL29", "PL0")) -->
+
+<!-- pl.poor.fam.populations <- rep(c(1108, 521, 270, 91, 1967), (length(pl.poor.fam.subset$Prediction_tool)/6)) -->
+
+<!-- # This table is manual cropped to add data to the plot below -->
+<!-- # tiff(file = "mlcPoorPLSupplement.tiff", width = 8, height = 5.5, units="in", res=700) -->
+<!-- p.pl.poor.pops <- ggplot(pl.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family)) + -->
+<!--   xlab("Classifier") + -->
+<!--   ylab("CAZy family") + -->
+<!--     theme(legend.background = element_rect(fill = figbg, color = figbg), -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         text = element_text(size=10), -->
+<!--         legend.text=element_text(size=10), -->
+<!--         legend.title=element_text(size=12), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=12,face="bold")) + -->
+<!--   labs(fill = expression(paste("F", beta, "-score"))) + -->
+<!--   coord_cartesian(clip="off") + -->
+<!--   geom_text(aes(label=pl.poor.fam.populations, x="Family Population")) + -->
+<!--   geom_text(data=pl.poor.fam.subset, aes(label=Recall_sample_size, x="CAZymes")) -->
+<!-- # p.pl.poor.pops -->
+<!-- # dev.off() -->
+
+<!-- # tiff(file = "mlcPoorPLFams.tiff", width = 7, height = 5.5, units="in", res=700) -->
+<!-- p.pl.poor.fam <- ggplot(pl.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=Fbeta_score)) + -->
+<!--   geom_tile() + -->
+<!--   scale_fill_viridis_c() + -->
+<!--   xlab("Classifier") + -->
+<!--   ylab("CAZy family") + -->
+<!--   geom_text(data=pl.poor.fam.subset, aes(label=round(Fbeta_score, digits=3))) + -->
+<!--     theme(legend.background = element_rect(fill = figbg, color = figbg), -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         text = element_text(size=10), -->
+<!--         legend.text=element_text(size=10), -->
+<!--         legend.title=element_text(size=12), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=12,face="bold")) + -->
+<!--   labs(fill = expression(paste("F", beta, "-score"))) -->
+<!-- p.pl.poor.fam -->
+<!-- # dev.off() -->
+<!-- ``` -->
+
+
+<!-- ### Carbohydrate Esterases -->
+
+<!-- ```{r cefamPoorFam1, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Carbohydrate Esterases."} -->
+<!-- ce.fam.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% ce.names), ] -->
+<!-- ce.fam.subset <- ce.fam.subset[complete.cases(ce.fam.subset), ] -->
+
+<!-- ce.fam.subset$Prediction_tool <- factor(ce.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI')) -->
+<!-- ce.fam.subset$Specificity_percentage <- ce.fam.subset$Specificity * 100 -->
+<!-- ce.fam.subset$Recall_percentage <- ce.fam.subset$Recall * 100 -->
+
+<!-- # pdf(file = "mlcCEfamsSpecSens.pdf", width = 11.25, height = 7) -->
+<!-- p.ce.fam = ggplot(ce.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) + -->
+<!--   geom_point() + -->
+<!--   scale_color_manual(values=colour_set) + -->
+<!--   theme(legend.position = "none", -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=11,face="bold"), -->
+<!--         strip.text = element_text(size=11)) + -->
+<!--   labs(x = "Sensitivity", y = "Specificity (log10)") + -->
+<!--   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x), -->
+<!--           labels = trans_format("log10", math_format(10^.x))) + -->
+<!--   coord_trans(y="log10") + -->
+<!--   facet_wrap(~ Prediction_tool) -->
+<!-- p.ce.fam -->
+<!-- # dev.off() -->
+<!-- ``` -->
+
+<!-- ```{r cefamPoorFam2, echo=FALSE, fig.cap="CE families which at least 3 tools scored and Fbeta-score of less than 0.75. The nubmer in bold next to each CAZy family is the number of known CAZymes from the CAZy family included across all test sets."} -->
+
+<!-- ce.poor.fam.names <- ce.poor.fams$CAZy.family -->
+
+<!-- ce.poor.fam.subset <- ce.fam.subset[which(ce.fam.subset$CAZy_family %in% ce.poor.fam.names), ] -->
+
+<!-- ce.poor.fam.subset$Prediction_tool <- factor(ce.poor.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI')) -->
+<!-- ce.poor.fam.subset$CAZy_family <- factor(ce.poor.fam.subset$CAZy_family, levels=c("CE18", "CE16", "CE1", "CE0")) -->
+
+<!-- ce.poor.fam.populations <- rep(c(33, 182, 5102, 2688), (length(ce.poor.fam.subset$Prediction_tool)/6)) -->
+
+<!-- # This table is manual cropped to add data to the plot below -->
+<!-- # tiff(file = "mlcPoorCESupplement.tiff", width = 8, height = 5.5, units="in", res=700) -->
+<!-- p.ce.poor.pops <- ggplot(ce.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family)) + -->
+<!--   xlab("Classifier") + -->
+<!--   ylab("CAZy family") + -->
+<!--     theme(legend.background = element_rect(fill = figbg, color = figbg), -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         text = element_text(size=10), -->
+<!--         legend.text=element_text(size=10), -->
+<!--         legend.title=element_text(size=12), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=12,face="bold")) + -->
+<!--   labs(fill = expression(paste("F", beta, "-score"))) + -->
+<!--   coord_cartesian(clip="off") + -->
+<!--   geom_text(aes(label=ce.poor.fam.populations, x="Family Population")) + -->
+<!--   geom_text(data=ce.poor.fam.subset, aes(label=Recall_sample_size, x="CAZymes")) -->
+<!-- # p.ce.poor.pops -->
+<!-- # dev.off() -->
+
+<!-- # tiff(file = "mlcPoorCEFams.tiff", width = 7, height = 4, units="in", res=700) -->
+<!-- p.ce.poor.fam <- ggplot(ce.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=Fbeta_score)) + -->
+<!--   geom_tile() + -->
+<!--   scale_fill_viridis_c() + -->
+<!--   xlab("Classifier") + -->
+<!--   ylab("CAZy family") + -->
+<!--   geom_text(data=ce.poor.fam.subset, aes(label=round(Fbeta_score, digits=3))) + -->
+<!--     theme(legend.background = element_rect(fill = figbg, color = figbg), -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         text = element_text(size=10), -->
+<!--         legend.text=element_text(size=10), -->
+<!--         legend.title=element_text(size=12), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=12,face="bold")) + -->
+<!--   labs(fill = expression(paste("F", beta, "-score"))) -->
+<!-- p.ce.poor.fam -->
+<!-- # dev.off() -->
+<!-- ``` -->
+
+<!-- ### Auxiliary Activities -->
+
+<!-- ```{r aafamPoorFam1, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Auxiliary Activities."} -->
+<!-- aa.fam.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% aa.names), ] -->
+<!-- aa.fam.subset <- aa.fam.subset[complete.cases(aa.fam.subset), ] -->
+
+<!-- aa.fam.subset$Prediction_tool <- factor(aa.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI')) -->
+<!-- aa.fam.subset$Specificity_percentage <- aa.fam.subset$Specificity * 100 -->
+<!-- aa.fam.subset$Recall_percentage <- aa.fam.subset$Recall * 100 -->
+
+<!-- # pdf(file = "mlcAAfamsSpecSens.pdf", width = 11.25, height = 7) -->
+<!-- p.aa.fam = ggplot(aa.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) + -->
+<!--   geom_point() + -->
+<!--   scale_color_manual(values=colour_set) + -->
+<!--   theme(legend.position = "none", -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=11,face="bold"), -->
+<!--         strip.text = element_text(size=11)) + -->
+<!--   labs(x = "Sensitivity", y = "Specificity (log10)") + -->
+<!--   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x), -->
+<!--           labels = trans_format("log10", math_format(10^.x))) + -->
+<!--   coord_trans(y="log10") + -->
+<!--   facet_wrap(~ Prediction_tool) -->
+<!-- p.aa.fam -->
+<!-- # dev.off() -->
+<!-- ``` -->
+
+
+<!-- ```{r aafamPoorFam2, echo=FALSE, fig.cap="AA families which at least 3 tools scored and Fbeta-score of less than 0.75. The nubmer in bold next to each CAZy family is the number of known CAZymes from the CAZy family included across all test sets."} -->
+
+<!-- aa.poor.fam.names <- aa.poor.fams$CAZy.family -->
+
+<!-- aa.poor.fam.subset <- aa.fam.subset[which(aa.fam.subset$CAZy_family %in% aa.poor.fam.names), ] -->
+
+<!-- aa.poor.fam.subset$Prediction_tool <- factor(aa.poor.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI')) -->
+<!-- aa.poor.fam.subset$CAZy_family <- factor(aa.poor.fam.subset$CAZy_family, levels=c("AA14", "AA8", "AA7", "AA2", "AA0")) -->
+
+<!-- aa.poor.fam.populations <- rep(c(38, 176, 702, 77), (length(aa.poor.fam.subset$Prediction_tool)/6)) -->
+
+<!-- # This table is manual cropped to add data to the plot below -->
+<!-- # tiff(file = "mlcPoorAASupplement.tiff", width = 8, height = 5.5, units="in", res=700) -->
+<!-- p.aa.poor.pops <- ggplot(aa.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family)) + -->
+<!--   xlab("Classifier") + -->
+<!--   ylab("CAZy family") + -->
+<!--     theme(legend.background = element_rect(fill = figbg, color = figbg), -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         text = element_text(size=10), -->
+<!--         legend.text=element_text(size=10), -->
+<!--         legend.title=element_text(size=12), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=12,face="bold")) + -->
+<!--   labs(fill = expression(paste("F", beta, "-score"))) + -->
+<!--   coord_cartesian(clip="off") + -->
+<!--   geom_text(aes(label=aa.poor.fam.populations, x="Family Population")) + -->
+<!--   geom_text(data=aa.poor.fam.subset, aes(label=Recall_sample_size, x="CAZymes")) -->
+<!-- # p.aa.poor.pops -->
+<!-- # dev.off() -->
+
+<!--  #tiff(file = "mlcPoorAAFams.tiff", width = 7, height = 4, units="in", res=700) -->
+<!-- p.aa.poor.fam <- ggplot(aa.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=Fbeta_score)) + -->
+<!--   geom_tile() + -->
+<!--   scale_fill_viridis_c() + -->
+<!--   xlab("Classifier") + -->
+<!--   ylab("CAZy family") + -->
+<!--   geom_text(data=aa.poor.fam.subset, aes(label=round(Fbeta_score, digits=3))) + -->
+<!--     theme(legend.background = element_rect(fill = figbg, color = figbg), -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         text = element_text(size=10), -->
+<!--         legend.text=element_text(size=10), -->
+<!--         legend.title=element_text(size=12), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=12,face="bold")) + -->
+<!--   labs(fill = expression(paste("F", beta, "-score"))) -->
+<!-- p.aa.poor.fam -->
+<!-- # dev.off() -->
+<!-- ``` -->
+
+<!-- ### Carbohydrate-Binding Module -->
+
+<!-- ```{r cbmfamPoorFam1, echo=FALSE, fig.cap="Scatter plot of recall (sensitivity) against specificity for predicting each CAZy family for each CAZyme classifier in the CAZy class Carbohydrate-Binding Module."} -->
+<!-- cbm.fam.subset <- fam.stat.df[which(fam.stat.df$CAZy_family %in% cbm.names), ] -->
+<!-- cbm.fam.subset <- cbm.fam.subset[complete.cases(cbm.fam.subset), ] -->
+
+<!-- cbm.fam.subset$Prediction_tool <- factor(cbm.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI')) -->
+<!-- cbm.fam.subset$Specificity_percentage <- cbm.fam.subset$Specificity * 100 -->
+<!-- cbm.fam.subset$Recall_percentage <- cbm.fam.subset$Recall * 100 -->
+
+<!-- # pdf(file = "mlcCBMfamsSpecSens.pdf", width = 11.25, height = 7) -->
+<!-- p.cbm.fam = ggplot(cbm.fam.subset, aes(x=Recall, y=Specificity_percentage, color=Prediction_tool)) + -->
+<!--   geom_point() + -->
+<!--   scale_color_manual(values=colour_set) + -->
+<!--   theme(legend.position = "none", -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=11,face="bold"), -->
+<!--         strip.text = element_text(size=11)) + -->
+<!--   labs(x = "Sensitivity", y = "Specificity (log10)") + -->
+<!--   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x), -->
+<!--           labels = trans_format("log10", math_format(10^.x))) + -->
+<!--   coord_trans(y="log10") + -->
+<!--   facet_wrap(~ Prediction_tool) -->
+<!-- p.cbm.fam -->
+<!-- # dev.off() -->
+<!-- ``` -->
+
+
+<!-- ```{r cbmfamPoorFam2, echo=FALSE, fig.cap="CBM families which at least 3 tools scored and Fbeta-score of less than 0.75. The nubmer in bold next to each CAZy family is the number of known CAZymes from the CAZy family included across all test sets."} -->
+
+<!-- cbm.poor.fam.names <- cbm.poor.fams$CAZy.family -->
+
+<!-- cbm.poor.fam.subset <- cbm.fam.subset[which(cbm.fam.subset$CAZy_family %in% cbm.poor.fam.names), ] -->
+
+<!-- cbm.poor.fam.subset$Prediction_tool <- factor(cbm.poor.fam.subset$Prediction_tool, levels = c('dbCAN', 'HMMER', 'Hotpep', 'DIAMOND', 'CUPP', 'eCAMI')) -->
+<!-- cbm.poor.fam.subset$CAZy_family <- factor(cbm.poor.fam.subset$CAZy_family, levels=c( -->
+<!--   "CBM87", "CBM67", "CBM61", "CBM57", "CBM56", "CBM54", "CBM51", "CBM50", "CBM47", "CBM45", "CBM44", "CBM42", "CBM41", "CBM38", "CBM36", "CBM35", "CBM32", "CBM30", -->
+<!--   "CBM26", "CBM25", "CBM24", "CBM22", "CBM20", "CBM19", "CBM16", "CBM14", "CBM13", "CBM12", "CBM11", "CBM10", "CBM9", "CBM6", "CBM5", "CBM4", "CBM3", "CBM2", -->
+<!--   "CBM1",    "CBM0" -->
+<!-- )) -->
+
+<!-- cbm.poor.fam.populations <- rep(c(33, 713, 776, 946, 241, 251, 113191, 1117, 189, 26, 903, 597, 135, 4359, 10217, 38, 889, 712, 202, 1418, 2376, 160, 994, 3570, 10811, 2675, 169, 333, 627, 4491, 12516, 1195, 2046, 7150, 1671, 1394), (length(cbm.poor.fam.subset$Prediction_tool)/6)) -->
+
+<!-- # This table is manual cropped to add data to the plot below -->
+<!-- # tiff(file = "mlcPoorCBMSupplement.tiff", width = 8, height = 5.5, units="in", res=700) -->
+<!-- p.cbm.poor.pops <- ggplot(cbm.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family)) + -->
+<!--   xlab("Classifier") + -->
+<!--   ylab("CAZy family") + -->
+<!--     theme(legend.background = element_rect(fill = figbg, color = figbg), -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         text = element_text(size=10), -->
+<!--         legend.text=element_text(size=10), -->
+<!--         legend.title=element_text(size=12), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=12,face="bold")) + -->
+<!--   labs(fill = expression(paste("F", beta, "-score"))) + -->
+<!--   coord_cartesian(clip="off") + -->
+<!--   geom_text(aes(label=cbm.poor.fam.populations, x="Family Population")) + -->
+<!--   geom_text(data=cbm.poor.fam.subset, aes(label=Recall_sample_size, x="CAZymes")) -->
+<!-- # p.cbm.poor.pops -->
+<!-- # dev.off() -->
+
+<!-- # tiff(file = "mlcPoorCBMFams.tiff", width = 7, height = 6, units="in", res=700) -->
+<!-- p.cbm.poor.fam <- ggplot(cbm.poor.fam.subset %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=CAZy_family, fill=Fbeta_score)) + -->
+<!--   geom_tile() + -->
+<!--   scale_fill_viridis_c() + -->
+<!--   xlab("Classifier") + -->
+<!--   ylab("CAZy family") + -->
+<!--   geom_text(data=cbm.poor.fam.subset, aes(label=round(Fbeta_score, digits=3))) + -->
+<!--     theme(legend.background = element_rect(fill = figbg, color = figbg), -->
+<!--         plot.background = element_rect(fill = figbg, color = figbg), -->
+<!--         text = element_text(size=10), -->
+<!--         legend.text=element_text(size=10), -->
+<!--         legend.title=element_text(size=12), -->
+<!--         axis.text=element_text(size=10), -->
+<!--         axis.title=element_text(size=12,face="bold")) + -->
+<!--   labs(fill = expression(paste("F", beta, "-score"))) -->
+<!-- p.cbm.poor.fam -->
+<!-- # dev.off() -->
+<!-- ``` -->
 
 
 ## Evaluation of multi-label CAZy family classification performance
@@ -1898,7 +1884,7 @@ p.ri.class = ggplot(fam_classification_df %>% group_by(Prediction_tool), aes(x=P
 p.ri.class
 ```
 
-```{r classRI, echo=FALSE, fig.cap="Violin plot of Adjusted Rand Index (ARI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy classes."}
+```{r famARI, echo=FALSE, fig.cap="Violin plot of Adjusted Rand Index (ARI) of performance of the CAZyme classifiers to predict the multilabel classification of CAZy classes."}
 
 p.ari.class = ggplot(fam_classification_df %>% group_by(Prediction_tool), aes(x=Prediction_tool, y=Adjusted_Rand_index, fill=Prediction_tool)) +
   geom_violin() +
@@ -1913,6 +1899,124 @@ p.ari.class = ggplot(fam_classification_df %>% group_by(Prediction_tool), aes(x=
   scale_y_continuous(breaks = c(-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1))
 p.ari.class
 ```
+
+# Performance per taxonomy group
+
+The performance for a classifier per taxonomy group may vary. For this evaluation the test sets were separated into the taxonomy groups:
+- Bacteria
+- Eukaryote
+
+The evaluation per classifier per taxonomy group, versus all test sets pooled together was evaluated.
+
+## Binary classification of CAZymes and non-CAZymes
+
+```{r buildTaxGroupBinaryPlots, include=FALSE}
+build.tax.group.binary.plot <- function(stat_parameter, tax.df){
+  # subset stat parameter
+  tax_binary_stat <- tax.df[which(binary_stat_df$Statistic_parameter == stat_parameter), ]
+  
+  tax_binary_stat$Prediction_tool <- factor(tax_binary_stat$Prediction_tool, levels = c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
+  
+  # create Bacteria plot
+  bact.tax_binary_stat <- binary_tax_df[which(tax_binary_stat$Tax_group == "Bacteria"), ]
+  
+  # create Eukaryote plot
+  euk.tax_binary_stat <- binary_tax_df[which(tax_binary_stat$Tax_group == "Eukaryote"), ]
+  
+  # create dataframe with tax_group set as "All"
+  all.vector <- rep("All", nrow(tax_binary_stat))
+  all.tax_binary_stat <- tax_binary_stat
+  all.tax_binary_stat$Tax_group <- all.vector
+  
+  complete.tax_binary_stat <- rbind(tax_binary_stat, all.tax_binary_stat)
+  
+  p.tax.binary = ggplot(complete.tax_binary_stat %>% group_by(Tax_group),
+                aes(x=Tax_group, y=Statistic_value, fill=Tax_group)) +
+    geom_boxplot(outlier.shape=NA) +
+    geom_jitter(width=0.1, height=0) +
+    scale_fill_manual(values = colour_set) +
+    theme(legend.position = "right",
+          plot.background = element_rect(fill = figbg, color = figbg),
+          axis.text=element_text(size=10),
+          axis.title=element_text(size=12,face="bold")) +
+    xlab("Classifier") + 
+    ylab(stat_parameter) +
+    facet_wrap(~ Prediction_tool)
+  
+  return(p.tax.binary)
+}
+```
+
+### Specificity
+
+```{r taxGroupBinarySpecificity, echo=FALSE, fig.cap="One dimensional scatter plot overlaying a box and whisker plot of the specificity of binary classification per CAZyme/non-CAZyme classifier per taxonomy group. Each point represents the score from one test set."}
+p.tax.binary.spec <- build.tax.group.binary.plot("Specificity", binary_tax_df)
+p.tax.binary.spec
+```
+
+```{r saveTaxBinSpec, include=FALSE}
+pdf(file = "taxBinarySpec.pdf", width = 8.58, height = 5.5)
+p.tax.binary.spec
+dev.off()
+```
+
+### Sensitivity
+
+```{r taxGroupBinarySensitivity, echo=FALSE, fig.cap="One dimensional scatter plot overlaying a box and whisker plot of the sensitivity of binary classification per CAZyme/non-CAZyme classifier per taxonomy group. Each point represents the score from one test set."}
+p.tax.binary.sens <- build.tax.group.binary.plot("Sensitivity", binary_tax_df)
+p.tax.binary.sens
+```
+
+```{r saveTaxBinSens, include=FALSE}
+pdf(file = "taxBinarySens.pdf", width = 8.58, height = 5.5)
+p.tax.binary.sens
+dev.off()
+```
+
+### Percision
+
+```{r taxGroupBinaryPrecision, echo=FALSE, fig.cap="One dimensional scatter plot overlaying a box and whisker plot of the precision of binary classification per CAZyme/non-CAZyme classifier per taxonomy group. Each point represents the score from one test set."}
+p.tax.binary.prec <- build.tax.group.binary.plot("Precision", binary_tax_df)
+p.tax.binary.prec
+```
+
+```{r saveTaxBinPrec, include=FALSE}
+pdf(file = "taxBinaryPrec.pdf", width = 8.58, height = 5.5)
+p.tax.binary.prec
+dev.off()
+```
+
+### F1-score
+
+```{r taxGroupBinaryF1, echo=FALSE, fig.cap="One dimensional scatter plot overlaying a box and whisker plot of the F1-score of binary classification per CAZyme/non-CAZyme classifier per taxonomy group. Each point represents the score from one test set."}
+p.tax.binary.f1 <- build.tax.group.binary.plot("FBeta-score", binary_tax_df)
+p.tax.binary.f1
+```
+
+```{r saveTaxBinF1, include=FALSE}
+pdf(file = "taxBinaryF1.pdf", width = 8.58, height = 5.5)
+p.tax.binary.f1
+dev.off()
+```
+
+### Accuracy
+
+```{r taxGroupBinaryAccuracy, echo=FALSE, fig.cap="One dimensional scatter plot overlaying a box and whisker plot of the accuracy of binary classification per CAZyme/non-CAZyme classifier per taxonomy group. Each point represents the score from one test set."}
+p.tax.binary.acc <- build.tax.group.binary.plot("Accuracy", binary_tax_df)
+p.tax.binary.acc
+```
+
+```{r saveTaxBinAcc, include=FALSE}
+pdf(file = "taxBinaryAcc.pdf", width = 8.58, height = 5.5)
+p.tax.binary.acc
+dev.off()
+```
+
+## CAZy class classification
+
+
+
+## CAZy family classification
 
 # Conclusions
 
