@@ -115,9 +115,20 @@ fam_classification_df <- read.csv ("data/family_predicted_classifications_2021_1
 # Load in data for taxonomy group comparison
 #
 
-# import binary_classification_tax_comparison_2021_12_01.csv
+# import binary_classification_tax_comparison_<date>.csv
 # Contains the same data as binary_stat_df with the additional 'Tax_group' column
 binary_tax_df <- read.csv("data/binary_classification_tax_comparison_2021_12_01.csv")
+
+# import "class_stats_per_test_set_tax_comparison_<tax_group>_<date>.csv"
+# Contains the calculated performance statistics when evaluating performance of CAZy class prediction per test set.
+# Written in long form with the columns: Genomic_accession, Prediction_tool, CAZy_class, Statistic_parameter, Statistic_value
+# load in each dataframe for each tax group
+bact.cazy_class_df <- read.csv("data/class_stats_per_test_set_tax_comparison_Bacteria_2021_12_01.csv")
+euk.cazy_class_df <- read.csv("data/class_stats_per_test_set_tax_comparison_Eukaryote_2021_12_01.csv")
+
+# import class_classification_tax_comparison_<date>.csv
+# df containing CAZy class RI and ARI
+class_tax_ri_ari_df <- read.csv("data/class_classification_tax_comparison_2021_12_01.csv")
 ```
 
 <div id="summary">
@@ -570,7 +581,6 @@ dbCAN consistently demonstrated the strongest performance in all catagories, inf
 # Evaluation of CAZy Class classification performance
 
 CAZy groups CAZymes into CAZy families by sequence similarity, and CAZy families are grouped into one of 6 functional classes. The CAZyme classifiers predict the CAZy family annotations of predicted CAZymes, but it is of interest to see what the level of performance of the classiferis is at the CAZy class level. Specifically, a classifier may struggle to predict the correct CAZy class for a CAZyme but consistently predict the correct CAZy class. Therefore, the aim of this part of the evaluation is to evaluate the performance of the classifiers to predict the correct CAZy class of predict CAZymes.
-
 
 ## General trends in CAZy class classification performance
 
@@ -2038,7 +2048,79 @@ dev.off()
 
 ## CAZy class classification
 
+Below a table containing the mean F1-score plus/minus standard deviation for per CAZyme classifier per taxonomy group is presented, in order to represent the overall performance per CAZyme classifier per taxonomy group for all CAZy class classification.
 
+```{r summaryTaxGroupBinary, echo=FALSE}
+# subset the F1-scores 
+bact.cazy_class_df.f1 <- bact.cazy_class_df[which(bact.cazy_class_df$Statistic_parameter == "FBeta-score"), ]
+bact.cazy_class_df.f1  <- bact.cazy_class_df.f1[complete.cases(bact.cazy_class_df.f1), ]
+bact.cazy_class_df.f1.stat <- bact.cazy_class_df.f1 %>% group_by(Prediction_tool) %>% summarise("Mean F1-score"=mean(Statistic_value), "F1-score Standard Deviation"=sd(Statistic_value))
+
+euk.cazy_class_df.f1 <- euk.cazy_class_df[which(euk.cazy_class_df$Statistic_parameter == "FBeta-score"), ]
+euk.cazy_class_df.f1  <- euk.cazy_class_df.f1[complete.cases(euk.cazy_class_df.f1), ]
+euk.cazy_class_df.f1.stat <- euk.cazy_class_df.f1 %>% group_by(Prediction_tool) %>% summarise("Mean F1-score"=mean(Statistic_value), "F1-score Standard Deviation"=sd(Statistic_value))
+
+class_subset_f1 <- cazy_class_df[which(cazy_class_df$Statistic_parameter == "Fbeta_score"), ]
+# 'Tax_group' column
+all.vector <- rep("All", nrow(class_subset_f1))
+all.cazy_class_df.f1 <- class_subset_f1
+all.cazy_class_df.f1$Tax_group <- all.vector
+class_subset_f1  <- class_subset_f1[complete.cases(class_subset_f1), ]
+all.cazy_class_df.f1.stat <- class_subset_f1 %>% group_by(Prediction_tool) %>% summarise("Mean F1-score"=mean(Statistic_value), "F1-score Standard Deviation"=sd(Statistic_value))
+
+tax_class_f1_mean_sd <- bact.tax_binary_f1_mean_sd
+tax_class_f1_mean_sd$`Eukaryote Mean` <- euk.cazy_class_df.f1.stat$`Mean`
+tax_class_f1_mean_sd$`Eukaryote Standard Deviation` <- euk.cazy_class_df.f1.stat$`Standard Deviation`
+tax_class_f1_mean_sd$`All Mean` <- all.cazy_class_df.f1.stat$`Mean`
+tax_class_f1_mean_sd$`All Standard Deviation` <- all.cazy_class_df.f1.stat$`Standard Deviation`
+
+tax_class_f1_mean_sd$Prediction_tool <- factor(tax_binary_f1_mean_sd$Prediction_tool, levels=c('dbCAN','HMMER','DIAMOND','Hotpep','CUPP','eCAMI')) # set order data is presented
+
+kable(tax_class_f1_mean_sd, caption="Overall performance of CAZy class classification by CAZy classifiers per taxonomy group", align='c', digits = 4) %>% kable_styling(full_width = F)
+
+```
+
+To represent the overall CAZy class classification performance, and take into consideration of CAZy class multi-label classification, the Rand Index was caluated for each taxonomy group per CAZy classifier.
+
+```{r taxClassRI echo=FALSE}
+bact.class_tax_ri_ari_df <- class_tax_ri_ari_df[which(class_tax_ri_ari_df$Tax_group == "Bacteria"), ]
+euk.class_tax_ri_ari_df <- class_tax_ri_ari_df[which(class_tax_ri_ari_df$Tax_group == "Eukaryote"), ]
+
+all.vector <- rep("All", nrow(class_tax_ri_ari_df))
+all.class_tax_ri_ari_df <- class_tax_ri_ari_df
+all.class_tax_ri_ari_df$Tax_group <- all.vector
+
+stat.bact.class_tax_ri_ari_df <- bact.class_tax_ri_ari_df %>% group_by(Prediction_tool) %>% summarise("Bacteria Mean"=mean(Rand_index), "Bacteria Standard Deviation"=sd(Rand_index))
+stat.euk.class_tax_ri_ari_df <- euk.class_tax_ri_ari_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Rand_index), "Standard Deviation"=sd(Rand_index))
+stat.all.class_tax_ri_ari_df <- all.class_tax_ri_ari_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Rand_index), "Standard Deviation"=sd(Rand_index))
+
+tax.class_tax_ri_ari_df <- stat.bact.class_tax_ri_ari_df
+tax.class_tax_ri_ari_df$`Eukaryote Mean` <- stat.euk.class_tax_ri_ari_df$Mean
+tax.class_tax_ri_ari_df$`Eukaryote Standard Deviation` <- stat.euk.class_tax_ri_ari_df$`Standard Deviation`
+tax.class_tax_ri_ari_df$`All Mean` <- stat.all.class_tax_ri_ari_df$Mean
+tax.class_tax_ri_ari_df$`All Standard Deviation` <- stat.all.class_tax_ri_ari_df$`Standard Deviation`
+
+kable(tax.class_tax_ri_ari_df, caption="Overall performance of CAZy class classification (represented by the Rand Index) by CAZy classifiers per taxonomy group", align='c', digits = 4) %>% kable_styling(full_width = F)
+
+```
+
+The Adjusted Rand Index was also calculated in order to take into consideration chance.
+
+```{r taxClassARI echo=FALSE}
+
+stat.bact.class_tax_ri_ari_df <- bact.class_tax_ri_ari_df %>% group_by(Prediction_tool) %>% summarise("Bacteria Mean"=mean(Adjusted_Rand_index), "Bacteria Standard Deviation"=sd(Adjusted_Rand_index))
+stat.euk.class_tax_ri_ari_df <- euk.class_tax_ri_ari_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
+stat.all.class_tax_ri_ari_df <- all.class_tax_ri_ari_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
+
+tax.class_tax_ri_ari_df <- stat.bact.class_tax_ri_ari_df
+tax.class_tax_ri_ari_df$`Eukaryote Mean` <- stat.euk.class_tax_ri_ari_df$Mean
+tax.class_tax_ri_ari_df$`Eukaryote Standard Deviation` <- stat.euk.class_tax_ri_ari_df$`Standard Deviation`
+tax.class_tax_ri_ari_df$`All Mean` <- stat.all.class_tax_ri_ari_df$Mean
+tax.class_tax_ri_ari_df$`All Standard Deviation` <- stat.all.class_tax_ri_ari_df$`Standard Deviation`
+
+kable(tax.class_tax_ri_ari_df, caption="Overall performance of CAZy class classification (represented by the Adjusted Rand Index) by CAZy classifiers per taxonomy group", align='c', digits = 4) %>% kable_styling(full_width = F)
+
+```
 
 ## CAZy family classification
 
