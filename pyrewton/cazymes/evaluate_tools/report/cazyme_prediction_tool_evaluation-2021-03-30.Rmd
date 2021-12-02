@@ -2055,7 +2055,7 @@ dev.off()
 
 Below a table containing the mean F1-score plus/minus standard deviation for per CAZyme classifier per taxonomy group is presented, in order to represent the overall performance per CAZyme classifier per taxonomy group for all CAZy class classification.
 
-```{r summaryTaxGroupBinary, echo=FALSE}
+```{r summaryTaxGroupClass, echo=FALSE}
 # subset the F1-scores 
 bact.cazy_class_df.f1 <- bact.cazy_class_df[which(bact.cazy_class_df$Statistic_parameter == "FBeta-score"), ]
 bact.cazy_class_df.f1  <- bact.cazy_class_df.f1[complete.cases(bact.cazy_class_df.f1), ]
@@ -2087,7 +2087,7 @@ kable(tax_class_f1_mean_sd, caption="Overall performance of CAZy class classific
 
 To represent the overall CAZy class classification performance, and take into consideration of CAZy class multi-label classification, the Rand Index was caluated for each taxonomy group per CAZy classifier.
 
-```{r taxClassRI echo=FALSE}
+```{r taxClassRI, echo=FALSE}
 bact.class_tax_ri_ari_df <- class_tax_ri_ari_df[which(class_tax_ri_ari_df$Tax_group == "Bacteria"), ]
 euk.class_tax_ri_ari_df <- class_tax_ri_ari_df[which(class_tax_ri_ari_df$Tax_group == "Eukaryote"), ]
 
@@ -2112,7 +2112,7 @@ kable(tax.class_tax_ri_df, caption="Overall performance of CAZy class classifica
 
 The Adjusted Rand Index was also calculated in order to take into consideration chance.
 
-```{r taxClassARI echo=FALSE}
+```{r taxClassARI, echo=FALSE}
 
 stat.bact.class_tax_ri_ari_df <- bact.class_tax_ri_ari_df %>% group_by(Prediction_tool) %>% summarise("Bacteria Mean"=mean(Adjusted_Rand_index), "Bacteria Standard Deviation"=sd(Adjusted_Rand_index))
 stat.euk.class_tax_ri_ari_df <- euk.class_tax_ri_ari_df %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
@@ -2131,7 +2131,7 @@ kable(tax.class_tax_ari_df, caption="Overall performance of CAZy class classific
 
 ## CAZy family classification
 
-```{r famRi, echo=FALSE}
+```{r famRiTax, echo=FALSE}
 fam_classification_df_tax.bact <- fam_classification_df_tax[which(fam_classification_df_tax$Tax_group == "Bacteria"), ]
 fam_classification_df_tax.euk <- fam_classification_df_tax[which(fam_classification_df_tax$Tax_group == "Eukaryote"), ]
 
@@ -2154,7 +2154,7 @@ fam_classification_df_tax.ri.complete$Prediction_tool <- factor(fam_classificati
 kable(fam_classification_df_tax.ri.complete, caption="Rand Index of CAZyme classifier classification of CAZy family annotations per taxonomt group", align='c', digits = 4) %>% kable_styling(full_width = F)
 ```
 
-```{r famAriCalc, echo=FALSE}
+```{r famAriCalcTax, echo=FALSE}
 fam_classification_df_tax.ari.bact <- fam_classification_df_tax.bact %>% group_by(Prediction_tool) %>% summarise("Bacteria Mean"=mean(Adjusted_Rand_index), "Bacteria Standard Deviation"=sd(Adjusted_Rand_index))
 fam_classification_df_tax.ari.euk <- fam_classification_df_tax.euk %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
 fam_classification_df_tax.ari.all <- fam_classification_df_tax.all %>% group_by(Prediction_tool) %>% summarise("Mean"=mean(Adjusted_Rand_index), "Standard Deviation"=sd(Adjusted_Rand_index))
