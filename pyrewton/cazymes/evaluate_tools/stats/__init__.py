@@ -523,11 +523,12 @@ def build_prediction_dataframes(predictions, time_stamp, cazy, data_source, args
     )
 
 
-def get_fam_freq(args, cazy, timestamp, data_source):
+def get_fam_freq(args, cazy, timestamp, data_source, ground_truths_df):
     """Retrieve the frequencies of all CAZy families total occurences across all test sets.
 
     :param args: cmd-line args parser
-    :param cazy: dict of CAZy family annotations of proteins from CAZy.
+    :param cazy: dict of CAZy family annotations of proteins from CAZy, or connection to local
+        CAZyme database
     :param timestamp: str, date-time script was invoked
     :param data_source: str, source of CAZy annotations, db or dict
 
@@ -535,81 +536,54 @@ def get_fam_freq(args, cazy, timestamp, data_source):
     """
     logger = logging.getLogger(__name__)
 
-    # get the paths to all test sets
-    testset_dir = args.testset_dir / "test_sets"
-    all_test_sets = get_paths.get_file_paths(
-        testset_dir,
-        prefixes=['genbank_proteins_'], 
-        suffixes=['_test_set.fasta'],
-    )
+    # grab all the rows for a single tool, so as to avoid counting a protein more than once
+    grnd_trth_df = ground_truths_df.loc[ground_truths_df["Prediction_tool"] == "dbCAN"]
 
-    logger.warning(f"Found {len(all_test_sets)} test sets in {args.testset_dir}")
+    test_set_fam_freq = family_classifications.foundation_dict()  # fam frequenices in the test sets, i.e. sample size
 
-    # build a dictionary to add frequency data to, key by CAZy fam, value by frequency
-    freq_dict = family_classifications.foundation_dict()
+    family_names = family_classifications.foundation_dict()
+    family_names = list(family_names.keys())
 
-    for testset in tqdm(all_test_sets, desc="Retrieving CAZy family freqs"):
-        freq_dict = add_fam_freq(testset, freq_dict, cazy, data_source)
+    row_index = 0
+    for row_index in tqdm(len(grnd_trth_df["Prediction_tool"]), desc="Calc family freq in test sets"):
+        row = grnd_trth_df.iloc[row_index]
 
-    # write out freq_dict
-    output_path = args.output / f"CAZy_fam_testset_freq_{timestamp}.json"
-    with open(output_path, "w") as fh:
-        json.dump(freq_dict, fh)
+        for fam in family_names:
+            fam_freq = sum(row[fam])
+
+            test_set_fam_freq[fam] = fam_freq
+
+    with open(f"CAZy_fam_testset_freq_{timestamp}.json") as fh:
+        json.dump(test_set_fam_freq, fh)
+
+    # calcualte the family frequencies in the CAZy database
+    cazy_populations = family_classifications.foundation_dict()
+
+    if args.data_source == 'dict':
+        for gbk_acc in tqdm(cazy_populations, desc='Calc CAZy family populations'):
+            families = cazy[gbk_acc]
+            for fam in families:
+                try:
+                    cazy_populations[fam] += 1
+                except KeyError:
+                    logger.warning(f"{fam} in CAZy dict but not in foundation fam dict")
+    
+    else:
+        for fam in tqdm(cazy_populations, desc="Calc CAZy family populations"):
+            with Session(bind=cazy) as session:
+                fam_query = session.query(CazyFamily, Genbank).\
+                    join(CazyFamily, Genbank.families).\
+                    filter(CazyFamily.family == fam).\
+                    all()
+
+                for record in fam_query:
+                    family = record[0].family
+                    cazy_populations[family] += 1
+
+    with open(f"CAZy_fam_populations_{timestamp}.json") as fh:
+        json.dump(cazy_populations, fh)
 
     return
-
-
-def add_fam_freq(testset, freq_dict, cazy, data_source):
-    """Retrieve the frequency of CAZy family annotations in a test set.
-
-    :param testset: Testset class instance
-    :param freq_dict: dict of total CAZy family frequencies across all test sets
-    :param cazy: dict of CAZy family annotations of proteins from CAZy.
-    :param data_source: str, CAZy annotation source type, db or dict
-
-    Return freq_dict.
-    """
-    logger = logging.getLogger(__name__)
-
-    filename = str(testset).split("/")[-1]
-
-    # open the FASTA file (FASTA file is the test set)
-    with open(testset, "r") as fh:
-        lines = fh.read().splitlines()
-    
-    for line in tqdm(lines, desc=f"Parsing {filename}"):
-        if line.startswith(">"):
-            # retrieve protein GenBank accession
-            protein_accession = line.replace(">", "")
-            
-            # check if protein is a CAZy classified CAZyme
-            if data_source == 'db':
-                with Session(bind=cazy) as session:
-                    fam_query = session.query(CazyFamily).\
-                        join(CazyFamily, Genbank.families).\
-                        filter(Genbank.genbank_accession == protein_accession).\
-                        all()
-                
-                fam_annotations = [fam.family for fam in fam_query]
-                if len(fam_annotations) == 0:  # non-CAZyme
-                    continue
-
-            else:
-                try:
-                    fam_annotations = cazy[protein_accession]
-                except KeyError:
-                    continue
-                
-            for fam in fam_annotations:
-                try:
-                    freq_dict[fam] += 1
-                except KeyError:
-                    logger.warning(
-                        f"Retrieved '{fam}' from CAZy dict, but not included "
-                        "in this modules foundation CAZy family dict"
-                    )
-
-    return freq_dict
 
 
 def evaluate_tax_group_performance(
