@@ -101,10 +101,10 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     predictions = stats.get_predictions(args)
 
     # perform stats evaluations
-    stats.evaluate_performance(predictions, cazy_dict, 'dict', args)
+    ground_truths_fam_df = stats.evaluate_performance(predictions, cazy_dict, 'dict', args)
 
     time_stamp = datetime.now().strftime("%Y_%m_%d")
-    stats.get_fam_freq(args, cazy_dict, time_stamp, 'dict')  # USED IN R EVALUATION
+    stats.get_fam_freq(args, cazy_dict, time_stamp, 'dict', ground_truths_fam_df)  # USED IN R EVALUATION
 
 
 if __name__ == "__main__":
