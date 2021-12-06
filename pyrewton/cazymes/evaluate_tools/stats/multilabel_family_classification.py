@@ -26,7 +26,7 @@ import pandas as pd
 
 from tqdm import tqdm
 
-from scraper.sql.sql_orm import CazyFamily, Genbank, Session
+from cazy_webscraper.sql.sql_orm import CazyFamily, Genbank, Session
 from sklearn.metrics import fbeta_score, confusion_matrix, recall_score, precision_score
 from sklearn.metrics.cluster import rand_score, adjusted_rand_score
 
@@ -210,13 +210,13 @@ def calc_fam_stats(predictions_df, ground_truths_df, args):
         index = 0
         for index in tqdm(
             range(len(grnd_trth_df["Prediction_tool"])),
-            desc=f"Removing TN non-CAZyme predictions from CAZy fam predictions for {tool}",
+            desc=f"Removing TN non-CAZyme predictions for {tool}",
         ):
             y_true = grnd_trth_df.iloc[index]
-            y_true = list(y_true[family_names])  # retrieve only the cazy family 0/1 annotations
+            y_true = list(y_true[family_names])  # retrieve only the cazy family 0/1 classifications
             
             y_pred = pred_df.iloc[index]
-            y_pred = list(y_pred[family_names])  # retrieve only the cazy family 0/1 annotations
+            y_pred = list(y_pred[family_names])  # retrieve only the cazy family 0/1 classifications
 
             if (1 not in y_true) and (1 not in y_pred):
                 # if y_true and y_pred are all 0s, this is a true negative non-CAZyme prediction
@@ -229,19 +229,25 @@ def calc_fam_stats(predictions_df, ground_truths_df, args):
 
         # iterate through the families and evaluate the CAZy family performance
         for fam in tqdm(family_names, desc=f"Evaluating performance per CAZy family for {tool}"):
-            y_true = list(tp_fp_fn_ground_truths[fam])
-            y_pred = list(tp_fp_fn_predictions[fam])
 
-            # check if family was predicted and was included in test set as a known annotations
-            if (1 not in y_true) and (1 not in y_pred):
+            # retrieve the classifications for every protein for the CAZy family
+            y_true_fam = list(tp_fp_fn_ground_truths[fam])
+            y_pred_fam = list(tp_fp_fn_predictions[fam])
+
+            # check if family was predicted AND was included in test set as a known annotation
+            # If family not predicted by a classifier AND not included in the test set then skip the fam
+            if (1 not in y_true_fam) and (1 not in y_pred_fam):
+
+                # True negative classification for this CAZy family by this tool
+
                 # do not include in statistics
                 logger.warning(
-                    f"{fam} not predicted by {tool} and not in known annotations for the protein\n"
-                    f"Excluding {fam} from evaluation by setting all stats results as NaN"
+                    f"{fam} not predicted by {tool} AND not known annotations for the protein\n"
+                    f"Excluding {fam} from {tool} evaluation, setting all stats results as NaN"
                 )
                 specific_logger.warning(
-                    f"{fam} not predicted by {tool} and not in known annotations for the protein.\n"
-                    f"Excluding {fam} from evaluation by setting all stats results as NaN"
+                    f"{fam} not predicted by {tool} AND not known annotations for the protein\n"
+                    f"Excluding {fam} from {tool} evaluation, setting all stats results as NaN"
                 )
                 specificity = np.nan
                 recall = np.nan
@@ -282,17 +288,17 @@ def calc_fam_stats(predictions_df, ground_truths_df, args):
             # else: calculate performance for the CAZy family
 
             # recall aka sensitivity
-            recall = recall_score(y_true, y_pred)
+            recall = recall_score(y_true_fam, y_pred_fam)
             long_dataframe_data.append([fam, tool, "Sensitivity", recall])
 
-            precision = precision_score(y_true, y_pred)
+            precision = precision_score(y_true_fam, y_pred_fam)
             long_dataframe_data.append([fam, tool, "Precision", precision])
 
-            fbeta = fbeta_score(y_true, y_pred, beta=args.beta)
+            fbeta = fbeta_score(y_true_fam, y_pred_fam, beta=args.beta)
             long_dataframe_data.append([fam, tool, "Fbeta_score", fbeta])
 
             # create confusion matrix for calculating Specificty and Accuracy
-            cm = confusion_matrix(y_true, y_pred)
+            cm = confusion_matrix(y_true_fam, y_pred_fam)
             try:
                 tn = cm[0][0]
                 fn = cm[1][0]
@@ -307,7 +313,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, args):
                     f"Error raised when creating confusion matrix for {tool}: {fam},\n"
                     f"Error raised:\n{e}\n"
                     f"Prediction Tool: {tool}\tFamily: {fam}\tStat: building confusion matrix\n"
-                    f"y_true: {y_true}\ny_pred: {y_pred}\n"
+                    f"y_true: {y_true_fam}\ny_pred: {y_pred_fam}\n"
                 )
 
                 specificity = np.nan
