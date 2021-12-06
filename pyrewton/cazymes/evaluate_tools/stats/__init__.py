@@ -35,7 +35,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-# from scraper.sql.sql_orm import CazyFamily, Genbank, Session
+from cazy_webscraper.sql.sql_orm import Session, CazyFamily, Genbank
 from saintBioutils.utilities.file_io import get_paths
 from tqdm import tqdm
 
@@ -232,7 +232,7 @@ def evaluate_performance(predictions, cazy, data_source, args):
     :param data_source: str, 'dict' or 'db' depending if accessing CAZy annotations from a dict or db
     :param args: cmd-line args parser
 
-    Return nothing.
+    Return all_family_ground_truths (df of ground truth CAZy fam annotations).
     """
     time_stamp = datetime.now().strftime("%Y_%m_%d")
 
@@ -346,7 +346,7 @@ def evaluate_performance(predictions, cazy, data_source, args):
             args,
         )
 
-    return
+    return all_family_ground_truths
 
 
 def build_prediction_dataframes(predictions, time_stamp, cazy, data_source, args):
@@ -544,23 +544,20 @@ def get_fam_freq(args, cazy, timestamp, data_source, ground_truths_df):
     family_names = family_classifications.foundation_dict()
     family_names = list(family_names.keys())
 
-    row_index = 0
-    for row_index in tqdm(len(grnd_trth_df["Prediction_tool"]), desc="Calc family freq in test sets"):
-        row = grnd_trth_df.iloc[row_index]
+    for fam in tqdm(family_names, desc="Calc family freq in test sets"):
+        fam_freq = sum(grnd_trth_df[fam])
 
-        for fam in family_names:
-            fam_freq = sum(row[fam])
+        test_set_fam_freq[fam] = fam_freq
 
-            test_set_fam_freq[fam] = fam_freq
-
-    with open(f"CAZy_fam_testset_freq_{timestamp}.json") as fh:
+    output_path = args.output / f"CAZy_fam_testset_freq_{timestamp}.json"
+    with open(output_path, "w") as fh:
         json.dump(test_set_fam_freq, fh)
 
     # calcualte the family frequencies in the CAZy database
     cazy_populations = family_classifications.foundation_dict()
 
-    if args.data_source == 'dict':
-        for gbk_acc in tqdm(cazy_populations, desc='Calc CAZy family populations'):
+    if data_source == 'dict':
+        for gbk_acc in tqdm(cazy, desc='Calc CAZy family populations'):
             families = cazy[gbk_acc]
             for fam in families:
                 try:
@@ -580,7 +577,8 @@ def get_fam_freq(args, cazy, timestamp, data_source, ground_truths_df):
                     family = record[0].family
                     cazy_populations[family] += 1
 
-    with open(f"CAZy_fam_populations_{timestamp}.json") as fh:
+    output_path = args.output / f"CAZy_fam_populations_{timestamp}.json"
+    with open(output_path, "w") as fh:
         json.dump(cazy_populations, fh)
 
     return
