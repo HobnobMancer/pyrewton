@@ -50,12 +50,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
+from Bio import SeqIO
 from saintBioutils.utilities import file_io
 from saintBioutils.utilities import logger
 from saintBioutils.utilities.file_io import get_paths
 from saintBioutils.utilities.logger import config_logger
 from tqdm import tqdm
 
+from pyrewton.sql.sql_orm import get_db_connection
 from pyrewton.utilities.parsers.cmd_parser_compile_db import build_parser
 
 
@@ -94,16 +96,36 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
             )
             sys.exit(1)
 
-    # get paths to FASTA files of protein sequences
+    # get paths to directories containing dbCAN output
     dbcan_output_dirs = get_paths.get_dir_paths(args.dbcan_dir)
 
     if len(dbcan_output_dirs) == 0:
         logger.error(
-            f"No dirs retrieved from {args.input_dir}\nCheck the correct dir was provided\n"
+            f"No dirs retrieved from {args.dbcan_dir}\nCheck the correct dir was provided\n"
             "The output for each genome must be stored within a separate dir\n"
-            "within a parent dir, which is provided to pyrewton."
+            "within a parent dir, which is provided to pyrewton.\n"
+            "Terminating program"
         )
         sys.exit(1)
+
+    # get paths to FASTA files of protein sequences parsed by dbCAN
+    protein_fasta_files = get_paths.get_dir_paths(args.protein_dir)
+
+    if len(protein_fasta_files) == 0:
+        logger.error(
+            f"No FASTA files containing protein sequences extracted from the genomes retrieved from\n"
+            f"{args.protein_dir}\nCheck the correct dir was provided\n"
+            "Terminating program"
+        )
+        sys.exit(1)
+
+    # retrieve protein data from the FASTA file parsed by dbCAN
+    #  {genus: {species: 'txid': str, 'genomes': {assembly_acc: {protein_acc: {'sequence': ....}}}}}
+    all_data_dit = get_protein_data(protein_fasta_files)
+    
+    connection = get_db_connection(db_path)
+
+    # retrieve FASTA
     
     predict_dict = get_dbcan_annotations(dbcan_output_dirs)
 
@@ -116,9 +138,97 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # annotation_df.to_csv('dbcan_cazy_annotations.csv')
 
 
-def get_dbcan_annotations(
-    dbcan_output_dirs,
-):
+def get_protein_data(protein_fasta_files):
+    """Retrieve protein, genomic and taxonomic data from the FASTA files parsed by dbCAN.
+    
+    :param protein_fasta_files: list of Paths, one path per FASTA file
+    
+    Return dict {genus: {species: 'txid': str, 'genomes': {assembly_acc: {protein_acc: {'sequence': ....}}}}}
+    """
+    all_data_dict = {}
+
+    for fasta in tqdm(protein_fasta_files, desc="Retrieving protein data from FASTA files"):
+        for record in SeqIO.parse(fasta, 'fasta'):
+            protein_acc = record.id
+
+            desc = record.description.split(" ")
+
+            assembly_acc = desc[2]
+            assembly_acc = assembly_acc.replace("_", ".")
+            assembly_acc = assembly_acc.replace("GCA.", "GCA_")
+            assembly_acc = assembly_acc.replace("GCF.", "GCF_")
+
+            tax_id = desc[3].replace("txid", "")
+            
+            genus = desc[4]
+            species = desc[5]
+
+            try:
+                all_data_dict[genus]
+
+                try:
+                    all_data_dict[genus][species]
+
+                    try:
+                        all_data_dict[genus][species]['genomes']
+
+                        try:
+                            all_data_dict[genus][species]['genomes'][protein_acc]
+                            
+                            if all_data_dict[genus][species]['genomes'][protein_acc]['sequence'] != record.seq:
+                                logger.error(
+                                    f"Multiple unique sequences found for {protein_acc}\n"
+                                    "Additional digit added to protein accession to differentiate the proteins"
+                                )
+
+                                success = False
+                                while success is False:
+                                    i = 0
+                                    protein_acc += f"{str(i)}"
+                                    try:
+                                        all_data_dict[genus][species]['genomes'][protein_acc]
+                                        i += 1
+                                    except KeyError:
+                                        all_data_dict[genus][species]['genomes'][protein_acc] = {'sequence': record.seq}
+                                        success = True
+
+                        except KeyError:
+                            all_data_dict[genus][species]['genomes'][protein_acc] = {'sequence': record.seq}
+
+                    except KeyError:
+                        all_data_dict[genus][species]['genomes'] = {assembly_acc:
+                            {
+                                protein_acc: {
+                                    'sequence': record.seq
+                                }
+                            }
+                        }
+
+                except KeyError:
+                    all_data_dict[genus] = {species:
+                        {
+                            'txid': tax_id,
+                            'genomes': {assembly_acc:
+                                {protein_acc: {
+                                    'sequence': record.seq
+                                }}
+                            },
+                        }
+                    }
+
+            except KeyError:
+                all_data_dict[genus] = {species:
+                    {
+                        'txid': tax_id,
+                        'genomes': {assembly_acc:
+                            {protein_acc: {
+                                'sequence': record.seq
+                            }}
+                        },
+                    }
+                }
+
+def get_dbcan_annotations(dbcan_output_dirs):
     """Retrieve CAZy family annotations from dbCAN ouput.
     
     :param fasta_paths: list of Paths(), to fasta files containing protein seqs
