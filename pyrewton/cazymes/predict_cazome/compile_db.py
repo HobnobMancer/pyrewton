@@ -89,20 +89,20 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     if db_path.exists() and args.force is False:
             logger.error(
-                f"Db at {db_path} exists\n"
-                "Force is false\n"
-                "Not overwriting file\n"
-                "To overwrite the file use -f or --force\n"
-                "Terminating program"
+                f"Db at {db_path} exists\nForce is false\nNot overwriting file\n"
+                "To overwrite the file use -f or --force\nTerminating program"
             )
             sys.exit(1)
 
     # get paths to FASTA files of protein sequences
-    dbcan_output_dirs = get_paths.get_dir_paths(
-        '2021_11_17_dbcan_output',
-    )
+    dbcan_output_dirs = get_paths.get_dir_paths(args.dbcan_dir)
+
     if len(dbcan_output_dirs) == 0:
-        logger.error(f"No dirs retrieved from {args.input_dir}")
+        logger.error(
+            f"No dirs retrieved from {args.input_dir}\nCheck the correct dir was provided\n"
+            "The output for each genome must be stored within a separate dir\n"
+            "within a parent dir, which is provided to pyrewton."
+        )
         sys.exit(1)
     
     predict_dict = get_dbcan_annotations(dbcan_output_dirs)
