@@ -135,6 +135,8 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     
     all_data_dict = get_dbcan_annotations(dbcan_output_dirs, all_data_dict)
 
+    all_data_dict = add_cazy_annotations(all_data_dict, connection)
+
     cache_path = Path(f"dbcan_predictions_{time_stamp}.json")
 
     if args.output_dir is not None:
@@ -151,10 +153,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         prediction_df_path = args.output_dir / prediction_df_path
 
     prediction_df.to_csv(prediction_df_path)
-
-    # annotation_df = add_cazy_annotations(prediction_df)
-
-    # annotation_df.to_csv('dbcan_cazy_annotations.csv')
 
 
 def get_protein_data(protein_fasta_files):
@@ -544,6 +542,46 @@ def get_diamond_prediction(diamond_data, protein_accession):
     return cazy_fams
 
 
+def add_cazy_annotations(all_data_dict, connection):
+    """Add CAZy family annotations from CAZy to the data dict
+    
+    :param all_data_dict: 
+    {genus: {species: 'txid': str, 'genomes': {assembly_acc: 
+        {protein_acc: {'sequence': SeqIO.seq, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}}}
+    }
+    :param connection: open sqlalchemy connection to an SQLite3 db engine
+    
+    Return all_data_dict
+    """
+    for genus in tqdm(all_data_dict, desc="Adding CAZy data per genus"):
+        genus_species = list(all_data_dict[genus].keys())
+
+        for species in tqdm(genus_species, desc="Adding CAZy data per species"):
+            assemblies = list(all_data_dict[genus][species]['genomes'].keys())
+
+            for genomic_accession in tqdm(assemblies, desc="Adding CAZy data per genome"):
+                protein_accessions = list(all_data_dict[genus][species]['genomes'][genomic_accession].keys())
+
+                for protein_accession in tqdm(protein_accessions, desc="Adding protein data"):
+                    with Session(bind=connection) as session:
+                        db_query = session.query(Genbank, CazyFamily).\
+                            join(CazyFamily, Genbank.families).\
+                            filter(Genbank.genbank_accession==protein_accession).\
+                            all()
+
+                        if len(db_query) == 0:
+                            cazy_data = ['']
+
+                        else:
+                            cazy_data = []
+                            for obj in db_query:
+                                cazy_data.append(obj[1].family)
+                            cazy_data.sort()
+                        
+                        all_data_dict[genus][species]['genomes'][genomic_accession][
+                            protein_accession]['cazy'] = cazy_data
+
+
 def build_prediction_df(all_data_dict):
     """Build Pandas df of data in the dict.
     
@@ -602,37 +640,6 @@ def build_prediction_df(all_data_dict):
                     new_row = pd.DataFrame(new_row, columns=column_names)
 
                     prediction_df = prediction_df.append(new_row, ignore_index=True)
-
-    return prediction_df
-
-
-def add_cazy_annotations(prediction_df):
-    row_index = 0
-
-    cazy_column = []
-
-    for row_index in tqdm(range(len(prediction_df['HMMER'])), desc="Adding annotations from CAZy"):
-        row = prediction_df.iloc[row_index]
-        protein_accession = row['Protein_accession']
-        
-        with Session(bind=connection) as session:
-            db_query = session.query(Genbank, CazyFamily).\
-                join(CazyFamily, Genbank.families).\
-                filter(Genbank.genbank_accession==protein_accession).\
-                all()
-            
-        if len(db_query) == 0:
-            # protein not in CAZy
-            cazy_column.append([''])
-        
-        else:
-            column_data = []
-            for obj in db_query:
-                column_data.append(obj[1].family)
-            column_data.sort()
-            cazy_column.append(' '.join(column_data))
-
-    prediction_df['CAZy'] = cazy_column
 
     return prediction_df
 
