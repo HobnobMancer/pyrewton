@@ -258,6 +258,13 @@ def get_dbcan_annotations(dbcan_output_dirs, all_data_dict):
         # identify the genus and species
         genus, species = get_genome_tax(all_data_dict, genomic_accession)
 
+        if genus is None and species is None:
+            logger.warning(
+                f"No tax data retrieved from FASTA files parsed by dbCAN retrieved from {genomic_accession}\n"
+                "Not retrieving data for this genomic assembly"
+            )
+            continue
+
         overview_path = dbcan_dir / "overview.txt"
 
         try:
@@ -266,6 +273,7 @@ def get_dbcan_annotations(dbcan_output_dirs, all_data_dict):
         except FileNotFoundError:
             logger.error(
                 f"Could not find dbCAN output file: {overview_file}\n"
+                f"for genomic assembly {genomic_accession}"
                 "Not retrieving CAZymes from this genome"
             )
             continue
