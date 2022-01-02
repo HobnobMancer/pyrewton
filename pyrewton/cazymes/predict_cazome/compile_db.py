@@ -555,6 +555,9 @@ def build_prediction_df(all_data_dict):
     Return Pandas df
     """
     column_names = [
+        'Genus',
+        'Species',
+        'NCBI_txid',
         'Genomic_accession',
         'Protein_accession',
         'HMMER',
@@ -566,24 +569,39 @@ def build_prediction_df(all_data_dict):
 
     prediction_df = pd.DataFrame(columns=column_names)
 
-    for protein_accession in tqdm(all_data_dict, 'Compiling prediction df'):
-        hmmer = ' '.join(all_data_dict[protein_accession]['hmmer'])
-        hotpep = ' '.join(all_data_dict[protein_accession]['hotpep'])
-        diamond = ' '.join(all_data_dict[protein_accession]['diamond'])
-        dbcan = ' '.join(all_data_dict[protein_accession]['dbcan'])
+    for genus in tqdm(all_data_dict, desc='Building prediction df per genus'):
+        genus_species = all_data_dict[genus]
 
-        new_row = [[
-            all_data_dict[protein_accession]['genome'],
-            protein_accession,
-            hmmer,
-            hotpep,
-            diamond,
-            all_data_dict[protein_accession]['no#tools'],
-            dbcan,
-        ]]
-        new_row = pd.DataFrame(new_row, columns=column_names)
+        for species in tqdm(genus_species, desc='Building prediction df per species'):
+            tax_id = all_data_dict[genus][species]['txid']
+            assemblies = all_data_dict[genus][species]['genomes']
 
-        prediction_df = prediction_df.append(new_row, ignore_index=True)
+            for genomic_accession in tqdm(assemblies, desc='Building prediction df per genome'):
+                protein_data = all_data_dict[genus][species]['genomes'][genomic_accession]
+
+                for protein_accession in tqdm(protein_data, desc='Parsing protein data'):
+                    # retrieve the prediction annotations
+                    hmmer = ' '.join(all_data_dict[genus][species]['genomes'][genomic_accession]['hmmer'])
+                    hotpep = ' '.join(all_data_dict[genus][species]['genomes'][genomic_accession]['hotpep'])
+                    diamond = ' '.join(all_data_dict[genus][species]['genomes'][genomic_accession]['diamond'])
+                    dbcan = ' '.join(all_data_dict[genus][species]['genomes'][genomic_accession]['dbcan'])
+
+                    new_row = [[
+                        genus,
+                        species,
+                        tax_id,
+                        genomic_accession,
+                        protein_accession,
+                        protein_accession,
+                        hmmer,
+                        hotpep,
+                        diamond,
+                        all_data_dict[genus][species]['genomes'][genomic_accession]['no#tools'],
+                        dbcan,
+                    ]]
+                    new_row = pd.DataFrame(new_row, columns=column_names)
+
+                    prediction_df = prediction_df.append(new_row, ignore_index=True)
 
     return prediction_df
 
