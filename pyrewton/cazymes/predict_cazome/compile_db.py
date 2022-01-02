@@ -384,7 +384,7 @@ def get_genome_tax(all_data_dict, genomic_accession):
     for genus in all_data_dict:
         genus_species = all_data_dict[genus]
         for species in genus_species:
-            if genomic_accession in list(all_data_dict[genus][species].keys()):
+            if genomic_accession in list(all_data_dict[genus][species]['genomes'].keys()):
                 return genus, species
 
     return None, None
