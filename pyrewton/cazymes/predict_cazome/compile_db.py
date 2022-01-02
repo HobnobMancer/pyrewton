@@ -180,57 +180,105 @@ def get_protein_data(protein_fasta_files):
                         all_data_dict[genus][species]['genomes']
 
                         try:
-                            all_data_dict[genus][species]['genomes'][protein_acc]
+                            all_data_dict[genus][species]['genomes'][assembly_acc]
                             
-                            if all_data_dict[genus][species]['genomes'][protein_acc]['sequence'] != record.seq:
-                                logger.error(
-                                    f"Multiple unique sequences found for {protein_acc}\n"
-                                    "Additional digit added to protein accession to differentiate the proteins"
-                                )
+                            try:
+                                all_data_dict[genus][species]['genomes'][assembly_acc][protein_acc]
+                                
+                                if all_data_dict[genus][species]['genomes'][protein_acc]['sequence'] != record.seq:
+                                    logger.error(
+                                        f"Multiple unique sequences found for {protein_acc}\n"
+                                        "Additional digit added to protein accession to differentiate the proteins"
+                                    )
 
-                                success = False
-                                while success is False:
-                                    i = 0
-                                    protein_acc += f"{str(i)}"
-                                    try:
-                                        all_data_dict[genus][species]['genomes'][protein_acc]
-                                        i += 1
-                                    except KeyError:
-                                        all_data_dict[genus][species]['genomes'][protein_acc] = {'sequence': record.seq}
-                                        success = True
+                                    success = False
+                                    while success is False:
+                                        i = 0
+                                        protein_acc += f"{str(i)}"
+                                        try:
+                                            all_data_dict[genus][species]['genomes'][protein_acc]
+                                            i += 1
+                                        except KeyError:
+                                            all_data_dict[genus][species]['genomes'][protein_acc] = {
+                                                'sequence': record.seq,
+                                                'hmmer': set(),
+                                                'hotpep': set(),
+                                                'diamond': set(),
+                                                'dbcan': set(),
+                                                '#ofTools': set(),
+                                            }
+                                            success = True
 
-                        except KeyError:
-                            all_data_dict[genus][species]['genomes'][protein_acc] = {'sequence': record.seq}
+                            except KeyError:  # protein accession raised KeyError
+                                all_data_dict[genus][species]['genomes'][assembly_acc][protein_acc] = {
+                                    'sequence': record.seq,
+                                    'hmmer': set(),
+                                    'hotpep': set(),
+                                    'diamond': set(),
+                                    'dbcan': set(),
+                                    '#ofTools': set(),
+                                }
 
-                    except KeyError:
+                        except KeyError:  # assembly accession raised KeyError
+                            all_data_dict[genus][species]['genomes'][assembly_acc] = {
+                                protein_acc: {
+                                    'sequence': record.seq,
+                                    'hmmer': set(),
+                                    'hotpep': set(),
+                                    'diamond': set(),
+                                    'dbcan': set(),
+                                    '#ofTools': set(),
+                                }
+                            }
+
+                    except KeyError:  # 'genomes' raised KeyError
                         all_data_dict[genus][species]['genomes'] = {assembly_acc:
                             {
                                 protein_acc: {
-                                    'sequence': record.seq
+                                    'sequence': record.seq,
+                                    'hmmer': set(),
+                                    'hotpep': set(),
+                                    'diamond': set(),
+                                    'dbcan': set(),
+                                    '#ofTools': set(),
                                 }
                             }
                         }
 
-                except KeyError:
+                except KeyError:  # species raised KeyError
                     all_data_dict[genus] = {species:
                         {
                             'txid': tax_id,
-                            'genomes': {assembly_acc:
-                                {protein_acc: {
-                                    'sequence': record.seq
-                                }}
+                            'genomes': {
+                                assembly_acc: {
+                                    protein_acc: {
+                                        'sequence': record.seq,
+                                        'hmmer': set(),
+                                        'hotpep': set(),
+                                        'diamond': set(),
+                                        'dbcan': set(),
+                                        '#ofTools': set(),
+                                    }
+                                }
                             },
                         }
                     }
 
-            except KeyError:
+            except KeyError:   # genus raised KeyError
                 all_data_dict[genus] = {species:
                     {
                         'txid': tax_id,
-                        'genomes': {assembly_acc:
-                            {protein_acc: {
-                                'sequence': record.seq
-                            }}
+                        'genomes': {
+                            assembly_acc: {
+                                protein_acc: {
+                                    'sequence': record.seq,
+                                    'hmmer': set(),
+                                    'hotpep': set(),
+                                    'diamond': set(),
+                                    'dbcan': set(),
+                                    '#ofTools': set(),
+                                }
+                            }
                         },
                     }
                 }
@@ -304,11 +352,17 @@ def get_dbcan_annotations(dbcan_output_dirs, all_data_dict):
             # add data from dbcan_dict to overview_dict which contains data for all proteins in the FASTA file
             try:
                 all_data_dict[genus][species]['genomes'][genomic_accession][protein_accession]
-                all_data_dict[genus][species]['genomes'][genomic_accession][protein_accession]['hmmer'] += list(hmmer_predictions)
-                all_data_dict[genus][species]['genomes'][genomic_accession][protein_accession]['hotpep'] += list(hotpep_predictions)
-                all_data_dict[genus][species]['genomes'][genomic_accession][protein_accession]['diamond'] += list(diamond_predictions)
-                all_data_dict[genus][species]['genomes'][genomic_accession][protein_accession]['dbcan'] += list(dbcan_predictions)
-                all_data_dict[genus][species]['genomes'][genomic_accession][protein_accession]['#ofTools'] = no_of_tools
+
+                all_data_dict[genus][species]['genomes'][genomic_accession][
+                    protein_accession]['hmmer'] += list(hmmer_predictions)
+                all_data_dict[genus][species]['genomes'][genomic_accession][
+                    protein_accession]['hotpep'] += list(hotpep_predictions)
+                all_data_dict[genus][species]['genomes'][genomic_accession][
+                    protein_accession]['diamond'] += list(diamond_predictions)
+                all_data_dict[genus][species]['genomes'][genomic_accession][
+                    protein_accession]['dbcan'] += list(dbcan_predictions)
+                all_data_dict[genus][species]['genomes'][genomic_accession][
+                    protein_accession]['#ofTools'] = no_of_tools
             except KeyError:
                 logger.warning(
                     f"Retrieving dbCAN output for protein {protein_accession} from {genomic_accession}\n"
