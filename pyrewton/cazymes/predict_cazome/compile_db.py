@@ -283,6 +283,8 @@ def get_protein_data(protein_fasta_files):
                     }
                 }
 
+    return all_data_dict
+
 
 def get_dbcan_annotations(dbcan_output_dirs, all_data_dict):
     """Retrieve CAZy family annotations from dbCAN ouput.
