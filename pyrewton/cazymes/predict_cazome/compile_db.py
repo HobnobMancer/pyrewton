@@ -129,13 +129,11 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # retrieve protein data from the FASTA file parsed by dbCAN
     #  {genus: {species: 'txid': str, 'genomes': {assembly_acc: {protein_acc: {'sequence': SeqIO.seq}}}}}
-    all_data_dit = get_protein_data(protein_fasta_files)
+    all_data_dict = get_protein_data(protein_fasta_files)
     
     connection = get_db_connection(db_path)
-
-    # retrieve FASTA
     
-    all_data_dict = get_dbcan_annotations(dbcan_output_dirs, all_data_dit)
+    all_data_dict = get_dbcan_annotations(dbcan_output_dirs, all_data_dict)
 
     cache_path = Path(f"dbcan_predictions_{time_stamp}.json")
 
@@ -151,7 +149,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     if args.output_dir is not None:
         prediction_df_path = args.output_dir / prediction_df_path
-        
+
     prediction_df.to_csv(prediction_df_path)
 
     # annotation_df = add_cazy_annotations(prediction_df)
@@ -303,16 +301,15 @@ def get_protein_data(protein_fasta_files):
 def get_dbcan_annotations(dbcan_output_dirs, all_data_dict):
     """Retrieve CAZy family annotations from dbCAN ouput.
     
-    :param all_data_dict: {genus: {species: 'txid': str, 'genomes': {assembly_acc: {protein_acc: {'sequence': SeqIO.seq}}}}}
-
-    :param fasta_paths: list of Paths(), to fasta files containing protein seqs
-    :param genome_fam_tab_data: dict, {protein accession: genomic accession}
-    :param genome_protein_families_data: dict {protein acc: {'genome': acc, 'fams': set()}}
-    :param dbcan_output_dirs: cmd-line args parser
+    :param dbcan_output_dirs: list of Paths() to output dirs containing dbCAN output
+    :param all_data_dict: 
+    {genus: {species: 'txid': str, 'genomes': {assembly_acc: 
+        {protein_acc: {'sequence': SeqIO.seq, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}}}
+    }
     
     Return dict:
     {genus: {species: 'txid': str, 'genomes': {assembly_acc: 
-        {protein_acc: {'sequence': str, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}}}
+        {protein_acc: {'sequence': SeqIO.seq, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}}}
     }
     """
     for dbcan_dir in tqdm(dbcan_output_dirs, "Parsing dbCAN output"):
@@ -393,6 +390,12 @@ def get_dbcan_annotations(dbcan_output_dirs, all_data_dict):
 def get_genome_tax(all_data_dict, genomic_accession):
     """Retrieve the genus and species of the source organism of a genome from the all_data_dict
     
+    :param all_data_dict: 
+    {genus: {species: 'txid': str, 'genomes': {assembly_acc: 
+        {protein_acc: {'sequence': SeqIO.seq, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}}}
+    }
+    :param genomic_accession: str
+
     Return genus (str) and species (str)
     """
     for genus in all_data_dict:
@@ -541,7 +544,16 @@ def get_diamond_prediction(diamond_data, protein_accession):
     return cazy_fams
 
 
-def build_prediction_df(predict_dict):
+def build_prediction_df(all_data_dict):
+    """Build Pandas df of data in the dict.
+    
+    :param all_data_dict: 
+    {genus: {species: 'txid': str, 'genomes': {assembly_acc: 
+        {protein_acc: {'sequence': SeqIO.seq, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}}}
+    }
+    
+    Return Pandas df
+    """
     column_names = [
         'Genomic_accession',
         'Protein_accession',
@@ -554,19 +566,19 @@ def build_prediction_df(predict_dict):
 
     prediction_df = pd.DataFrame(columns=column_names)
 
-    for protein_accession in tqdm(predict_dict, 'Compiling prediction df'):
-        hmmer = ' '.join(predict_dict[protein_accession]['hmmer'])
-        hotpep = ' '.join(predict_dict[protein_accession]['hotpep'])
-        diamond = ' '.join(predict_dict[protein_accession]['diamond'])
-        dbcan = ' '.join(predict_dict[protein_accession]['dbcan'])
+    for protein_accession in tqdm(all_data_dict, 'Compiling prediction df'):
+        hmmer = ' '.join(all_data_dict[protein_accession]['hmmer'])
+        hotpep = ' '.join(all_data_dict[protein_accession]['hotpep'])
+        diamond = ' '.join(all_data_dict[protein_accession]['diamond'])
+        dbcan = ' '.join(all_data_dict[protein_accession]['dbcan'])
 
         new_row = [[
-            predict_dict[protein_accession]['genome'],
+            all_data_dict[protein_accession]['genome'],
             protein_accession,
             hmmer,
             hotpep,
             diamond,
-            predict_dict[protein_accession]['no#tools'],
+            all_data_dict[protein_accession]['no#tools'],
             dbcan,
         ]]
         new_row = pd.DataFrame(new_row, columns=column_names)
