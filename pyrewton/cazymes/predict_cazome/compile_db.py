@@ -603,6 +603,7 @@ def build_prediction_df(all_data_dict):
         'DIAMOND',
         '#dbCAN_tools',
         'dbCAN',
+        'CAZy',
     ]
 
     prediction_df = pd.DataFrame(columns=column_names)
@@ -623,6 +624,7 @@ def build_prediction_df(all_data_dict):
                     hotpep = ' '.join(all_data_dict[genus][species]['genomes'][genomic_accession]['hotpep'])
                     diamond = ' '.join(all_data_dict[genus][species]['genomes'][genomic_accession]['diamond'])
                     dbcan = ' '.join(all_data_dict[genus][species]['genomes'][genomic_accession]['dbcan'])
+                    cazy = ' '.join(all_data_dict[genus][species]['genomes'][genomic_accession]['cazy'])
 
                     new_row = [[
                         genus,
@@ -636,6 +638,7 @@ def build_prediction_df(all_data_dict):
                         diamond,
                         all_data_dict[genus][species]['genomes'][genomic_accession]['no#tools'],
                         dbcan,
+                        cazy,
                     ]]
                     new_row = pd.DataFrame(new_row, columns=column_names)
 
