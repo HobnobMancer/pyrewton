@@ -137,13 +137,22 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     
     all_data_dict = get_dbcan_annotations(dbcan_output_dirs, all_data_dit)
 
-    cache_path = f"dbcan_predictions_{time_stamp}.json"
+    cache_path = Path(f"dbcan_predictions_{time_stamp}.json")
+
+    if args.output_dir is not None:
+        cache_path = args.output_dir / cache_path
+
     with open(cache_path, 'w') as fh:
         json.dump(all_data_dict, fh)
 
-    prediction_df = build_prediction_df(predict_dict)
+    prediction_df = build_prediction_df(all_data_dict)
 
-    prediction_df.to_csv('dbcan_prediction_output.csv')
+    prediction_df_path = Path(f"dbcan_predictions_{time_stamp}.csv")
+
+    if args.output_dir is not None:
+        prediction_df_path = args.output_dir / prediction_df_path
+        
+    prediction_df.to_csv(prediction_df_path)
 
     # annotation_df = add_cazy_annotations(prediction_df)
 
