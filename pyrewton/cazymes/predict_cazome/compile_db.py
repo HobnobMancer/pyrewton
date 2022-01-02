@@ -79,6 +79,13 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         config_logger(args)
     logger = logging.getLogger(__package__)
 
+    if args.cazy.exists() is False:
+        logger.error(
+            f"Path to local CAZyme db ({args.cazy})\ndoes not exist\n"
+            "Check the correct path was provided\n"
+            "Terminating program"
+        )
+
     # compile path to the output CAZome database
     if args.output_db is None:
         db_path = Path(f"cazome_db_{time_stamp}.db")
@@ -120,14 +127,14 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         sys.exit(1)
 
     # retrieve protein data from the FASTA file parsed by dbCAN
-    #  {genus: {species: 'txid': str, 'genomes': {assembly_acc: {protein_acc: {'sequence': ....}}}}}
+    #  {genus: {species: 'txid': str, 'genomes': {assembly_acc: {protein_acc: {'sequence': SeqIO.seq}}}}}
     all_data_dit = get_protein_data(protein_fasta_files)
     
     connection = get_db_connection(db_path)
 
     # retrieve FASTA
     
-    predict_dict = get_dbcan_annotations(dbcan_output_dirs)
+    all_data_dit = get_dbcan_annotations(dbcan_output_dirs, all_data_dit)
 
     prediction_df = build_prediction_df(predict_dict)
 
@@ -143,7 +150,7 @@ def get_protein_data(protein_fasta_files):
     
     :param protein_fasta_files: list of Paths, one path per FASTA file
     
-    Return dict {genus: {species: 'txid': str, 'genomes': {assembly_acc: {protein_acc: {'sequence': ....}}}}}
+    Return dict {genus: {species: 'txid': str, 'genomes': {assembly_acc: {protein_acc: {'sequence': SeqIO.seq}}}}}
     """
     all_data_dict = {}
 
@@ -228,22 +235,29 @@ def get_protein_data(protein_fasta_files):
                     }
                 }
 
-def get_dbcan_annotations(dbcan_output_dirs):
+
+def get_dbcan_annotations(dbcan_output_dirs, all_data_dict):
     """Retrieve CAZy family annotations from dbCAN ouput.
     
+    :param all_data_dict: {genus: {species: 'txid': str, 'genomes': {assembly_acc: {protein_acc: {'sequence': SeqIO.seq}}}}}
+
     :param fasta_paths: list of Paths(), to fasta files containing protein seqs
     :param genome_fam_tab_data: dict, {protein accession: genomic accession}
     :param genome_protein_families_data: dict {protein acc: {'genome': acc, 'fams': set()}}
     :param dbcan_output_dirs: cmd-line args parser
     
     Return dict:
-    {protein_accession: {'genome': str, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()} }
+    {genus: {species: 'txid': str, 'genomes': {assembly_acc: 
+        {protein_acc: {'sequence': str, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}}}
+    }
     """
-    dbcan_dict = {}  # {protein_accession: {'genome': str, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()} }
-
     for dbcan_dir in tqdm(dbcan_output_dirs, "Parsing dbCAN output"):
         # dir name format: GCA_123456789_1
         genomic_accession = f"{(dbcan_dir.name).split('_')[0]}_{(dbcan_dir.name).split('_')[1]}.{(dbcan_dir.name).split('_')[2]}"
+
+        # identify the genus and species
+        genus, species = get_genome_tax(all_data_dict, genomic_accession)
+
         overview_path = dbcan_dir / "overview.txt"
 
         try:
@@ -297,6 +311,20 @@ def get_dbcan_annotations(dbcan_output_dirs):
                 }
 
     return dbcan_dict
+
+
+def get_genome_tax(all_data_dict, genomic_accession):
+    """Retrieve the genus and species of the source organism of a genome from the all_data_dict
+    
+    Return genus (str) and species (str)
+    """
+    for genus in all_data_dict:
+        genus_species = all_data_dict[genus]
+        for species in genus_species:
+            if genomic_accession in list(all_data_dict[genus][species].keys()):
+                return genus, species
+
+    return None, None
 
 
 def get_hmmer_prediction(hmmer_data, protein_accession):
