@@ -303,22 +303,21 @@ def get_dbcan_annotations(dbcan_output_dirs, all_data_dict):
                         
             # add data from dbcan_dict to overview_dict which contains data for all proteins in the FASTA file
             try:
-                dbcan_dict[protein_accession]
-                dbcan_dict[protein_accession]['hmmer'] += list(hmmer_predictions)
-                dbcan_dict[protein_accession]['hotpep'] += list(hotpep_predictions)
-                dbcan_dict[protein_accession]['diamond'] += list(diamond_predictions)
-                dbcan_dict[protein_accession]['dbcan'] += list(dbcan_predictions)
+                all_data_dict[genus][species]['genomes'][genomic_accession][protein_accession]
+                all_data_dict[genus][species]['genomes'][genomic_accession][protein_accession]['hmmer'] += list(hmmer_predictions)
+                all_data_dict[genus][species]['genomes'][genomic_accession][protein_accession]['hotpep'] += list(hotpep_predictions)
+                all_data_dict[genus][species]['genomes'][genomic_accession][protein_accession]['diamond'] += list(diamond_predictions)
+                all_data_dict[genus][species]['genomes'][genomic_accession][protein_accession]['dbcan'] += list(dbcan_predictions)
+                all_data_dict[genus][species]['genomes'][genomic_accession][protein_accession]['#ofTools'] = no_of_tools
             except KeyError:
-                dbcan_dict[protein_accession] = {
-                    'hmmer': hmmer_predictions,
-                    'hotpep': hotpep_predictions,
-                    'diamond': diamond_predictions,
-                    'dbcan': dbcan_predictions,
-                    'no#tools': no_of_tools,
-                    'genome': genomic_accession,
-                }
+                logger.warning(
+                    f"Retrieving dbCAN output for protein {protein_accession} from {genomic_accession}\n"
+                    "but protein not retrieved from FASTA file parsed by dbCAN\n"
+                    "Skipping protein"
+                )
+                continue
 
-    return dbcan_dict
+    return all_data_dict
 
 
 def get_genome_tax(all_data_dict, genomic_accession):
