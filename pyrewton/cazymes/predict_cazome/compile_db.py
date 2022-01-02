@@ -40,6 +40,7 @@
 """Parse dbCAN output and a local CAZyme database to compile an annotated CAZome"""
 
 
+import json
 import logging
 import re
 import sys
@@ -134,7 +135,11 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     # retrieve FASTA
     
-    all_data_dit = get_dbcan_annotations(dbcan_output_dirs, all_data_dit)
+    all_data_dict = get_dbcan_annotations(dbcan_output_dirs, all_data_dit)
+
+    cache_path = f"dbcan_predictions_{time_stamp}.json"
+    with open(cache_path, 'w') as fh:
+        json.dump(all_data_dict, fh)
 
     prediction_df = build_prediction_df(predict_dict)
 
