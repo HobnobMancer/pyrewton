@@ -33,39 +33,41 @@ def build_parser(argv: Optional[List] = None):
         description="Programme to evaluate third-party CAZyme prediction tools",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-
     # Add positional arguments to parser
 
     # Add path to input fasta files
     parser.add_argument(
-        "prediction_dir",
+        "protein_dir",
         type=Path,
-        help="Path to directory containing outputs from prediction tools and test sets fasta files",
+        help="Path to directory containing FASTA files of protein seqs extract from genomic assemblies",
     )
     parser.add_argument(
-        "testset_dir",
+        "dbcan_dir",
         type=Path,
-        help=(
-            "Path to directory containing test set dir from create_test_sets_*.py,\n"
-            "containing the dirs 'alignment_scores' and 'test_sets'"
-        ),
-    )
-    parser.add_argument(
-        "cazy",
-        type=Path,
-        help="Path to JSON file or local CAZyme db of CAZy annotations of proteins (ground truths)",
+        help="Path to directory containing output from dbCAN, with one child per genome",
     )
 
     # Add optional arguments to parser
-    # Add option to define F-beta weighting
+
     parser.add_argument(
-        "-b",
-        "--beta",
-        dest="beta",
-        type=int,
-        default=1,
-        help="Weighting of Fbeta-stat when calculating Fbeta score of CAZy family prediction",
+        "-c",
+        "--cazy",
+        type=Path,
+        default=None,
+        help=(
+            "Path to local CAZyme db of CAZy annotations of proteins created using cazy_webscraper\n"
+            "Will add CAZy annotations to the output."
+        ),
     )
+
+    parser.add_argument(
+        "-d",
+        "--output_db",
+        type=Path,
+        default=None,
+        help="Name of resulting database",
+    )
+
     # Add option to force file over writting
     parser.add_argument(
         "-f",
@@ -97,32 +99,18 @@ def build_parser(argv: Optional[List] = None):
         default=False,
         help="enable/disable deletion of exisiting files",
     )
+
     # Add option to specify output directory
     # This will enable creation of a new output directory
     parser.add_argument(
         "-o",
-        "--output",
+        "--output_dir",
         type=Path,
         metavar="output directory",
         default=Path(os.getcwd()),
-        help="Directory to which all outputs are written",
+        help="Directory to which all outputs are written. Defauly, write to cwd",
     )
-    # Add option to change the number rounds of bootstrapping
-    parser.add_argument(
-        "-r",
-        "--bs_resampling",
-        type=int,
-        default=100,
-        help="Number of rounds of bootstrap resampling",
-    )
-    # Add option to change the number of test sets used for bootstrapping
-    parser.add_argument(
-        "-s",
-        "--bs_sample_size",
-        type=int,
-        default=6,
-        help="Number of test sets used for bootstrapping CAZyme/non-CAZyme predictions",
-    )
+
     # Add option for more detail (verbose) logging
     parser.add_argument(
         "-v",
