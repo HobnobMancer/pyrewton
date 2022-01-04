@@ -219,7 +219,7 @@ class Taxonomy(Base):
 
 class Assembly(Base):
     """Represent a genomic assembly from which CAZymes (protein sequences) were retrieved."""
-    __tablename__ = "Asssemblies"
+    __tablename__ = "Assemblies"
     
     __table_args__ = (
         UniqueConstraint("assembly_accession"),
