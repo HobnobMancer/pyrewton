@@ -113,7 +113,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 "Terminating program"
             )
             sys.exit(1)
-        connection = get_db_connection(args.cazy, args, False)
+        cazy_db_connection = get_db_connection(args.cazy, args, False)
 
     connection = get_cazome_db_connection(db_path, args)
 
@@ -149,7 +149,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     cazome_dict, domain_range_dict = get_dbcan_annotations(dbcan_output_dirs, protein_dict)
 
     if args.cazy is not None:
-        cazome_dict = add_cazy_annotations(cazome_dict, connection)
+        cazome_dict = add_cazy_annotations(cazome_dict, cazy_db_connection)
 
     # cache the dict
     cache_dict(cazome_dict, time_stamp, args)
