@@ -77,3 +77,7 @@ def get_tax_table(connection):
         db_tax_records = session.query(Taxonomy).all()
 
     tax_data = {}  # {genus species: db_id}
+    for record in tqdm(db_tax_records, desc="Retrieving db Tax records"):
+        tax_data[f"{record.genus} {record.species}"] = record.tax_id
+
+    return tax_data
