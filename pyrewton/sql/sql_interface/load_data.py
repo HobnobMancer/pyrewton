@@ -46,27 +46,10 @@ from pyrewton.sql.sql_orm import (
     CazyFamily,
     Classifier,
     Protein,
-    Ncbi_Tax_Id,
     Taxonomy,
     Session,
 )
 
-
-def get_ncbi_tax_ids(connection):
-    """Parse Ncbi_Tax_Ids into a dict
-    
-    :param connection: open sqlalchemy connection to an SQLite3 db engine
-    
-    Return dict {ncbi_tax_id: db_id}
-    """
-    with Session(bind=connection) as session:
-        db_ncbi_records = session.query(Ncbi_Tax_Id).all()
-
-    ncbi_tax_ids = {}  # {ncbi_tax_id: db_id}
-    for record in tqdm(db_ncbi_records, desc="Retrieving NCBI db records"):
-        ncbi_tax_ids[record.ncbi_tax_id] = record.ncbi_id
-
-    return ncbi_tax_ids
 
 
 def get_tax_table(connection):
