@@ -76,7 +76,7 @@ Session = sessionmaker()
 
 # linker table between Proteins and PDB structures
 proteins_pdbs = Table(
-    "proteins_pdbs",
+    "Proteins_Pdbs",
     Base.metadata,
     Column("protein_id", Integer, ForeignKey("Proteins.protein_id")),
     Column("pdb_id", Integer, ForeignKey("Pdbs.pdb_id")),
@@ -86,7 +86,7 @@ proteins_pdbs = Table(
 
 # linker table between Proteins and PDB structures
 proteins_ecs = Table(
-    "proteins_ecs",
+    "Proteins_Ecs",
     Base.metadata,
     Column("protein_id", Integer, ForeignKey("Proteins.protein_id")),
     Column("ec_id", Integer, ForeignKey("Ec_numbers.ec_id")),
@@ -379,7 +379,7 @@ class Transmembrane(Base):
     __tablename__ = "Transmembranes"
     __table_args__ = (
         UniqueConstraint("transmembrane_id", "protein_id"),
-        Index("transmembrane_id")
+        Index("transmembrane_id", "protein_id")
     )
 
     transmembrane_id = Column(Integer, primary_key=True)
@@ -401,7 +401,6 @@ class Transmembrane(Base):
             f"<Transmembrane region uniprot={self.uniprot_transmembrane},"
             f"tmhmm={self.tmhmm_transmembrane},signal_p={self.signal_p_transmembrane}>"
         )
-
 
 
 #
