@@ -207,7 +207,7 @@ class Taxonomy(Base):
     species = Column(String)
     ncbi_tax_id = Column(Integer)  # excludes the NCBI:txid prefix
 
-    ncbi_ids = relationship("Ncbi_Tax_Ids", back_populates="species")
+    ncbi_ids = relationship("Ncbi_Tax_Id", back_populates="species")
     assembly = relationship("Assembly", back_populates="tax_assembly")
 
     def __str__(self):
