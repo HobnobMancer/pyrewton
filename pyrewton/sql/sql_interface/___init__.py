@@ -38,10 +38,3 @@
 # SOFTWARE.
 #
 """Module for interacting with the db"""
-
-
-class SqlInterfaceException(Exception):
-    """General exception for SQL interface"""
-
-    def __init__(self, message):
-        self.message = message
