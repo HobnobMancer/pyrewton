@@ -40,10 +40,12 @@
 """Module for defining the db ORM and interacting with the db"""
 
 
-from pyrewton.cazymes.predict_cazome.compile_db import CazyFamily
 from tqdm import tqdm
 
 from pyrewton.sql.sql_orm import (
+    CazyFamily,
+    Classifier,
+    Protein,
     Ncbi_Tax_Id,
     Taxonomy,
     Session,
