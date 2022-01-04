@@ -123,7 +123,7 @@ def add_proteins(protein_dict, assembly_dict, connection):
     
     :param protein_dict:
     :param assembly_dict:
-    :param connection:
+    :param connection: open sqlalchemy connection to an SQLite3 engine
     
     Return nothing
     """
@@ -157,7 +157,7 @@ def add_families(cazome_dict, connection):
     """Add CAZy families to db.
     
     :param cazome_dict:
-    :param connection:
+    :param connection: open sqlalchemy connection to an SQLite3 engine
     
     Return nothing
     """
@@ -197,6 +197,8 @@ def add_classifications(
     """Add domain classifications from dbCAN (and CAZy) to the db.
     
     :param
+    :param connection: open sqlalchemy connection to an SQLite3 engine
+    :param args: cmd-line args parser
 
     Return nothing.
     """
@@ -214,19 +216,18 @@ def add_classifications(
             classifier_id = classifer_db_dict[tool]
 
             for tool in tools:
-                domain_fams = cazome_dict[genomic_accession][protein_accession][tool]
+                if tool == 'hmmer':  # includes adding domain ranges
+                    domain_fams = cazome_dict[genomic_accession][protein_accession][tool]
+                    
+                    for fam in domain_fams:
+                        fam_id = family_db_dict[fam]
+                        domain_ranges = domain_dict[protein_accession][fam]
 
-                for fam in domain_fams:
-                    fam_id = family_db_dict[fam]
-
-                    # check if add domain ranges
-                    try:
-                        domain_ranges = domain_dict[protein_accession][tool][fam]
                         for drange in domain_ranges:
-                            domains_to_insert.add( (protein_id, classifier_id, fam_id, drange) )
+                             domains_to_insert.add( (protein_id, classifier_id, fam_id, drange) )
 
-                    except KeyError:
-                        # no domain ranges to add
+                else:  # no domain ranges
+                    for fam in domain_fams:
                         domains_to_insert.add( (protein_id, classifier_id, fam_id, None) )
     
     if len(domains_to_insert) != 0:
