@@ -40,6 +40,8 @@
 """Module for defining the db ORM and interacting with the db"""
 
 
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+
 from datetime import datetime
 from tqdm import tqdm
 
@@ -112,5 +114,40 @@ def add_genomic_accessions(tax_dict, tax_table_dict, connection):
 
     if len(assemblies_to_insert) != 0:
         insert_data(connection, 'Assemblies', ['tax_id', 'assembly_accession'], list(assemblies_to_insert))
+
+    return
+
+
+def add_proteins(protein_dict, assembly_dict, connection):
+    """Add proteins to the db
+    
+    :param protein_dict:
+    :param assembly_dict:
+    :param connection:
+    
+    Return nothing
+    """
+    proteins_to_insert = set()
+
+    for genomic_accession in tqdm(protein_dict, desc="Adding proteins to db"):
+        protein_accessions = list(protein_dict[genomic_accession].keys())
+        
+        for protein_accession in protein_accessions:
+            assembly_db_id = assembly_dict[genomic_accession]
+
+            sequence = protein_dict[genomic_accession][protein_accession]['sequence']
+            analysed_seq = ProteinAnalysis(sequence)
+            mass = analysed_seq.molecular_weight()
+            length = len(sequence)
+
+            proteins_to_insert.add( (assembly_db_id, protein_accession, mass, length, sequence) )
+
+    if len(proteins_to_insert) != 0:
+        insert_data(
+            connection,
+            'Proteins',
+            ['assembly_id', 'genbank_accession', 'mass', 'length', 'sequence'],
+            list(proteins_to_insert),
+        )
 
     return
