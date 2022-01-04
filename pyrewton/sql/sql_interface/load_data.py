@@ -40,6 +40,7 @@
 """Module for defining the db ORM and interacting with the db"""
 
 
+from pyrewton.cazymes.predict_cazome.compile_db import CazyFamily
 from tqdm import tqdm
 
 from pyrewton.sql.sql_orm import (
@@ -103,8 +104,49 @@ def get_assemblies_table(connection):
 def get_protein_db_ids(connection):
     """Get Protein record Ids, load into a dict
     
-    :param connection:
+    :param connection: open sqlalchemy connection to an SQLite3 db engine
     
-    Return dict:
+    Return dict {genbank_accession: db_id}
     """
-    return
+    with Session(bind=connection) as session:
+        db_records = session.query(Protein).all()
+
+    protein_dict = {}  # {genomic_accession: db_id}
+    for record in tqdm(db_records, desc="Retrieving db Protein records"):
+        protein_dict[record.genbank_accession] = record.protein_id
+
+    return protein_dict
+
+
+def get_classifier_db_ids(connection):
+    """Get Classifier record Ids, load into a dict
+    
+    :param connection: open sqlalchemy connection to an SQLite3 db engine
+    
+    Return dict {genbank_accession: db_id}
+    """
+    with Session(bind=connection) as session:
+        db_records = session.query(Classifier).all()
+
+    classifier_dict = {}  # {genomic_accession: db_id}
+    for record in tqdm(db_records, desc="Retrieving db classifier records"):
+        classifier_dict[record.classifier] = record.classifier_id
+
+    return classifier_dict
+
+
+def get_family_db_ids(connection):
+    """Get CazyFamily record Ids, load into a dict
+    
+    :param connection: open sqlalchemy connection to an SQLite3 db engine
+    
+    Return dict {genbank_accession: db_id}
+    """
+    with Session(bind=connection) as session:
+        db_records = session.query(CazyFamily).all()
+
+    fam_dict = {}  # {genomic_accession: db_id}
+    for record in tqdm(db_records, desc="Retrieving db Protein records"):
+        fam_dict[record.family] = record.family_id
+
+    return fam_dict
