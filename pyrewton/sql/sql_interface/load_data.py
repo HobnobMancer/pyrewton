@@ -152,3 +152,10 @@ def get_family_db_ids(connection):
         fam_dict[record.family] = record.family_id
 
     return fam_dict
+
+
+
+
+
+
+
