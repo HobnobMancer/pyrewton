@@ -42,10 +42,14 @@
 
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
-from datetime import datetime
 from tqdm import tqdm
 
-from pyrewton.sql.sql_interface import SqlInterfaceException
+
+class SqlInterfaceException(Exception):
+    """General exception for SQL interface"""
+
+    def __init__(self, message):
+        self.message = message
 
 
 def insert_data(connection, table_name, column_names, insert_values):
@@ -76,17 +80,15 @@ def insert_data(connection, table_name, column_names, insert_values):
     return
 
 
-def add_species_data(tax_dict, ncbi_tax_dict, connection):
+def add_species_data(tax_dict, connection):
     species_to_insert = set()
     
     for genomic_accession in tqdm(tax_dict, desc="Adding species to db"):
         tax_id = tax_dict[genomic_accession]['tax_id']
-        db_tax_id = ncbi_tax_dict[tax_id]
-
         genus = tax_dict[genomic_accession]['genus']
         species = tax_dict[genomic_accession]['species']
 
-        species_to_insert.add( (db_tax_id, genus, species) )
+        species_to_insert.add( (tax_id, genus, species) )
 
     if len(species_to_insert) != 0:
         insert_data(connection, 'Taxonomies', ['ncbi_id', 'genus', 'species'], list(species_to_insert))

@@ -601,18 +601,8 @@ def add_data_to_db(cazome_dict, tax_dict, domain_dict, connection):
     :param connection: open sqlalchemy connection to an SQLite3 db
     
     Return nothing"""
-    # retrieve and add NCBI taxonomy IDs
-    ncbi_ids_to_insert = [(tax_dict[genomic_accession]['txid'],) for genomic_accession in tax_dict]
-    ncbi_ids_to_insert = list(set(ncbi_ids_to_insert))  # remove duplicates
-
-    if len(ncbi_ids_to_insert) != 0:
-        add_data.insert_data(connection, 'Ncbi_Tax_Ids', ['ncbi_tax_id'], ncbi_ids_to_insert)
-
-    # retrieve NCBI tax ID db IDs
-    ncbi_tax_dict = load_data.get_ncbi_tax_ids(connection)
-
     # add taxonomy (species) data to the db
-    add_data.add_species_data(tax_dict, ncbi_tax_dict, connection)
+    add_data.add_species_data(tax_dict, connection)
 
     # retrieve Taxonomies table
     tax_table_dict = load_data.get_tax_table(connection)
