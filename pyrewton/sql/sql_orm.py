@@ -343,13 +343,12 @@ class Protein(Base):
     mass = Column(Integer)  # retrieved from UniProt
     length = Column(Integer)  # length of Aa seq
     sequence = Column(String)
-    uniprot_transmembrane = Column(Boolean)  # 0 no, 1 yes, retrieved from UniProt
-    tmhmm_transmembrane = Column(Integer)  # 0=none, 1=possible, 2=confident
-    signalp_transmembrane = Column(Boolean)  # 0 no, 1 yes, used with tmhmm
     
     # data from CAZy, dbCAN and genomes
     domains = relationship("Domain", back_populates="proteins")
     assemblies = relationship("Assembly", back_populates="proteins")
+    # info about the possibility of transmembrane regions
+    transmembranes = relationship("Transmembrane", back_populates="proteins")
     # data retrieved from UniProt
     active_sites = relationship("ActiveSite", back_populates="proteins")
     substrate_sites = relationship("SubstrateBindingSite", back_populates="proteins")
@@ -368,6 +367,41 @@ class Protein(Base):
 
     def __repr__(self):
         return f"<Protein, id={self.protein_id}, name={self.protein_name}>"
+
+
+#
+# Table for transmembrane data
+#
+
+
+class Transmembrane(Base):
+    """Describe information about the possible presence of a transmembrane region in a protein"""
+    __tablename__ = "Transmembranes"
+    __table_args__ = (
+        UniqueConstraint("transmembrane_id", "protein_id"),
+        Index("transmembrane_id")
+    )
+
+    transmembrane_id = Column(Integer, primary_key=True)
+    protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
+    uniprot_transmembrane = Column(Boolean)
+    tmhmm_transmembrane = Column(Integer)
+    signal_p_transmembrane = Column(Boolean)
+
+    proteins = relationship("Protein", back_populates="transmembranes")
+
+    def __str__(self):
+        return (
+            f"-Transmembrane region uniprot={self.uniprot_transmembrane},"
+            f"tmhmm={self.tmhmm_transmembrane},signal_p={self.signal_p_transmembrane}-"
+        )
+
+    def __repr__(self):
+        return (
+            f"<Transmembrane region uniprot={self.uniprot_transmembrane},"
+            f"tmhmm={self.tmhmm_transmembrane},signal_p={self.signal_p_transmembrane}>"
+        )
+
 
 
 #
