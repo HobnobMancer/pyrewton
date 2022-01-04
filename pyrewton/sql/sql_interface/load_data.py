@@ -98,3 +98,13 @@ def get_assemblies_table(connection):
         assembly_dict[record.genomic_accession] = record.assembly_id
 
     return assembly_dict
+
+
+def get_protein_db_ids(connection):
+    """Get Protein record Ids, load into a dict
+    
+    :param connection:
+    
+    Return dict:
+    """
+    return
