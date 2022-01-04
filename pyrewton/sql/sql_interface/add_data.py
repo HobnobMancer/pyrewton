@@ -196,7 +196,13 @@ def add_classifications(
 ):
     """Add domain classifications from dbCAN (and CAZy) to the db.
     
-    :param
+    :param cazome_dict:
+    {genomic_accession: {protein_accession: {sequence: str, tool: set, #ofTools: int}}}
+    :param connection: open sqlalchemy connection to an SQLite3 db engine
+    :param domain_dict: {protein: {fam: set(ranges)}}
+    :param protein_db_dict: {protein: db_id}
+    :param classifier_db_dict: {classifier: db_id}
+    :param family_db_dict: {fam: db_id}
     :param connection: open sqlalchemy connection to an SQLite3 engine
     :param args: cmd-line args parser
 
