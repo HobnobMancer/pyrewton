@@ -144,7 +144,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     protein_dict, tax_dict = get_protein_data(protein_fasta_files)
 
     # retrieve CAZymes predicted by dbCAN
-    cazome_dict = get_dbcan_annotations(dbcan_output_dirs, protein_dict)
+    cazome_dict, domain_range_dict = get_dbcan_annotations(dbcan_output_dirs, protein_dict)
 
     if args.cazy is not None:
         cazome_dict = add_cazy_annotations(cazome_dict, connection)
@@ -152,7 +152,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # cache the dict
     cache_dict(cazome_dict, time_stamp, args)
 
-    add_data_to_db(cazome_dict, tax_dict, connection)
+    add_data_to_db(cazome_dict, tax_dict, domain_range_dict, connection)
 
 
 def get_protein_data(protein_fasta_files):
@@ -290,7 +290,8 @@ def get_dbcan_annotations(dbcan_output_dirs, protein_dict):
                 continue
 
             # create a CazymeProteinPrediction instance each for HMMER, Hotpep and DIAMOND
-            hmmer_predictions, domain_ranges = list(get_hmmer_prediction(line[1], protein_accession))
+            hmmer_predictions, domain_ranges = get_hmmer_prediction(line[1], protein_accession)
+            hmmer_predictions = list(hmmer_predictions)
             hotpep_predictions = list(get_hotpep_prediction(line[2], protein_accession))
             diamond_predictions = list(get_diamond_prediction(line[3], protein_accession))
 
@@ -367,7 +368,7 @@ def get_hmmer_prediction(hmmer_data, protein_accession):
     logger = logging.getLogger(__name__)
 
     if hmmer_data == "-":
-        return set()
+        return set(), {}
     
     cazy_fams = set()
     ranges = {}
@@ -520,7 +521,8 @@ def add_cazy_annotations(cazome_dict, connection):
     
     Return cazome_dict
     """
-    for genomic_accession in tqdm(cazome_dict, desc="Adding CAZy data per genome"):
+    genomic_accessions = list(cazome_dict.keys())
+    for genomic_accession in tqdm(genomic_accessions, desc="Adding CAZy data per genome"):
         protein_accessions = list(cazome_dict[genomic_accession].keys())
 
         for protein_accession in tqdm(protein_accessions, desc="Retrieving CAZy annotations"):
