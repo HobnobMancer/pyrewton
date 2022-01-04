@@ -86,6 +86,6 @@ def add_species_data(tax_dict, ncbi_tax_dict, connection):
         species_to_insert.add( (db_tax_id, genus, species) )
 
     if len(species_to_insert) != 0:
-        insert_data(connection, 'Taxonomies', ['ncbi_id', 'genus', 'species'], species_to_insert)
+        insert_data(connection, 'Taxonomies', ['ncbi_id', 'genus', 'species'], list(species_to_insert))
 
     return
