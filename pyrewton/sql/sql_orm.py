@@ -231,6 +231,7 @@ class Assembly(Base):
     taxonomy_id = Column(Integer, ForeignKey("Taxonomies.taxonomy_id"))
     
     tax_assembly = relationship("Taxonomy", back_populates="assembly")
+    proteins = relationship("Protein", back_populates="assemblies")
     
     def __str__(self):
         return (
@@ -353,7 +354,7 @@ class Protein(Base):
     active_sites = relationship("ActiveSite", back_populates="proteins")
     substrate_sites = relationship("SubstrateBindingSite", back_populates="proteins")
     metal_sites = relationship("MetalBindingSite", back_populates="proteins")
-    cofactors = relationship("Cofactors", back_populates="proteins")
+    cofactors = relationship("Cofactor", back_populates="proteins")
     glycosylations = relationship("Glycosylation", back_populates="proteins")
     temperatures = relationship("Temperature", back_populates="proteins")
     optimal_phs = relationship("OptimalPH", back_populates="proteins")
