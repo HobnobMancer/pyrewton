@@ -52,6 +52,11 @@ from pathlib import Path
 from typing import List, Optional
 
 from Bio import SeqIO
+# from cazy_webscraper.sql.sql_orm import (
+#   CazyFamily,
+#   Genbank,
+#   Session,
+# )
 # from saintBioutils.utilities import file_io
 # from saintBioutils.utilities import logger
 # from saintBioutils.utilities.file_io import get_paths
@@ -108,7 +113,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 "Terminating program"
             )
             sys.exit(1)
-        connection = get_db_connection(db_path)
+        connection = get_db_connection(db_path, args)
 
     # get paths to directories containing dbCAN output
     dbcan_output_dirs = get_dir_paths(args.dbcan_dir)
@@ -374,25 +379,19 @@ def get_hmmer_prediction(hmmer_data, protein_accession):
         domain_range = domain.split("(")[1]
         domain_range = domain_range.replace(")", "")
 
+        success = False
+
         if domain_name.find("_") != -1:
             try: 
                 re.match(r"\D{2,3}\d+?_\D", domain_name).group()  # check unusal CAZy family formating
                 cazy_fams.add(domain_name.split("_")[0])
-
-                try:
-                    ranges[cazy_fams].add(domain_range)
-                except KeyError:
-                    ranges[cazy_fams] = {domain_range}
+                success = True
 
             except AttributeError:  # raised if not an usual CAZy family format
                 try:
                     re.match(r"\D{2,3}\d+?_\d+", domain_name).group()  # check if a subfamily
                     cazy_fams.add(domain_name.split("_")[0])
-
-                    try:
-                        ranges[cazy_fams].add(domain_range)
-                    except KeyError:
-                        ranges[cazy_fams] = {domain_range}
+                    success = True
                     
                 except AttributeError:
                     logger.warning(
@@ -404,12 +403,19 @@ def get_hmmer_prediction(hmmer_data, protein_accession):
             try:
                 re.match(r"\D{2,3}\d+", domain_name).group()
                 cazy_fams.add(domain_name)
+                success = True
 
             except AttributeError:  # raised if doesn't match expected CAZy family
                 logger.warning(
                     f"Unknown data type of {domain_name} for protein {protein_accession}, for HMMER.\n"
                     "Not adding as domain to CAZy family annotations for the genome"
                 )
+
+        if success:
+            try:
+                ranges[domain_name].add(domain_range)
+            except KeyError:
+                ranges[domain_name] = {domain_range}
     
     return cazy_fams, ranges
 
