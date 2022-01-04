@@ -153,6 +153,38 @@ def add_proteins(protein_dict, assembly_dict, connection):
     return
 
 
+def add_families(cazome_dict, connection):
+    """Add CAZy families to db.
+    
+    :param cazome_dict:
+    :param connection:
+    
+    Return nothing
+    """
+    families_to_insert = set()
+
+    tools = ['dbcan', 'hmmer', 'hotpep', 'diamond', 'cazy']
+    for genomic_accession in tqdm(cazome_dict, desc="Adding families to db"):
+        protein_accessions = list(cazome_dict[genomic_accession].keys())
+        for protein in protein_accessions:
+            for tool in tools:
+                try:
+                    fams = cazome_dict[genomic_accession][protein][tool]
+                    for fam in fams:
+                        families_to_insert.add( (fam,) )
+                except KeyError:
+                    pass  # raised if data not retrieved from CAZy
+
+    if len(families_to_insert) != 0:
+        insert_data(
+            connection,
+            'CazyFamilies',
+            ['family'],
+            list(families_to_insert),
+        )
+    
+    return
+
 def add_classifications(cazome_dict, protein_db_dict, connection):
     """Add CAZy and dbCAN CAZy family classifications to the db.
     
