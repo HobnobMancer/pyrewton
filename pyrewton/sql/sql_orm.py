@@ -194,7 +194,7 @@ class Ncbi_Tax_Id(Base):
 
 class Taxonomy(Base):
     """Describes the taxonomic data for a source organism. Data retrieved from NCBI"""
-    __tablename__ = "Taxs"
+    __tablename__ = "Taxonomies"
     
     __table_args__ = (
         UniqueConstraint("genus", "species", "ncbi_tax_id"),
@@ -207,7 +207,7 @@ class Taxonomy(Base):
     species = Column(String)
     ncbi_tax_id = Column(Integer)  # excludes the NCBI:txid prefix
 
-    ncbi_ids = relationship("Ncbi_Tax_id", back_populates="species")
+    ncbi_ids = relationship("Ncbi_Tax_Ids", back_populates="species")
     assembly = relationship("Assembly", back_populates="tax_assembly")
 
     def __str__(self):
@@ -228,7 +228,7 @@ class Assembly(Base):
     
     assembly_id = Column(Integer, primary_key=True)
     assembly_accession = Column(String)
-    taxonomy_id = Column(Integer, ForeignKey("Taxs.taxonomy_id"))
+    taxonomy_id = Column(Integer, ForeignKey("Taxonomies.taxonomy_id"))
     
     tax_assembly = relationship("Taxonomy", back_populates="assembly")
     
