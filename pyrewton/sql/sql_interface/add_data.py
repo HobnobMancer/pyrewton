@@ -185,13 +185,54 @@ def add_families(cazome_dict, connection):
     
     return
 
-def add_classifications(cazome_dict, protein_db_dict, connection):
-    """Add CAZy and dbCAN CAZy family classifications to the db.
+def add_classifications(
+    cazome_dict,
+    domain_dict,
+    protein_db_dict,
+    classifer_db_dict,
+    family_db_dict,
+    connection,
+    args,
+):
+    """Add domain classifications from dbCAN (and CAZy) to the db.
     
-    :param cazome_dict:
-    :param protein_db_dict:
-    :param connection:
-    
-    Return nothing
+    :param
+
+    Return nothing.
     """
+    if args.cazy is not None:
+        tools = ['hmmer', 'hotpep', 'diamond', 'dbcan', 'cazy']
+    else:
+        tools = ['hmmer', 'hotpep', 'diamond', 'dbcan']
+
+    domains_to_insert = set()
+
+    for genomic_accession in tqdm(cazome_dict, desc="Adding domains to db"):
+        protein_accessions = list(cazome_dict[genomic_accession].keys())
+        for protein_accession in protein_accessions:
+            protein_id = protein_db_dict[protein_accession]  # db protein record id
+            classifier_id = classifer_db_dict[tool]
+
+            for tool in tools:
+                domain_fams = cazome_dict[genomic_accession][protein_accession][tool]
+
+                # check if add domain ranges
+                try:
+                    domain_dict[protein_accession]
+                
+                except KeyError:
+                    # not adding domain ranges
+                    for fam in domain_fams:
+                        fam_id = family_db_dict[fam]
+
+                        domains_to_insert.add( (protein_id, classifier_id, fam_id, None) )
+    
+    if len(domains_to_insert) != 0:
+        insert_data(
+            connection,
+            'Domains',
+            ['protein_id', 'classifier_id', 'family_id', 'domain_range'],
+            list(domains_to_insert),
+        )
+
     return
