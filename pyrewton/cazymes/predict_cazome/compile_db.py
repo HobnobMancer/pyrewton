@@ -602,7 +602,7 @@ def add_data_to_db(cazome_dict, tax_dict, domain_dict, connection):
     
     Return nothing"""
     # retrieve and add NCBI taxonomy IDs
-    ncbi_ids_to_insert = [(tax_dict[genomic_accession]['tax_id'],) for genomic_accession in tax_dict]
+    ncbi_ids_to_insert = [(tax_dict[genomic_accession]['txid'],) for genomic_accession in tax_dict]
     ncbi_ids_to_insert = list(set(ncbi_ids_to_insert))  # remove duplicates
 
     if len(ncbi_ids_to_insert) != 0:
