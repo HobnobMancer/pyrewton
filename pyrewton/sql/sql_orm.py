@@ -748,7 +748,7 @@ class Citations(Base):
         )
 
 
-def get_db_connection(db_path, args):
+def get_cazome_db_connection(db_path, args):
     """Create open session to local CAZy SQL database.
     
     :param db_path: Path, path to local CAZome database

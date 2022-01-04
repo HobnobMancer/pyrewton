@@ -65,7 +65,7 @@ import os
 
 from tqdm import tqdm
 
-from pyrewton.sql.sql_orm import get_db_connection
+from pyrewton.sql.sql_orm import get_cazome_db_connection
 from pyrewton.sql.sql_interface import add_data, load_data
 from pyrewton.utilities.parsers.cmd_parser_compile_db import build_parser
 
@@ -113,7 +113,9 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 "Terminating program"
             )
             sys.exit(1)
-        connection = get_db_connection(db_path, args)
+        connection = get_db_connection(args.cazy, args, False)
+
+    connection = get_cazome_db_connection(db_path, args)
 
     # get paths to directories containing dbCAN output
     dbcan_output_dirs = get_dir_paths(args.dbcan_dir)
@@ -1188,6 +1190,27 @@ class Log(Base):
             f"Class Log: date={self.date}, scraped classes={self.classes}, "
             f"scraped families={self.families}, cmd line commands={self.cmd_line}>"
         )
+
+def get_db_connection(db_path, args, new):
+    """Create open connection to local CAZy SQL database.
+    :param db_path: cmd args parser
+    :param args: cmd-line args parser
+    :param new: bool, whether it is a new or an existing database being connected to
+    Return an open database session.
+    """
+    logger = logging.getLogger(__name__)
+
+    if new:
+        logger.info("Building a new empty database")
+    else:
+        logger.info("Opening session to an existing local database")
+
+    engine = create_engine(f"sqlite+pysqlite:///{db_path}", echo=args.sql_echo, future=True)
+    Base.metadata.create_all(engine)
+    Session.configure(bind=engine)  # allows for calls to session later on when required
+    connection = engine.connect()
+    
+    return connection
 
 
 
