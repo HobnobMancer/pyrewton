@@ -94,6 +94,7 @@ setuptools.setup(
             "benchmark_create_test_sets = pyrewton.cazymes.evaluate_tools.create_test_sets_from_dict:main",
             "benchmark_predict_cazymes = pyrewton.cazymes.evaluate_tools.predict_cazymes:main",
             "benchmark_calculate_stats = pyrewton.cazymes.evaluate_tools.calculate_stats:main",
+            "compile_cazome_db = pyrewton.cazymes.predict_cazome.compile_db:main",
         ]
     },
     # Ensure all additional requirements are installed
