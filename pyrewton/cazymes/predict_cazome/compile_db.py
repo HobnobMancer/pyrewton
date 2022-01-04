@@ -52,13 +52,16 @@ from pathlib import Path
 from typing import List, Optional
 
 from Bio import SeqIO
-from saintBioutils.utilities import file_io
-from saintBioutils.utilities import logger
-from saintBioutils.utilities.file_io import get_paths
-from saintBioutils.utilities.logger import config_logger
+# from saintBioutils.utilities import file_io
+# from saintBioutils.utilities import logger
+# from saintBioutils.utilities.file_io import get_paths
+# from saintBioutils.utilities.logger import config_logger
+import os
+
 from tqdm import tqdm
 
 from pyrewton.sql.sql_orm import get_db_connection
+from pyrewton.sql.sql_interface import add_data, load_data
 from pyrewton.utilities.parsers.cmd_parser_compile_db import build_parser
 
 
@@ -80,13 +83,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         config_logger(args)
     logger = logging.getLogger(__package__)
 
-    if args.cazy.exists() is False:
-        logger.error(
-            f"Path to local CAZyme db ({args.cazy})\ndoes not exist\n"
-            "Check the correct path was provided\n"
-            "Terminating program"
-        )
-
     # compile path to the output CAZome database
     if args.output_db is None:
         db_path = Path(f"cazome_db_{time_stamp}.db")
@@ -94,7 +90,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         db_path = args.output_db
 
     if args.output_dir is not None:
-        file_io.make_output_directory(args.output_dir, args.force, args.nodelete)
+        make_output_directory(args.output_dir, args.force, args.nodelete)
         db_path = args.output_dir / db_path
 
     if db_path.exists() and args.force is False:
@@ -103,9 +99,19 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
                 "To overwrite the file use -f or --force\nTerminating program"
             )
             sys.exit(1)
+    
+    if args.cazy is not None:
+        if args.cazy.exists() is False:
+            logger.error(
+                f"Path to local CAZyme db ({args.cazy})\ndoes not exist\n"
+                "Check the correct path was provided\n"
+                "Terminating program"
+            )
+            sys.exit(1)
+        connection = get_db_connection(db_path)
 
     # get paths to directories containing dbCAN output
-    dbcan_output_dirs = get_paths.get_dir_paths(args.dbcan_dir)
+    dbcan_output_dirs = get_dir_paths(args.dbcan_dir)
 
     if len(dbcan_output_dirs) == 0:
         logger.error(
@@ -117,7 +123,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         sys.exit(1)
 
     # get paths to FASTA files of protein sequences parsed by dbCAN
-    protein_fasta_files = get_paths.get_dir_paths(args.protein_dir)
+    protein_fasta_files = get_file_paths(args.protein_dir, suffixes='fasta')
 
     if len(protein_fasta_files) == 0:
         logger.error(
@@ -128,24 +134,22 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         sys.exit(1)
 
     # retrieve protein data from the FASTA file parsed by dbCAN
-    #  {genus: {species: 'txid': str, 'genomes': {assembly_acc: {protein_acc: {'sequence': SeqIO.seq}}}}}
-    all_data_dict = get_protein_data(protein_fasta_files)
-    
-    connection = get_db_connection(db_path)
-    
-    all_data_dict = get_dbcan_annotations(dbcan_output_dirs, all_data_dict)
+    # tax_dict = {genomic_accession: {'genus': str, 'species': str, 'tax_id': str}}
+    # protein_dict = {genomic_accession: {protein_accession: str(sequence)}}
+    protein_dict, tax_dict = get_protein_data(protein_fasta_files)
 
-    all_data_dict = add_cazy_annotations(all_data_dict, connection)
+    # retrieve CAZymes predicted by dbCAN
+    cazome_dict = get_dbcan_annotations(dbcan_output_dirs, protein_dict)
 
-    cache_path = Path(f"dbcan_predictions_{time_stamp}.json")
+    if args.cazy is not None:
+        cazome_dict = add_cazy_annotations(cazome_dict, connection)
 
-    if args.output_dir is not None:
-        cache_path = args.output_dir / cache_path
+    # cache the dict
+    cache_dict(cazome_dict, time_stamp, args)
 
-    with open(cache_path, 'w') as fh:
-        json.dump(all_data_dict, fh)
+    add_data_to_db(cazome_dict, tax_dict, connection)
 
-    prediction_df = build_prediction_df(all_data_dict)
+    prediction_df = build_prediction_df(cazome_dict, args)
 
     prediction_df_path = Path(f"dbcan_predictions_{time_stamp}.csv")
 
@@ -160,9 +164,14 @@ def get_protein_data(protein_fasta_files):
     
     :param protein_fasta_files: list of Paths, one path per FASTA file
     
-    Return dict {genus: {species: 'txid': str, 'genomes': {assembly_acc: {protein_acc: {'sequence': SeqIO.seq}}}}}
+    Return two dicts
+    tax_dict = {genomic_accession: {'genus': str, 'species': str, 'tax_id': str}}
+    protein_dict = {genomic_accession: {protein_accession: str(sequence)}}
     """
-    all_data_dict = {}
+    logger = logging.getLogger(__name__)
+
+    protein_dict = {}
+    tax_dict = {}  # {genomes: {'genus': str, 'species': str, 'tax_id': str}}
 
     for fasta in tqdm(protein_fasta_files, desc="Retrieving protein data from FASTA files"):
         for record in SeqIO.parse(fasta, 'fasta'):
@@ -180,147 +189,71 @@ def get_protein_data(protein_fasta_files):
             genus = desc[4]
             species = desc[5]
 
+            # add taxonomy data
             try:
-                all_data_dict[genus]
-
-                try:
-                    all_data_dict[genus][species]
-
-                    try:
-                        all_data_dict[genus][species]['genomes']
-
-                        try:
-                            all_data_dict[genus][species]['genomes'][assembly_acc]
-                            
-                            try:
-                                all_data_dict[genus][species]['genomes'][assembly_acc][protein_acc]
-                                
-                                if all_data_dict[genus][species]['genomes'][protein_acc]['sequence'] != record.seq:
-                                    logger.error(
-                                        f"Multiple unique sequences found for {protein_acc}\n"
-                                        "Additional digit added to protein accession to differentiate the proteins"
-                                    )
-
-                                    success = False
-                                    while success is False:
-                                        i = 0
-                                        protein_acc += f"{str(i)}"
-                                        try:
-                                            all_data_dict[genus][species]['genomes'][protein_acc]
-                                            i += 1
-                                        except KeyError:
-                                            all_data_dict[genus][species]['genomes'][protein_acc] = {
-                                                'sequence': record.seq,
-                                                'hmmer': set(),
-                                                'hotpep': set(),
-                                                'diamond': set(),
-                                                'dbcan': set(),
-                                                '#ofTools': set(),
-                                            }
-                                            success = True
-
-                            except KeyError:  # protein accession raised KeyError
-                                all_data_dict[genus][species]['genomes'][assembly_acc][protein_acc] = {
-                                    'sequence': record.seq,
-                                    'hmmer': set(),
-                                    'hotpep': set(),
-                                    'diamond': set(),
-                                    'dbcan': set(),
-                                    '#ofTools': set(),
-                                }
-
-                        except KeyError:  # assembly accession raised KeyError
-                            all_data_dict[genus][species]['genomes'][assembly_acc] = {
-                                protein_acc: {
-                                    'sequence': record.seq,
-                                    'hmmer': set(),
-                                    'hotpep': set(),
-                                    'diamond': set(),
-                                    'dbcan': set(),
-                                    '#ofTools': set(),
-                                }
-                            }
-
-                    except KeyError:  # 'genomes' raised KeyError
-                        all_data_dict[genus][species]['genomes'] = {assembly_acc:
-                            {
-                                protein_acc: {
-                                    'sequence': record.seq,
-                                    'hmmer': set(),
-                                    'hotpep': set(),
-                                    'diamond': set(),
-                                    'dbcan': set(),
-                                    '#ofTools': set(),
-                                }
-                            }
-                        }
-
-                except KeyError:  # species raised KeyError
-                    all_data_dict[genus] = {species:
-                        {
-                            'txid': tax_id,
-                            'genomes': {
-                                assembly_acc: {
-                                    protein_acc: {
-                                        'sequence': record.seq,
-                                        'hmmer': set(),
-                                        'hotpep': set(),
-                                        'diamond': set(),
-                                        'dbcan': set(),
-                                        '#ofTools': set(),
-                                    }
-                                }
-                            },
-                        }
-                    }
-
-            except KeyError:   # genus raised KeyError
-                all_data_dict[genus] = {species:
-                    {
-                        'txid': tax_id,
-                        'genomes': {
-                            assembly_acc: {
-                                protein_acc: {
-                                    'sequence': record.seq,
-                                    'hmmer': set(),
-                                    'hotpep': set(),
-                                    'diamond': set(),
-                                    'dbcan': set(),
-                                    '#ofTools': set(),
-                                }
-                            }
-                        },
-                    }
+                tax_dict[assembly_acc]
+            
+            except KeyError:
+                tax_dict[assembly_acc] = {
+                    'genus': genus,
+                    'species': species,
+                    'txid': tax_id,
                 }
 
-    return all_data_dict
+            # add protein data
+            try:
+                protein_dict[assembly_acc]
+
+                try:
+                    protein_dict[assembly_acc][protein_acc]
+
+                    if protein_dict[assembly_acc][protein_acc] != str(record.seq):
+                        logger.warning(
+                            f"Multiple unique sequences retrieved for {protein_acc}\n"
+                            "Retrieving the first protein sequence only"
+                        )
+
+                except KeyError:
+                    protein_dict[assembly_acc][protein_acc] = str(record.seq)
+
+            except KeyError:
+                protein_dict[assembly_acc] = {
+                    protein_acc: str(record.seq),
+                }
+
+    return protein_dict, tax_dict
 
 
-def get_dbcan_annotations(dbcan_output_dirs, all_data_dict):
+def get_dbcan_annotations(dbcan_output_dirs, protein_dict):
     """Retrieve CAZy family annotations from dbCAN ouput.
     
     :param dbcan_output_dirs: list of Paths() to output dirs containing dbCAN output
-    :param all_data_dict: 
-    {genus: {species: 'txid': str, 'genomes': {assembly_acc: 
-        {protein_acc: {'sequence': SeqIO.seq, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}}}
-    }
+    :param protein_dict: 
+    {genomic_accession: {
+        protein_accession: {
+            'sequence': SeqIO.seq, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}
     
-    Return dict:
-    {genus: {species: 'txid': str, 'genomes': {assembly_acc: 
-        {protein_acc: {'sequence': SeqIO.seq, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}}}
-    }
+    Return protein_dict
     """
+    logger = logging.getLogger(__name__)
+
+    # {genomic_accession: {
+    # protein_accession: {
+    # 'sequence': SeqIO.seq, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}
+    cazyme_dict = {}
+
     for dbcan_dir in tqdm(dbcan_output_dirs, "Parsing dbCAN output"):
         # dir name format: GCA_123456789_1
         genomic_accession = f"{(dbcan_dir.name).split('_')[0]}_{(dbcan_dir.name).split('_')[1]}.{(dbcan_dir.name).split('_')[2]}"
 
-        # identify the genus and species
-        genus, species = get_genome_tax(all_data_dict, genomic_accession)
-
-        if genus is None and species is None:
-            logger.warning(
-                f"No tax data retrieved from FASTA files parsed by dbCAN retrieved from {genomic_accession}\n"
-                "Not retrieving data for this genomic assembly"
+        try:
+            protein_dict[genomic_accession]
+        
+        except KeyError:
+            logger.error(
+                f"Genome {genomic_accession} parsed by dbCAN but not FASTA file of protein seqs\n"
+                "found for this assembly\n"
+                "Not parsing protein data for this genome"
             )
             continue
 
@@ -346,6 +279,16 @@ def get_dbcan_annotations(dbcan_output_dirs, all_data_dict):
             if protein_accession.find("|") != -1:
                 protein_accession = protein_accession.split("|")[1]
 
+            try:
+                protein_dict[genomic_accession][protein_accession]
+            except KeyError:
+                logger.warning(
+                    f"{protein_accession} protein retrieved from dbCAN for {genomic_accession}\n"
+                    "but not protein data retrieved from the FASTA file of protein seqs for this assembly\n"
+                    "Not adding protein to the database"
+                )
+                continue
+
             # create a CazymeProteinPrediction instance each for HMMER, Hotpep and DIAMOND
             hmmer_predictions = list(get_hmmer_prediction(line[1], protein_accession))
             hotpep_predictions = list(get_hotpep_prediction(line[2], protein_accession))
@@ -359,50 +302,45 @@ def get_dbcan_annotations(dbcan_output_dirs, all_data_dict):
             hotpep_diamond = list(set(hotpep_predictions) & set(diamond_predictions))
 
             dbcan_predictions = list(set(hmmer_hotpep + hmmer_diamond + hotpep_diamond))
+            
+            tools = [
+                ('hmmer', hmmer_predictions),
+                ('hotpep', hotpep_predictions),
+                ('diamond', diamond_predictions),
+                ('dbcan', dbcan_predictions),
+            ]
+
+            for tool_data in tools:
+                try:
+                    cazyme_dict[genomic_accession]
+                    try:
+                        cazyme_dict[genomic_accession][protein_accession]
+                        try:
+                            existing = cazyme_dict[genomic_accession][protein_accession][tool_data[0]]
+                            updated = existing.union(set(tool_data[1]))
+                            cazyme_dict[genomic_accession][protein_accession][tool_data[0]] = updated
                         
-            # add data from dbcan_dict to overview_dict which contains data for all proteins in the FASTA file
-            try:
-                all_data_dict[genus][species]['genomes'][genomic_accession][protein_accession]
+                        except KeyError:  # tool raised KeyError
+                            cazyme_dict[genomic_accession][protein_accession][tool_data[0]] = set(tool_data[1])
 
-                all_data_dict[genus][species]['genomes'][genomic_accession][
-                    protein_accession]['hmmer'] += list(hmmer_predictions)
-                all_data_dict[genus][species]['genomes'][genomic_accession][
-                    protein_accession]['hotpep'] += list(hotpep_predictions)
-                all_data_dict[genus][species]['genomes'][genomic_accession][
-                    protein_accession]['diamond'] += list(diamond_predictions)
-                all_data_dict[genus][species]['genomes'][genomic_accession][
-                    protein_accession]['dbcan'] += list(dbcan_predictions)
-                all_data_dict[genus][species]['genomes'][genomic_accession][
-                    protein_accession]['#ofTools'] = no_of_tools
-            except KeyError:
-                logger.warning(
-                    f"Retrieving dbCAN output for protein {protein_accession} from {genomic_accession}\n"
-                    "but protein not retrieved from FASTA file parsed by dbCAN\n"
-                    "Skipping protein"
-                )
-                continue
+                    except KeyError:  # protein accession raised KeyError
+                        cazyme_dict[genomic_accession][protein_accession] = {
+                            tool_data[0]: set(tool_data[1]),
+                            'sequence': protein_dict[genomic_accession][protein_accession],
+                        }
 
-    return all_data_dict
+                except KeyError:  # genomic accession raised KeyError
+                    cazyme_dict[genomic_accession] = {
+                        protein_accession: {
+                            tool_data[0]: set(tool_data[1]),
+                            'sequence': protein_dict[genomic_accession][protein_accession],
+                        }
+                    }
 
+            cazyme_dict[genomic_accession][protein_accession]['#ofTools'] = str(no_of_tools)
+            cazyme_dict[genomic_accession][protein_accession]['sequence'] = protein_dict[genomic_accession][protein_accession]
 
-def get_genome_tax(all_data_dict, genomic_accession):
-    """Retrieve the genus and species of the source organism of a genome from the all_data_dict
-    
-    :param all_data_dict: 
-    {genus: {species: 'txid': str, 'genomes': {assembly_acc: 
-        {protein_acc: {'sequence': SeqIO.seq, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}}}
-    }
-    :param genomic_accession: str
-
-    Return genus (str) and species (str)
-    """
-    for genus in all_data_dict:
-        genus_species = all_data_dict[genus]
-        for species in genus_species:
-            if genomic_accession in list(all_data_dict[genus][species]['genomes'].keys()):
-                return genus, species
-
-    return None, None
+    return cazyme_dict
 
 
 def get_hmmer_prediction(hmmer_data, protein_accession):
@@ -533,118 +471,785 @@ def get_diamond_prediction(diamond_data, protein_accession):
                 try:
                     re.match(r"\d+?\.(\d+?|\*)\.(\d+?|\*)\.(\d+?|\*)", domain). group()
                 except AttributeError:
-                    logger.warning(
-                        f"Unexpected data format of '{domain}' for protein "
-                        f"{protein_accession}, for DIAMOND.\n"
-                        "Not adding as domain to CAZy family annotations for the genome"
-                    )
+                    try:
+                        re.match(r"\d+?\.(\d+?|\*)\.(\d+?|\*)\.-", domain). group()
+                    except AttributeError:
+                        logger.warning(
+                            f"Unexpected data format of '{domain}' for protein "
+                            f"{protein_accession}, for DIAMOND.\n"
+                            "Not adding as domain to CAZy family annotations for the genome"
+                        )
 
     return cazy_fams
 
 
-def add_cazy_annotations(all_data_dict, connection):
+def add_cazy_annotations(cazome_dict, connection):
     """Add CAZy family annotations from CAZy to the data dict
     
-    :param all_data_dict: 
-    {genus: {species: 'txid': str, 'genomes': {assembly_acc: 
-        {protein_acc: {'sequence': SeqIO.seq, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}}}
-    }
+    :param cazome_dict: 
+    {genomic_accession: {protein_accession: {sequence: str, tool: set, #ofTools: int}}}
     :param connection: open sqlalchemy connection to an SQLite3 db engine
     
-    Return all_data_dict
+    Return cazome_dict
     """
-    for genus in tqdm(all_data_dict, desc="Adding CAZy data per genus"):
-        genus_species = list(all_data_dict[genus].keys())
+    for genomic_accession in tqdm(cazome_dict, desc="Adding CAZy data per genome"):
+        protein_accessions = list(cazome_dict[genomic_accession].keys())
 
-        for species in tqdm(genus_species, desc="Adding CAZy data per species"):
-            assemblies = list(all_data_dict[genus][species]['genomes'].keys())
+        for protein_accession in tqdm(protein_accessions, desc="Retrieving CAZy annotations"):
+            with Session(bind=connection) as session:
+                db_query = session.query(Genbank, CazyFamily).\
+                    join(CazyFamily, Genbank.families).\
+                    filter(Genbank.genbank_accession==protein_accession).\
+                    all()
 
-            for genomic_accession in tqdm(assemblies, desc="Adding CAZy data per genome"):
-                protein_accessions = list(all_data_dict[genus][species]['genomes'][genomic_accession].keys())
+            if len(db_query) == 0:
+                cazy_data = None
 
-                for protein_accession in tqdm(protein_accessions, desc="Adding protein data"):
-                    with Session(bind=connection) as session:
-                        db_query = session.query(Genbank, CazyFamily).\
-                            join(CazyFamily, Genbank.families).\
-                            filter(Genbank.genbank_accession==protein_accession).\
-                            all()
-
-                        if len(db_query) == 0:
-                            cazy_data = ['']
-
-                        else:
-                            cazy_data = []
-                            for obj in db_query:
-                                cazy_data.append(obj[1].family)
-                            cazy_data.sort()
-                        
-                        all_data_dict[genus][species]['genomes'][genomic_accession][
-                            protein_accession]['cazy'] = cazy_data
+            else:
+                cazy_data = []
+                for obj in db_query:
+                    cazy_data.append(obj[1].family)
+                cazy_data.sort()
+            
+            cazome_dict[genomic_accession][protein_accession]['cazy'] = cazy_data
+    
+    return cazome_dict
 
 
-def build_prediction_df(all_data_dict):
+def build_prediction_df(cazome_dict, args):
     """Build Pandas df of data in the dict.
     
-    :param all_data_dict: 
+    :param cazome_dict: 
     {genus: {species: 'txid': str, 'genomes': {assembly_acc: 
         {protein_acc: {'sequence': SeqIO.seq, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}}}
     }
     
     Return Pandas df
     """
-    column_names = [
-        'Genus',
-        'Species',
-        'NCBI_txid',
-        'Genomic_accession',
-        'Protein_accession',
-        'HMMER',
-        'Hotpep',
-        'DIAMOND',
-        '#dbCAN_tools',
-        'dbCAN',
-        'CAZy',
-    ]
+    if args.cazy is not None:
+        column_names = [
+            'Genus',
+            'Species',
+            'NCBI_txid',
+            'Genomic_accession',
+            'Protein_accession',
+            'HMMER',
+            'Hotpep',
+            'DIAMOND',
+            '#dbCAN_tools',
+            'dbCAN',
+            'CAZy',
+        ]
+    else:
+        column_names = [
+            'Genus',
+            'Species',
+            'NCBI_txid',
+            'Genomic_accession',
+            'Protein_accession',
+            'HMMER',
+            'Hotpep',
+            'DIAMOND',
+            '#dbCAN_tools',
+            'dbCAN',
+        ]
 
     prediction_df = pd.DataFrame(columns=column_names)
 
-    for genus in tqdm(all_data_dict, desc='Building prediction df per genus'):
-        genus_species = all_data_dict[genus]
+    for genus in tqdm(cazome_dict, desc='Building prediction df per genus'):
+        genus_species = cazome_dict[genus]
 
         for species in tqdm(genus_species, desc='Building prediction df per species'):
-            tax_id = all_data_dict[genus][species]['txid']
-            assemblies = all_data_dict[genus][species]['genomes']
+            tax_id = cazome_dict[genus][species]['txid']
+            assemblies = cazome_dict[genus][species]['genomes']
 
             for genomic_accession in tqdm(assemblies, desc='Building prediction df per genome'):
-                protein_data = all_data_dict[genus][species]['genomes'][genomic_accession]
+                protein_data = cazome_dict[genus][species]['genomes'][genomic_accession]
 
                 for protein_accession in tqdm(protein_data, desc='Parsing protein data'):
                     # retrieve the prediction annotations
-                    hmmer = ' '.join(all_data_dict[genus][species]['genomes'][genomic_accession]['hmmer'])
-                    hotpep = ' '.join(all_data_dict[genus][species]['genomes'][genomic_accession]['hotpep'])
-                    diamond = ' '.join(all_data_dict[genus][species]['genomes'][genomic_accession]['diamond'])
-                    dbcan = ' '.join(all_data_dict[genus][species]['genomes'][genomic_accession]['dbcan'])
-                    cazy = ' '.join(all_data_dict[genus][species]['genomes'][genomic_accession]['cazy'])
-
-                    new_row = [[
-                        genus,
-                        species,
-                        tax_id,
-                        genomic_accession,
-                        protein_accession,
-                        protein_accession,
-                        hmmer,
-                        hotpep,
-                        diamond,
-                        all_data_dict[genus][species]['genomes'][genomic_accession]['no#tools'],
-                        dbcan,
-                        cazy,
-                    ]]
+                    try:
+                        hmmer = ' '.join(cazome_dict[genus][species]['genomes'][genomic_accession]['hmmer'])
+                    except KeyError:
+                        a = protein_dict[genomic_accession][protein_accession]
+                        print('-------\n', a, '\n--------------')
+                    hotpep = ' '.join(cazome_dict[genus][species]['genomes'][genomic_accession]['hotpep'])
+                    diamond = ' '.join(cazome_dict[genus][species]['genomes'][genomic_accession]['diamond'])
+                    dbcan = ' '.join(cazome_dict[genus][species]['genomes'][genomic_accession]['dbcan'])
+                    if args.cazy is not None:
+                        cazy = ' '.join(cazome_dict[genus][species]['genomes'][genomic_accession]['cazy'])
+                        new_row = [[
+                            genus,
+                            species,
+                            tax_id,
+                            genomic_accession,
+                            protein_accession,
+                            protein_accession,
+                            hmmer,
+                            hotpep,
+                            diamond,
+                            cazome_dict[genus][species]['genomes'][genomic_accession]['no#tools'],
+                            dbcan,
+                            cazy,
+                        ]]
+                    else:
+                        new_row = [[
+                            genus,
+                            species,
+                            tax_id,
+                            genomic_accession,
+                            protein_accession,
+                            protein_accession,
+                            hmmer,
+                            hotpep,
+                            diamond,
+                            cazome_dict[genus][species]['genomes'][genomic_accession]['no#tools'],
+                            dbcan,
+                        ]]
                     new_row = pd.DataFrame(new_row, columns=column_names)
 
                     prediction_df = prediction_df.append(new_row, ignore_index=True)
 
     return prediction_df
+
+
+def cache_dict(cazome_dict, time_stamp, args):
+    """Cache the dict of CAZome protein data
+    
+    :param cazome_dict: {genomic_accession: {protein_accession: {tool: fams}}}
+    :param time_stamp: str, date and time program was invoked
+    :param args: cmd-line args parser
+    
+    Return nothing"""
+    cache_path = Path(f"dbcan_predictions_{time_stamp}.json")
+
+    if args.output_dir is not None:
+        cache_path = args.output_dir / cache_path
+
+    json_data = convert_for_serialisation(cazome_dict, args)
+
+    with open(cache_path, 'w') as fh:
+        json.dump(json_data, fh)
+
+    return
+
+
+def add_data_to_db(cazome_dict, tax_dict, connection):
+    """Add data to the database
+    
+    :param cazome_dict: {genomic_accession: {protein_accession: {tool: fams}}}
+    :param tax_dict: {genomic_accession: {'genus': str, 'species': str, 'tax_id': str}}
+    :param connection: open sqlalchemy connection to an SQLite3 db
+    
+    Return nothing"""
+    # retrieve and add NCBI taxonomy IDs
+    ncbi_ids_to_insert = [(tax_dict[genomic_accession]['tax_id'],) for genomic_accession in tax_dict]
+    ncbi_ids_to_insert = list(set(ncbi_ids_to_insert))  # remove duplicates
+
+    if len(ncbi_ids_to_insert) != 0:
+        add_data.insert_data(connection, 'Ncbi_Tax_Ids', ['ncbi_tax_id'], ncbi_ids_to_insert)
+
+    # retrieve NCBI tax ID db IDs
+    ncbi_tax_dict = load_data.get_ncbi_tax_ids(connection)
+
+    # add taxonomy (species) data to the db
+    add_data.add_species_data(tax_dict, ncbi_tax_dict, connection)
+
+    # retrieve Taxonomies table
+    tax_table_dict = load_data.get_tax_table(connection)
+
+    # add genomic assemblies to the database
+    add_data.add_genomic_accessions(tax_dict, tax_table_dict, connection)
+
+    # retrive genomic assembly records from the db
+    assembly_dict = load_data.get_assemblies_table(connection)
+
+    # add proteins
+    add_data.add_proteins(cazome_dict, assembly_dict, connection)
+
+    # retrieve db protein record Ids
+    protein_db_dict = load_data.get_protein_db_ids(connection)
+
+    # add classifiers
+    classifier_data = [
+        ('dbCAN', '2.0.11', 'March 2020'),
+        ('CUPP', '1.0.14', 'April 2018'),
+        ('eCAMI', None, 'July 2018')
+    ]
+    add_data.insert_data(
+        connection,
+        'Classifiers',
+        ['classifier', 'version', 'cazy_training_set'],
+        classifier_data,
+    )
+
+    # add CAZy families
+    add_data.add_families(cazome_dict, connection)
+
+    # add CAZy and dbCAN annotations
+    add_data.add_classifications(cazome_dict, protein_db_dict, connection)
+
+
+
+
+
+
+
+
+import logging
+import shutil
+import sys
+
+
+def make_output_directory(output, force, nodelete):
+    """Create output directory for genomic files.
+    :param output: path, path of dir to be created
+    :param force: bool, enable/disable creating dir if already exists
+    :param nodelete: bool, enable/disable deleting content in existing dir
+    Raises FileExistsError if an attempt is made to create a directory that already
+    exist and force (force overwrite) is False.
+    Return Nothing
+    """
+    logger = logging.getLogger(__name__)
+
+    if output.exists():
+        if force is True:
+
+            if nodelete is True:
+                logger.warning(
+                    f"Output directory {output} exists, nodelete is {nodelete}. "
+                    "Adding output to output directory."
+                )
+                return
+
+            else:
+                logger.warning(
+                    f"Output directory {output} exists, nodelete is {nodelete}. "
+                    "Deleting content currently in output directory."
+                )
+                shutil.rmtree(output)
+                output.mkdir(exist_ok=force)
+                return
+
+        else:
+            logger.warning(
+                f"Output directory {output} exists. 'force' is False, cannot write to existing "
+                "output directory.\nTerminating program."
+            )
+            sys.exit(1)
+
+    else:
+        output.mkdir(parents=True, exist_ok=force)
+        logger.warning(f"Built output directory: {output}")
+
+    return
+
+def get_file_paths(directory, prefixes=None, suffixes=None):
+    """Retrieve paths to all files in input dir.
+    :param directory: Path, path to directory from which files are to be retrieved
+    :param prefixes: List of Str, prefixes of the file names to be retrieved
+    :param suffixes: List of Str, suffixes of the file names to be retrieved
+    Returns list of paths to fasta files.
+    """
+    # create empty list to store the file entries, to allow checking if no files returned
+    file_paths = []
+
+    # retrieve all files from input directory
+    files_in_entries = (entry for entry in Path(directory).iterdir() if entry.is_file())
+
+    if prefixes is None and suffixes is None:
+        for item in files_in_entries:
+            file_paths.append(item)
+    
+    elif prefixes is not None and suffixes is None:
+        for item in files_in_entries:
+            for prefix in prefixes:
+                if item.name.startswith(prefix):
+                    file_paths.append(item)
+    
+    elif prefixes is None and suffixes is not None:
+        for item in files_in_entries:
+            for suffix in suffixes:
+                if item.name.endswith(suffix):
+                    file_paths.append(item)
+
+    else:
+        for item in files_in_entries:
+            for suffix in suffixes:
+                for prefix in prefixes:
+                    if item.name.startswith(prefix) and item.name.endswith(suffix):
+                        file_paths.append(item)
+
+    return file_paths
+
+
+def get_dir_paths(directory, prefixes=None, suffixes=None):
+    """Retrieve paths to all directories in input dir.
+    :param directory: Path, path to directory from which files are to be retrieved
+    :param prefixes: List of Str, prefixes of the file names to be retrieved
+    :param suffixes: List of Str, suffixes of the file names to be retrieved
+    Returns list of paths to fasta files.
+    """
+    # create empty list to store the file entries, to allow checking if no files returned
+    dir_paths = []
+
+    # retrieve all files from input directory
+    files_in_entries = (entry for entry in Path(directory).iterdir() if entry.is_dir())
+
+    if prefixes is None and suffixes is None:
+        for item in files_in_entries:
+            dir_paths.append(item)
+    
+    elif prefixes is not None and suffixes is None:
+        for item in files_in_entries:
+            for prefix in prefixes:
+                if item.name.startswith(prefix):
+                    dir_paths.append(item)
+    
+    elif prefixes is None and suffixes is not None:
+        for item in files_in_entries:
+            for suffix in suffixes:
+                if item.name.endswith(suffix):
+                    dir_paths.append(item)
+
+    else:
+        for item in files_in_entries:
+            for suffix in suffixes:
+                for prefix in prefixes:
+                    if item.name.startswith(prefix) and item.name.endswith(suffix):
+                        dir_paths.append(item)
+
+    return dir_paths
+
+
+def config_logger(args) -> logging.Logger:
+    """Configure package wide logger.
+    Configure a logger at the package level, from which the module will inherit.
+    If CMD-line args are provided, these are used to define output streams, and
+    logging level.
+    :param args: cmd-line args parser
+    Return nothing
+    """
+    logger = logging.getLogger(__package__)
+
+    # Set format of loglines
+    log_formatter = logging.Formatter("[%(levelname)s] [%(name)s]: %(message)s")
+
+    # define logging level
+    if args.verbose is True:
+        logger.setLevel(logging.INFO)
+    else:
+        logger.setLevel(logging.WARNING)
+
+    # Setup console handler to log to terminal
+    console_log_handler = logging.StreamHandler()
+    console_log_handler.setFormatter(log_formatter)
+    logger.addHandler(console_log_handler)
+
+    # Setup file handler to log to a file
+    if args.log is not None:
+        file_log_handler = logging.FileHandler(args.log)
+        file_log_handler.setFormatter(log_formatter)
+        logger.addHandler(file_log_handler)
+
+    return
+
+
+def convert_for_serialisation(protein_dict, args):
+    """Convert all data types in the dict to those suitable for JSON serialisation."""
+    for genomic_accession in protein_dict:
+        for protein_accession in protein_dict[genomic_accession]:
+            if args.cazy is not None:
+                tools = ['hmmer', 'hotpep', 'diamond', 'dbcan', 'cazy', '#ofTools']
+            else:
+                tools = ['hmmer', 'hotpep', 'diamond', 'dbcan', '#ofTools']
+
+            for tool in tools:
+                try:
+                    if len(protein_dict[genomic_accession][protein_accession][tool]) == 0:
+                        protein_dict[genomic_accession][protein_accession][tool] = ""
+                    else:
+                        protein_dict[genomic_accession][protein_accession][tool] = (
+                            str(protein_dict[genomic_accession][protein_accession][tool])
+                        )
+                except TypeError:
+                    pass  # raised when '#ofTools' is an int
+
+    return protein_dict
+
+
+
+
+
+
+import logging
+import re
+
+import sqlite3
+
+from sqlalchemy import (
+    Column,
+    ForeignKey,
+    Index,
+    Integer,
+    PrimaryKeyConstraint,
+    String,
+    Table,
+    UniqueConstraint,
+    MetaData,
+    create_engine,
+    event,
+    exc,
+)
+from sqlalchemy.engine import Engine
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.sql.expression import BinaryExpression, func, literal
+from sqlalchemy.sql.operators import custom_op
+
+
+# Use the declarative system
+# Database structured in NF1
+metadata_obj = MetaData()
+Base = declarative_base()
+Session = sessionmaker()
+
+
+# Enable regular expression searching of the database
+class ReString(String):
+    """Enchanced version of standard SQLAlchemy's :class:`String`.
+    Supports additional operators that can be used while constructing filter expressions.
+    """
+    class comparator_factory(String.comparator_factory):
+        """Contains implementation of :class:`String` operators related to regular expressions."""
+        def regexp(self, other):
+            return RegexMatchExpression(self.expr, literal(other), custom_op('~'))
+
+        def iregexp(self, other):
+            return RegexMatchExpression(self.expr, literal(other), custom_op('~*'))
+
+        def not_regexp(self, other):
+            return RegexMatchExpression(self.expr, literal(other), custom_op('!~'))
+
+        def not_iregexp(self, other):
+            return RegexMatchExpression(self.expr, literal(other), custom_op('!~*'))
+
+
+class RegexMatchExpression(BinaryExpression):
+    """Represents matching of a column againsts a regular expression."""
+
+
+@compiles(RegexMatchExpression, 'sqlite')
+def sqlite_regex_match(element, compiler, **kw):
+    """Compile the SQL expression representing a regular expression match for the SQLite engine."""
+    # determine the name of a custom SQLite function to use for the operator
+    operator = element.operator.opstring
+    try:
+        func_name, _ = SQLITE_REGEX_FUNCTIONS[operator]
+    except (KeyError, ValueError) as e:
+        would_be_sql_string = ' '.join((compiler.process(element.left),
+                                        operator,
+                                        compiler.process(element.right)))
+        raise exc.StatementError(
+            f"unknown regular expression match operator: {operator} {would_be_sql_string} {e}"
+        )
+
+    # compile the expression as an invocation of the custom function
+    regex_func = getattr(func, func_name)
+    regex_func_call = regex_func(element.left, element.right)
+    return compiler.process(regex_func_call)
+
+
+@event.listens_for(Engine, 'connect')
+def sqlite_engine_connect(dbapi_connection, connection_record):
+    """Listener for the event of establishing connection to a SQLite database.
+    Creates the functions handling regular expression operators
+    within SQLite engine, pointing them to their Python implementations above.
+    """
+    if not isinstance(dbapi_connection, sqlite3.Connection):
+        return
+
+    for name, function in SQLITE_REGEX_FUNCTIONS.values():
+        dbapi_connection.create_function(name, 2, function)
+
+
+# Mapping from the regular expression matching operators
+# to named Python functions that implement them for SQLite.
+SQLITE_REGEX_FUNCTIONS = {
+    '~': ('REGEXP',
+          lambda value, regex: bool(re.match(regex, value))),
+    '~*': ('IREGEXP',
+           lambda value, regex: bool(re.match(regex, value, re.IGNORECASE))),
+    '!~': ('NOT_REGEXP',
+           lambda value, regex: not re.match(regex, value)),
+    '!~*': ('NOT_IREGEXP',
+            lambda value, regex: not re.match(regex, value, re.IGNORECASE)),
+}
+
+
+# define linker/relationship tables
+genbanks_families = Table(
+    'Genbanks_CazyFamilies',
+    Base.metadata,
+    Column("genbank_id", Integer, ForeignKey("Genbanks.genbank_id")),
+    Column("family_id", Integer, ForeignKey("CazyFamilies.family_id")),
+    PrimaryKeyConstraint("genbank_id", "family_id"),
+)
+
+genbanks_ecs = Table(
+    "Genbanks_Ecs",
+    Base.metadata,
+    Column("genbank_id", Integer, ForeignKey("Genbanks.genbank_id")),
+    Column("ec_id", Integer, ForeignKey("Ecs.ec_id")),
+    PrimaryKeyConstraint("genbank_id", "ec_id"),
+)
+
+
+
+# Define class tables
+class Genbank(Base):
+    """Represents a protein GenBank accession number and protein seq.
+    
+    The GenBank accession is used to identify unique proteins in the database.
+    """
+    __tablename__ = 'Genbanks'
+    
+    __table_args__ = (
+        UniqueConstraint("genbank_accession"),
+    )
+    
+    genbank_id = Column(Integer, primary_key=True)
+    genbank_accession = Column(String, index=True)
+    sequence = Column(ReString)
+    seq_update_date = Column(ReString)
+    taxonomy_id = Column(Integer, ForeignKey("Taxs.taxonomy_id"))
+    
+    organism = relationship(
+        "Taxonomy",
+        back_populates="genbanks",
+    )
+    
+    families = relationship(
+        "CazyFamily",
+        secondary=genbanks_families,
+        back_populates="genbanks",
+        lazy="dynamic",
+    )
+    
+    ecs = relationship(
+        "Ec",
+        secondary=genbanks_ecs,
+        back_populates="genbanks",
+        lazy="dynamic",
+    )
+    
+    pdbs = relationship(
+        "Pdb",
+        back_populates="genbank",
+    )
+    
+    uniprot = relationship(
+        "Uniprot",
+        back_populates="genbank",
+        # uselist=False,
+    ) # 1-1 relationship
+    
+    def __str__(self):
+        return f"-Genbank accession={self.genbank_accession}-"
+
+    def __repr__(self):
+        return f"<Class GenBank acc={self.genbank_accession}>"
+
+
+class Taxonomy(Base):
+    """Represent the taxonomy of an organism."""
+    __tablename__ = "Taxs"
+    
+    __table_args__ = (
+        UniqueConstraint("genus", "species"),
+        Index("organism_option", "taxonomy_id", "genus", "species")
+    )
+    
+    taxonomy_id = Column(Integer, primary_key=True)
+    genus = Column(String)
+    species = Column(String)
+    kingdom_id = Column(Integer, ForeignKey("Kingdoms.kingdom_id"))
+    
+    genbanks = relationship("Genbank", back_populates="organism")
+    tax_kingdom = relationship("Kingdom", back_populates="taxonomy")
+    
+    def __str__(self):
+        return f"-Source organism, Genus={self.genus}, Species={self.species}-"
+
+    def __repr__(self):
+        return (
+            f"<Class Taxonomy: genus={self.genus}, species={self.species}, id={self.taxonomy_id}, kndgm={self.kingdom_id}>"
+        )
+
+    
+class Kingdom(Base):
+    """Describes a taxonomy Kingdom. Data retrieved from NCBI"""
+    __tablename__ = "Kingdoms"
+    
+    __table_args__ = (
+        UniqueConstraint("kingdom"),
+    )
+    
+    kingdom_id = Column(Integer, primary_key=True)
+    kingdom = Column(String)
+
+    taxonomy = relationship("Taxonomy", back_populates="tax_kingdom")
+
+    def __str__(self):
+        return f"-Kingdom, kingdom={self.kingdom}-"
+
+    def __repr__(self):
+        return f"<Class Kingdom, kingdom={self.kingdom}, kingdom_id={self.kingdom_id}>"
+
+
+class CazyFamily(Base):
+    """Describes a CAZy family, and subfamily if applicable.
+    
+    Every unique CAZy family-subfamily pair is represented as a unique instance
+    in the database.
+    """
+    __tablename__ = "CazyFamilies"
+    
+    # define columns before table_args so subfam column can be called
+    family_id = Column(Integer, primary_key=True)
+    family = Column(ReString, nullable=False)  # make this an ReString later
+    subfamily = Column(String, nullable=True)
+    
+    __table_args__ = (
+        UniqueConstraint("family", "subfamily"),
+        Index("fam_index", "family", "subfamily"),
+    )
+    
+    genbanks = relationship(
+        "Genbank",
+        secondary=genbanks_families,
+        back_populates="families",
+        lazy="dynamic",
+    )
+
+    def __str__(self):
+        return f"-CAZy Family, Family={self.family}, Subfamily={self.subfamily}, id={self.family_id}-"
+
+    def __repr__(self):
+        """Return string representation of source organism."""
+        return(
+            f"<Class Family, family={self.family}, subfamily={self.subfamily}, id={self.family_id}>"
+        )
+    
+    
+class Uniprot(Base):
+    """Table containing UniProt accessions and protein sequences retrieved from UniProtKB"""
+    __tablename__ = "Uniprots"
+    
+    __table_args__ = (
+        UniqueConstraint("uniprot_accession",),
+        Index("uniprot_option", "uniprot_id", "uniprot_accession")
+    )
+    
+    genbank_id = Column(Integer, ForeignKey('Genbanks.genbank_id'))
+    uniprot_id = Column(Integer, primary_key=True)
+    uniprot_accession = Column(String)
+    uniprot_name = Column(ReString)
+    sequence = Column(ReString)
+    seq_update_date = Column(ReString)
+    
+    genbank = relationship("Genbank", back_populates="uniprot")
+    
+    def __str__(self):
+        return f"-Uniprot, accession={self.uniprot_accession}, name={self.uniprot_name}, id={self.uniprot_id}-"
+
+    def __repr__(self):
+        """Return string representation of source organism."""
+        return(
+            f"<Uniprot, accession={self.uniprot_accession}, name={self.uniprot_name}, id={self.uniprot_id}>"
+        )
+
+
+class Ec(Base):
+    """Describe EC numbers."""
+    __tablename__ = "Ecs"
+    __table_args__ = (
+        UniqueConstraint("ec_number"),
+    )
+
+    ec_id = Column(Integer, primary_key=True)
+    ec_number = Column(String, index=True)
+
+    genbanks = relationship(
+        "Genbank",
+        secondary=genbanks_ecs,
+        back_populates="ecs",
+        lazy="dynamic",
+    )
+    
+    def __str__(self):
+        return f"-EC{self.ec_number}-ec_id={self.ec_number}-"
+
+    def __repr__(self):
+        return f"<Class EC, EC{self.ec_number}, ec_id={self.ec_number}>"
+    
+
+class Pdb(Base):
+    """Describe a PDB accession number of protein structure."""
+    __tablename__ = "Pdbs"
+    __table_args__ = (
+        UniqueConstraint("pdb_accession"),
+    )
+
+    pdb_id = Column(Integer, primary_key=True)
+    pdb_accession = Column(String)
+    genbank_id = Column(Integer, ForeignKey('Genbanks.genbank_id'))
+    
+    Index('pdb_idx', pdb_accession)
+
+    genbank = relationship(
+        "Genbank",
+        back_populates="pdbs",
+    )
+    
+    def __str__(self):
+        return f"-PDB accession={self.pdb_accession}, id={self.pdb_id}-"
+
+    def __repr__(self):
+        return f"<Class Pdb accession={self.pdb_accession}, id={self.pdb_id}>"
+
+
+class Log(Base):
+    """Record what data was added to the database and when."""
+    __tablename__ = "Logs"
+
+    log_id = Column(Integer, primary_key=True)
+    date = Column(String)  # date CAZy scrape was initiated
+    time = Column(String)  # time scrape was initated
+    database = Column(String)
+    retrieved_annotations = Column(String)
+    classes = Column(String)  # CAZy classes scraped
+    families = Column(String)  # CAZy families scraped
+    kingdoms = Column(String)  # Taxonomy Kingdoms to retrieve CAZymes from
+    genera_filter = Column(String)
+    species_filter = Column(String)
+    strains_filter = Column(String)
+    ec_filter = Column(String)
+    cmd_line = Column(String)  # command line arguments
+
+    def __str__(self):
+        return(
+            f"Log: date={self.date}, scraped classes={self.classes}, "
+            f"scraped families={self.families}, cmd line commands={self.cmd_line}"
+        )
+
+    def __repr__(self):
+        return(
+            f"Class Log: date={self.date}, scraped classes={self.classes}, "
+            f"scraped families={self.families}, cmd line commands={self.cmd_line}>"
+        )
+
 
 
 if __name__ == "__main__":
