@@ -84,7 +84,7 @@ def add_species_data(tax_dict, connection):
     species_to_insert = set()
     
     for genomic_accession in tqdm(tax_dict, desc="Adding species to db"):
-        tax_id = tax_dict[genomic_accession]['tax_id']
+        tax_id = tax_dict[genomic_accession]['txid']
         genus = tax_dict[genomic_accession]['genus']
         species = tax_dict[genomic_accession]['species']
 
