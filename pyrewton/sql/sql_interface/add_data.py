@@ -216,15 +216,17 @@ def add_classifications(
             for tool in tools:
                 domain_fams = cazome_dict[genomic_accession][protein_accession][tool]
 
-                # check if add domain ranges
-                try:
-                    domain_dict[protein_accession]
-                
-                except KeyError:
-                    # not adding domain ranges
-                    for fam in domain_fams:
-                        fam_id = family_db_dict[fam]
+                for fam in domain_fams:
+                    fam_id = family_db_dict[fam]
 
+                    # check if add domain ranges
+                    try:
+                        domain_ranges = domain_dict[protein_accession][tool][fam]
+                        for drange in domain_ranges:
+                            domains_to_insert.add( (protein_id, classifier_id, fam_id, drange) )
+
+                    except KeyError:
+                        # no domain ranges to add
                         domains_to_insert.add( (protein_id, classifier_id, fam_id, None) )
     
     if len(domains_to_insert) != 0:
