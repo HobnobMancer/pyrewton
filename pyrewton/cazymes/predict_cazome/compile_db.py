@@ -149,15 +149,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
     add_data_to_db(cazome_dict, tax_dict, connection)
 
-    prediction_df = build_prediction_df(cazome_dict, args)
-
-    prediction_df_path = Path(f"dbcan_predictions_{time_stamp}.csv")
-
-    if args.output_dir is not None:
-        prediction_df_path = args.output_dir / prediction_df_path
-
-    prediction_df.to_csv(prediction_df_path)
-
 
 def get_protein_data(protein_fasta_files):
     """Retrieve protein, genomic and taxonomic data from the FASTA files parsed by dbCAN.
@@ -228,12 +219,13 @@ def get_dbcan_annotations(dbcan_output_dirs, protein_dict):
     """Retrieve CAZy family annotations from dbCAN ouput.
     
     :param dbcan_output_dirs: list of Paths() to output dirs containing dbCAN output
-    :param protein_dict: 
-    {genomic_accession: {
+    :param protein_dict: {genomic_accession: {protein_accession: {sequence}}
+    
+    Return 
+    cazome_dict: {genomic_accession: {
         protein_accession: {
             'sequence': SeqIO.seq, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}
-    
-    Return protein_dict
+    domain_dict: dict of domain ranges {protein: {tool: {fam: set()}}}
     """
     logger = logging.getLogger(__name__)
 
@@ -241,6 +233,9 @@ def get_dbcan_annotations(dbcan_output_dirs, protein_dict):
     # protein_accession: {
     # 'sequence': SeqIO.seq, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}
     cazyme_dict = {}
+
+    # {protein: {tool/classifier: {fam: set}}}
+    domain_dict = {}
 
     for dbcan_dir in tqdm(dbcan_output_dirs, "Parsing dbCAN output"):
         # dir name format: GCA_123456789_1
@@ -290,7 +285,7 @@ def get_dbcan_annotations(dbcan_output_dirs, protein_dict):
                 continue
 
             # create a CazymeProteinPrediction instance each for HMMER, Hotpep and DIAMOND
-            hmmer_predictions = list(get_hmmer_prediction(line[1], protein_accession))
+            hmmer_predictions, domain_ranges = list(get_hmmer_prediction(line[1], protein_accession))
             hotpep_predictions = list(get_hotpep_prediction(line[2], protein_accession))
             diamond_predictions = list(get_diamond_prediction(line[3], protein_accession))
 
@@ -340,7 +335,20 @@ def get_dbcan_annotations(dbcan_output_dirs, protein_dict):
             cazyme_dict[genomic_accession][protein_accession]['#ofTools'] = str(no_of_tools)
             cazyme_dict[genomic_accession][protein_accession]['sequence'] = protein_dict[genomic_accession][protein_accession]
 
-    return cazyme_dict
+            for fam in domain_ranges:
+                ranges = domain_ranges[fam]
+
+                for drange in ranges:
+                    try:
+                        domain_dict[protein_accession]
+                        try:
+                            domain_dict[protein_accession][fam].add(drange)
+                        except KeyError:
+                            domain_dict[protein_accession][fam] = {drange}
+                    except KeyError:
+                        domain_dict[protein_accession] = {fam: {drange}}
+
+    return cazyme_dict, domain_dict
 
 
 def get_hmmer_prediction(hmmer_data, protein_accession):
@@ -349,7 +357,7 @@ def get_hmmer_prediction(hmmer_data, protein_accession):
     :param hmmer_data: str, output data from HMMER written in the overview.txt file.
     :param protein_accession: str
 
-    Return set of CAZy family predictions
+    Return set of CAZy family predictions, dict of domain ranges {fam: set(ranges)}
     """
     logger = logging.getLogger(__name__)
 
@@ -357,21 +365,35 @@ def get_hmmer_prediction(hmmer_data, protein_accession):
         return set()
     
     cazy_fams = set()
+    ranges = {}
 
     predicted_domains = hmmer_data.split("+")
     for domain in predicted_domains:
         # separate the predicted CAZy family from the domain range
         domain_name = domain.split("(")[0]  # CAZy (sub)family
+        domain_range = domain.split("(")[1]
+        domain_range = domain_range.replace(")", "")
 
         if domain_name.find("_") != -1:
             try: 
                 re.match(r"\D{2,3}\d+?_\D", domain_name).group()  # check unusal CAZy family formating
                 cazy_fams.add(domain_name.split("_")[0])
 
+                try:
+                    ranges[cazy_fams].add(domain_range)
+                except KeyError:
+                    ranges[cazy_fams] = {domain_range}
+
             except AttributeError:  # raised if not an usual CAZy family format
                 try:
                     re.match(r"\D{2,3}\d+?_\d+", domain_name).group()  # check if a subfamily
                     cazy_fams.add(domain_name.split("_")[0])
+
+                    try:
+                        ranges[cazy_fams].add(domain_range)
+                    except KeyError:
+                        ranges[cazy_fams] = {domain_range}
+                    
                 except AttributeError:
                     logger.warning(
                         f"Unknown data type of {domain_name} for protein {protein_accession}, for HMMER.\n"
@@ -389,7 +411,7 @@ def get_hmmer_prediction(hmmer_data, protein_accession):
                     "Not adding as domain to CAZy family annotations for the genome"
                 )
     
-    return cazy_fams
+    return cazy_fams, ranges
 
 
 def get_hotpep_prediction(hotpep_data, protein_accession):
@@ -516,103 +538,6 @@ def add_cazy_annotations(cazome_dict, connection):
     return cazome_dict
 
 
-def build_prediction_df(cazome_dict, args):
-    """Build Pandas df of data in the dict.
-    
-    :param cazome_dict: 
-    {genus: {species: 'txid': str, 'genomes': {assembly_acc: 
-        {protein_acc: {'sequence': SeqIO.seq, 'diamond':set(), 'hmmer':set(), 'hotpep':set(), '#ofTools': int, 'dbcan':set()}}}}
-    }
-    
-    Return Pandas df
-    """
-    if args.cazy is not None:
-        column_names = [
-            'Genus',
-            'Species',
-            'NCBI_txid',
-            'Genomic_accession',
-            'Protein_accession',
-            'HMMER',
-            'Hotpep',
-            'DIAMOND',
-            '#dbCAN_tools',
-            'dbCAN',
-            'CAZy',
-        ]
-    else:
-        column_names = [
-            'Genus',
-            'Species',
-            'NCBI_txid',
-            'Genomic_accession',
-            'Protein_accession',
-            'HMMER',
-            'Hotpep',
-            'DIAMOND',
-            '#dbCAN_tools',
-            'dbCAN',
-        ]
-
-    prediction_df = pd.DataFrame(columns=column_names)
-
-    for genus in tqdm(cazome_dict, desc='Building prediction df per genus'):
-        genus_species = cazome_dict[genus]
-
-        for species in tqdm(genus_species, desc='Building prediction df per species'):
-            tax_id = cazome_dict[genus][species]['txid']
-            assemblies = cazome_dict[genus][species]['genomes']
-
-            for genomic_accession in tqdm(assemblies, desc='Building prediction df per genome'):
-                protein_data = cazome_dict[genus][species]['genomes'][genomic_accession]
-
-                for protein_accession in tqdm(protein_data, desc='Parsing protein data'):
-                    # retrieve the prediction annotations
-                    try:
-                        hmmer = ' '.join(cazome_dict[genus][species]['genomes'][genomic_accession]['hmmer'])
-                    except KeyError:
-                        a = protein_dict[genomic_accession][protein_accession]
-                        print('-------\n', a, '\n--------------')
-                    hotpep = ' '.join(cazome_dict[genus][species]['genomes'][genomic_accession]['hotpep'])
-                    diamond = ' '.join(cazome_dict[genus][species]['genomes'][genomic_accession]['diamond'])
-                    dbcan = ' '.join(cazome_dict[genus][species]['genomes'][genomic_accession]['dbcan'])
-                    if args.cazy is not None:
-                        cazy = ' '.join(cazome_dict[genus][species]['genomes'][genomic_accession]['cazy'])
-                        new_row = [[
-                            genus,
-                            species,
-                            tax_id,
-                            genomic_accession,
-                            protein_accession,
-                            protein_accession,
-                            hmmer,
-                            hotpep,
-                            diamond,
-                            cazome_dict[genus][species]['genomes'][genomic_accession]['no#tools'],
-                            dbcan,
-                            cazy,
-                        ]]
-                    else:
-                        new_row = [[
-                            genus,
-                            species,
-                            tax_id,
-                            genomic_accession,
-                            protein_accession,
-                            protein_accession,
-                            hmmer,
-                            hotpep,
-                            diamond,
-                            cazome_dict[genus][species]['genomes'][genomic_accession]['no#tools'],
-                            dbcan,
-                        ]]
-                    new_row = pd.DataFrame(new_row, columns=column_names)
-
-                    prediction_df = prediction_df.append(new_row, ignore_index=True)
-
-    return prediction_df
-
-
 def cache_dict(cazome_dict, time_stamp, args):
     """Cache the dict of CAZome protein data
     
@@ -634,11 +559,12 @@ def cache_dict(cazome_dict, time_stamp, args):
     return
 
 
-def add_data_to_db(cazome_dict, tax_dict, connection):
+def add_data_to_db(cazome_dict, tax_dict, domain_dict, connection):
     """Add data to the database
     
     :param cazome_dict: {genomic_accession: {protein_accession: {tool: fams}}}
     :param tax_dict: {genomic_accession: {'genus': str, 'species': str, 'tax_id': str}}
+    :param domain_dict: dict of domain ranges {protein: {tool: {fam: set()}}}
     :param connection: open sqlalchemy connection to an SQLite3 db
     
     Return nothing"""
@@ -667,9 +593,6 @@ def add_data_to_db(cazome_dict, tax_dict, connection):
     # add proteins
     add_data.add_proteins(cazome_dict, assembly_dict, connection)
 
-    # retrieve db protein record Ids
-    protein_db_dict = load_data.get_protein_db_ids(connection)
-
     # add classifiers
     classifier_data = [
         ('dbCAN', '2.0.11', 'March 2020'),
@@ -686,11 +609,22 @@ def add_data_to_db(cazome_dict, tax_dict, connection):
     # add CAZy families
     add_data.add_families(cazome_dict, connection)
 
-    # add CAZy and dbCAN annotations
-    add_data.add_classifications(cazome_dict, protein_db_dict, connection)
+    # load Proteins, CazyFamilies and Classifiers tables into dicts
+    protein_db_dict = load_data.get_protein_db_ids(connection)
+    classifer_db_dict = load_data.get_classifier_db_ids(connection)
+    family_db_dict = load_data.get_family_db_ids(connection)
 
+    # add CAZy and dbCAN domain annotations
+    add_data.add_classifications(
+        cazome_dict,
+        domain_dict,
+        protein_db_dict,
+        classifer_db_dict,
+        family_db_dict,
+        connection,
+    )
 
-
+    return
 
 
 
@@ -782,7 +716,6 @@ def get_file_paths(directory, prefixes=None, suffixes=None):
 
     return file_paths
 
-
 def get_dir_paths(directory, prefixes=None, suffixes=None):
     """Retrieve paths to all directories in input dir.
     :param directory: Path, path to directory from which files are to be retrieved
@@ -821,7 +754,6 @@ def get_dir_paths(directory, prefixes=None, suffixes=None):
 
     return dir_paths
 
-
 def config_logger(args) -> logging.Logger:
     """Configure package wide logger.
     Configure a logger at the package level, from which the module will inherit.
@@ -853,7 +785,6 @@ def config_logger(args) -> logging.Logger:
         logger.addHandler(file_log_handler)
 
     return
-
 
 def convert_for_serialisation(protein_dict, args):
     """Convert all data types in the dict to those suitable for JSON serialisation."""
