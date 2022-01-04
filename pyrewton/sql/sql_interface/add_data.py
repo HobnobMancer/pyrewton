@@ -40,6 +40,7 @@
 """Module for defining the db ORM and interacting with the db"""
 
 
+from datetime import datetime
 from tqdm import tqdm
 
 from pyrewton.sql.sql_interface import SqlInterfaceException
@@ -87,5 +88,29 @@ def add_species_data(tax_dict, ncbi_tax_dict, connection):
 
     if len(species_to_insert) != 0:
         insert_data(connection, 'Taxonomies', ['ncbi_id', 'genus', 'species'], list(species_to_insert))
+
+    return
+
+
+def add_genomic_accessions(tax_dict, tax_table_dict, connection):
+    """Add genomic accessions to the database.
+    
+    :param tax_dict: {genomic_accession: {'genus': str, 'species': str, 'tax_id': str}}
+    :param tax_table_dict: {genus species: db_id}
+    :param connection: open sqlalchemy connection to an SQLite3 engine
+    
+    Return nothing
+    """
+    assemblies_to_insert = set()
+    for genomic_accession in tqdm(tax_dict, desc="Adding assemblies to db"):
+        genus = tax_dict[genomic_accession]['genus']
+        species = tax_dict[genomic_accession]['species']
+
+        db_tax_id = tax_table_dict[f"{genus} {species}"]
+
+        assemblies_to_insert.add( (db_tax_id, genomic_accession) )
+
+    if len(assemblies_to_insert) != 0:
+        insert_data(connection, 'Assemblies', ['tax_id', 'assembly_accession'], list(assemblies_to_insert))
 
     return
