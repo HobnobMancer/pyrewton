@@ -725,9 +725,9 @@ class OptimalPH(Base):
         return f"<OptimalPH, protein={self.protein_id}, note={self.note}>"
 
 
-class Citations(Base):
+class Citation(Base):
     """Represent the literature sources of protein data."""
-    __tablename__ = "Citation"
+    __tablename__ = "Citations"
     
     __table_args__ = (
         UniqueConstraint("protein_id", "citation_id"),
