@@ -72,6 +72,26 @@ Base = declarative_base()
 Session = sessionmaker()
 
 
+# linker table between Proteins and PDB structures
+proteins_pdbs = Table(
+    "proteins_pdbs",
+    Base.metadata,
+    Column("protein_id", Integer, ForeignKey("Proteins.protein_id")),
+    Column("pdb_id", Integer, ForeignKey("Pdbs.pdb_id")),
+    PrimaryKeyConstraint("protein_id", "pdb_id"),
+)
+
+
+# linker table between Proteins and PDB structures
+proteins_ecs = Table(
+    "proteins_ecs",
+    Base.metadata,
+    Column("protein_id", Integer, ForeignKey("Proteins.protein_id")),
+    Column("ec_id", Integer, ForeignKey("Ec_numbers.ec_id")),
+    PrimaryKeyConstraint("protein_id", "ec_id"),
+)
+
+
 # Enable regular expression searching of the database
 class ReString(String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.
