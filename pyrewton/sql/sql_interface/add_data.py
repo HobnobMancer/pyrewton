@@ -151,3 +151,15 @@ def add_proteins(protein_dict, assembly_dict, connection):
         )
 
     return
+
+
+def add_classifications(cazome_dict, protein_db_dict, connection):
+    """Add CAZy and dbCAN CAZy family classifications to the db.
+    
+    :param cazome_dict:
+    :param protein_db_dict:
+    :param connection:
+    
+    Return nothing
+    """
+    return
