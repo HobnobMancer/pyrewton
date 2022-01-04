@@ -74,26 +74,6 @@ Base = declarative_base()
 Session = sessionmaker()
 
 
-# linker table between Proteins and PDB structures
-proteins_pdbs = Table(
-    "Proteins_Pdbs",
-    Base.metadata,
-    Column("protein_id", Integer, ForeignKey("Proteins.protein_id")),
-    Column("pdb_id", Integer, ForeignKey("Pdbs.pdb_id")),
-    PrimaryKeyConstraint("protein_id", "pdb_id"),
-)
-
-
-# linker table between Proteins and PDB structures
-proteins_ecs = Table(
-    "Proteins_Ecs",
-    Base.metadata,
-    Column("protein_id", Integer, ForeignKey("Proteins.protein_id")),
-    Column("ec_id", Integer, ForeignKey("Ec_numbers.ec_id")),
-    PrimaryKeyConstraint("protein_id", "ec_id"),
-)
-
-
 # Enable regular expression searching of the database
 class ReString(String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.
@@ -169,27 +149,33 @@ SQLITE_REGEX_FUNCTIONS = {
 
 
 #
-# Add tax tables
+# Relationship/Linker tables
 #
 
-class Ncbi_Tax_Id(Base):
-    """Describes an NCBI taxonomy ID."""
-    __tablename__ = "Ncbi_Tax_Ids"
-    __table_args__ = (
-        UniqueConstraint("ncbi_tax_id"),
-        Index("ncbi_id", "ncbi_tax_id")
-    )
 
-    ncbi_id = Column(Integer, primary_key=True)  # autoincremental
-    ncbi_tax_id = Column(String)
+# linker table between Proteins and PDB structures
+proteins_pdbs = Table(
+    "Proteins_Pdbs",
+    Base.metadata,
+    Column("protein_id", Integer, ForeignKey("Proteins.protein_id")),
+    Column("pdb_id", Integer, ForeignKey("Pdbs.pdb_id")),
+    PrimaryKeyConstraint("protein_id", "pdb_id"),
+)
 
-    species = relationship("Taxonomy", back_populates="ncbi_ids")
 
-    def __str__(self):
-        return f"-NCBI, NCBI:txid={self.ncbi_tax_id}, id={self.ncbi_id}-"
+# linker table between Proteins and PDB structures
+proteins_ecs = Table(
+    "Proteins_Ecs",
+    Base.metadata,
+    Column("protein_id", Integer, ForeignKey("Proteins.protein_id")),
+    Column("ec_id", Integer, ForeignKey("Ec_numbers.ec_id")),
+    PrimaryKeyConstraint("protein_id", "ec_id"),
+)
 
-    def __repr__(self):
-        return f"<NCBI, NCBI:txid={self.ncbi_tax_id}, id={self.ncbi_id}>"
+
+#
+# Add tax tables
+#
 
 
 class Taxonomy(Base):
@@ -202,12 +188,11 @@ class Taxonomy(Base):
     )
     
     taxonomy_id = Column(Integer, primary_key=True)  # autoincremental
-    ncbi_id = Column(Integer, ForeignKey("Ncbi_Tax_Ids.ncbi_id"))
+    ncbi_tax_id = Column(String)
     genus = Column(String)
     species = Column(String)
     ncbi_tax_id = Column(Integer)  # excludes the NCBI:txid prefix
 
-    ncbi_ids = relationship("Ncbi_Tax_Id", back_populates="species")
     assembly = relationship("Assembly", back_populates="tax_assembly")
 
     def __str__(self):
@@ -231,7 +216,7 @@ class Assembly(Base):
     taxonomy_id = Column(Integer, ForeignKey("Taxonomies.taxonomy_id"))
     
     tax_assembly = relationship("Taxonomy", back_populates="assembly")
-    proteins = relationship("Protein", back_populates="assemblies")
+    assem_proteins = relationship("Protein", back_populates="assemblies")
     
     def __str__(self):
         return (
@@ -263,7 +248,7 @@ class Domain(Base):
     family_id = Column(Integer, ForeignKey("CazyFamilies.family_id"))
     domain_range = Column(String)
     
-    proteins = relationship("Protein", back_populates="domains")
+    dom_proteins = relationship("Protein", back_populates="domains")
     classifier = relationship("Classifier", back_populates="parent_domain")
     family = relationship("CazyFamily", back_populates="parent_domain")
     
@@ -345,22 +330,32 @@ class Protein(Base):
     sequence = Column(String)
     
     # data from CAZy, dbCAN and genomes
-    domains = relationship("Domain", back_populates="proteins")
-    assemblies = relationship("Assembly", back_populates="proteins")
+    domains = relationship("Domain", back_populates="dom_proteins")
+    assemblies = relationship("Assembly", back_populates="assem_proteins")
     # info about the possibility of transmembrane regions
-    transmembranes = relationship("Transmembrane", back_populates="proteins")
+    transmembranes = relationship("Transmembrane", back_populates="trans_proteins")
     # data retrieved from UniProt
-    active_sites = relationship("ActiveSite", back_populates="proteins")
-    substrate_sites = relationship("SubstrateBindingSite", back_populates="proteins")
-    metal_sites = relationship("MetalBindingSite", back_populates="proteins")
-    cofactors = relationship("Cofactor", back_populates="proteins")
-    glycosylations = relationship("Glycosylation", back_populates="proteins")
-    temperatures = relationship("Temperature", back_populates="proteins")
-    optimal_phs = relationship("OptimalPH", back_populates="proteins")
-    data_citations = relationship("Citation", back_populates="proteins")
+    active_sites = relationship("ActiveSite", back_populates="act_proteins")
+    substrate_sites = relationship("SubstrateBindingSite", back_populates="sub_proteins")
+    metal_sites = relationship("MetalBindingSite", back_populates="met_proteins")
+    cofactors = relationship("Cofactor", back_populates="cof_proteins")
+    glycosylations = relationship("Glycosylation", back_populates="gly_proteins")
+    temperatures = relationship("Temperature", back_populates="temp_proteins")
+    optimal_phs = relationship("OptimalPH", back_populates="ph_proteins")
+    data_citations = relationship("Citation", back_populates="cite_proteins")
     # many-to-many relationships
-    pdbs = relationship("Protein", secondary=proteins_pdbs, back_populates="proteins", lazy="dynamic")
-    ec_numbers = relationship("Protein", secondary=proteins_ecs, back_populates="proteins", lazy="dynamic")
+    pdbs = relationship(
+        "Protein",
+        secondary=proteins_pdbs,
+        back_populates="pdb_proteins",
+        lazy="dynamic",
+    )
+    ec_numbers = relationship(
+        "Protein",
+        secondary=proteins_ecs,
+        back_populates="ec_proteins",
+        lazy="dynamic",
+    )
 
     def __str__(self):
         return f"-Protein, id={self.protein_id}, name={self.protein_name}-"
@@ -388,7 +383,7 @@ class Transmembrane(Base):
     tmhmm_transmembrane = Column(Integer)
     signal_p_transmembrane = Column(Boolean)
 
-    proteins = relationship("Protein", back_populates="transmembranes")
+    trans_proteins = relationship("Protein", back_populates="transmembranes")
 
     def __str__(self):
         return (
@@ -419,7 +414,12 @@ class Pdb(Base):
     pdb_id = Column(Integer, primary_key=True)
     pdb_accession = Column(String)
 
-    proteins = relationship("Protein", secondary=proteins_pdbs, back_populates="pdbs", lazy="dynamic")
+    pdb_proteins = relationship(
+        "Protein",
+        secondary=proteins_pdbs,
+        back_populates="pdbs",
+        lazy="dynamic",
+    )
 
     def __str__(self):
         return f"-PDB accession={self.pdb_accession}, id={self.pdb_id}-"
@@ -439,7 +439,12 @@ class Ec_number(Base):
     ec_id = Column(Integer, primary_key=True)
     ec_number = Column(String)
 
-    proteins = relationship("Protein", secondary=proteins_ecs, back_populates="ec_numbers", lazy="dynamic")
+    ec_proteins = relationship(
+        "Protein",
+        secondary=proteins_ecs,
+        back_populates="ec_numbers",
+        lazy="dynamic",
+    )
 
     def __str__(self):
         return f"-EC, id={self.ec_id}, number={self.ec_number}-"
@@ -465,7 +470,7 @@ class ActiveSite(Base):
     note = Column(ReString)
     evidence = Column(ReString)
     
-    proteins = relationship("Protein", back_populates="active_sites")
+    act_proteins = relationship("Protein", back_populates="active_sites")
     active_site_types = relationship("SiteTypes", back_populates="parent_active_sites")
     associated_activities = relationship("AssociatedActivity", back_populates="source_active_sites")
     
@@ -541,7 +546,7 @@ class SubstrateBindingSite(Base):
     note = Column(ReString)  # Typically the substrate, although may be burried within text
     evidence = Column(ReString)
     
-    proteins = relationship("Protein", back_populates="substrate_sites")
+    sub_proteins = relationship("Protein", back_populates="substrate_sites")
     
     def __str__(self):
         return f"-SubstrateBindingSite, protein={self.protein_id}, position={self.position}, id={self.substratesite_id}-"
@@ -569,7 +574,7 @@ class MetalBindingSite(Base):
     note = Column(ReString)  # Typically the substrate, although may be burried within text
     evidence = Column(ReString)
     
-    proteins = relationship("Protein", back_populates="metal_sites")
+    met_proteins = relationship("Protein", back_populates="metal_sites")
     metals = relationship("Metal", back_populates="metal_sites")
     
     def __str__(self):
@@ -592,7 +597,6 @@ class Metal(Base):
     ion_id = Column(Integer, primary_key=True)
     ion = Column(String)
     
-    proteins = relationship("Protein", back_populates="active_sites")
     metals = relationship("Metal", back_populates="metal_sites")
     
     def __str__(self):
@@ -616,7 +620,7 @@ class Cofactor(Base):
     note = Column(ReString)  # Typically the substrate, although may be burried within text
     evidence = Column(ReString)
     
-    proteins = relationship("Protein", back_populates="cofactors")
+    cof_proteins = relationship("Protein", back_populates="cofactors")
     molecules = relationship("CofactorMolecule", back_populates="cofactor_site")
     
     def __str__(self):
@@ -662,7 +666,7 @@ class Glycosylation(Base):
     note = Column(ReString)  # Typically a description of the sugar architecture
     evidence = Column(ReString)
     
-    proteins = relationship("Protein", back_populates="glycosylations")
+    gly_proteins = relationship("Protein", back_populates="glycosylations")
     
     def __str__(self):
         return f"-Glycosylation, protein={self.protein_id}-"
@@ -691,7 +695,7 @@ class Temperature(Base):
     note = Column(ReString)  # A copy of the full text retrieved from UniProt, in case parsing fails
     evidence = Column(ReString)
     
-    proteins = relationship("Protein", back_populates="temperatures")
+    temp_proteins = relationship("Protein", back_populates="temperatures")
     
     def __str__(self):
         str_repr = f"-Temperature, protein={self.protein_id},"
@@ -749,7 +753,7 @@ class OptimalPH(Base):
     note = Column(ReString)  # entire string from UniProt in case parsing fails
     evidence = Column(ReString)
     
-    proteins = relationship("Protein", back_populates="optimal_phs")
+    ph_proteins = relationship("Protein", back_populates="optimal_phs")
     
     def __str__(self):
         return f"-Optimal pH range, protein={self.protein_id}-"
@@ -771,7 +775,7 @@ class Citation(Base):
     citation_id = Column(Integer, primary_key=True)
     citation = Column(Integer)  # PubMed Id
     
-    proteins = relationship("Protein", back_populates="data_citations")
+    cite_proteins = relationship("Protein", back_populates="data_citations")
     
     def __str__(self):
         return f"-Citation, protein={self.protein_id}, id={self.citation_id}-"
