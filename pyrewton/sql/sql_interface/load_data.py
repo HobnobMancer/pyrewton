@@ -81,3 +81,20 @@ def get_tax_table(connection):
         tax_data[f"{record.genus} {record.species}"] = record.tax_id
 
     return tax_data
+
+
+def get_assemblies_table(connection):
+    """Parse Assemblies into dict
+    
+    :param connection: open sqlalchemy connection to an SQLite3 db engine
+    
+    Return dict {genomic_accession: db_id}
+    """
+    with Session(bind=connection) as session:
+        db_records = session.query(Taxonomy).all()
+
+    assembly_dict = {}  # {genomic_accession: db_id}
+    for record in tqdm(db_records, desc="Retrieving db Assembly records"):
+        assembly_dict[record.genomic_accession] = record.assembly_id
+
+    return assembly_dict
