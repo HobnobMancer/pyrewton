@@ -111,6 +111,14 @@ def build_parser(argv: Optional[List] = None):
         help="Directory to which all outputs are written. Defauly, write to cwd",
     )
 
+    parser.add_argument(
+        "--sql_echo",
+        dest="sql_echo",
+        action="store_true",
+        default=False,
+        help="Set SQLite echo to True, adds verbose SQL messaging",
+    )
+
     # Add option for more detail (verbose) logging
     parser.add_argument(
         "-v",
