@@ -567,6 +567,29 @@ def cache_dict(cazome_dict, time_stamp, args):
         json.dump(json_data, fh)
 
     return
+    
+
+def convert_for_serialisation(protein_dict, args):
+    """Convert all data types in the dict to those suitable for JSON serialisation."""
+    for genomic_accession in protein_dict:
+        for protein_accession in protein_dict[genomic_accession]:
+            if args.cazy is not None:
+                tools = ['hmmer', 'hotpep', 'diamond', 'dbcan', 'cazy', '#ofTools']
+            else:
+                tools = ['hmmer', 'hotpep', 'diamond', 'dbcan', '#ofTools']
+
+            for tool in tools:
+                try:
+                    if len(protein_dict[genomic_accession][protein_accession][tool]) == 0:
+                        protein_dict[genomic_accession][protein_accession][tool] = None
+                    else:
+                        protein_dict[genomic_accession][protein_accession][tool] = (
+                            str(protein_dict[genomic_accession][protein_accession][tool])
+                        )
+                except TypeError:
+                    pass  # raised when '#ofTools' is an int
+
+    return protein_dict
 
 
 def add_data_to_db(cazome_dict, tax_dict, domain_dict, connection):
@@ -795,29 +818,6 @@ def config_logger(args) -> logging.Logger:
         logger.addHandler(file_log_handler)
 
     return
-
-def convert_for_serialisation(protein_dict, args):
-    """Convert all data types in the dict to those suitable for JSON serialisation."""
-    for genomic_accession in protein_dict:
-        for protein_accession in protein_dict[genomic_accession]:
-            if args.cazy is not None:
-                tools = ['hmmer', 'hotpep', 'diamond', 'dbcan', 'cazy', '#ofTools']
-            else:
-                tools = ['hmmer', 'hotpep', 'diamond', 'dbcan', '#ofTools']
-
-            for tool in tools:
-                try:
-                    if len(protein_dict[genomic_accession][protein_accession][tool]) == 0:
-                        protein_dict[genomic_accession][protein_accession][tool] = ""
-                    else:
-                        protein_dict[genomic_accession][protein_accession][tool] = (
-                            str(protein_dict[genomic_accession][protein_accession][tool])
-                        )
-                except TypeError:
-                    pass  # raised when '#ofTools' is an int
-
-    return protein_dict
-
 
 
 
