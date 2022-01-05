@@ -620,9 +620,18 @@ def add_data_to_db(cazome_dict, tax_dict, domain_dict, connection, args):
     # add classifiers
     classifier_data = [
         ('dbCAN', '2.0.11', 'March 2020'),
+        ('HMMER', 'dbCAN=2.0.11', 'March 2020'),
+        ('Hotpep', 'dbCAN=2.0.11', 'March 2020'),
+        ('DIAMOND', 'dbCAN=2.0.11', 'March 2020'),
         ('CUPP', '1.0.14', 'April 2018'),
         ('eCAMI', None, 'July 2018')
     ]
+
+    if args.cazy_date is not None:
+        classifier_data.append( ('CAZy', None, args.cazy_date) )
+    else:
+        classifier_data.append( ('CAZy', None, None) )
+
     add_data.insert_data(
         connection,
         'Classifiers',
