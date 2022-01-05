@@ -40,6 +40,7 @@
 """Module for defining the db ORM and interacting with the db"""
 
 
+import logging
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
 from tqdm import tqdm
@@ -217,6 +218,8 @@ def add_classifications(
 
     Return nothing.
     """
+    logger = logging.getLogger(__name__)
+
     if args.cazy is not None:
         tools = [
             ['hmmer', 'HMMER'],
@@ -248,7 +251,14 @@ def add_classifications(
                 if tool[0] == 'hmmer':  # includes adding domain ranges
                     for fam in domain_fams:
                         fam_id = family_db_dict[fam]
-                        domain_ranges = domain_dict[protein_accession][fam]
+                        try:
+                            domain_ranges = domain_dict[protein_accession][fam]
+                        except KeyError:
+                            logger.warning(
+                                f"HMMER annotation {fam} retrieved for {genomic_accession}:{protein_accession}\n"
+                                "but no domain range was retrieved. Adding domain without domain range"
+                            )
+                            domains_to_insert.add( (protein_id, classifier_id, fam_id, None) )
 
                         for drange in domain_ranges:
                              domains_to_insert.add( (protein_id, classifier_id, fam_id, drange) )
@@ -256,6 +266,7 @@ def add_classifications(
                 else:  # no domain ranges
                     try:
                         for fam in domain_fams:
+                            fam_id = family_db_dict[fam]
                             domains_to_insert.add( (protein_id, classifier_id, fam_id, None) )
                     except TypeError:  # raised if domain_fams is None
                         continue
