@@ -42,9 +42,14 @@
 
 
 import logging
+import urllib.parse
+import urllib.request
+
 from typing import List, Optional
+from urllib.error import HTTPError
 
 from saintBioutils.utilities.logger import config_logger
+from tqdm import tqdm
 
 from pyrewton.sql.sql_orm import get_cazome_db_connection
 from pyrewton.sql.sql_interface import load_data
@@ -75,15 +80,95 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     return
 
 
-def get_uniprot_ids(protein_db_dict):
+def get_uniprot_ids(protein_db_dict, args):
     """Batch query UniProt to get the UniProt record IDs
+
+    Retrieve UniProt accessions for the GenBank accessions from UniProt REST API.
     
-    :param protein_db_dict:
+    UniProt requests batch queries of no larger than 20,000, athough queries longer than 500
+    often raise HTTP 400 Error codes, especially in busy server times.
+    
+    :param protein_db_dict: {genbank_accession: db_id}
+    :param args: cmd-line args parser
 
     Return dict {uniprot_id: {'gbk_acc': str, 'db_id': int}}
     Contains only proteins in UniProt and the local CAZome db
     """
-    
+    logger = logging.getLogger(__name__)
+    uniprot_url = 'https://www.uniprot.org/uploadlists/'
+
+    genbank_accessions = list(protein_db_dict.keys())
+
+    uniprot_rest_queries = get_chunks_list(genbank_accessions, args.uniprot_batch_size)
+
+    uniprot_gbk_dict = {}  # {uniprot_accession: gbk_accession}
+    failed_queries = {}  # {query: tries}
+
+    for query_chunk in tqdm(
+        uniprot_rest_queries,
+        desc='Batch retrieving UniProt accessions',
+    ):
+        if type(query) != str:
+            # convert the set of gbk accessions into str format
+            query = ' '.join(query_chunk)
+
+        params = {
+            'from': 'EMBL',
+            'to': 'ACC',
+            'format': 'tab',
+            'query': query
+        }
+
+        # submit query data
+        data = urllib.parse.urlencode(params)
+        data = data.encode('utf-8')
+        req = urllib.request.Request(uniprot_url, data)
+
+        # retrieve UniProt response
+        try:
+            with urllib.request.urlopen(req) as f:
+                response = f.read()
+        except HTTPError:
+            try:
+                failed_queries[query] += 1
+            except KeyError:
+                failed_queries[query] = 1
+            if failed_queries[query] > args.retries:
+                del failed_queries[query]
+            else:
+                uniprot_rest_queries.append(query)
+
+        uniprot_batch_response = response.decode('utf-8')
+
+        uniprot_batch_response = uniprot_batch_response.split('\n')
+
+        for line in uniprot_batch_response[1:]:  # the first line includes the titles, last line is an empty str
+            if line == '':  # add check incase last line is not an empty str 
+                continue
+            uniprot_accession = line.split('\t')[1]
+            genbank_accession = line.split('\t')[0]
+            db_id = protein_db_dict[genbank_accession]
+            uniprot_gbk_dict[uniprot_accession] = {'gbk_acc': genbank_accession, 'db_id': db_id}
+
+    logger.info(
+        f"Retrieved {len(genbank_accessions)} gbk accessions from the local db\n"
+        f"{len(list(uniprot_gbk_dict.keys()))} were assoicated with records in UniProt"
+    )
+
+    return uniprot_gbk_dict
+
+
+
+def get_chunks_list(lst, chunk_length):
+    """Separate the long list into separate chunks.
+    :param lst: list to be separated into smaller lists (or chunks)
+    :param chunk_length: int, the length of the lists the longer list is to be split up into
+    Return a list of nested lists.
+    """
+    chunks = []
+    for i in range(0, len(lst), chunk_length):
+        chunks.append(lst[i:i + chunk_length])
+    return chunks
 
 
 if __name__ == "__main__":
