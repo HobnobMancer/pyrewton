@@ -382,19 +382,17 @@ def get_hmmer_prediction(hmmer_data, protein_accession):
         domain_range = domain.split("(")[1]
         domain_range = domain_range.replace(")", "")
 
-        success = False
+        formated_name = None
 
         if domain_name.find("_") != -1:
             try: 
                 re.match(r"\D{2,3}\d+?_\D", domain_name).group()  # check unusal CAZy family formating
-                cazy_fams.add(domain_name.split("_")[0])
-                success = True
+                formated_name = domain_name.split("_")[0]
 
             except AttributeError:  # raised if not an usual CAZy family format
                 try:
                     re.match(r"\D{2,3}\d+?_\d+", domain_name).group()  # check if a subfamily
-                    cazy_fams.add(domain_name.split("_")[0])
-                    success = True
+                    formated_name = domain_name.split("_")[0]
                     
                 except AttributeError:
                     logger.warning(
@@ -405,20 +403,18 @@ def get_hmmer_prediction(hmmer_data, protein_accession):
         else:
             try:
                 re.match(r"\D{2,3}\d+", domain_name).group()
-                cazy_fams.add(domain_name)
-                success = True
-
+                formated_name = domain_name
             except AttributeError:  # raised if doesn't match expected CAZy family
                 logger.warning(
                     f"Unknown data type of {domain_name} for protein {protein_accession}, for HMMER.\n"
                     "Not adding as domain to CAZy family annotations for the genome"
                 )
 
-        if success:
+        if formated_name is not None:
             try:
-                ranges[domain_name].add(domain_range)
+                ranges[formated_name].add(domain_range)
             except KeyError:
-                ranges[domain_name] = {domain_range}
+                ranges[formated_name] = {domain_range}
     
     return cazy_fams, ranges
 
