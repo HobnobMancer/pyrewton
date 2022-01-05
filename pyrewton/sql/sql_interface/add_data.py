@@ -170,7 +170,9 @@ def add_families(cazome_dict, connection):
     families_to_insert = set()
 
     tools = ['dbcan', 'hmmer', 'hotpep', 'diamond', 'cazy']
-    for genomic_accession in tqdm(cazome_dict, desc="Adding families to db"):
+
+    genomic_accessions = list(cazome_dict.keys())
+    for genomic_accession in tqdm(genomic_accessions, desc="Adding families to db"):
         protein_accessions = list(cazome_dict[genomic_accession].keys())
         for protein in protein_accessions:
             for tool in tools:
@@ -252,8 +254,11 @@ def add_classifications(
                              domains_to_insert.add( (protein_id, classifier_id, fam_id, drange) )
 
                 else:  # no domain ranges
-                    for fam in domain_fams:
-                        domains_to_insert.add( (protein_id, classifier_id, fam_id, None) )
+                    try:
+                        for fam in domain_fams:
+                            domains_to_insert.add( (protein_id, classifier_id, fam_id, None) )
+                    except TypeError:  # raised if domain_fams is None
+                        continue
     
     if len(domains_to_insert) != 0:
         insert_data(
