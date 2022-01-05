@@ -139,6 +139,9 @@ def add_proteins(protein_dict, assembly_dict, connection):
 
             sequence = protein_dict[genomic_accession][protein_accession]['sequence']
             processed_sequence = sequence.replace("X", "G")
+            processed_sequence = processed_sequence.replace("Z", "G")
+            processed_sequence = processed_sequence.replace("B", "G")
+            processed_sequence = processed_sequence.replace("J", "G")
             analysed_seq = ProteinAnalysis(processed_sequence)
             mass = analysed_seq.molecular_weight()
             length = len(sequence)
