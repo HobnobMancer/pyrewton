@@ -43,6 +43,7 @@
 from tqdm import tqdm
 
 from pyrewton.sql.sql_orm import (
+    Assembly,
     CazyFamily,
     Classifier,
     Protein,
@@ -77,7 +78,7 @@ def get_assemblies_table(connection):
     Return dict {genomic_accession: db_id}
     """
     with Session(bind=connection) as session:
-        db_records = session.query(Taxonomy).all()
+        db_records = session.query(Assembly).all()
 
     assembly_dict = {}  # {genomic_accession: db_id}
     for record in tqdm(db_records, desc="Retrieving db Assembly records"):
