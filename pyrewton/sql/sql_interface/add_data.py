@@ -226,9 +226,10 @@ def add_classifications(
         protein_accessions = list(cazome_dict[genomic_accession].keys())
         for protein_accession in protein_accessions:
             protein_id = protein_db_dict[protein_accession]  # db protein record id
-            classifier_id = classifer_db_dict[tool]
 
             for tool in tools:
+                classifier_id = classifer_db_dict[tool]
+                
                 if tool == 'hmmer':  # includes adding domain ranges
                     domain_fams = cazome_dict[genomic_accession][protein_accession][tool]
                     
