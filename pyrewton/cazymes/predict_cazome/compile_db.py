@@ -625,7 +625,7 @@ def add_data_to_db(cazome_dict, tax_dict, domain_dict, connection):
     add_data.insert_data(
         connection,
         'Classifiers',
-        ['classifier', 'version', 'cazy_training_set'],
+        ['classifier', 'version', 'cazy_training_set_date'],
         classifier_data,
     )
 
