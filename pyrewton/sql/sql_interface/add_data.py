@@ -216,9 +216,20 @@ def add_classifications(
     Return nothing.
     """
     if args.cazy is not None:
-        tools = ['hmmer', 'hotpep', 'diamond', 'dbcan', 'cazy']
+        tools = [
+            ['hmmer', 'HMMER'],
+            ['hotpep', 'Hotpep'],
+            ['diamond', 'DIAMOND'],
+            ['dbcan', 'dbCAN'],
+            ['cazy', 'CAZy'],
+        ]
     else:
-        tools = ['hmmer', 'hotpep', 'diamond', 'dbcan']
+        tools = [
+            ['hmmer', 'HMMER'],
+            ['hotpep', 'Hotpep'],
+            ['diamond', 'DIAMOND'],
+            ['dbcan', 'dbCAN'],
+        ]
 
     domains_to_insert = set()
 
@@ -228,11 +239,11 @@ def add_classifications(
             protein_id = protein_db_dict[protein_accession]  # db protein record id
 
             for tool in tools:
-                classifier_id = classifer_db_dict[tool]
-                
-                if tool == 'hmmer':  # includes adding domain ranges
-                    domain_fams = cazome_dict[genomic_accession][protein_accession][tool]
-                    
+                classifier_id = classifer_db_dict[tool[1]]
+
+                domain_fams = cazome_dict[genomic_accession][protein_accession][tool[0]]
+
+                if tool[0] == 'hmmer':  # includes adding domain ranges
                     for fam in domain_fams:
                         fam_id = family_db_dict[fam]
                         domain_ranges = domain_dict[protein_accession][fam]
