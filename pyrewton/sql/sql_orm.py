@@ -603,7 +603,7 @@ class Metal(Base):
     ion_id = Column(Integer, primary_key=True)
     ion = Column(String)
     
-    metals = relationship("Metal", back_populates="metal_sites")
+    metal_sites = relationship("MetalBindingSite", back_populates="metals")
     
     def __str__(self):
         return f"-Metal, protein={self.ion_id}, ion={self.ion}-"
