@@ -477,7 +477,7 @@ class ActiveSite(Base):
     evidence = Column(ReString)
     
     act_proteins = relationship("Protein", back_populates="active_sites")
-    active_site_types = relationship("SiteTypes", back_populates="parent_active_sites")
+    active_site_types = relationship("SiteType", back_populates="parent_active_sites")
     associated_activities = relationship("AssociatedActivity", back_populates="source_active_sites")
     
     def __str__(self):
