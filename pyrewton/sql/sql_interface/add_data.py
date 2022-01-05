@@ -176,8 +176,9 @@ def add_families(cazome_dict, connection):
             for tool in tools:
                 try:
                     fams = cazome_dict[genomic_accession][protein][tool]
-                    for fam in fams:
-                        families_to_insert.add( (fam,) )
+                    if fams is not None:
+                        for fam in fams:
+                            families_to_insert.add( (fam,) )
                 except KeyError:
                     pass  # raised if data not retrieved from CAZy
 
