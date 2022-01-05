@@ -82,7 +82,7 @@ def get_assemblies_table(connection):
 
     assembly_dict = {}  # {genomic_accession: db_id}
     for record in tqdm(db_records, desc="Retrieving db Assembly records"):
-        assembly_dict[record.genomic_accession] = record.assembly_id
+        assembly_dict[record.assembly_accession] = record.assembly_id
 
     return assembly_dict
 
