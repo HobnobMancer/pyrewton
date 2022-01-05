@@ -61,6 +61,13 @@ def build_parser(argv: Optional[List] = None):
     )
 
     parser.add_argument(
+        "--cazy_date",
+        type=str,
+        default=None,
+        help="Date CAZy data was pulled down",
+    )
+
+    parser.add_argument(
         "-d",
         "--output_db",
         type=Path,
