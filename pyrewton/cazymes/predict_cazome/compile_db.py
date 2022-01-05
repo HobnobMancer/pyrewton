@@ -415,6 +415,8 @@ def get_hmmer_prediction(hmmer_data, protein_accession):
                 ranges[formated_name].add(domain_range)
             except KeyError:
                 ranges[formated_name] = {domain_range}
+
+        cazy_fams.add(formated_name)
     
     return cazy_fams, ranges
 
