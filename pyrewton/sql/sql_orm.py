@@ -188,18 +188,23 @@ class Taxonomy(Base):
     )
     
     taxonomy_id = Column(Integer, primary_key=True)  # autoincremental
-    ncbi_tax_id = Column(String)
+    ncbi_tax_id = Column(Integer)  # excludes the NCBI:txid prefix
     genus = Column(String)
     species = Column(String)
-    ncbi_tax_id = Column(Integer)  # excludes the NCBI:txid prefix
 
     assembly = relationship("Assembly", back_populates="tax_assembly")
 
     def __str__(self):
-        return f"-Source organism, genus={self.genus}, species={self.species}, ncbi={self.ncbi_tax_id}, id={self.taxonomy_id}-"
+        return (
+            f"-Source organism, genus={self.genus}, species={self.species}, "
+            f"ncbi={self.ncbi_tax_id}, id={self.taxonomy_id}-"
+        )
 
     def __repr__(self):
-        return f"<Class Taxonomy, genus={self.genus}, species={self.species}, ncbi={self.ncbi_tax_id}, id={self.taxonomy_id}>"
+        return (
+            f"<Class Taxonomy, genus={self.genus}, species={self.species}, "
+            f"ncbi={self.ncbi_tax_id}, id={self.taxonomy_id}>"
+        )
 
 
 class Assembly(Base):
@@ -212,8 +217,8 @@ class Assembly(Base):
     )
     
     assembly_id = Column(Integer, primary_key=True)
-    assembly_accession = Column(String)
     taxonomy_id = Column(Integer, ForeignKey("Taxonomies.taxonomy_id"))
+    assembly_accession = Column(String)
     
     tax_assembly = relationship("Taxonomy", back_populates="assembly")
     assem_proteins = relationship("Protein", back_populates="assemblies")
@@ -225,7 +230,8 @@ class Assembly(Base):
 
     def __repr__(self):
         return (
-            f"<Class Assembly: assembly_accession={self.assembly_accession}, id={self.assembly_id}, tax={self.taxonomy_id}>"
+            f"<Class Assembly: assembly_accession={self.assembly_accession}, "
+            f"id={self.assembly_id}, tax={self.taxonomy_id}>"
         )
 
 
@@ -345,13 +351,13 @@ class Protein(Base):
     data_citations = relationship("Citation", back_populates="cite_proteins")
     # many-to-many relationships
     pdbs = relationship(
-        "Protein",
+        "Pdb",
         secondary=proteins_pdbs,
         back_populates="pdb_proteins",
         lazy="dynamic",
     )
     ec_numbers = relationship(
-        "Protein",
+        "Ec_number",
         secondary=proteins_ecs,
         back_populates="ec_proteins",
         lazy="dynamic",
