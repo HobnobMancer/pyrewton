@@ -48,6 +48,7 @@ import urllib.request
 from typing import List, Optional
 from urllib.error import HTTPError
 
+from bioservices import UniProt
 from saintBioutils.utilities.logger import config_logger
 from tqdm import tqdm
 
@@ -158,7 +159,6 @@ def get_uniprot_ids(protein_db_dict, args):
     return uniprot_gbk_dict
 
 
-
 def get_chunks_list(lst, chunk_length):
     """Separate the long list into separate chunks.
     :param lst: list to be separated into smaller lists (or chunks)
@@ -169,6 +169,158 @@ def get_chunks_list(lst, chunk_length):
     for i in range(0, len(lst), chunk_length):
         chunks.append(lst[i:i + chunk_length])
     return chunks
+
+
+def get_uniprot_data(uniprot_gbk_dict, cache_dir, args):
+    """Batch query UniProt to retrieve protein data. Save data to cache directory.
+    
+    Bioservices requests batch queries no larger than 200.
+    :param uniprot_gbk_dict: dict, keyed by GenBank accession and valued by UniProt accession
+    :param cache_dir: path to directory to write out cache
+    :param args: cmd-line args parser
+    
+    Return
+    Dict of data retrieved from UniProt and to be added to the db 
+        {uniprot_acccession: {gbk_acccession: str, uniprot_name: str, pdb: set, ec: set}}
+    Set of all retrieved EC numbers
+    """
+    logger = logging.getLogger(__name__)
+    
+    # break up list into nested list of shorter lists for batch querying
+    bioservices_queries = get_chunks_list(
+        list(uniprot_gbk_dict.keys()),
+        args.bioservices_batch_size,
+    )
+
+    # data can be inserted straight away for the following tables
+    substrate_binding_inserts = []  # (protein_id, position, note, evidence)
+    glycosylation_inserts = []  # (protein_id, note, evidence)
+    temperature_inserts = []  # (protein_id, lower_opt, upper_opt, lower_therm, upper_therm, lower_lose, upper_lose, note, evidence)
+    ph_inserts = []  # (protein_id, lower_ph, upper_ph, note, evidence)
+    citation_inserts = []  # (protein_id, citation)
+    transmembrane_inserts = []  # (transmembrane bool,)
+    uniprot_protein_data = []  # {protein_id: (uniprot_acc, uniprot_name)}
+
+    # data has to be added in stages across the related tables
+    active_sites_inserts = []  # (protein_id, position, type_id, activity_id, note, evidence)
+    active_site_types_inserts = []  # (site_type)
+    associated_activities_inserts = []  # (associated_activity)
+
+    metal_binding_inserts = []  # (protein_id, ion_id, ion_number, note, evidence)
+    metals_inserts = []  # (ion)
+
+    cofactors_inserts = []  # (protein_id, molecule_id, note, evidence)
+    cofactor_molecules_inserts = []   # (molecule,)
+
+    protein_pdb_inserts = []  # (pdb_id, protein_id)
+    pdbs_inserts = []  # (pdb_accession,)
+
+    protein_ec_inserts = []  # (protein_id,)
+    ec_inserts = []  # (ec_number,)
+
+    for query in tqdm(bioservices_queries, "Batch retrieving protein data from UniProt"):
+        uniprot_df = UniProt().get_df(entries=query)
+
+        index = 0
+        uniprot_df = uniprot_df[[
+            'Entry',
+            'Protein names',
+            'EC number',
+            'Sequence',
+            'Cross-reference (PDB)',
+        ]]
+
+        for index in tqdm(range(len(uniprot_df['Entry'])), desc="Parsing UniProt response"):
+            row = uniprot_df.iloc[index]
+            uniprot_acc = row['Entry']
+            uniprot_name = row['Protein names']
+
+            # checked if parsed before incase bioservices returned duplicate proteins
+            try:
+                uniprot_dict[uniprot_acc]
+                logger.warning(
+                    f'Multiple entries for UniProt:{uniprot_acc}, '
+                    f'GenBank:{uniprot_gbk_dict[uniprot_acc]} retrieved from UniProt,\n'
+                    'compiling data into a single record'
+                )
+            except KeyError:
+                try:
+                    uniprot_dict[uniprot_acc] = {
+                        "genbank_accession": uniprot_gbk_dict[uniprot_acc],
+                        "name": uniprot_name,
+                        }
+                except KeyError:
+                    logger.warning(
+                        f"Retrieved record with UniProt accession {uniprot_acc} but this "
+                        "accession was not\nretrieved from the UniProt REST API"
+                    )
+                    continue
+            
+            if args.ec:
+                # retrieve EC numbers
+                ec_numbers = row['EC number']
+                try:
+                    ec_numbers = ec_numbers.split('; ')
+                except AttributeError:
+                    # no EC numbers listed
+                    ec_numbers = set()
+                
+                try:
+                    uniprot_dict[uniprot_acc]["ec"]
+                except KeyError:
+                    uniprot_dict[uniprot_acc]["ec"] = set()
+
+                # add EC numbers to dict
+                for ec in ec_numbers:
+                    all_ecs.add( (ec,) )
+                    uniprot_dict[uniprot_acc]["ec"].add(ec)
+
+            if args.pdb:
+                # retrieve PDB accessions
+                pdb_accessions = row['Cross-reference (PDB)']
+                print('PDBS:', pdb_accessions)
+                try:
+                    pdb_accessions = pdb_accessions.split('; ')
+                except AttributeError:
+                    pdb_accessions = set()
+
+                try:
+                    uniprot_dict[uniprot_acc]["pdb"]
+                except KeyError:
+                    uniprot_dict[uniprot_acc]["pdb"] = set()
+
+                # add PDB accessions to dict
+                for pdb in pdb_accessions:
+                    uniprot_dict[uniprot_acc]["pdb"].add(pdb)
+            
+            if args.sequence:
+                sequence = row['Sequence']
+
+                try:
+                    uniprot_dict[uniprot_acc]["sequence"]
+                    existing_date = uniprot_dict[uniprot_acc]["seq_date"]
+                    new_date = row['Date of last sequence modification']
+                    
+                    # check which sequence is newer
+                    existing_date.split('-')
+                    existing_date = datetime(existing_date[0], existing_date[1], existing_date[2])
+                    new_date.split('-')
+                    new_date = datetime(existing_date[0], existing_date[1], existing_date[2])
+
+                    if new_date > existing_date:  # past < present is True
+                        uniprot_dict[uniprot_acc]["sequence"] = sequence
+                        uniprot_dict[uniprot_acc]["seq_date"] = row['Date of last sequence modification']
+                    # else keep the existing sequence
+                    logger.warning(
+                        f'Multiple sequences retrieved for {uniprot_acc}\n'
+                        'Using most recently updated sequence'
+                    )
+                    
+                except KeyError:
+                    uniprot_dict[uniprot_acc]["sequence"] = sequence
+                    uniprot_dict[uniprot_acc]["seq_date"] = row['Date of last sequence modification']
+
+    return uniprot_dict, all_ecs
 
 
 if __name__ == "__main__":
