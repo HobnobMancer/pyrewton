@@ -154,7 +154,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # cache the dict
     cache_dict(cazome_dict, time_stamp, args)
 
-    add_data_to_db(cazome_dict, tax_dict, domain_range_dict, connection)
+    add_data_to_db(cazome_dict, tax_dict, domain_range_dict, connection, args)
 
 
 def get_protein_data(protein_fasta_files):
@@ -592,13 +592,14 @@ def convert_for_serialisation(protein_dict, args):
     return protein_dict
 
 
-def add_data_to_db(cazome_dict, tax_dict, domain_dict, connection):
+def add_data_to_db(cazome_dict, tax_dict, domain_dict, connection, args):
     """Add data to the database
     
     :param cazome_dict: {genomic_accession: {protein_accession: {tool: fams}}}
     :param tax_dict: {genomic_accession: {'genus': str, 'species': str, 'tax_id': str}}
     :param domain_dict: dict of domain ranges {protein: {tool: {fam: set()}}}
     :param connection: open sqlalchemy connection to an SQLite3 db
+    :param args: cmd-line args parser
     
     Return nothing"""
     # add taxonomy (species) data to the db
@@ -645,6 +646,7 @@ def add_data_to_db(cazome_dict, tax_dict, domain_dict, connection):
         classifer_db_dict,
         family_db_dict,
         connection,
+        args,
     )
 
     return
