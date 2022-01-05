@@ -64,7 +64,7 @@ def get_tax_table(connection):
 
     tax_data = {}  # {genus species: db_id}
     for record in tqdm(db_tax_records, desc="Retrieving db Tax records"):
-        tax_data[f"{record.genus} {record.species}"] = record.tax_id
+        tax_data[f"{record.genus} {record.species}"] = record.taxonomy_id
 
     return tax_data
 
