@@ -115,7 +115,7 @@ def add_genomic_accessions(tax_dict, tax_table_dict, connection):
         assemblies_to_insert.add( (db_tax_id, genomic_accession) )
 
     if len(assemblies_to_insert) != 0:
-        insert_data(connection, 'Assemblies', ['tax_id', 'assembly_accession'], list(assemblies_to_insert))
+        insert_data(connection, 'Assemblies', ['taxonomy_id', 'assembly_accession'], list(assemblies_to_insert))
 
     return
 
@@ -138,7 +138,8 @@ def add_proteins(protein_dict, assembly_dict, connection):
             assembly_db_id = assembly_dict[genomic_accession]
 
             sequence = protein_dict[genomic_accession][protein_accession]['sequence']
-            analysed_seq = ProteinAnalysis(sequence)
+            processed_sequence = sequence.replace("X", "G")
+            analysed_seq = ProteinAnalysis(processed_sequence)
             mass = analysed_seq.molecular_weight()
             length = len(sequence)
 
