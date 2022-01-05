@@ -151,10 +151,10 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     if args.cazy is not None:
         cazome_dict = add_cazy_annotations(cazome_dict, cazy_db_connection)
 
-    # cache the dict
-    cache_dict(cazome_dict, time_stamp, args)
-
     add_data_to_db(cazome_dict, tax_dict, domain_range_dict, connection, args)
+
+    # cache the dict into the output dir
+    cache_dict(cazome_dict, time_stamp, args)
 
 
 def get_protein_data(protein_fasta_files):
@@ -558,10 +558,12 @@ def cache_dict(cazome_dict, time_stamp, args):
     Return nothing"""
     cache_path = Path(f"dbcan_predictions_{time_stamp}.json")
 
+    cahce_dict = cazome_dict
+
     if args.output_dir is not None:
         cache_path = args.output_dir / cache_path
 
-    json_data = convert_for_serialisation(cazome_dict, args)
+    json_data = convert_for_serialisation(cahce_dict, args)
 
     with open(cache_path, 'w') as fh:
         json.dump(json_data, fh)
@@ -623,8 +625,6 @@ def add_data_to_db(cazome_dict, tax_dict, domain_dict, connection, args):
         ('HMMER', 'dbCAN=2.0.11', 'March 2020'),
         ('Hotpep', 'dbCAN=2.0.11', 'March 2020'),
         ('DIAMOND', 'dbCAN=2.0.11', 'March 2020'),
-        ('CUPP', '1.0.14', 'April 2018'),
-        ('eCAMI', None, 'July 2018')
     ]
 
     if args.cazy_date is not None:
