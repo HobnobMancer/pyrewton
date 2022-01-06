@@ -46,10 +46,10 @@ import re
 import numpy as np
 
 
-def get_sites_data(results_table, column_name, line_starter, get_data_func):
+def get_sites_data(results_row, column_name, line_starter, get_data_func):
     """Generic func for retrieving data for a specific item from a UniProt results df.
     
-    :param results_table: pandas df, df of UniProt query results
+    :param results_row: pandas df, df of UniProt query results
     :param column_name: str, name of the column to retrieve data from
     :param line_starter: str, substring to identify new data in a cell
     :param get_data_func: func, func for retrieving and parsing data
@@ -58,25 +58,26 @@ def get_sites_data(results_table, column_name, line_starter, get_data_func):
     """
     sites = set()
 
-    for value in results_table[column_name]:
-        try:
-            if np.isnan(value):
-                continue
-        except TypeError:
-            pass
+    value = results_row[column_name]
 
-        data = value.split(";")
+    try:
+        if np.isnan(value):
+            return sites  # no data to retrieve
+    except TypeError:
+        pass
 
-        index = 0
-        data_index = 0
-        for index in range(len(data)):
+    data = value.split(";")
 
-            if data[data_index].strip().startswith(line_starter):  # new row to be inserted in the db
-                site, data_index = get_data_func(data, data_index)
-                sites.add(site)
+    index = 0
+    data_index = 0
+    for index in range(len(data)):
 
-            if data_index == len(data):
-                break
+        if data[data_index].strip().startswith(line_starter):  # new row to be inserted in the db
+            site, data_index = get_data_func(data, data_index)
+            sites.add(site)
+
+        if data_index == len(data):
+            break
 
     return sites
 
@@ -213,6 +214,53 @@ def get_glycosylation_data(data, data_index):
     return glycosylation_tuple, index
 
 
+def get_temp_data(results_row):
+    temp_dependence_data = set()  # tuples (lower stable, upper stable, lower loss of activity, upper loss of activity, note, evidence)
+
+    value = results_row['Temperature dependence']
+    try:
+        if np.isnan(value):
+            return temp_dependence_data  # no data to retrieve
+    except TypeError:
+        pass
+
+    if value.startswith('BIOPHYSICOCHEMICAL PROPERTIES') is False:
+        return temp_dependence_data  # no data to retrieve
+    
+    # attempt to retrieve optimal temp range
+    lower_optimum, upper_optimum = get_temp_range(value, "Optimum temperature is ")
+
+    # attempt to retrieve thermostable range
+    lower_stable, upper_stable = get_temp_range(value, "Thermostable to ")
+    
+    # attempt to retrieve loss of activity range
+    lower_loss, upper_loss = get_temp_range(value, "Complete loss of activity ")
+    
+    if lower_optimum is None and \
+    upper_optimum is None and \
+    lower_stable is None and \
+    upper_stable is None and \
+    lower_loss is None and \
+    upper_loss is None:
+        return temp_dependence_data  # no data to retrieve
+    
+    # retrieve the evidence
+    evidence = re.search(r"\{\.+?\})", value).group()
+    if evidence == "":
+        evidence = None
+    else:
+        evidence = evidence.replace("{","")
+        evidence = evidence.replace("}","").strip()
+    
+    note = value[:value.find("{")]
+
+    temp_dependence_data.add(
+        (lower_optimum, upper_optimum, lower_stable, upper_stable, lower_loss, upper_loss, note, evidence)
+    )
+
+    return temp_dependence_data
+
+
 def get_temp_range(value, term):
     """Return the temp range listed for the type of term, identified by the 'term'"""
     lower_temp, upper_temp = None, None
@@ -269,108 +317,62 @@ def get_temp_range(value, term):
     return lower_temp, upper_temp
 
 
-def get_temp_data(results_table):
-    temp_dependence_data = set()  # tuples (lower stable, upper stable, lower loss of activity, upper loss of activity, note, evidence)
-
-    for value in results_table['Temperature dependence']:
-        try:
-            if np.isnan(value):
-                continue
-        except TypeError:
-            pass
-
-        if value.startswith('BIOPHYSICOCHEMICAL PROPERTIES') is False:
-            continue
-        
-        # attempt to retrieve optimal temp range
-        lower_optimum, upper_optimum = get_temp_range(value, "Optimum temperature is ")
-
-        # attempt to retrieve thermostable range
-        lower_stable, upper_stable = get_temp_range(value, "Thermostable to ")
-        
-        # attempt to retrieve loss of activity range
-        lower_loss, upper_loss = get_temp_range(value, "Complete loss of activity ")
-        
-        if lower_optimum is None and \
-        upper_optimum is None and \
-        lower_stable is None and \
-        upper_stable is None and \
-        lower_loss is None and \
-        upper_loss is None:
-            continue
-        
-        # retrieve the evidence
-        evidence = re.search(r"\{\.+?\})", value).group()
-        if evidence == "":
-            evidence = None
-        else:
-            evidence = evidence.replace("{","")
-            evidence = evidence.replace("}","").strip()
-        
-        note = value[:value.find("{")]
-
-        temp_dependence_data.add(
-            (lower_optimum, upper_optimum, lower_stable, upper_stable, lower_loss, upper_loss, note, evidence)
-        )
-    
-    return temp_dependence_data
-
-
-def get_optimum_ph(results_table):
+def get_optimum_ph(results_row):
     """Retrieve the optimum pH for the protein's activity."""
     optimum_ph_data = set()  # set of tuples (pH, note, evidence)
 
-    for value in results_table['pH dependence']:
-        try:
-            if np.isnan(value):
-                continue
-        except TypeError:
-            pass
+    value = results_row['pH dependence']
 
-        if value.startswith('BIOPHYSICOCHEMICAL PROPERTIES'):
-            optimum_phs = re.findall(r'Optimum pH is .*? {.*?}', value)
+    try:
+        if np.isnan(value):
+            return optimum_ph_data
+    except TypeError:
+        pass
 
-            for optimum in optimum_phs:
-                ph = None
+    if value.startswith('BIOPHYSICOCHEMICAL PROPERTIES'):
+        optimum_phs = re.findall(r'Optimum pH is .*? {.*?}', value)
+
+        for optimum in optimum_phs:
+            ph = None
+            
+            try:
+                ph = re.search(r"(((\d?\.\d?)|\d?)-((\d?\.\d?)|\d?))", optimum).group()
+                lower_ph = ph.split("-")[0]
+                upper_ph = ph.split("-")[1]
                 
-                try:
-                    ph = re.search(r"(((\d?\.\d?)|\d?)-((\d?\.\d?)|\d?))", optimum).group()
-                    lower_ph = ph.split("-")[0]
-                    upper_ph = ph.split("-")[1]
-                    
-                except AttributeError:  # raised if not a range, but a single temp is given
-                    ph = re.search(r"(\d?\.\d?)", optimum).group()
-                    if ph == '':  # if a int not a float is provided, an empty str is returned
-                        ph = re.search(r"\d?", optimum).group()
-                    lower_ph = ph
-                    upper_ph = ph
-                
-                if ph is not None:
-                    if optimum.find("with") != -1:
-                        note = re.search(r"with .*? {", optimum).group()
-                        note = note.replace("{", "").strip()
-                        if note.endswith("."):
-                            note = note[:-2]
-                    else:
-                        note = None
-                        
-                    evidence = optimum[optimum.find("{")+1:optimum.find("}")]
-                    
+            except AttributeError:  # raised if not a range, but a single temp is given
+                ph = re.search(r"(\d?\.\d?)", optimum).group()
+                if ph == '':  # if a int not a float is provided, an empty str is returned
+                    ph = re.search(r"\d?", optimum).group()
+                lower_ph = ph
+                upper_ph = ph
+            
+            if ph is not None:
+                if optimum.find("with") != -1:
+                    note = re.search(r"with .*? {", optimum).group()
+                    note = note.replace("{", "").strip()
+                    if note.endswith("."):
+                        note = note[:-2]
                 else:
-                    continue
+                    note = None
+                    
+                evidence = optimum[optimum.find("{")+1:optimum.find("}")]
                 
-                # not all pH values are strored as floats in UniProt
-                # standardised the datatype for the local db
-                optimum_ph_data.add( (float(lower_ph), float(upper_ph), note, evidence) )
+            else:
+                continue
+            
+            # not all pH values are strored as floats in UniProt
+            # standardised the datatype for the local db
+            optimum_ph_data.add( (float(lower_ph), float(upper_ph), note, evidence) )
 
     return optimum_ph_data
 
 
-def get_citations(results_table):
+def get_citations(results_row):
     """Retrieve publication citations for the protein."""
     citations = set()  # tuples, one tuple per PubMed ID
 
-    for value in results_table['PubMed ID']:
+    for value in results_row['PubMed ID']:
 
         try:
             if np.isnan(value):
@@ -397,33 +399,34 @@ def get_citations(results_table):
     return citations
 
 
-def get_active_site_data(results_table):
+def get_active_site_data(results_row):
     active_sites = set()  # store tuples (aa position, evidence)
     site_types = set()
     activities = set()
     
-    for value in results_table['Active site']:
-        try:
-            if np.isnan(value):
-                continue
-        except TypeError:
-            pass
+    value = results_row['Active site']
 
-        data = value.split(";")
+    try:
+        if np.isnan(value):
+            return active_sites, site_types, activities
+    except TypeError:
+        pass
 
-        # items group in pairs, the first is the Aa site position, the second the evidence
-        index = 0
-        data_index = 0
+    data = value.split(";")
 
-        while index < len(data):
-            if data[data_index].strip().startswith("ACT_SITE"):  # new metal binding site
-                active_site, new_site_types, new_activities, data_index = extract_active_site_data(data, data_index)
-                active_sites.add(active_site)
-                site_types = site_types.union(new_site_types)
-                activities = activities.union(new_activities)
+    # items group in pairs, the first is the Aa site position, the second the evidence
+    index = 0
+    data_index = 0
 
-            if data_index == len(data):
-                break
+    while index < len(data):
+        if data[data_index].strip().startswith("ACT_SITE"):  # new metal binding site
+            active_site, new_site_types, new_activities, data_index = extract_active_site_data(data, data_index)
+            active_sites.add(active_site)
+            site_types = site_types.union(new_site_types)
+            activities = activities.union(new_activities)
+
+        if data_index == len(data):
+            break
             
     return active_sites, site_types, activities
 
@@ -505,30 +508,31 @@ def extract_active_site_data(data, data_index):
     return active_site_tuple, site_types, activities, index
 
 
-def get_metal_binding_sites(results_table):
+def get_metal_binding_sites(results_row):
     metal_binding_sites = set()  # store tuples (position, ion, ion_number, note, evidence)
     metals = set()  # store tuples (ion,)
 
-    for value in results_table['Metal binding']:
-        try:
-            if np.isnan(value):
-                continue
-        except TypeError:
-            pass
+    value = results_row['Metal binding']
 
-        data = value.split(";")
+    try:
+        if np.isnan(value):
+            return metal_binding_sites, metals
+    except TypeError:
+        pass
 
-        index = 0
-        data_index = 0
-        for index in range(len(data)):
+    data = value.split(";")
 
-            if data[data_index].strip().startswith("METAL"):  # new metal binding site
-                new_site, new_metals, data_index = get_metal_binding_data(data, data_index)
-                metal_binding_sites.add(new_site)
-                metals = metals.union(new_metals)
+    index = 0
+    data_index = 0
+    for index in range(len(data)):
 
-            if data_index == len(data):
-                break
+        if data[data_index].strip().startswith("METAL"):  # new metal binding site
+            new_site, new_metals, data_index = get_metal_binding_data(data, data_index)
+            metal_binding_sites.add(new_site)
+            metals = metals.union(new_metals)
+
+        if data_index == len(data):
+            break
 
     return metal_binding_sites, metals
 
@@ -608,9 +612,9 @@ def get_metal_binding_data(data, data_index):
     return metal_binding_tuple, metals, index
 
 
-def get_cofactor_data(results_table):
+def get_cofactor_data(results_row):
     cofactor_data = get_sites_data(
-        results_table,
+        results_row,
         'Cofactor',
         'COFACTOR',
         get_cofactors,
