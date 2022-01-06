@@ -360,3 +360,111 @@ def get_citations(results_table):
             
 
     return citations
+
+
+def get_active_site_data(results_table):
+    active_sites = set()  # store tuples (aa position, evidence)
+    site_types = set()
+    activities = set()
+    
+    for value in results_table['Active site']:
+        try:
+            if np.isnan(value):
+                continue
+        except TypeError:
+            pass
+
+        data = value.split(";")
+
+        # items group in pairs, the first is the Aa site position, the second the evidence
+        index = 0
+        data_index = 0
+
+        while index < len(data):
+            if data[data_index].strip().startswith("ACT_SITE"):  # new metal binding site
+                active_site, new_site_types, new_activities, data_index = extract_active_site_data(data, data_index)
+                active_sites.add(active_site)
+                site_types = site_types.union(new_site_types)
+                activities = activities.union(new_activities)
+
+            if data_index == len(data):
+                break
+            
+    return active_sites, site_types, activities
+
+
+def extract_active_site_data(data, data_index):
+    position = data[data_index].strip()
+    position = int(position.replace("ACT_SITE ", "").strip())
+    
+    active_site = {
+        'position': position,
+        'type': None,  # e.g. Nucleotphile or Proton donor
+        'activity': None,  # e.g. for esterase activity
+        'note': None,  # misc
+        'evidence': None,
+    }
+    
+    site_types = set()
+    activities = set()
+    
+    # check if any more data relating to this metal binding site
+    data_index += 1
+    
+    index = data_index
+    limit_index = data_index
+    
+    for limit_index in range(len(data[data_index:])):
+        new_data = data[index].strip()
+        
+        if new_data.startswith("ACT_SITE"):
+            # new active site
+            break
+        
+        elif new_data.startswith("/note"): 
+            note = new_data.replace('/note="', '')
+            site_type = note.replace('"', '')
+            
+            active_site['type'] = site_type
+            site_types.add( (site_type,) )
+            
+        elif new_data.startswith("for") or new_data.endswith("activity"):
+            activity = new_data.replace('"', '')
+            activity = activity.replace("for", "")
+            
+            active_site['activity'] = activity.strip()
+            activities.add( (activity,) )
+        
+        elif new_data.startswith("/evidence"):
+            evidence = new_data.replace('/evidence="', '')
+            evidence = evidence.replace('"', '')
+            
+            if active_site['evidence'] is None:
+                active_site['evidence'] = evidence
+            else:
+                new_evidence = f"{active_site['evidence']} {evidence}"
+                active_site['evidence'] = new_evidence
+        
+        else:  # part of note that covered multiple lines
+            new_data = new_data.replace('"', '')
+            
+            if len(new_data) != 0:
+                if active_site['note'] is None:
+                    active_site['note'] = new_data
+                else:
+                    new_note = f"{active_site['note']} {new_data}"
+                    active_site['note'] = new_note
+                
+        index += 1
+        if index == len(data):
+            break  # came to end of list
+    
+    active_site_tuple = (
+        active_site['position'],
+        active_site['type'],
+        active_site['activity'],
+        active_site['note'],
+        active_site['evidence'],
+    )
+    
+    return active_site_tuple, site_types, activities, index
