@@ -63,7 +63,7 @@ def insert_substrate_data(substrate_binding_inserts, connection):
     if len(substrates_to_insert) != 0:
         insert_data(connection, 'Substrates', ['substrate'], substrates_to_insert)
     
-    substrates_table_dict = load_data.get_substrates_tables(connection)
+    substrates_table_dict = load_uniprot_data.get_substrates_tables(connection)
 
     binding_sites_to_insert = set()
 
