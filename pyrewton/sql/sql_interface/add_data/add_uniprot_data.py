@@ -44,7 +44,7 @@ from sqlalchemy import text
 from tqdm import tqdm
 
 from pyrewton.sql.sql_interface.load_data import load_uniprot_data
-from pyrewton.sql.sql_interface.add_data import insert_data
+from pyrewton.sql.sql_interface.add_data.bulk_insert import insert_data
 
 
 def insert_substrate_data(substrate_binding_inserts, connection):
