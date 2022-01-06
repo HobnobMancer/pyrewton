@@ -106,3 +106,68 @@ def get_substrate_binding_site_data(data, data_index):
     )
     
     return substrate_binding_tuple, index
+
+
+def get_glycosylation_data(data, data_index):
+    position = data[data_index].strip()
+    position = int(position.replace("CARBOHYD ", ""))
+    
+    glycosylation_site = {
+        'position': position,
+        'note': None,
+        'evidence': None,
+    }
+    
+    # check if any more data relating to this metal binding site
+    data_index += 1
+    
+    index = data_index
+    limit_index = data_index
+    
+    for limit_index in range(len(data[data_index:])):
+        new_data = data[index].strip()
+        
+        if new_data.startswith("CARBOHYD"):
+            # new binding site
+            break
+        
+        elif new_data.startswith("/note"): 
+            note = new_data.replace('/note="', '')
+            note = note.replace('"', '')
+            
+            if glycosylation_site['note'] is None:
+                glycosylation_site['note'] = note
+            else:
+                new_note = f"{glycosylation_site['note']} {new_data}"
+                glycosylation_site['note'] = new_note
+        
+        elif new_data.startswith("/evidence"):
+            evidence = new_data.replace('/evidence="', '')
+            evidence = evidence.replace('"', '')
+            
+            if glycosylation_site['evidence'] is None:
+                glycosylation_site['evidence'] = evidence
+            else:
+                new_evidence = f"{glycosylation_site['evidence']} {evidence}"
+                glycosylation_site['evidence'] = new_evidence
+        
+        else:  # part of note that covered multiple lines
+            new_data = new_data.replace('"', '')
+            if len(new_data) != 0:
+                if glycosylation_site['note'] is None:
+                    glycosylation_site['note'] = new_data
+                else:
+                    new_note = f"{glycosylation_site['note']} {new_data}"
+                    glycosylation_site['note'] = new_note
+                
+        index += 1
+        if index == len(data):
+            break  # came to end of list
+    
+    glycosylation_tuple = (
+        glycosylation_site['position'],
+        glycosylation_site['note'],
+        glycosylation_site['evidence'],
+    )
+    
+    return glycosylation_tuple, index
