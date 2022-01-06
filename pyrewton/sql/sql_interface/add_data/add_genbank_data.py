@@ -37,7 +37,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-"""Module for defining the db ORM and interacting with the db"""
+"""Script housing funcs for adding data from GenBank assemblies and proteins to the db"""
 
 
 import logging
@@ -45,7 +45,7 @@ from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
 from tqdm import tqdm
 
-from pyrewton.sql.sql_interface.add_data import insert_data
+from pyrewton.sql.sql_interface.add_data.bulk_insert import insert_data
 
 
 def add_species_data(tax_dict, connection):

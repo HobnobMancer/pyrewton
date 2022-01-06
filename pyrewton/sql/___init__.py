@@ -37,4 +37,4 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-"""Submodule for adding data to the db"""
+"""Module for defining the db ORM and interacting with the db"""
