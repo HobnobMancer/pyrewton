@@ -569,7 +569,6 @@ class Substrate(Base):
     __tablename__ = "Substrates"
     
     __table_args__ = (
-        UniqueConstraint("protein_id", "substratesite_id"),
         Index("sub_site_index", "substrate_id")
     )
     
