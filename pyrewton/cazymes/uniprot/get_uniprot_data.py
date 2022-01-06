@@ -270,11 +270,11 @@ def get_uniprot_data(uniprot_gbk_dict, cache_dir, args):
 
             # data for adding to the SubstrateBindingSites table
             substrate_binding_inserts = substrate_binding_inserts.union(
-                get_sites_data(row, 'Binding site', 'BINDING', parse_uniprot.get_substrate_binding_site_data)
+                parse_uniprot.get_sites_data(row, 'Binding site', 'BINDING', parse_uniprot.get_substrate_binding_site_data)
             )
             # data for adding to the Glycosylations table
             glycosylation_inserts = glycosylation_inserts.union(
-                get_sites_data(row, 'Glycosylation', 'CARBOHYD', parse_uniprot.get_glycosylation_data)
+                parse_uniprot.get_sites_data(row, 'Glycosylation', 'CARBOHYD', parse_uniprot.get_glycosylation_data)
             )
             # data for adding to the Temperatures table
             temperature_inserts = temperature_inserts.union(parse_uniprot.get_temp_data(row))
@@ -291,43 +291,36 @@ def get_uniprot_data(uniprot_gbk_dict, cache_dir, args):
                 # raised if value is returened for 'Transmembrane'
                 # becuase transmembrane region is annotated
                 transmembrane_inserts = transmembrane_inserts.add( (True,) )
+            
+            # data to be added to the ActiveSites, SiteTypes and AssociatedActivities tables
+            new_active_sites, new_site_types, new_activities = parse_uniprot.get_active_site_data(row)
+
+            active_sites_inserts = active_sites_inserts.union(new_active_sites)
+            active_site_types_inserts = active_site_types_inserts.union(new_site_types)
+            associated_activities_inserts = associated_activities_inserts.union(new_activities)
+
+            # data to be added to Metals and MetalBindingSites tables
+            new_metal_sites, new_metals = parse_uniprot.get_metal_binding_sites(row)
+            metal_binding_inserts = metal_binding_inserts.union(new_metal_sites)
+            metals_inserts = metals_inserts.union(new_metals)
+
+            # data to be add to Cofactors
+            new_cofactors, new_molecules = parse_uniprot.get_cofactor_data(row)
+            cofactors_inserts = cofactors_inserts.union(new_cofactors)
+            cofactor_molecules_inserts = cofactor_molecules_inserts.union(new_molecules)
+
+    cofactors_inserts = set()  # (protein_id, molecule_id, note, evidence)
+    cofactor_molecules_inserts = []   # (molecule,)
+
+    protein_pdb_inserts = set()  # (pdb_id, protein_id)
+    pdbs_inserts = set()  # (pdb_accession,)
+
+    protein_ec_inserts = set()  # (protein_id,)
+    ec_inserts = set()  # (ec_number,)
+
+
 
     return
-
-
-def get_sites_data(results_table, column_name, line_starter, get_data_func):
-    """Generic func for retrieving data for a specific item from a UniProt results df.
-    
-    :param results_table: pandas df, df of UniProt query results
-    :param column_name: str, name of the column to retrieve data from
-    :param line_starter: str, substring to identify new data in a cell
-    :param get_data_func: func, func for retrieving and parsing data
-    
-    Return set(), one item per row to be inserted
-    """
-    sites = set()
-
-    for value in results_table[column_name]:
-        try:
-            if np.isnan(value):
-                continue
-        except TypeError:
-            pass
-
-        data = value.split(";")
-
-        index = 0
-        data_index = 0
-        for index in range(len(data)):
-
-            if data[data_index].strip().startswith(line_starter):  # new row to be inserted in the db
-                site, data_index = get_data_func(data, data_index)
-                sites.add(site)
-
-            if data_index == len(data):
-                break
-
-    return sites
 
 
 if __name__ == "__main__":
