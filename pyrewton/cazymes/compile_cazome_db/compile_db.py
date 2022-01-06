@@ -57,6 +57,7 @@ from cazy_webscraper.sql.sql_orm import (
   CazyFamily,
   Genbank,
   Session,
+  get_db_connection,
 )
 from saintBioutils.utilities import file_io
 from saintBioutils.utilities import logger
