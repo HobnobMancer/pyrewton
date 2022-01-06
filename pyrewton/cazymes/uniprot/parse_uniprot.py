@@ -46,13 +46,14 @@ import re
 import numpy as np
 
 
-def get_sites_data(results_row, column_name, line_starter, get_data_func):
+def get_sites_data(results_row, column_name, line_starter, get_data_func, protein_id):
     """Generic func for retrieving data for a specific item from a UniProt results df.
     
     :param results_row: pandas df, df of UniProt query results
     :param column_name: str, name of the column to retrieve data from
     :param line_starter: str, substring to identify new data in a cell
     :param get_data_func: func, func for retrieving and parsing data
+    :param protein_id: int, local CAZome db ID for the source protein
     
     Return set(), one item per row to be inserted
     """
@@ -73,7 +74,7 @@ def get_sites_data(results_row, column_name, line_starter, get_data_func):
     for index in range(len(data)):
 
         if data[data_index].strip().startswith(line_starter):  # new row to be inserted in the db
-            site, data_index = get_data_func(data, data_index)
+            site, data_index = get_data_func(data, data_index, protein_id)
             sites.add(site)
 
         if data_index == len(data):
@@ -82,7 +83,7 @@ def get_sites_data(results_row, column_name, line_starter, get_data_func):
     return sites
 
 
-def get_substrate_binding_site_data(data, data_index):
+def get_substrate_binding_site_data(data, data_index, protein_id):
     position = data[data_index].strip()
     position = int(position.replace("BINDING ", ""))
     
@@ -141,6 +142,7 @@ def get_substrate_binding_site_data(data, data_index):
             break  # came to end of list
     
     substrate_binding_tuple = (
+        protein_id,
         substrate_binding_site['position'],
         substrate_binding_site['note'],
         substrate_binding_site['evidence'],
@@ -149,7 +151,7 @@ def get_substrate_binding_site_data(data, data_index):
     return substrate_binding_tuple, index
 
 
-def get_glycosylation_data(data, data_index):
+def get_glycosylation_data(data, data_index, protein_id):
     position = data[data_index].strip()
     position = int(position.replace("CARBOHYD ", ""))
     
@@ -206,6 +208,7 @@ def get_glycosylation_data(data, data_index):
             break  # came to end of list
     
     glycosylation_tuple = (
+        protein_id,
         glycosylation_site['position'],
         glycosylation_site['note'],
         glycosylation_site['evidence'],
@@ -214,7 +217,7 @@ def get_glycosylation_data(data, data_index):
     return glycosylation_tuple, index
 
 
-def get_temp_data(results_row):
+def get_temp_data(results_row, protein_id):
     temp_dependence_data = set()  # tuples (lower stable, upper stable, lower loss of activity, upper loss of activity, note, evidence)
 
     value = results_row['Temperature dependence']
@@ -255,7 +258,17 @@ def get_temp_data(results_row):
     note = value[:value.find("{")]
 
     temp_dependence_data.add(
-        (lower_optimum, upper_optimum, lower_stable, upper_stable, lower_loss, upper_loss, note, evidence)
+        (
+            protein_id,
+            lower_optimum,
+            upper_optimum,
+            lower_stable,
+            upper_stable,
+            lower_loss,
+            upper_loss,
+            note,
+            evidence,
+        )
     )
 
     return temp_dependence_data
@@ -317,7 +330,7 @@ def get_temp_range(value, term):
     return lower_temp, upper_temp
 
 
-def get_optimum_ph(results_row):
+def get_optimum_ph(results_row, protein_id):
     """Retrieve the optimum pH for the protein's activity."""
     optimum_ph_data = set()  # set of tuples (pH, note, evidence)
 
@@ -363,12 +376,12 @@ def get_optimum_ph(results_row):
             
             # not all pH values are strored as floats in UniProt
             # standardised the datatype for the local db
-            optimum_ph_data.add( (float(lower_ph), float(upper_ph), note, evidence) )
+            optimum_ph_data.add( (protein_id, float(lower_ph), float(upper_ph), note, evidence) )
 
     return optimum_ph_data
 
 
-def get_citations(results_row):
+def get_citations(results_row, protein_id):
     """Retrieve publication citations for the protein."""
     citations = set()  # tuples, one tuple per PubMed ID
 
@@ -391,7 +404,7 @@ def get_citations(results_row):
         for pubmed_id in data:
             try:
                 pubmed_id = int(pubmed_id)
-                citations.add( (pubmed_id,) )
+                citations.add( (protein_id, pubmed_id,) )
             except ValueError:
                 continue
             
@@ -399,7 +412,7 @@ def get_citations(results_row):
     return citations
 
 
-def get_active_site_data(results_row):
+def get_active_site_data(results_row, protein_id):
     active_sites = set()  # store tuples (aa position, evidence)
     site_types = set()
     activities = set()
@@ -420,7 +433,11 @@ def get_active_site_data(results_row):
 
     while index < len(data):
         if data[data_index].strip().startswith("ACT_SITE"):  # new metal binding site
-            active_site, new_site_types, new_activities, data_index = extract_active_site_data(data, data_index)
+            active_site, new_site_types, new_activities, data_index = extract_active_site_data(
+                data,
+                data_index,
+                protein_id,
+            )
             active_sites.add(active_site)
             site_types = site_types.union(new_site_types)
             activities = activities.union(new_activities)
@@ -431,7 +448,7 @@ def get_active_site_data(results_row):
     return active_sites, site_types, activities
 
 
-def extract_active_site_data(data, data_index):
+def extract_active_site_data(data, data_index, protein_id):
     position = data[data_index].strip()
     position = int(position.replace("ACT_SITE ", "").strip())
     
@@ -498,6 +515,7 @@ def extract_active_site_data(data, data_index):
             break  # came to end of list
     
     active_site_tuple = (
+        protein_id,
         active_site['position'],
         active_site['type'],
         active_site['activity'],
@@ -508,7 +526,7 @@ def extract_active_site_data(data, data_index):
     return active_site_tuple, site_types, activities, index
 
 
-def get_metal_binding_sites(results_row):
+def get_metal_binding_sites(results_row, protein_id):
     metal_binding_sites = set()  # store tuples (position, ion, ion_number, note, evidence)
     metals = set()  # store tuples (ion,)
 
@@ -527,7 +545,7 @@ def get_metal_binding_sites(results_row):
     for index in range(len(data)):
 
         if data[data_index].strip().startswith("METAL"):  # new metal binding site
-            new_site, new_metals, data_index = get_metal_binding_data(data, data_index)
+            new_site, new_metals, data_index = get_metal_binding_data(data, data_index, protein_id)
             metal_binding_sites.add(new_site)
             metals = metals.union(new_metals)
 
@@ -537,7 +555,7 @@ def get_metal_binding_sites(results_row):
     return metal_binding_sites, metals
 
 
-def get_metal_binding_data(data, data_index):
+def get_metal_binding_data(data, data_index, protein_id):
     position = data[data_index].strip()
     position = int(position.replace("METAL ", ""))
     
@@ -602,6 +620,7 @@ def get_metal_binding_data(data, data_index):
             break  # came to end of list
     
     metal_binding_tuple = (
+        protein_id,
         metal_binding_site['position'],
         metal_binding_site['ion'],
         metal_binding_site['ion_number'],
@@ -612,12 +631,13 @@ def get_metal_binding_data(data, data_index):
     return metal_binding_tuple, metals, index
 
 
-def get_cofactor_data(results_row):
+def get_cofactor_data(results_row, protein_id):
     cofactor_data = get_sites_data(
         results_row,
         'Cofactor',
         'COFACTOR',
         get_cofactors,
+        protein_id,
     )
 
     new_molecules = set()
@@ -628,7 +648,7 @@ def get_cofactor_data(results_row):
     return cofactor_data, new_molecules
 
 
-def get_cofactors(data, data_index):
+def get_cofactors(data, data_index, protein_id):
     cofactor_molecule = data[data_index].strip()
     cofactor_molecule = cofactor_molecule.replace("COFACTOR: Name=", "")
     
@@ -686,6 +706,7 @@ def get_cofactors(data, data_index):
             break  # came to end of list
     
     cofactor_tuple = (
+        protein_id,
         cofactor['cofactor'],
         cofactor['note'],
         cofactor['evidence'],
