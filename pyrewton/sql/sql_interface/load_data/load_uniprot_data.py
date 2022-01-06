@@ -42,3 +42,99 @@
 
 import logging
 
+from tqdm import tqdm
+
+from pyrewton.sql.sql_orm import (
+    CofactorMolecule,
+    Ec_number,
+    Metal,
+    Pdb,
+    Session,
+    Substrate,
+)
+
+
+def get_substrates_tables(connection):
+    """Parse Substrates table into dict
+    
+    :param:
+    
+    Return dict {substrate: pdb_id}
+    """
+    with Session(bind=connection) as session:
+        db_records = session.query(Substrate).all()
+
+    data = {}  # {pdb: molecule_id}
+    for record in tqdm(db_records, desc="Retrieving db Substrate records"):
+        data[record.substrate] = record.substrate_id
+
+    return data
+
+
+
+def load_metals_table(connection):
+    """Parse Metals table into dict
+    
+    :param connection: open sqlalchemy connection to an SQLite3 db engine
+    
+    Return dict {metal: db_id}
+    """
+    with Session(bind=connection) as session:
+        db_records = session.query(Metal).all()
+
+    metal_data = {}  # {metal: db_id}
+    for record in tqdm(db_records, desc="Retrieving db Metal Ion records"):
+        metal_data[record.ion] = record.ion_id
+
+    return metal_data
+
+
+def get_molecules_dict(connection):
+    """Parse CofactorMolecules table into dict
+    
+    :param:
+    
+    Return dict {molecule: molecule_id}
+    """
+    with Session(bind=connection) as session:
+        db_records = session.query(CofactorMolecule).all()
+
+    data = {}  # {molecule: molecule_id}
+    for record in tqdm(db_records, desc="Retrieving db Cofactor Molecule records"):
+        data[record.molecule] = record.molecule_id
+
+    return data
+
+
+def get_pdb_dict(connection):
+    """Parse Pdbs table into dict
+    
+    :param:
+    
+    Return dict {pdb: pdb_id}
+    """
+    with Session(bind=connection) as session:
+        db_records = session.query(Pdb).all()
+
+    data = {}  # {pdb: molecule_id}
+    for record in tqdm(db_records, desc="Retrieving db PDB records"):
+        data[record.pdb_accession] = record.pdb_id
+
+    return data
+
+
+def get_ec_dict(connection):
+    """Parse Ec_numbers table into dict
+    
+    :param:
+    
+    Return dict {ec: ec_id}
+    """
+    with Session(bind=connection) as session:
+        db_records = session.query(Ec_number).all()
+
+    data = {}  # {pdb: molecule_id}
+    for record in tqdm(db_records, desc="Retrieving db EC number records"):
+        data[record.ec_number] = record.ec_id
+
+    return data
