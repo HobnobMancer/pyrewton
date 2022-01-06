@@ -569,7 +569,7 @@ class Substrate(Base):
     __tablename__ = "Substrates"
     
     __table_args__ = (
-        Index("sub_site_index", "substrate_id")
+        Index("sub_site_index", "substrate_id"),
     )
     
     substrate_id = Column(Integer, primary_key=True)
