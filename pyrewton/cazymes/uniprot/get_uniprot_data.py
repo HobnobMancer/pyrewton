@@ -270,18 +270,36 @@ def get_uniprot_data(uniprot_gbk_dict, cache_dir, args):
 
             # data for adding to the SubstrateBindingSites table
             substrate_binding_inserts = substrate_binding_inserts.union(
-                parse_uniprot.get_sites_data(row, 'Binding site', 'BINDING', parse_uniprot.get_substrate_binding_site_data)
+                parse_uniprot.get_sites_data(
+                    row,
+                    'Binding site',
+                    'BINDING',
+                    parse_uniprot.get_substrate_binding_site_data,
+                    protein_db_id,
+                )
             )
             # data for adding to the Glycosylations table
             glycosylation_inserts = glycosylation_inserts.union(
-                parse_uniprot.get_sites_data(row, 'Glycosylation', 'CARBOHYD', parse_uniprot.get_glycosylation_data)
+                parse_uniprot.get_sites_data(
+                    row,
+                    'Glycosylation',
+                    'CARBOHYD',
+                    parse_uniprot.get_glycosylation_data,
+                    protein_db_id,
+                )
             )
             # data for adding to the Temperatures table
-            temperature_inserts = temperature_inserts.union(parse_uniprot.get_temp_data(row))
+            temperature_inserts = temperature_inserts.union(
+                parse_uniprot.get_temp_data(row, protein_db_id)
+            )
             # data for adding to the OptimalPHs table
-            ph_inserts = ph_inserts.union(parse_uniprot.get_optimum_ph(row))
+            ph_inserts = ph_inserts.union(
+                parse_uniprot.get_optimum_ph(row, protein_db_id)
+            )
             # data for adding to the Citations table
-            citation_inserts = citation_inserts.union(parse_uniprot.get_citations(row))
+            citation_inserts = citation_inserts.union(
+                parse_uniprot.get_citations(row, protein_db_id)
+            )
             
             # data for adding to the Transmembranes table
             try:
@@ -293,24 +311,30 @@ def get_uniprot_data(uniprot_gbk_dict, cache_dir, args):
                 transmembrane_inserts = transmembrane_inserts.add( (True,) )
             
             # data to be added to the ActiveSites, SiteTypes and AssociatedActivities tables
-            new_active_sites, new_site_types, new_activities = parse_uniprot.get_active_site_data(row)
+            new_active_sites, new_site_types, new_activities = parse_uniprot.get_active_site_data(
+                row,
+                protein_db_id,
+            )
 
             active_sites_inserts = active_sites_inserts.union(new_active_sites)
             active_site_types_inserts = active_site_types_inserts.union(new_site_types)
             associated_activities_inserts = associated_activities_inserts.union(new_activities)
 
             # data to be added to Metals and MetalBindingSites tables
-            new_metal_sites, new_metals = parse_uniprot.get_metal_binding_sites(row)
+            new_metal_sites, new_metals = parse_uniprot.get_metal_binding_sites(
+                row,
+                protein_db_id,
+            )
             metal_binding_inserts = metal_binding_inserts.union(new_metal_sites)
             metals_inserts = metals_inserts.union(new_metals)
 
             # data to be add to Cofactors
-            new_cofactors, new_molecules = parse_uniprot.get_cofactor_data(row)
+            new_cofactors, new_molecules = parse_uniprot.get_cofactor_data(
+                row,
+                protein_db_id,
+            )
             cofactors_inserts = cofactors_inserts.union(new_cofactors)
             cofactor_molecules_inserts = cofactor_molecules_inserts.union(new_molecules)
-
-    cofactors_inserts = set()  # (protein_id, molecule_id, note, evidence)
-    cofactor_molecules_inserts = []   # (molecule,)
 
     protein_pdb_inserts = set()  # (pdb_id, protein_id)
     pdbs_inserts = set()  # (pdb_accession,)
