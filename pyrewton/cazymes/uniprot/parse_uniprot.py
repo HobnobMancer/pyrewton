@@ -41,6 +41,7 @@
 """Retrieve data from UniProt for CAZymes in a CAZome database"""
 
 
+import logging
 import re
 
 import numpy as np
@@ -84,6 +85,7 @@ def get_sites_data(results_row, column_name, line_starter, get_data_func, protei
 
 
 def get_substrate_binding_site_data(data, data_index, protein_id):
+    """"""
     position = data[data_index].strip()
     position = int(position.replace("BINDING ", ""))
     
@@ -559,6 +561,8 @@ def get_metal_binding_sites(results_row, protein_id):
 
 
 def get_metal_binding_data(data, data_index, protein_id):
+    logger = logging.getLogger(__name__)
+
     position = data[data_index].strip()
     position = int(position.replace("METAL ", ""))
     
@@ -593,10 +597,17 @@ def get_metal_binding_data(data, data_index, protein_id):
                 ion_number = int(ion_number.replace('"', ''))
             except IndexError:
                 ion_number = None
+            except ValueError:
+                if ion_number.startswith("/note"):
+                    ion = ion_number.replace("/note", "").strip()
+                else:
+                    if metal_binding_site['note'] is None:
+                        metal_binding_site['note'] = ion_number
+                    else:
+                        metal_binding_site['note'] += f" {ion_number}"
             
             metal_binding_site['ion'] = ion
             metals.add( (ion,) )
-            metal_binding_site['ion_number'] = ion_number
         
         elif new_data.startswith("/evidence"):
             evidence = new_data.replace('/evidence="', '')
