@@ -183,3 +183,65 @@ def insert_metal_binding_data(metal_binding_inserts, metals_inserts, connection)
         )
     
     return
+
+
+def insert_cofactor_data(
+    cofactors_inserts,
+    cofactor_molecules_inserts,
+    connection,
+):
+    """Add data about cofactors to the db
+    
+    :param
+    
+    Return nothing
+    """
+    if len(cofactor_molecules_inserts) != 0:
+        insert_data(
+            connection,
+            'CofactorMolecules',
+            ['molecule'],
+            cofactor_molecules_inserts
+        )
+
+    molecules_dict = load_uniprot_data.get_molecules_dict(connection)
+
+    cofactor_data_inserts = set()
+
+    for data_tuple in cofactors_inserts:
+        cofactor_data_inserts.add(
+            (
+                data_tuple[0],  # protein_id
+                molecules_dict[data_tuple[1]],  # molecule_id
+                data_tuple[2],  # note
+                data_tuple[3],  # evidence
+            )
+        )
+    
+    if len(cofactor_data_inserts) != 0:
+        insert_data(
+            connection,
+            'Cofactors',
+            ['protein_id', 'molecule_id', 'note', 'evidence'],
+            cofactor_data_inserts,
+        )
+
+    return
+
+
+def insert_pdb_data(
+    protein_pdb_inserts,
+    pdbs_inserts,
+    connection,
+):
+    """"""
+
+def insert_ec_data(
+    protein_ec_inserts ,
+    ec_inserts,
+    connection,
+):
+    """"""
+
+def insert_protein_names(protein_table_updates, connection):
+    """"""
