@@ -279,3 +279,53 @@ def get_temp_data(results_table):
         )
     
     return temp_dependence_data
+
+
+def get_optimum_ph(results_table):
+    """Retrieve the optimum pH for the protein's activity."""
+    optimum_ph_data = set()  # set of tuples (pH, note, evidence)
+
+    for value in results_table['pH dependence']:
+        try:
+            if np.isnan(value):
+                continue
+        except TypeError:
+            pass
+
+        if value.startswith('BIOPHYSICOCHEMICAL PROPERTIES'):
+            optimum_phs = re.findall(r'Optimum pH is .*? {.*?}', value)
+
+            for optimum in optimum_phs:
+                ph = None
+                
+                try:
+                    ph = re.search(r"(((\d?\.\d?)|\d?)-((\d?\.\d?)|\d?))", optimum).group()
+                    lower_ph = ph.split("-")[0]
+                    upper_ph = ph.split("-")[1]
+                    
+                except AttributeError:  # raised if not a range, but a single temp is given
+                    ph = re.search(r"(\d?\.\d?)", optimum).group()
+                    if ph == '':  # if a int not a float is provided, an empty str is returned
+                        ph = re.search(r"\d?", optimum_phs_8[0]).group()
+                    lower_ph = ph
+                    upper_ph = ph
+                
+                if ph is not None:
+                    if optimum.find("with") != -1:
+                        note = re.search(r"with .*? {", optimum).group()
+                        note = note.replace("{", "").strip()
+                        if note.endswith("."):
+                            note = note[:-2]
+                    else:
+                        note = None
+                        
+                    evidence = optimum[optimum.find("{")+1:optimum.find("}")]
+                    
+                else:
+                    continue
+                
+                # not all pH values are strored as floats in UniProt
+                # standardised the datatype for the local db
+                optimum_ph_data.add( (float(lower_ph), float(upper_ph), note, evidence) )
+
+    return optimum_ph_data
