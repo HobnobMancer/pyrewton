@@ -52,7 +52,6 @@ from pyrewton.sql.sql_orm import (
 )
 
 
-
 def get_tax_table(connection):
     """Parse Taxonomies into dict
     
