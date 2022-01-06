@@ -272,15 +272,25 @@ def get_uniprot_data(uniprot_gbk_dict, cache_dir, args):
             substrate_binding_inserts = substrate_binding_inserts.union(
                 get_sites_data(row, 'Binding site', 'BINDING', parse_uniprot.get_substrate_binding_site_data)
             )
-
-            glycosylation_inserts = set()  # (protein_id, note, evidence)
-            temperature_inserts = set()  # (protein_id, lower_opt, upper_opt, lower_therm, upper_therm, lower_lose, upper_lose, note, evidence)
-            ph_inserts = set()  # (protein_id, lower_ph, upper_ph, note, evidence)
-            citation_inserts = set()  # (protein_id, citation)
-            transmembrane_inserts = set()  # (protein_id, transmembrane bool,)
-            uniprot_protein_data = set()  # {protein_id: (uniprot_acc, uniprot_name)}
-
-
+            # data for adding to the Glycosylations table
+            glycosylation_inserts = glycosylation_inserts.union(
+                get_sites_data(row, 'Glycosylation', 'CARBOHYD', parse_uniprot.get_glycosylation_data)
+            )
+            # data for adding to the Temperatures table
+            temperature_inserts = temperature_inserts.union(parse_uniprot.get_temp_data(row))
+            # data for adding to the OptimalPHs table
+            ph_inserts = ph_inserts.union(parse_uniprot.get_optimum_ph(row))
+            # data for adding to the Citations table
+            citation_inserts = citation_inserts.union(parse_uniprot.get_citations(row))
+            
+            # data for adding to the Transmembranes table
+            try:
+                np.isnan(row['Transmembrane'])
+                transmembrane_inserts = transmembrane_inserts.add( (False,) )
+            except TypeError:
+                # raised if value is returened for 'Transmembrane'
+                # becuase transmembrane region is annotated
+                transmembrane_inserts = transmembrane_inserts.add( (True,) )
 
     return
 
