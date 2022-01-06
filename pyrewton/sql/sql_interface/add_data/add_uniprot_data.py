@@ -234,7 +234,42 @@ def insert_pdb_data(
     pdbs_inserts,
     connection,
 ):
-    """"""
+    """Insert PDB accessions and relation to proteins to the db
+    
+    :param
+    
+    Return nothing
+    """
+    if len(pdbs_inserts) != 0:
+        insert_data(
+            connection,
+            'Pdbs',
+            ['pdb_accession'],
+            pdbs_inserts
+        )
+
+    pdb_table_dict = load_uniprot_data.get_pdb_dict(connection)
+
+    pdb_relationships = set()
+
+    for data_tuple in protein_pdb_inserts:
+        pdb_relationships.add(
+            (
+                data_tuple[0],  # protein_id
+                pdb_table_dict[data_tuple[1]],  # pdb_id
+            )
+        )
+
+    if len(pdb_relationships) != 0:
+        insert_data(
+            connection,
+            'Proteins_Pdbs',
+            ['protein_id', 'pdb_id'],
+            pdb_relationships
+        )
+
+    return
+
 
 def insert_ec_data(
     protein_ec_inserts ,
