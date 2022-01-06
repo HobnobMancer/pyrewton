@@ -589,7 +589,7 @@ class MetalBindingSite(Base):
     __tablename__ = "MetalBindingSites"
     
     __table_args__ = (
-        UniqueConstraint("position", "ion", "ion_number"),
+        UniqueConstraint("position", "ion_id", "ion_number"),
         Index("metal_site_index", "protein_id", "metalsite_id", "position")
     )
     
