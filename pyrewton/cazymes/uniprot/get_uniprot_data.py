@@ -45,6 +45,8 @@ import logging
 import urllib.parse
 import urllib.request
 
+import numpy as np
+
 from typing import List, Optional
 from urllib.error import HTTPError
 
@@ -52,6 +54,7 @@ from bioservices import UniProt
 from saintBioutils.utilities.logger import config_logger
 from tqdm import tqdm
 
+from pyrewton.cazymes.uniprot import parse_uniprot
 from pyrewton.sql.sql_orm import get_cazome_db_connection
 from pyrewton.sql.sql_interface import load_data
 from pyrewton.utilities.parsers.cmd_parser_add_uniprot import build_parser
@@ -265,9 +268,56 @@ def get_uniprot_data(uniprot_gbk_dict, cache_dir, args):
             # data for adding to the Proteins table
             protein_table_updates.add( (protein_db_id, uniprot_acc, uniprot_name) )
 
+            # data for adding to the SubstrateBindingSites table
+            substrate_binding_inserts = substrate_binding_inserts.union(
+                get_sites_data(row, 'Binding site', 'BINDING', parse_uniprot.get_substrate_binding_site_data)
+            )
+
+            glycosylation_inserts = set()  # (protein_id, note, evidence)
+            temperature_inserts = set()  # (protein_id, lower_opt, upper_opt, lower_therm, upper_therm, lower_lose, upper_lose, note, evidence)
+            ph_inserts = set()  # (protein_id, lower_ph, upper_ph, note, evidence)
+            citation_inserts = set()  # (protein_id, citation)
+            transmembrane_inserts = set()  # (protein_id, transmembrane bool,)
+            uniprot_protein_data = set()  # {protein_id: (uniprot_acc, uniprot_name)}
+
 
 
     return
+
+
+def get_sites_data(results_table, column_name, line_starter, get_data_func):
+    """Generic func for retrieving data for a specific item from a UniProt results df.
+    
+    :param results_table: pandas df, df of UniProt query results
+    :param column_name: str, name of the column to retrieve data from
+    :param line_starter: str, substring to identify new data in a cell
+    :param get_data_func: func, func for retrieving and parsing data
+    
+    Return set(), one item per row to be inserted
+    """
+    sites = set()
+
+    for value in results_table[column_name]:
+        try:
+            if np.isnan(value):
+                continue
+        except TypeError:
+            pass
+
+        data = value.split(";")
+
+        index = 0
+        data_index = 0
+        for index in range(len(data)):
+
+            if data[data_index].strip().startswith(line_starter):  # new row to be inserted in the db
+                site, data_index = get_data_func(data, data_index)
+                sites.add(site)
+
+            if data_index == len(data):
+                break
+
+    return sites
 
 
 if __name__ == "__main__":
