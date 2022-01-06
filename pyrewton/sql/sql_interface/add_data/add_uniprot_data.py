@@ -40,7 +40,8 @@
 """Module for defining the db ORM and interacting with the db"""
 
 
-import logging
+from sqlalchemy import text
+from tqdm import tqdm
 
 from pyrewton.sql.sql_interface.load_data import load_uniprot_data
 from pyrewton.sql.sql_interface.add_data import insert_data
@@ -276,7 +277,65 @@ def insert_ec_data(
     ec_inserts,
     connection,
 ):
-    """"""
+    """Add EC numbers and relation to proteins to the db
+    
+    :param:
+    
+    Return nothing
+    """
+    if len(ec_inserts) != 0:
+        insert_data(
+            connection,
+            'Ec_number',
+            ['ec_number'],
+            ec_inserts,
+        )
+
+    ec_table_dict = load_uniprot_data.get_ec_dict(connection)
+
+    ec_relationships = set()
+
+    for data_tuple in protein_ec_inserts:
+        ec_relationships.add(
+            (
+                data_tuple[0],  # protein_id
+                ec_table_dict[data_tuple[1]],  # ec_id
+            )
+        )
+
+    if len(ec_relationships) != 0:
+        insert_data(
+            connection,
+            'Proteins_Ecs',
+            ['protein_id', 'ec_id'],
+            ec_relationships
+        )
+    
+    return
+
 
 def insert_protein_names(protein_table_updates, connection):
-    """"""
+    """Add UniProt protein names and IDs to the Proteins table
+    
+    :param protein_table_updates:
+    :param connection:
+    
+    Return nothing.
+    """
+    for record in tqdm(protein_table_updates, desc="Updating UniProt data in the Proteins table"):
+        connection.execute(
+            text(
+                "UPDATE Proteins "
+                f"SET uniprot_id = {record[1]} "
+                f"WHERE protein_id = '{record[0]}'"
+            )
+        )
+        connection.execute(
+            text(
+                "UPDATE Proteins "
+                f"SET protein_name = {record[2]} "
+                f"WHERE protein_id = '{record[0]}'"
+            )
+        )
+
+    return
