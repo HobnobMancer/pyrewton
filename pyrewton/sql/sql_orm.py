@@ -546,13 +546,14 @@ class SubstrateBindingSite(Base):
         Index("sub_site_index", "protein_id", "substratesite_id", "position")
     )
     
-    protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
     substratesite_id = Column(Integer, primary_key=True)
+    protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
     position = Column(Integer)
-    note = Column(ReString)  # Typically the substrate, although may be burried within text
+    substrate_id = Column(Integer, ForeignKey("Substrates.substrate_id"))  # Typically the substrate, although may be burried within text
     evidence = Column(ReString)
     
     sub_proteins = relationship("Protein", back_populates="substrate_sites")
+    sub_molecules = relationship("Substrate", back_populates="sub_binding_site")
     
     def __str__(self):
         return f"-SubstrateBindingSite, protein={self.protein_id}, position={self.position}, id={self.substratesite_id}-"
@@ -561,6 +562,27 @@ class SubstrateBindingSite(Base):
         return (
             f"<SubstrateBindingSite, protein={self.protein_id}, position={self.position}, id={self.substratesite_id}>"
         )
+
+
+class Substrate(Base):
+    """Represent the molecule that binds at a substrate binding site."""
+    __tablename__ = "Substrates"
+    
+    __table_args__ = (
+        UniqueConstraint("protein_id", "substratesite_id"),
+        Index("sub_site_index", "substrate_id")
+    )
+    
+    substrate_id = Column(Integer, primary_key=True)
+    substrate = Column(ReString)
+    
+    sub_binding_site = relationship("SubstrateBindingSite", back_populates="sub_molecules")
+    
+    def __str__(self):
+        return f"-Substrates, substrate={self.substrate}, id={self.substrate_id}-"
+
+    def __repr__(self):
+        return f"<Substrates, substrate={self.substrate}, id={self.substrate_id}>"
 
 
 class MetalBindingSite(Base):
@@ -669,6 +691,7 @@ class Glycosylation(Base):
     
     protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
     glycosylation_id = Column(Integer, primary_key=True)
+    position = Column(Integer)
     note = Column(ReString)  # Typically a description of the sugar architecture
     evidence = Column(ReString)
     
