@@ -594,10 +594,10 @@ class MetalBindingSite(Base):
         Index("metal_site_index", "protein_id", "metalsite_id", "position")
     )
     
-    protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
     metalsite_id = Column(Integer, primary_key=True)
+    protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
     position = Column(Integer)
-    ion = Column(Integer, ForeignKey("Metals.ion_id"))
+    ion_id = Column(Integer, ForeignKey("Metals.ion_id"))
     ion_number = Column(Integer)
     note = Column(ReString)  # Typically the substrate, although may be burried within text
     evidence = Column(ReString)
@@ -612,6 +612,7 @@ class MetalBindingSite(Base):
         return (
             f"<MetalBindingSite, protein={self.protein_id}, position={self.position}, id={self.metalsite_id}>"
         )
+
 
 class Metal(Base):
     """Represent the metal binding sites (Aa) in the enzymes."""
@@ -639,11 +640,11 @@ class Cofactor(Base):
     __tablename__ = "Cofactors"
     
     __table_args__ = (
-        Index("cofactor_index", "protein_id", "cofactor_id", "molecule_id"),
+        Index("cofactor_index", "protein_id", "cofactor_id", "molecule_id", "note", "evidence"),
     )
     
-    protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
     cofactor_id = Column(Integer, primary_key=True)
+    protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
     molecule_id = Column(Integer, ForeignKey("CofactorMolecules.molecule_id"))
     note = Column(ReString)  # Typically the substrate, although may be burried within text
     evidence = Column(ReString)
@@ -658,6 +659,7 @@ class Cofactor(Base):
         return (
             f"<Cofactor, protein={self.protein_id}, cofactor_id={self.cofactor_id}, id={self.molecule_id}>"
         )
+
 
 class CofactorMolecule(Base):
     """Represent enzyme, Cofactor molecules"""
@@ -689,8 +691,8 @@ class Glycosylation(Base):
         Index("glycos_index", "protein_id", "glycosylation_id")
     )
     
-    protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
     glycosylation_id = Column(Integer, primary_key=True)
+    protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
     position = Column(Integer)
     note = Column(ReString)  # Typically a description of the sugar architecture
     evidence = Column(ReString)
@@ -713,8 +715,8 @@ class Temperature(Base):
         Index("temp_index", "protein_id", "temperature_id")
     )
     
-    protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
     temperature_id = Column(Integer, primary_key=True)
+    protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
     lower_optimal = Column(Float)
     upper_optimal = Column(Float)
     lower_thermostable = Column(Float)
@@ -775,8 +777,8 @@ class OptimalPH(Base):
         Index("ph_index", "protein_id", "ph_id")
     )
     
-    protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
     ph_id = Column(Integer, primary_key=True)
+    protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
     lower_pH = Column(Float)
     upper_pH = Column(Float)
     note = Column(ReString)  # entire string from UniProt in case parsing fails
@@ -800,8 +802,8 @@ class Citation(Base):
         Index("citation_index", "protein_id", "citation_id")
     )
     
-    protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
     citation_id = Column(Integer, primary_key=True)
+    protein_id = Column(Integer, ForeignKey("Proteins.protein_id"))
     citation = Column(Integer)  # PubMed Id
     
     cite_proteins = relationship("Protein", back_populates="data_citations")
