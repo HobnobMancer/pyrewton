@@ -37,4 +37,39 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-"""Module for defining the db ORM and interacting with the db"""
+"""Submodule for adding data to the db"""
+
+
+class SqlInterfaceException(Exception):
+    """General exception for SQL interface"""
+
+    def __init__(self, message):
+        self.message = message
+
+
+def insert_data(connection, table_name, column_names, insert_values):
+    """Insert values into one or multiple rows in the database.
+    
+    :param connection: open connection to SQLite db engine
+    :param table_name: str, name of table to be inserted into
+    :param column_names: list of columns (str) to insert data into
+    :param insert_values: list of tuples, one tuple per inserted row in the db
+    
+    Return nothing.
+    """
+    # set up series of ? to fill in the VALUES statement
+    value_stmt = ''
+    for name in range((len(column_names)) - 1):
+        value_stmt += '?, '
+    value_stmt += '?'  # statement should not end with a comma
+    
+    with connection.begin():
+        try:
+            connection.exec_driver_sql(
+                f"INSERT INTO {table_name} ({', '.join(column_names)}) VALUES ({value_stmt})",
+                insert_values,
+            )
+        except Exception as db_error:
+            raise SqlInterfaceException(db_error)
+
+    return
