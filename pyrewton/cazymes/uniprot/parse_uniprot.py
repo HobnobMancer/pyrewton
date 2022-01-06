@@ -306,7 +306,7 @@ def get_optimum_ph(results_table):
                 except AttributeError:  # raised if not a range, but a single temp is given
                     ph = re.search(r"(\d?\.\d?)", optimum).group()
                     if ph == '':  # if a int not a float is provided, an empty str is returned
-                        ph = re.search(r"\d?", optimum_phs_8[0]).group()
+                        ph = re.search(r"\d?", optimum).group()
                     lower_ph = ph
                     upper_ph = ph
                 
@@ -329,3 +329,34 @@ def get_optimum_ph(results_table):
                 optimum_ph_data.add( (float(lower_ph), float(upper_ph), note, evidence) )
 
     return optimum_ph_data
+
+
+def get_citations(results_table):
+    """Retrieve publication citations for the protein."""
+    citations = set()  # tuples, one tuple per PubMed ID
+
+    for value in results_table['PubMed ID']:
+
+        try:
+            if np.isnan(value):
+                continue
+        except TypeError:
+            pass
+
+        try:
+            data = value.split(";")
+        except AttributeError:
+            citations.add((value,))
+            continue
+
+        index = 0
+
+        for pubmed_id in data:
+            try:
+                pubmed_id = int(pubmed_id)
+                citations.add( (pubmed_id,) )
+            except ValueError:
+                continue
+            
+
+    return citations
