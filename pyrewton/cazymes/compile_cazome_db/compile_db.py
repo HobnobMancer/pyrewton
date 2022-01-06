@@ -66,7 +66,9 @@ from saintBioutils.utilities.logger import config_logger
 from tqdm import tqdm
 
 from pyrewton.sql.sql_orm import get_cazome_db_connection
-from pyrewton.sql.sql_interface import add_data, load_data
+from pyrewton.sql.sql_interface import add_data
+from pyrewton.sql.sql_interface.add_data import add_genbank_data
+from pyrewton.sql.sql_interface.load_data import load_genbank_data
 from pyrewton.utilities.parsers.cmd_parser_compile_db import build_parser
 
 
@@ -603,19 +605,19 @@ def add_data_to_db(cazome_dict, tax_dict, domain_dict, connection, args):
     
     Return nothing"""
     # add taxonomy (species) data to the db
-    add_data.add_species_data(tax_dict, connection)
+    add_genbank_data.add_species_data(tax_dict, connection)
 
     # retrieve Taxonomies table
-    tax_table_dict = load_data.get_tax_table(connection)
+    tax_table_dict = load_genbank_data.get_tax_table(connection)
 
     # add genomic assemblies to the database
-    add_data.add_genomic_accessions(tax_dict, tax_table_dict, connection)
+    add_genbank_data.add_genomic_accessions(tax_dict, tax_table_dict, connection)
 
     # retrive genomic assembly records from the db
-    assembly_dict = load_data.get_assemblies_table(connection)
+    assembly_dict = load_genbank_data.get_assemblies_table(connection)
 
     # add proteins
-    add_data.add_proteins(cazome_dict, assembly_dict, connection)
+    add_genbank_data.add_proteins(cazome_dict, assembly_dict, connection)
 
     # add classifiers
     classifier_data = [
@@ -638,15 +640,15 @@ def add_data_to_db(cazome_dict, tax_dict, domain_dict, connection, args):
     )
 
     # add CAZy families
-    add_data.add_families(cazome_dict, connection)
+    add_genbank_data.add_families(cazome_dict, connection)
 
     # load Proteins, CazyFamilies and Classifiers tables into dicts
-    protein_db_dict = load_data.get_protein_db_ids(connection)
-    classifer_db_dict = load_data.get_classifier_db_ids(connection)
-    family_db_dict = load_data.get_family_db_ids(connection)
+    protein_db_dict = load_genbank_data.get_protein_db_ids(connection)
+    classifer_db_dict = load_genbank_data.get_classifier_db_ids(connection)
+    family_db_dict = load_genbank_data.get_family_db_ids(connection)
 
     # add CAZy and dbCAN domain annotations
-    add_data.add_classifications(
+    add_genbank_data.add_classifications(
         cazome_dict,
         domain_dict,
         protein_db_dict,
