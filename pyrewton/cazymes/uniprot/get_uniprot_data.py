@@ -51,14 +51,49 @@ from typing import List, Optional
 from urllib.error import HTTPError
 
 from bioservices import UniProt
-from saintBioutils.utilities.logger import config_logger
+# from saintBioutils.utilities.logger import config_logger
 from tqdm import tqdm
 
 from pyrewton.cazymes.uniprot import parse_uniprot
 from pyrewton.sql.sql_orm import get_cazome_db_connection
-from pyrewton.sql.sql_interface import load_data, add_data
-from pyrewton.sql.sql_interface.add_data import add_uniprot_data
+from pyrewton.sql.sql_interface.add_data import bulk_insert, add_uniprot_data
+from pyrewton.sql.sql_interface.load_data import load_uniprot_data
 from pyrewton.utilities.parsers.cmd_parser_add_uniprot import build_parser
+
+
+
+def config_logger(args) -> logging.Logger:
+    """Configure package wide logger.
+    Configure a logger at the package level, from which the module will inherit.
+    If CMD-line args are provided, these are used to define output streams, and
+    logging level.
+    :param args: cmd-line args parser
+    Return nothing
+    """
+    logger = logging.getLogger(__package__)
+
+    # Set format of loglines
+    log_formatter = logging.Formatter("[%(levelname)s] [%(name)s]: %(message)s")
+
+    # define logging level
+    if args.verbose is True:
+        logger.setLevel(logging.INFO)
+    else:
+        logger.setLevel(logging.WARNING)
+
+    # Setup console handler to log to terminal
+    console_log_handler = logging.StreamHandler()
+    console_log_handler.setFormatter(log_formatter)
+    logger.addHandler(console_log_handler)
+
+    # Setup file handler to log to a file
+    if args.log is not None:
+        file_log_handler = logging.FileHandler(args.log)
+        file_log_handler.setFormatter(log_formatter)
+        logger.addHandler(file_log_handler)
+
+    return
+
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
@@ -77,7 +112,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     connection = get_cazome_db_connection(args.database, args)
 
     # {genbank_accession: db_id}
-    protein_db_dict = load_data.get_protein_db_ids(connection)
+    protein_db_dict = load_uniprot_data.get_protein_db_ids(connection)
 
     # {uniprot_id: {'gbk_acc': str, 'db_id': int}}
     uniprot_id_dict = get_uniprot_ids(protein_db_dict)
@@ -433,10 +468,6 @@ def get_uniprot_data(uniprot_gbk_dict, args):
     )
 
 
-def update_proteins_table(protein_table_updates):
-    """Add UniProt data to the Proteins table, thus updating Proteins table records"""
-    return
-
 def add_simple_uniprot_data(
         glycosylation_inserts,
         temperature_inserts,
@@ -447,7 +478,7 @@ def add_simple_uniprot_data(
 ):
     """Bulk insert data into tables, which require no additional parsing"""
     if len(glycosylation_inserts) != 0:
-        add_data.insert_data(
+        bulk_insert.insert_data(
             connection,
             'Glycosylations',
             ['protein_id', 'position', 'note', 'evidence'],
@@ -455,7 +486,7 @@ def add_simple_uniprot_data(
         )
 
     if len(temperature_inserts) != 0:
-        add_data.insert_data(
+        bulk_insert.insert_data(
             connection,
             'Temperatures',
             [
@@ -473,7 +504,7 @@ def add_simple_uniprot_data(
         )
 
     if len(ph_inserts) != 0:
-        add_data.insert_data(
+        bulk_insert.insert_data(
             connection,
             'OptimalPHs',
             ['protein_id', 'lower_pH', 'upper_pH', 'note', 'evidence'],
@@ -481,7 +512,7 @@ def add_simple_uniprot_data(
         )
 
     if len(citation_inserts) != 0:
-        add_data.insert_data(
+        bulk_insert.insert_data(
             connection,
             'Citations',
             ['protein_id', 'citation'],
@@ -489,7 +520,7 @@ def add_simple_uniprot_data(
         )
 
     if len(transmembrane_inserts) != 0:
-        add_data.insert_data(
+        bulk_insert.insert_data(
             connection,
             'Transmembranes',
             ['protein_id', 'uniprot_transmembrane'],
