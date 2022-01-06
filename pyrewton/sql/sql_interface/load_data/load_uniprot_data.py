@@ -49,9 +49,27 @@ from pyrewton.sql.sql_orm import (
     Ec_number,
     Metal,
     Pdb,
+    Protein,
     Session,
     Substrate,
 )
+
+
+def get_protein_db_ids(connection):
+    """Parse Proteins table into dict:
+    
+    :param:
+    
+    Return {genbank_accession: db_id}
+    """
+    with Session(bind=connection) as session:
+        db_records = session.query(Protein).all()
+
+    data = {}  # {genbank_accession: db_id}
+    for record in tqdm(db_records, desc="Retrieving db Protein records"):
+        data[record.genbank_accession] = record.protein_id
+
+    return data
 
 
 def get_substrates_tables(connection):
@@ -59,12 +77,12 @@ def get_substrates_tables(connection):
     
     :param:
     
-    Return dict {substrate: pdb_id}
+    Return dict {substrate: substrate_id}
     """
     with Session(bind=connection) as session:
         db_records = session.query(Substrate).all()
 
-    data = {}  # {pdb: molecule_id}
+    data = {}  # {substrate: substrate_id}
     for record in tqdm(db_records, desc="Retrieving db Substrate records"):
         data[record.substrate] = record.substrate_id
 
