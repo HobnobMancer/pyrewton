@@ -57,6 +57,7 @@ from tqdm import tqdm
 from pyrewton.cazymes.uniprot import parse_uniprot
 from pyrewton.sql.sql_orm import get_cazome_db_connection
 from pyrewton.sql.sql_interface import load_data, add_data
+from pyrewton.sql.sql_interface.add_data import add_uniprot_data
 from pyrewton.utilities.parsers.cmd_parser_add_uniprot import build_parser
 
 
@@ -103,7 +104,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     ) = get_uniprot_data(uniprot_id_dict, args)
 
     add_simple_uniprot_data(
-        substrate_binding_inserts,
         glycosylation_inserts,
         temperature_inserts,
         ph_inserts,
@@ -111,6 +111,37 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         transmembrane_inserts,
         connection,
     )
+
+    add_uniprot_data.insert_substrate_data(substrate_binding_inserts, connection)
+
+    add_uniprot_data.insert_active_site_data(
+        active_sites_inserts,
+        active_site_types_inserts,
+        associated_activities_inserts,
+        connection,
+    )
+
+    add_uniprot_data.insert_metal_binding_data(metal_binding_inserts, metals_inserts, connection)
+
+    add_uniprot_data.insert_cofactor_data(
+        cofactors_inserts,
+        cofactor_molecules_inserts,
+        connection,
+    )
+
+    add_uniprot_data.insert_pdb_data(
+        protein_pdb_inserts,
+        pdbs_inserts,
+        connection,
+    )
+
+    add_uniprot_data.insert_ec_data(
+        protein_ec_inserts ,
+        ec_inserts,
+        connection,
+    )
+
+    add_uniprot_data.insert_protein_names(protein_table_updates, connection)
 
     return
 
