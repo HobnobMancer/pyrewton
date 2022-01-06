@@ -41,6 +41,11 @@
 """Retrieve data from UniProt for CAZymes in a CAZome database"""
 
 
+import re
+
+import numpy as np
+
+
 def get_substrate_binding_site_data(data, data_index):
     position = data[data_index].strip()
     position = int(position.replace("BINDING ", ""))
@@ -171,3 +176,106 @@ def get_glycosylation_data(data, data_index):
     )
     
     return glycosylation_tuple, index
+
+
+def get_temp_range(value, term):
+    """Return the temp range listed for the type of term, identified by the 'term'"""
+    lower_temp, upper_temp = None, None
+    # 
+    try:
+        temp = re.search(rf'{term} (above|over) (\d+?\.\d+?) degrees Celsius', value).group()
+        lower_temp = temp
+        upper_temp = None
+
+    except AttributeError:
+        try:
+            temp = re.search(rf'{term} (above|over) (\d+?) degrees Celsius', value).group()
+            lower_temp = temp
+            upper_temp = None
+        
+        except AttributeError:
+            try:
+                temp = re.search(rf'{term} below (\d+?\.\d+?) degrees Celsius', value).group()
+                lower_temp = None
+                upper_temp = temp
+        
+            except AttributeError:
+                try:
+                    temp = re.search(rf'{term} below (\d+?) degrees Celsius', value).group()
+                    lower_temp = None
+                    upper_temp = temp
+                
+                except AttributeError:
+                    try:
+                        temp = re.search(rf'{term} is (((\d+?|\d+?\.\d+?))|(\d+?|\d+?\.\d+?)(-| to )(\d+?|\d+?\.\d+?)) degrees Celsius', value).group()
+                        if temp.find("to") != -1:
+                            lower_temp = temp.split(" to ")[0]
+                            upper_temp = temp.split(" to ")[1]
+                        
+                        else:
+                            lower_temp = temp.split("-")[0]
+                            upper_temp = temp.split("-")[1]
+                            
+                    except AttributeError:
+                        try:
+                            temp = re.search(rf'{term} is (\d+?\.\d+?) degrees Celsius', value).group()
+                            lower_temp = temp
+                            upper_temp = temp
+                            
+                        except AttributeError:
+                            try:
+                                temp = re.search(rf'{term} is (\d+?) degrees Celsius', value).group()
+                                lower_temp = temp
+                                upper_temp = temp
+                            
+                            except AttributeError:
+                                lower_temp, upper_temp = None, None
+
+    return lower_temp, upper_temp
+
+
+def get_temp_data(results_table):
+    temp_dependence_data = set()  # tuples (lower stable, upper stable, lower loss of activity, upper loss of activity, note, evidence)
+
+    for value in results_table['Temperature dependence']:
+        try:
+            if np.isnan(value):
+                continue
+        except TypeError:
+            pass
+
+        if value.startswith('BIOPHYSICOCHEMICAL PROPERTIES') is False:
+            continue
+        
+        # attempt to retrieve optimal temp range
+        lower_optimum, upper_optimum = get_temp_range(value, "Optimum temperature is ")
+
+        # attempt to retrieve thermostable range
+        lower_stable, upper_stable = get_temp_range(value, "Thermostable to ")
+        
+        # attempt to retrieve loss of activity range
+        lower_loss, upper_loss = get_temp_range(value, "Complete loss of activity ")
+        
+        if lower_optimum is None and \
+        upper_optimum is None and \
+        lower_stable is None and \
+        upper_stable is None and \
+        lower_loss is None and \
+        upper_loss is None:
+            continue
+        
+        # retrieve the evidence
+        evidence = re.search(r"\{\.+?\})", value).group()
+        if evidence == "":
+            evidence = None
+        else:
+            evidence = evidence.replace("{","")
+            evidence = evidence.replace("}","").strip()
+        
+        note = value[:value.find("{")]
+
+        temp_dependence_data.add(
+            (lower_optimum, upper_optimum, lower_stable, upper_stable, lower_loss, upper_loss, note, evidence)
+        )
+    
+    return temp_dependence_data
