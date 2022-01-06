@@ -46,6 +46,41 @@ import re
 import numpy as np
 
 
+def get_sites_data(results_table, column_name, line_starter, get_data_func):
+    """Generic func for retrieving data for a specific item from a UniProt results df.
+    
+    :param results_table: pandas df, df of UniProt query results
+    :param column_name: str, name of the column to retrieve data from
+    :param line_starter: str, substring to identify new data in a cell
+    :param get_data_func: func, func for retrieving and parsing data
+    
+    Return set(), one item per row to be inserted
+    """
+    sites = set()
+
+    for value in results_table[column_name]:
+        try:
+            if np.isnan(value):
+                continue
+        except TypeError:
+            pass
+
+        data = value.split(";")
+
+        index = 0
+        data_index = 0
+        for index in range(len(data)):
+
+            if data[data_index].strip().startswith(line_starter):  # new row to be inserted in the db
+                site, data_index = get_data_func(data, data_index)
+                sites.add(site)
+
+            if data_index == len(data):
+                break
+
+    return sites
+
+
 def get_substrate_binding_site_data(data, data_index):
     position = data[data_index].strip()
     position = int(position.replace("BINDING ", ""))
@@ -571,3 +606,85 @@ def get_metal_binding_data(data, data_index):
     )
     
     return metal_binding_tuple, metals, index
+
+
+def get_cofactor_data(results_table):
+    cofactor_data = get_sites_data(
+        results_table,
+        'Cofactor',
+        'COFACTOR',
+        get_cofactors,
+    )
+
+    new_molecules = set()
+
+    for data_tuple in cofactor_data:
+        new_molecules.add(data_tuple[0])
+
+    return cofactor_data, new_molecules
+
+
+def get_cofactors(data, data_index):
+    cofactor_molecule = data[data_index].strip()
+    cofactor_molecule = cofactor_molecule.replace("COFACTOR: Name=", "")
+    
+    cofactor = {
+        'cofactor': cofactor_molecule,
+        'note': None,
+        'evidence': None,
+    }
+    
+    # check if any more data relating to this metal binding site
+    data_index += 1
+    
+    index = data_index
+    limit_index = data_index
+    
+    for limit_index in range(len(data[data_index:])):
+        new_data = data[index].strip()
+        
+        if new_data.startswith("COFACTOR"):
+            # new binding site
+            break
+        
+        elif new_data.startswith("/note"): 
+            note = new_data.replace('/note="', '')
+            note = note.replace('"', '')
+            
+            if cofactor['note'] is None:
+                cofactor['note'] = note
+            else:
+                new_note = f"{cofactor['note']} {new_data}"
+                cofactor['note'] = new_note
+        
+        elif new_data.startswith("/evidence") or new_data.startswith('Xref'):
+            evidence = new_data.replace('/evidence="', '')
+            evidence = evidence.replace('Xref=', '')
+            evidence = evidence.replace('"', '')
+            
+            if cofactor['evidence'] is None:
+                cofactor['evidence'] = evidence
+            else:
+                new_evidence = f"{cofactor['evidence']} {evidence}"
+                cofactor['evidence'] = new_evidence
+        
+        else:  # part of note that covered multiple lines
+            new_data = new_data.replace('"', '')
+            if len(new_data) != 0:
+                if cofactor['note'] is None:
+                    cofactor['note'] = new_data
+                else:
+                    new_note = f"{cofactor['note']} {new_data}"
+                    cofactor['note'] = new_note
+                
+        index += 1
+        if index == len(data):
+            break  # came to end of list
+    
+    cofactor_tuple = (
+        cofactor['cofactor'],
+        cofactor['note'],
+        cofactor['evidence'],
+    )
+    
+    return cofactor_tuple, index
