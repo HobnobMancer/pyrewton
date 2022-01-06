@@ -89,7 +89,7 @@ def get_substrate_binding_site_data(data, data_index, protein_id):
     
     substrate_binding_site = {
         'position': position,
-        'note': None,
+        'substrate': None,
         'evidence': None,
     }
     
@@ -111,11 +111,14 @@ def get_substrate_binding_site_data(data, data_index, protein_id):
             note = note.replace('"', '')
             
             if note != "Substrate":
-                if substrate_binding_site['note'] is None:
-                    substrate_binding_site['note'] = note
+                if substrate_binding_site['substrate'] is None:
+                    substrate_binding_site['substrate'] = note
                 else:
-                    new_note = f"{substrate_binding_site['note']} {new_data}"
-                    substrate_binding_site['note'] = new_note
+                    new_note = f"{substrate_binding_site['substrate']} {new_data}"
+                    substrate_binding_site['substrate'] = new_note
+            
+            else:
+                substrate_binding_site['substrate'] = note
         
         elif new_data.startswith("/evidence"):
             evidence = new_data.replace('/evidence="', '')
@@ -131,11 +134,11 @@ def get_substrate_binding_site_data(data, data_index, protein_id):
             new_data = new_data.replace('"', '')
             
             if len(new_data) != 0:
-                if substrate_binding_site['note'] is None:
-                    substrate_binding_site['note'] = new_data
+                if substrate_binding_site['substrate'] is None:
+                    substrate_binding_site['substrate'] = new_data
                 else:
-                    new_note = f"{substrate_binding_site['note']} {new_data}"
-                    substrate_binding_site['note'] = new_note
+                    new_note = f"{substrate_binding_site['substrate']} {new_data}"
+                    substrate_binding_site['substrate'] = new_note
                 
         index += 1
         if index == len(data):
@@ -144,7 +147,7 @@ def get_substrate_binding_site_data(data, data_index, protein_id):
     substrate_binding_tuple = (
         protein_id,
         substrate_binding_site['position'],
-        substrate_binding_site['note'],
+        substrate_binding_site['substrate'],
         substrate_binding_site['evidence'],
     )
     
@@ -713,3 +716,24 @@ def get_cofactors(data, data_index, protein_id):
     )
     
     return cofactor_tuple, index
+
+
+def get_pdb_ecs(results_row, protein_id, column_name):
+    value = results_row[column_name]
+
+    accessions = set()
+    protein_relationships = set()
+
+    try:
+        if np.isnan(value):
+            return protein_relationships, accessions
+    except TypeError:
+        pass
+
+    data = value.split(";")
+
+    for item in data:
+        accessions.add( (item.strip(),) )
+        protein_relationships.add( (protein_id, item.strip()) )
+
+    return protein_relationships, accessions

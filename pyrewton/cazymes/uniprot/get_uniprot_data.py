@@ -56,7 +56,7 @@ from tqdm import tqdm
 
 from pyrewton.cazymes.uniprot import parse_uniprot
 from pyrewton.sql.sql_orm import get_cazome_db_connection
-from pyrewton.sql.sql_interface import load_data
+from pyrewton.sql.sql_interface import load_data, add_data
 from pyrewton.utilities.parsers.cmd_parser_add_uniprot import build_parser
 
 
@@ -101,6 +101,16 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         ec_inserts,
         protein_table_updates,
     ) = get_uniprot_data(uniprot_id_dict, args)
+
+    add_simple_uniprot_data(
+        substrate_binding_inserts,
+        glycosylation_inserts,
+        temperature_inserts,
+        ph_inserts,
+        citation_inserts,
+        transmembrane_inserts,
+        connection,
+    )
 
     return
 
@@ -390,6 +400,72 @@ def get_uniprot_data(uniprot_gbk_dict, args):
         ec_inserts,
         protein_table_updates,
     )
+
+
+def update_proteins_table(protein_table_updates):
+    """Add UniProt data to the Proteins table, thus updating Proteins table records"""
+    return
+
+def add_simple_uniprot_data(
+        glycosylation_inserts,
+        temperature_inserts,
+        ph_inserts,
+        citation_inserts,
+        transmembrane_inserts,
+        connection,
+):
+    """Bulk insert data into tables, which require no additional parsing"""
+    if len(glycosylation_inserts) != 0:
+        add_data.insert_data(
+            connection,
+            'Glycosylations',
+            ['protein_id', 'position', 'note', 'evidence'],
+            glycosylation_inserts
+        )
+
+    if len(temperature_inserts) != 0:
+        add_data.insert_data(
+            connection,
+            'Temperatures',
+            [
+                'protein_id',
+                'lower_optimal',
+                'upper_optimal',
+                'lower_thermostable',
+                'upper_thermostable',
+                'lower_lose_activity',
+                'upper_lose_activity',
+                'note',
+                'evidence',
+            ],
+            temperature_inserts
+        )
+
+    if len(ph_inserts) != 0:
+        add_data.insert_data(
+            connection,
+            'OptimalPHs',
+            ['protein_id', 'lower_pH', 'upper_pH', 'note', 'evidence'],
+            ph_inserts
+        )
+
+    if len(citation_inserts) != 0:
+        add_data.insert_data(
+            connection,
+            'Citations',
+            ['protein_id', 'citation'],
+            citation_inserts
+        )
+
+    if len(transmembrane_inserts) != 0:
+        add_data.insert_data(
+            connection,
+            'Transmembranes',
+            ['protein_id', 'uniprot_transmembrane'],
+            transmembrane_inserts
+        )
+
+    return
 
 
 if __name__ == "__main__":
