@@ -193,134 +193,81 @@ def get_uniprot_data(uniprot_gbk_dict, cache_dir, args):
     )
 
     # data can be inserted straight away for the following tables
-    substrate_binding_inserts = []  # (protein_id, position, note, evidence)
-    glycosylation_inserts = []  # (protein_id, note, evidence)
-    temperature_inserts = []  # (protein_id, lower_opt, upper_opt, lower_therm, upper_therm, lower_lose, upper_lose, note, evidence)
-    ph_inserts = []  # (protein_id, lower_ph, upper_ph, note, evidence)
-    citation_inserts = []  # (protein_id, citation)
-    transmembrane_inserts = []  # (transmembrane bool,)
-    uniprot_protein_data = []  # {protein_id: (uniprot_acc, uniprot_name)}
+    substrate_binding_inserts = set()  # (protein_id, position, note, evidence)
+    glycosylation_inserts = set()  # (protein_id, note, evidence)
+    temperature_inserts = set()  # (protein_id, lower_opt, upper_opt, lower_therm, upper_therm, lower_lose, upper_lose, note, evidence)
+    ph_inserts = set()  # (protein_id, lower_ph, upper_ph, note, evidence)
+    citation_inserts = set()  # (protein_id, citation)
+    transmembrane_inserts = set()  # (protein_id, transmembrane bool,)
+    uniprot_protein_data = set()  # {protein_id: (uniprot_acc, uniprot_name)}
 
     # data has to be added in stages across the related tables
-    active_sites_inserts = []  # (protein_id, position, type_id, activity_id, note, evidence)
-    active_site_types_inserts = []  # (site_type)
-    associated_activities_inserts = []  # (associated_activity)
+    active_sites_inserts = set()  # (protein_id, position, type_id, activity_id, note, evidence)
+    active_site_types_inserts = set()  # (site_type)
+    associated_activities_inserts = set()  # (associated_activity)
 
-    metal_binding_inserts = []  # (protein_id, ion_id, ion_number, note, evidence)
-    metals_inserts = []  # (ion)
+    metal_binding_inserts = set()  # (protein_id, ion_id, ion_number, note, evidence)
+    metals_inserts = set()  # (ion)
 
-    cofactors_inserts = []  # (protein_id, molecule_id, note, evidence)
+    cofactors_inserts = set()  # (protein_id, molecule_id, note, evidence)
     cofactor_molecules_inserts = []   # (molecule,)
 
-    protein_pdb_inserts = []  # (pdb_id, protein_id)
-    pdbs_inserts = []  # (pdb_accession,)
+    protein_pdb_inserts = set()  # (pdb_id, protein_id)
+    pdbs_inserts = set()  # (pdb_accession,)
 
-    protein_ec_inserts = []  # (protein_id,)
-    ec_inserts = []  # (ec_number,)
+    protein_ec_inserts = set()  # (protein_id,)
+    ec_inserts = set()  # (ec_number,)
+
+    protein_table_updates = set()  # (protein_id, uniprot_id, protein_names)
+
+    uniprot_record_ids = list(uniprot_gbk_dict.keys())
+    parsed_uniprot_ids = set()  # IDs of records that have been parsed
 
     for query in tqdm(bioservices_queries, "Batch retrieving protein data from UniProt"):
         uniprot_df = UniProt().get_df(entries=query)
-
-        index = 0
+       
+        # filter for the columns of interest
         uniprot_df = uniprot_df[[
-            'Entry',
+            'Entry',  ## UniProt record ID
             'Protein names',
+            'Active site',
+            'Binding site',
+            'Metal binidng',
+            'Cofactor',
+            'Temperature dependence',
+            'pH dependence',
+            'PubMed ID',
             'EC number',
-            'Sequence',
             'Cross-reference (PDB)',
         ]]
 
+        index = 0
         for index in tqdm(range(len(uniprot_df['Entry'])), desc="Parsing UniProt response"):
             row = uniprot_df.iloc[index]
+
             uniprot_acc = row['Entry']
+
+            if uniprot_acc not in uniprot_record_ids:
+                continue
+            
             uniprot_name = row['Protein names']
 
+            protein_db_id = uniprot_gbk_dict[uniprot_acc]['db_id']
+
             # checked if parsed before incase bioservices returned duplicate proteins
-            try:
-                uniprot_dict[uniprot_acc]
+            if uniprot_acc in parsed_uniprot_ids:
                 logger.warning(
                     f'Multiple entries for UniProt:{uniprot_acc}, '
                     f'GenBank:{uniprot_gbk_dict[uniprot_acc]} retrieved from UniProt,\n'
-                    'compiling data into a single record'
+                    'Add ALL data to the database'
                 )
-            except KeyError:
-                try:
-                    uniprot_dict[uniprot_acc] = {
-                        "genbank_accession": uniprot_gbk_dict[uniprot_acc],
-                        "name": uniprot_name,
-                        }
-                except KeyError:
-                    logger.warning(
-                        f"Retrieved record with UniProt accession {uniprot_acc} but this "
-                        "accession was not\nretrieved from the UniProt REST API"
-                    )
-                    continue
-            
-            if args.ec:
-                # retrieve EC numbers
-                ec_numbers = row['EC number']
-                try:
-                    ec_numbers = ec_numbers.split('; ')
-                except AttributeError:
-                    # no EC numbers listed
-                    ec_numbers = set()
-                
-                try:
-                    uniprot_dict[uniprot_acc]["ec"]
-                except KeyError:
-                    uniprot_dict[uniprot_acc]["ec"] = set()
 
-                # add EC numbers to dict
-                for ec in ec_numbers:
-                    all_ecs.add( (ec,) )
-                    uniprot_dict[uniprot_acc]["ec"].add(ec)
+            # data for adding to the Proteins table
+            protein_table_updates.add( (protein_db_id, uniprot_acc, uniprot_name) )
 
-            if args.pdb:
-                # retrieve PDB accessions
-                pdb_accessions = row['Cross-reference (PDB)']
-                print('PDBS:', pdb_accessions)
-                try:
-                    pdb_accessions = pdb_accessions.split('; ')
-                except AttributeError:
-                    pdb_accessions = set()
 
-                try:
-                    uniprot_dict[uniprot_acc]["pdb"]
-                except KeyError:
-                    uniprot_dict[uniprot_acc]["pdb"] = set()
 
-                # add PDB accessions to dict
-                for pdb in pdb_accessions:
-                    uniprot_dict[uniprot_acc]["pdb"].add(pdb)
-            
-            if args.sequence:
-                sequence = row['Sequence']
-
-                try:
-                    uniprot_dict[uniprot_acc]["sequence"]
-                    existing_date = uniprot_dict[uniprot_acc]["seq_date"]
-                    new_date = row['Date of last sequence modification']
-                    
-                    # check which sequence is newer
-                    existing_date.split('-')
-                    existing_date = datetime(existing_date[0], existing_date[1], existing_date[2])
-                    new_date.split('-')
-                    new_date = datetime(existing_date[0], existing_date[1], existing_date[2])
-
-                    if new_date > existing_date:  # past < present is True
-                        uniprot_dict[uniprot_acc]["sequence"] = sequence
-                        uniprot_dict[uniprot_acc]["seq_date"] = row['Date of last sequence modification']
-                    # else keep the existing sequence
-                    logger.warning(
-                        f'Multiple sequences retrieved for {uniprot_acc}\n'
-                        'Using most recently updated sequence'
-                    )
-                    
-                except KeyError:
-                    uniprot_dict[uniprot_acc]["sequence"] = sequence
-                    uniprot_dict[uniprot_acc]["seq_date"] = row['Date of last sequence modification']
-
-    return uniprot_dict, all_ecs
+    return
 
 
 if __name__ == "__main__":
