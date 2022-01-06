@@ -468,3 +468,106 @@ def extract_active_site_data(data, data_index):
     )
     
     return active_site_tuple, site_types, activities, index
+
+
+def get_metal_binding_sites(results_table):
+    metal_binding_sites = set()  # store tuples (position, ion, ion_number, note, evidence)
+    metals = set()  # store tuples (ion,)
+
+    for value in results_table['Metal binding']:
+        try:
+            if np.isnan(value):
+                continue
+        except TypeError:
+            pass
+
+        data = value.split(";")
+
+        index = 0
+        data_index = 0
+        for index in range(len(data)):
+
+            if data[data_index].strip().startswith("METAL"):  # new metal binding site
+                new_site, new_metals, data_index = get_metal_binding_data(data, data_index)
+                metal_binding_sites.add(new_site)
+                metals = metals.union(new_metals)
+
+            if data_index == len(data):
+                break
+
+    return metal_binding_sites, metals
+
+
+def get_metal_binding_data(data, data_index):
+    position = data[data_index].strip()
+    position = int(position.replace("METAL ", ""))
+    
+    metal_binding_site = {
+        'position': position,
+        'ion': None,  # name of metal ion, e.g. Calcium
+        'ion_number': None,  # if multiple ions of the same name can bind, this distinguishes between them
+        'note': None,
+        'evidence': None,
+    }
+    metals = set()
+    
+    # check if any more data relating to this metal binding site
+    data_index += 1
+    
+    index = data_index
+    limit_index = data_index
+    
+    for limit_index in range(len(data[data_index:])):
+        new_data = data[index].strip()
+        
+        if new_data.startswith("METAL"):
+            # new binding site
+            break
+        
+        elif new_data.startswith("/note"): 
+            note = new_data.replace('/note="', '')
+            
+            ion = note.split(" ")[0]
+            try:
+                ion_number = note.split(" ")[1]
+                ion_number = int(ion_number.replace('"', ''))
+            except IndexError:
+                ion_number = None
+            
+            metal_binding_site['ion'] = ion
+            metals.add( (ion,) )
+            metal_binding_site['ion_number'] = ion_number
+        
+        elif new_data.startswith("/evidence"):
+            evidence = new_data.replace('/evidence="', '')
+            evidence = evidence.replace('"', '')
+            
+            if metal_binding_site['evidence'] is None:
+                metal_binding_site['evidence'] = evidence
+            else:
+                new_evidence = f"{metal_binding_site['evidence']} {evidence}"
+                metal_binding_site['evidence'] = new_evidence
+        
+        else:  # part of note that covered multiple lines
+            new_data = new_data.replace('"', '')
+            
+            if len(new_data) != 0:
+                if metal_binding_site['note'] is None:
+                    metal_binding_site['note'] = new_data
+                else:
+                    new_note = f"{metal_binding_site['note']} {new_data}"
+                    metal_binding_site['note'] = new_note
+
+        index += 1
+        if index == len(data):
+            break  # came to end of list
+    
+    metal_binding_tuple = (
+        metal_binding_site['position'],
+        metal_binding_site['ion'],
+        metal_binding_site['ion_number'],
+        metal_binding_site['note'],
+        metal_binding_site['evidence'],
+    )
+    
+    return metal_binding_tuple, metals, index
