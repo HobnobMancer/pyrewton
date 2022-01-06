@@ -81,6 +81,27 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     # {uniprot_id: {'gbk_acc': str, 'db_id': int}}
     uniprot_id_dict = get_uniprot_ids(protein_db_dict)
 
+    (
+        substrate_binding_inserts,
+        glycosylation_inserts,
+        temperature_inserts,
+        ph_inserts,
+        citation_inserts,
+        transmembrane_inserts,
+        active_sites_inserts,
+        active_site_types_inserts,
+        associated_activities_inserts,
+        metal_binding_inserts,
+        metals_inserts,
+        cofactors_inserts,
+        cofactor_molecules_inserts,
+        protein_pdb_inserts,
+        pdbs_inserts,
+        protein_ec_inserts ,
+        ec_inserts,
+        protein_table_updates,
+    ) = get_uniprot_data(uniprot_id_dict, args)
+
     return
 
 
@@ -174,12 +195,12 @@ def get_chunks_list(lst, chunk_length):
     return chunks
 
 
-def get_uniprot_data(uniprot_gbk_dict, cache_dir, args):
+def get_uniprot_data(uniprot_gbk_dict, args):
     """Batch query UniProt to retrieve protein data. Save data to cache directory.
     
     Bioservices requests batch queries no larger than 200.
+
     :param uniprot_gbk_dict: dict, keyed by GenBank accession and valued by UniProt accession
-    :param cache_dir: path to directory to write out cache
     :param args: cmd-line args parser
     
     Return
@@ -195,6 +216,9 @@ def get_uniprot_data(uniprot_gbk_dict, cache_dir, args):
         args.bioservices_batch_size,
     )
 
+    # add PDB column to columns to be retrieved
+    UniProt()._valid_columns.append('database(PDB)')
+
     # data can be inserted straight away for the following tables
     substrate_binding_inserts = set()  # (protein_id, position, note, evidence)
     glycosylation_inserts = set()  # (protein_id, note, evidence)
@@ -202,7 +226,6 @@ def get_uniprot_data(uniprot_gbk_dict, cache_dir, args):
     ph_inserts = set()  # (protein_id, lower_ph, upper_ph, note, evidence)
     citation_inserts = set()  # (protein_id, citation)
     transmembrane_inserts = set()  # (protein_id, transmembrane bool,)
-    uniprot_protein_data = set()  # {protein_id: (uniprot_acc, uniprot_name)}
 
     # data has to be added in stages across the related tables
     active_sites_inserts = set()  # (protein_id, position, type_id, activity_id, note, evidence)
@@ -213,7 +236,7 @@ def get_uniprot_data(uniprot_gbk_dict, cache_dir, args):
     metals_inserts = set()  # (ion)
 
     cofactors_inserts = set()  # (protein_id, molecule_id, note, evidence)
-    cofactor_molecules_inserts = []   # (molecule,)
+    cofactor_molecules_inserts = set()  # (molecule,)
 
     protein_pdb_inserts = set()  # (pdb_id, protein_id)
     pdbs_inserts = set()  # (pdb_accession,)
@@ -228,21 +251,6 @@ def get_uniprot_data(uniprot_gbk_dict, cache_dir, args):
 
     for query in tqdm(bioservices_queries, "Batch retrieving protein data from UniProt"):
         uniprot_df = UniProt().get_df(entries=query)
-       
-        # filter for the columns of interest
-        uniprot_df = uniprot_df[[
-            'Entry',  ## UniProt record ID
-            'Protein names',
-            'Active site',
-            'Binding site',
-            'Metal binidng',
-            'Cofactor',
-            'Temperature dependence',
-            'pH dependence',
-            'PubMed ID',
-            'EC number',
-            'Cross-reference (PDB)',
-        ]]
 
         index = 0
         for index in tqdm(range(len(uniprot_df['Entry'])), desc="Parsing UniProt response"):
@@ -336,15 +344,52 @@ def get_uniprot_data(uniprot_gbk_dict, cache_dir, args):
             cofactors_inserts = cofactors_inserts.union(new_cofactors)
             cofactor_molecules_inserts = cofactor_molecules_inserts.union(new_molecules)
 
-    protein_pdb_inserts = set()  # (pdb_id, protein_id)
-    pdbs_inserts = set()  # (pdb_accession,)
+            new_protein_pdb_inserts, new_pdb_insert = parse_uniprot.get_pdb_ecs(
+                row,
+                protein_db_id,
+                'Cross-reference (PDB)',
+            )
+            protein_pdb_inserts = protein_pdb_inserts.union(new_protein_pdb_inserts)
+            pdbs_inserts = pdbs_inserts.union(new_pdb_insert)
 
-    protein_ec_inserts = set()  # (protein_id,)
-    ec_inserts = set()  # (ec_number,)
+            new_protein_ec_inserts, new_ec_inserts = parse_uniprot.get_pdb_ecs(
+                row,
+                protein_db_id,
+                'EC number',
+            )
+            protein_ec_inserts = protein_ec_inserts.union(new_protein_ec_inserts)
+            ec_inserts = ec_inserts.union(new_ec_inserts)
 
+            parsed_uniprot_ids.add(uniprot_acc)
 
+    if len(parsed_uniprot_ids) < len(uniprot_record_ids):
+        logger.warning(
+            f"UniProt data not retrieved for all UniProt IDs"
+        )
+        for uniprot_id in uniprot_record_ids:
+            if uniprot_id not in parsed_uniprot_ids:
+                logger.warning(f"Data not retrieved for UniProt ID {uniprot_id}")
 
-    return
+    return (
+        substrate_binding_inserts,
+        glycosylation_inserts,
+        temperature_inserts,
+        ph_inserts,
+        citation_inserts,
+        transmembrane_inserts,
+        active_sites_inserts,
+        active_site_types_inserts,
+        associated_activities_inserts,
+        metal_binding_inserts,
+        metals_inserts,
+        cofactors_inserts,
+        cofactor_molecules_inserts,
+        protein_pdb_inserts,
+        pdbs_inserts,
+        protein_ec_inserts ,
+        ec_inserts,
+        protein_table_updates,
+    )
 
 
 if __name__ == "__main__":
