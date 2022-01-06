@@ -41,13 +41,9 @@
 
 
 import logging
-from re import sub
-from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
-from tqdm import tqdm
-
-from pyrewton.sql.sql_interface import load_data
-from pyrewton.sql.sql_interface.add_data import SqlInterfaceException, insert_data
+from pyrewton.sql.sql_interface.load_data import load_uniprot_data
+from pyrewton.sql.sql_interface.add_data import insert_data
 
 
 def insert_substrate_data(substrate_binding_inserts, connection):
@@ -145,4 +141,45 @@ def insert_active_site_data(
         )
 
     return
+
+
+def insert_metal_binding_data(metal_binding_inserts, metals_inserts, connection):
+    """Insert data pertaining to metal binding into the db
     
+    :param:
+    
+    Return nothing
+    """
+    if len(metals_inserts) != 0:
+        insert_data(
+            connection,
+            'Metals',
+            ['ion'],
+            metals_inserts
+        )
+
+    metals_table_dict = load_uniprot_data.load_metals_table(connection)
+
+    metal_sites_to_insert = set()
+
+    for site_tuple in metal_binding_inserts:
+        metal_sites_to_insert.add(
+            (
+                site_tuple[0],  # protein_id
+                site_tuple[1],  # position
+                metals_table_dict[site_tuple[2]],  # ion_id
+                site_tuple[3],  # ion_number,
+                site_tuple[4],  # note
+                site_tuple[5],  # evidence
+            )
+        )
+
+    if len(metal_sites_to_insert) != 0:
+        insert_data(
+            connection,
+            'MetalBindingSites',
+            ['protein_id', 'position', 'ion_id', 'ion_number', 'note', 'evidence'],
+            metals_inserts
+        )
+    
+    return
