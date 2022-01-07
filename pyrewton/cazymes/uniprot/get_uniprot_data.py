@@ -41,6 +41,7 @@
 """Retrieve data from UniProt for CAZymes in a CAZome database"""
 
 
+import json
 import logging
 import urllib.parse
 import urllib.request
@@ -115,7 +116,13 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     protein_db_dict = load_uniprot_data.get_protein_db_ids(connection)
 
     # {uniprot_id: {'gbk_acc': str, 'db_id': int}}
-    uniprot_id_dict = get_uniprot_ids(protein_db_dict)
+    # # # # uniprot_id_dict = get_uniprot_ids(protein_db_dict, args)
+
+    # # # # with open('uniprot_cache_1.json', 'w') as fh:
+    # # # #     json.dump(uniprot_id_dict, fh)
+    # # # # print('uniprot accessions:', len(list(uniprot_id_dict.keys())))
+    with open('uniprot_cache_1.json', 'r') as fh:
+        uniprot_id_dict = json.load(fh)
 
     (
         substrate_binding_inserts,
@@ -137,6 +144,35 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         ec_inserts,
         protein_table_updates,
     ) = get_uniprot_data(uniprot_id_dict, args)
+
+    data = [
+        substrate_binding_inserts,
+        glycosylation_inserts,
+        temperature_inserts,
+        ph_inserts,
+        citation_inserts,
+        transmembrane_inserts,
+        active_sites_inserts,
+        active_site_types_inserts,
+        associated_activities_inserts,
+        metal_binding_inserts,
+        metals_inserts,
+        cofactors_inserts,
+        cofactor_molecules_inserts,
+        protein_pdb_inserts,
+        pdbs_inserts,
+        protein_ec_inserts ,
+        ec_inserts,
+        protein_table_updates,
+    ]
+    i = 0
+    for i in range(len(data)):
+        lines = ""
+        for row in data[i]:
+            lines += f"{str(row)}\n"
+            
+        with open(f"cached_uniprot_{str(i)}.txt", 'w') as fh:
+            fh.write(lines)
 
     add_simple_uniprot_data(
         glycosylation_inserts,
@@ -200,7 +236,7 @@ def get_uniprot_ids(protein_db_dict, args):
 
     genbank_accessions = list(protein_db_dict.keys())
 
-    uniprot_rest_queries = get_chunks_list(genbank_accessions, args.uniprot_batch_size)
+    uniprot_rest_queries = get_chunks_list(genbank_accessions, args.batch_size)
 
     uniprot_gbk_dict = {}  # {uniprot_accession: gbk_accession}
     failed_queries = {}  # {query: tries}
@@ -209,7 +245,7 @@ def get_uniprot_ids(protein_db_dict, args):
         uniprot_rest_queries,
         desc='Batch retrieving UniProt accessions',
     ):
-        if type(query) != str:
+        if type(query_chunk) != str:
             # convert the set of gbk accessions into str format
             query = ' '.join(query_chunk)
 
@@ -243,7 +279,7 @@ def get_uniprot_ids(protein_db_dict, args):
 
         uniprot_batch_response = uniprot_batch_response.split('\n')
 
-        for line in uniprot_batch_response[1:]:  # the first line includes the titles, last line is an empty str
+        for line in tqdm(uniprot_batch_response[1:], "Parsing retrieved UniProt query"):  # the first line includes the titles, last line is an empty str
             if line == '':  # add check incase last line is not an empty str 
                 continue
             uniprot_accession = line.split('\t')[1]
@@ -285,11 +321,13 @@ def get_uniprot_data(uniprot_gbk_dict, args):
     Set of all retrieved EC numbers
     """
     logger = logging.getLogger(__name__)
+
+    uniprot_record_ids = list(uniprot_gbk_dict.keys())
     
     # break up list into nested list of shorter lists for batch querying
     bioservices_queries = get_chunks_list(
-        list(uniprot_gbk_dict.keys()),
-        args.bioservices_batch_size,
+        uniprot_record_ids,
+        args.batch_size,
     )
 
     # add PDB column to columns to be retrieved
@@ -322,8 +360,133 @@ def get_uniprot_data(uniprot_gbk_dict, args):
 
     protein_table_updates = set()  # (protein_id, uniprot_id, protein_names)
 
-    uniprot_record_ids = list(uniprot_gbk_dict.keys())
     parsed_uniprot_ids = set()  # IDs of records that have been parsed
+
+    last_renaming_number = len(uniprot_record_ids) - len(parsed_uniprot_ids)
+
+    while len(parsed_uniprot_ids) < len(uniprot_record_ids):
+
+        uniprot_ids_to_parse = [uniprot_id for uniprot_id in uniprot_record_ids if uniprot_id not in parsed_uniprot_ids]
+
+        bioservices_queries = get_chunks_list(
+            uniprot_ids_to_parse,
+            args.batch_size,
+        )
+
+        (
+            latest_parsed_uniprot_ids,
+            substrate_binding_inserts,
+            glycosylation_inserts,
+            temperature_inserts,
+            ph_inserts,
+            citation_inserts,
+            transmembrane_inserts,
+            active_sites_inserts,
+            active_site_types_inserts,
+            associated_activities_inserts,
+            metal_binding_inserts,
+            metals_inserts,
+            cofactors_inserts,
+            cofactor_molecules_inserts,
+            protein_pdb_inserts,
+            pdbs_inserts,
+            protein_ec_inserts ,
+            ec_inserts,
+            protein_table_updates,
+        ) = query_uniprot(
+            bioservices_queries,
+            uniprot_record_ids,
+            parsed_uniprot_ids,
+            uniprot_gbk_dict,
+            substrate_binding_inserts,
+            glycosylation_inserts,
+            temperature_inserts,
+            ph_inserts,
+            citation_inserts,
+            transmembrane_inserts,
+            active_sites_inserts,
+            active_site_types_inserts,
+            associated_activities_inserts,
+            metal_binding_inserts,
+            metals_inserts,
+            cofactors_inserts,
+            cofactor_molecules_inserts,
+            protein_pdb_inserts,
+            pdbs_inserts,
+            protein_ec_inserts ,
+            ec_inserts,
+            protein_table_updates,
+        )
+
+        parsed_uniprot_ids = parsed_uniprot_ids.union(latest_parsed_uniprot_ids)
+        logger.warning(
+            f"UniProt data not retrieved for all UniProt IDs\n"
+            f"The {len(uniprot_record_ids)} proteins in the db have a UniProt ID\n"
+            f"Data for only {len(parsed_uniprot_ids)} proteins was retrieved"
+        )
+
+        new_remaining_number = len(uniprot_record_ids) - len(parsed_uniprot_ids)
+        if new_remaining_number == last_renaming_number:
+            break
+        else:
+            last_renaming_number = new_remaining_number
+            uniprot_ids_to_parse = [uniprot_id for uniprot_id in uniprot_record_ids if uniprot_id not in parsed_uniprot_ids]
+            # # # # # for uniprot_id in uniprot_ids_to_parse:
+            # # # # #     logger.warning(f"Data not retrieved for UniProt ID {uniprot_id}")
+
+    # if len(parsed_uniprot_ids) < len(uniprot_record_ids):
+
+    #     # for uniprot_id in uniprot_record_ids:
+    #     #     if uniprot_id not in parsed_uniprot_ids:
+    #     #         logger.warning(f"Data not retrieved for UniProt ID {uniprot_id}")
+
+    return (
+        substrate_binding_inserts,
+        glycosylation_inserts,
+        temperature_inserts,
+        ph_inserts,
+        citation_inserts,
+        transmembrane_inserts,
+        active_sites_inserts,
+        active_site_types_inserts,
+        associated_activities_inserts,
+        metal_binding_inserts,
+        metals_inserts,
+        cofactors_inserts,
+        cofactor_molecules_inserts,
+        protein_pdb_inserts,
+        pdbs_inserts,
+        protein_ec_inserts ,
+        ec_inserts,
+        protein_table_updates,
+    )
+
+
+def query_uniprot(
+    bioservices_queries,
+    uniprot_record_ids,
+    parsed_uniprot_ids,
+    uniprot_gbk_dict,
+    substrate_binding_inserts,
+    glycosylation_inserts,
+    temperature_inserts,
+    ph_inserts,
+    citation_inserts,
+    transmembrane_inserts,
+    active_sites_inserts,
+    active_site_types_inserts,
+    associated_activities_inserts,
+    metal_binding_inserts,
+    metals_inserts,
+    cofactors_inserts,
+    cofactor_molecules_inserts,
+    protein_pdb_inserts,
+    pdbs_inserts,
+    protein_ec_inserts ,
+    ec_inserts,
+    protein_table_updates,
+):
+    logger = logging.getLogger(__name__)
 
     for query in tqdm(bioservices_queries, "Batch retrieving protein data from UniProt"):
         uniprot_df = UniProt().get_df(entries=query)
@@ -388,11 +551,11 @@ def get_uniprot_data(uniprot_gbk_dict, args):
             # data for adding to the Transmembranes table
             try:
                 np.isnan(row['Transmembrane'])
-                transmembrane_inserts = transmembrane_inserts.add( (False,) )
+                transmembrane_inserts.add( (protein_db_id, False,) )
             except TypeError:
                 # raised if value is returened for 'Transmembrane'
                 # becuase transmembrane region is annotated
-                transmembrane_inserts = transmembrane_inserts.add( (True,) )
+                transmembrane_inserts.add( (protein_db_id, True,) )
             
             # data to be added to the ActiveSites, SiteTypes and AssociatedActivities tables
             new_active_sites, new_site_types, new_activities = parse_uniprot.get_active_site_data(
@@ -438,15 +601,8 @@ def get_uniprot_data(uniprot_gbk_dict, args):
 
             parsed_uniprot_ids.add(uniprot_acc)
 
-    if len(parsed_uniprot_ids) < len(uniprot_record_ids):
-        logger.warning(
-            f"UniProt data not retrieved for all UniProt IDs"
-        )
-        for uniprot_id in uniprot_record_ids:
-            if uniprot_id not in parsed_uniprot_ids:
-                logger.warning(f"Data not retrieved for UniProt ID {uniprot_id}")
-
     return (
+        parsed_uniprot_ids,
         substrate_binding_inserts,
         glycosylation_inserts,
         temperature_inserts,
@@ -478,12 +634,15 @@ def add_simple_uniprot_data(
 ):
     """Bulk insert data into tables, which require no additional parsing"""
     if len(glycosylation_inserts) != 0:
-        bulk_insert.insert_data(
-            connection,
-            'Glycosylations',
-            ['protein_id', 'position', 'note', 'evidence'],
-            glycosylation_inserts
-        )
+        try:
+            bulk_insert.insert_data(
+                connection,
+                'Glycosylations',
+                ['protein_id', 'position', 'note', 'evidence'],
+                list(glycosylation_inserts),
+            )
+        except Exception:
+            print("GLY ERROR:", )
 
     if len(temperature_inserts) != 0:
         bulk_insert.insert_data(
@@ -500,7 +659,7 @@ def add_simple_uniprot_data(
                 'note',
                 'evidence',
             ],
-            temperature_inserts
+            list(temperature_inserts),
         )
 
     if len(ph_inserts) != 0:
@@ -508,7 +667,7 @@ def add_simple_uniprot_data(
             connection,
             'OptimalPHs',
             ['protein_id', 'lower_pH', 'upper_pH', 'note', 'evidence'],
-            ph_inserts
+            list(ph_inserts),
         )
 
     if len(citation_inserts) != 0:
@@ -516,7 +675,7 @@ def add_simple_uniprot_data(
             connection,
             'Citations',
             ['protein_id', 'citation'],
-            citation_inserts
+            list(citation_inserts),
         )
 
     if len(transmembrane_inserts) != 0:
@@ -524,7 +683,7 @@ def add_simple_uniprot_data(
             connection,
             'Transmembranes',
             ['protein_id', 'uniprot_transmembrane'],
-            transmembrane_inserts
+            list(transmembrane_inserts),
         )
 
     return
