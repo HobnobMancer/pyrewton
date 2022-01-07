@@ -61,7 +61,7 @@ def insert_substrate_data(substrate_binding_inserts, connection):
         substrates_to_insert.add( (substrate_tuple[2],) )
 
     if len(substrates_to_insert) != 0:
-        insert_data(connection, 'Substrates', ['substrate'], substrates_to_insert)
+        insert_data(connection, 'Substrates', ['substrate'], list(substrates_to_insert))
     
     substrates_table_dict = load_uniprot_data.get_substrates_tables(connection)
 
@@ -82,7 +82,7 @@ def insert_substrate_data(substrate_binding_inserts, connection):
             connection,
             'SubstrateBindingSites',
             ['protein_id', 'position', 'substrate_id', 'evidence'],
-            binding_sites_to_insert,
+            list(binding_sites_to_insert),
         )
 
     return
@@ -105,7 +105,7 @@ def insert_active_site_data(
             connection,
             'SiteTypes',
             ['site_type'],
-            active_site_types_inserts
+            list(active_site_types_inserts),
         )
 
     if len(associated_activities_inserts) != 0:
@@ -113,11 +113,11 @@ def insert_active_site_data(
             connection,
             'AssociatedActivities',
             ['associated_activity'],
-            associated_activities_inserts
+            list(associated_activities_inserts),
         )
 
-    site_type_dict = load_data.get_site_type_dict(connection)
-    activity_dict = load_data.get_activity_dict(connection)
+    site_type_dict = load_uniprot_data.get_site_type_dict(connection)
+    activity_dict = load_uniprot_data.get_activity_dict(connection)
 
     acitve_sites_to_insert = set()
 
@@ -138,7 +138,7 @@ def insert_active_site_data(
             connection,
             'ActiveSites',
             ['protein_id', 'position', 'type_id', 'activity_id', 'note', 'evidence'],
-            acitve_sites_to_insert
+            list(acitve_sites_to_insert),
         )
 
     return
@@ -156,7 +156,7 @@ def insert_metal_binding_data(metal_binding_inserts, metals_inserts, connection)
             connection,
             'Metals',
             ['ion'],
-            metals_inserts
+            list(metals_inserts),
         )
 
     metals_table_dict = load_uniprot_data.load_metals_table(connection)
@@ -180,7 +180,7 @@ def insert_metal_binding_data(metal_binding_inserts, metals_inserts, connection)
             connection,
             'MetalBindingSites',
             ['protein_id', 'position', 'ion_id', 'ion_number', 'note', 'evidence'],
-            metals_inserts
+            list(metals_inserts),
         )
     
     return
@@ -202,7 +202,7 @@ def insert_cofactor_data(
             connection,
             'CofactorMolecules',
             ['molecule'],
-            cofactor_molecules_inserts
+            list(cofactor_molecules_inserts),
         )
 
     molecules_dict = load_uniprot_data.get_molecules_dict(connection)
@@ -224,7 +224,7 @@ def insert_cofactor_data(
             connection,
             'Cofactors',
             ['protein_id', 'molecule_id', 'note', 'evidence'],
-            cofactor_data_inserts,
+            list(cofactor_data_inserts),
         )
 
     return
@@ -246,7 +246,7 @@ def insert_pdb_data(
             connection,
             'Pdbs',
             ['pdb_accession'],
-            pdbs_inserts
+            list(pdbs_inserts),
         )
 
     pdb_table_dict = load_uniprot_data.get_pdb_dict(connection)
@@ -266,7 +266,7 @@ def insert_pdb_data(
             connection,
             'Proteins_Pdbs',
             ['protein_id', 'pdb_id'],
-            pdb_relationships
+            list(pdb_relationships),
         )
 
     return
@@ -288,7 +288,7 @@ def insert_ec_data(
             connection,
             'Ec_number',
             ['ec_number'],
-            ec_inserts,
+            list(ec_inserts),
         )
 
     ec_table_dict = load_uniprot_data.get_ec_dict(connection)
@@ -308,7 +308,7 @@ def insert_ec_data(
             connection,
             'Proteins_Ecs',
             ['protein_id', 'ec_id'],
-            ec_relationships
+            list(ec_relationships),
         )
     
     return
