@@ -592,6 +592,7 @@ def get_metal_binding_data(data, data_index, protein_id):
             note = new_data.replace('/note="', '')
             
             ion = note.split(" ")[0]
+            ion = ion.replace('"', '')
             try:
                 ion_number = note.split(" ")[1]
                 ion_number = int(ion_number.replace('"', ''))
@@ -657,7 +658,7 @@ def get_cofactor_data(results_row, protein_id):
     new_molecules = set()
 
     for data_tuple in cofactor_data:
-        new_molecules.add(data_tuple[0])
+        new_molecules.add( (data_tuple[1],) )
 
     return cofactor_data, new_molecules
 
@@ -744,7 +745,8 @@ def get_pdb_ecs(results_row, protein_id, column_name):
     data = value.split(";")
 
     for item in data:
-        accessions.add( (item.strip(),) )
-        protein_relationships.add( (protein_id, item.strip()) )
+        if item != "":
+            accessions.add( (item.strip(),) )
+            protein_relationships.add( (protein_id, item.strip()) )
 
     return protein_relationships, accessions
