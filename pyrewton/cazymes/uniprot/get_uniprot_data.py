@@ -108,7 +108,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         protein_table_updates,
     ) = get_uniprot_data(uniprot_id_dict, args)
 
-
     add_simple_uniprot_data(
         glycosylation_inserts,
         temperature_inserts,
