@@ -52,7 +52,7 @@ from typing import List, Optional
 from urllib.error import HTTPError
 
 from bioservices import UniProt
-# from saintBioutils.utilities.logger import config_logger
+from saintBioutils.utilities.logger import config_logger
 from tqdm import tqdm
 
 from pyrewton.cazymes.uniprot import parse_uniprot
@@ -60,41 +60,6 @@ from pyrewton.sql.sql_orm import get_cazome_db_connection
 from pyrewton.sql.sql_interface.add_data import bulk_insert, add_uniprot_data
 from pyrewton.sql.sql_interface.load_data import load_uniprot_data
 from pyrewton.utilities.parsers.cmd_parser_add_uniprot import build_parser
-
-
-
-def config_logger(args) -> logging.Logger:
-    """Configure package wide logger.
-    Configure a logger at the package level, from which the module will inherit.
-    If CMD-line args are provided, these are used to define output streams, and
-    logging level.
-    :param args: cmd-line args parser
-    Return nothing
-    """
-    logger = logging.getLogger(__package__)
-
-    # Set format of loglines
-    log_formatter = logging.Formatter("[%(levelname)s] [%(name)s]: %(message)s")
-
-    # define logging level
-    if args.verbose is True:
-        logger.setLevel(logging.INFO)
-    else:
-        logger.setLevel(logging.WARNING)
-
-    # Setup console handler to log to terminal
-    console_log_handler = logging.StreamHandler()
-    console_log_handler.setFormatter(log_formatter)
-    logger.addHandler(console_log_handler)
-
-    # Setup file handler to log to a file
-    if args.log is not None:
-        file_log_handler = logging.FileHandler(args.log)
-        file_log_handler.setFormatter(log_formatter)
-        logger.addHandler(file_log_handler)
-
-    return
-
 
 
 def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
@@ -116,13 +81,11 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     protein_db_dict = load_uniprot_data.get_protein_db_ids(connection)
 
     # {uniprot_id: {'gbk_acc': str, 'db_id': int}}
-    # # # # uniprot_id_dict = get_uniprot_ids(protein_db_dict, args)
+    uniprot_id_dict = get_uniprot_ids(protein_db_dict, args)
 
-    # # # # with open('uniprot_cache_1.json', 'w') as fh:
-    # # # #     json.dump(uniprot_id_dict, fh)
-    # # # # print('uniprot accessions:', len(list(uniprot_id_dict.keys())))
-    with open('uniprot_cache_1.json', 'r') as fh:
-        uniprot_id_dict = json.load(fh)
+    uniprot_cache_path = "uniprot_acc_cache.json"
+    with open(uniprot_cache_path, 'w', 'r') as fh:
+        json.dump(uniprot_id_dict, fh)
 
     (
         substrate_binding_inserts,
@@ -145,34 +108,6 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         protein_table_updates,
     ) = get_uniprot_data(uniprot_id_dict, args)
 
-    data = [
-        substrate_binding_inserts,
-        glycosylation_inserts,
-        temperature_inserts,
-        ph_inserts,
-        citation_inserts,
-        transmembrane_inserts,
-        active_sites_inserts,
-        active_site_types_inserts,
-        associated_activities_inserts,
-        metal_binding_inserts,
-        metals_inserts,
-        cofactors_inserts,
-        cofactor_molecules_inserts,
-        protein_pdb_inserts,
-        pdbs_inserts,
-        protein_ec_inserts ,
-        ec_inserts,
-        protein_table_updates,
-    ]
-    i = 0
-    for i in range(len(data)):
-        lines = ""
-        for row in data[i]:
-            lines += f"{str(row)}\n"
-            
-        with open(f"cached_uniprot_{str(i)}.txt", 'w') as fh:
-            fh.write(lines)
 
     add_simple_uniprot_data(
         glycosylation_inserts,
@@ -191,7 +126,7 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         associated_activities_inserts,
         connection,
     )
-
+    
     add_uniprot_data.insert_metal_binding_data(metal_binding_inserts, metals_inserts, connection)
 
     add_uniprot_data.insert_cofactor_data(
