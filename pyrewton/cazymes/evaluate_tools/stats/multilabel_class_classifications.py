@@ -44,10 +44,17 @@ def build_class_annotation_dataframes(fam_predictions_df, fam_ground_truths_df, 
     class_ground_truths = []  # [[genomic_accession, protein_accession, prediction_tool, cazy_class]]
     class_predictions = []  # [[genomic_accession, protein_accession, prediction_tool, cazy_class]]
 
+    dbcan_tool_predictions = {}  # {protein_accession: {HMMER:set(), DIAMOND:set(), Hotpep:set(): genomic_accession:str}}
+
     row_index = 0
     for row_index in tqdm(
         range(len(fam_ground_truths_df["Prediction_tool"])), desc="Getting CAZy class predictions",
     ):
+        if row_predictions["Prediction_tool"] == "dbCAN":
+            continue  # otherwise would ignore when different families are predicted for the same class
+            # HMMER GH1, DIAMOND GH2 and Hotpep GH3 would result in no dbCAN consensus class annotation
+            # so parser separately to find the consensus class annotation, irrespective the family annotation
+
         row_ground_truths = fam_ground_truths_df.iloc[row_index]
         row_predictions = fam_predictions_df.iloc[row_index]
 
@@ -62,6 +69,15 @@ def build_class_annotation_dataframes(fam_predictions_df, fam_ground_truths_df, 
             row_predictions["Prediction_tool"],
         ]
 
+        if row_predictions["Prediction_tool"] in ['HMMER', 'DIAMOND', 'Hotpep']:
+            try:
+                dbcan_tool_predictions[row_predictions["Protein_accession"]]
+            
+            except KeyError:
+                dbcan_tool_predictions[row_predictions["Protein_accession"]] = {
+                    'genomic_accession': row_predictions["Genomic_accession"]
+                }
+
         # get the prediction and ground truth for each CAZy class
         for cazy_class in ["GH", "GT", "PL", "CE", "AA", "CBM"]:
             # retrieve names of CAZy families in the CAZy class
@@ -70,17 +86,66 @@ def build_class_annotation_dataframes(fam_predictions_df, fam_ground_truths_df, 
             class_fam_ground_truths = row_ground_truths[fam_names]
             class_fam_predictions = row_predictions[fam_names]
 
+            # were any of the child families of the parent class predicted for the protein?
             if (class_fam_ground_truths == 1).any():
                 ground_truth_class_classification = 1
             else:
                 ground_truth_class_classification = 0
+
             ground_truth_row_data.append(ground_truth_class_classification)
 
             if (class_fam_predictions == 1).any():
                 predicted_class_classification = 1
             else:
                 predicted_class_classification = 0
+
             pred_row_data.append(predicted_class_classification)
+
+            if row_predictions["Prediction_tool"] in ['HMMER', 'DIAMOND', 'Hotpep']:
+                try:
+                    dbcan_tool_predictions[row_predictions["Protein_accession"]][row_predictions["Prediction_tool"]]
+                    dbcan_tool_predictions[row_predictions["Protein_accession"]][row_predictions["Prediction_tool"]][cazy_class] = predicted_class_classification
+                except KeyError:
+                    dbcan_tool_predictions[row_predictions["Protein_accession"]][row_predictions["Prediction_tool"]] = {cazy_class: predicted_class_classification}
+                
+                try:
+                    dbcan_tool_predictions[row_predictions["Protein_accession"]]['CAZy']
+                    dbcan_tool_predictions[row_predictions["Protein_accession"]]['CAZy'][cazy_class] = ground_truth_class_classification
+                except KeyError:
+                    dbcan_tool_predictions[row_predictions["Protein_accession"]]['CAZy'] = {cazy_class: ground_truth_class_classification}
+
+        class_ground_truths.append(ground_truth_row_data)
+        class_predictions.append(pred_row_data)
+
+    protein_accessions = list(dbcan_tool_predictions.keys())
+    for protein_accession in tqdm(protein_accessions, desc="Getting consensus dbCAN Class predictions"):
+        ground_truth_row_data = [
+            dbcan_tool_predictions[protein_accession]["genomic_accession"],
+            protein_accession,
+            'dbCAN',
+        ]
+        pred_row_data = [
+            dbcan_tool_predictions[protein_accession]["genomic_accession"],
+            protein_accession,
+            'dbCAN',
+        ]
+        for cazy_class in ["GH", "GT", "PL", "CE", "AA", "CBM"]:
+            # retrieve the CAZy class annotations from CAZy and the classifiers within dbCAN
+            hmmer = dbcan_tool_predictions[protein_accession]['HMMER'][cazy_class]
+            hotpep = dbcan_tool_predictions[protein_accession]['Hotpep'][cazy_class]
+            diamond = dbcan_tool_predictions[protein_accession]['DIAMOND'][cazy_class]
+            cazy = dbcan_tool_predictions[protein_accession]['CAZy'][cazy_class]
+
+            # get the consensus CAZy class annotations from HMMER, DIAMOND and Hotpep
+            # annotations are stored as int, therefore the sum is the numnber of predictions for the class
+            total = hmmer + hotpep + diamond
+            if total >= 2:
+                dbcan = 1
+            else:
+                dbcan = 0
+                
+            pred_row_data.append(dbcan)
+            ground_truth_row_data.append(cazy)
 
         class_ground_truths.append(ground_truth_row_data)
         class_predictions.append(pred_row_data)
