@@ -45,6 +45,8 @@ import logging
 from tqdm import tqdm
 
 from pyrewton.sql.sql_orm import (
+    ActiveSiteType,
+    AssociatedActivity,
     CofactorMolecule,
     Ec_number,
     Metal,
@@ -88,6 +90,27 @@ def get_substrates_tables(connection):
 
     return data
 
+
+def get_site_type_dict(connection):
+    with Session(bind=connection) as session:
+        db_records = session.query(ActiveSiteType).all()
+
+    data = {}  # {site_type: db_id}
+    for record in tqdm(db_records, desc="Retrieving db Site Types records"):
+        data[record.site_type] = record.type_id
+
+    return data
+
+
+def get_activity_dict(connection):
+    with Session(bind=connection) as session:
+        db_records = session.query(AssociatedActivity).all()
+
+    data = {}  # {site_type: db_id}
+    for record in tqdm(db_records, desc="Retrieving db Acitivity records"):
+        data[record.associated_activity] = record.activity_id
+
+    return data
 
 
 def load_metals_table(connection):
