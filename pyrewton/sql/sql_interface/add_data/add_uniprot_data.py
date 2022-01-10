@@ -122,12 +122,22 @@ def insert_active_site_data(
     acitve_sites_to_insert = set()
 
     for site_tuple in active_sites_inserts:
+        if site_tuple[2] is None:
+            site_type = site_tuple[2]
+        else:
+            site_type = site_type_dict[site_tuple[2]]
+        
+        if site_tuple[3] is None:
+            activity = site_tuple[3]
+        else:
+            activity = activity_dict[site_tuple[3]]
+
         acitve_sites_to_insert.add(
             (
                 site_tuple[0],  # protein_id
                 site_tuple[1],  # position
-                site_type_dict[site_tuple[2]],  # type_id
-                activity_dict[site_tuple[3]],  # activity_id
+                site_type,  # type_id
+                activity,  # activity_id
                 site_tuple[4],  # note
                 site_tuple[5],  # evidence
             )
@@ -151,12 +161,13 @@ def insert_metal_binding_data(metal_binding_inserts, metals_inserts, connection)
     
     Return nothing
     """
-    if len(metals_inserts) != 0:
+    metals = [_ for _ in metals_inserts]
+    if len(metals) != 0:
         insert_data(
             connection,
             'Metals',
             ['ion'],
-            list(metals_inserts),
+            metals,
         )
 
     metals_table_dict = load_uniprot_data.load_metals_table(connection)
@@ -164,11 +175,16 @@ def insert_metal_binding_data(metal_binding_inserts, metals_inserts, connection)
     metal_sites_to_insert = set()
 
     for site_tuple in metal_binding_inserts:
+        if site_tuple[2] is None:
+            ion = None
+        else:
+            ion = metals_table_dict[site_tuple[2]]
+
         metal_sites_to_insert.add(
             (
                 site_tuple[0],  # protein_id
                 site_tuple[1],  # position
-                metals_table_dict[site_tuple[2]],  # ion_id
+                ion,  # ion_id
                 site_tuple[3],  # ion_number,
                 site_tuple[4],  # note
                 site_tuple[5],  # evidence
@@ -180,7 +196,7 @@ def insert_metal_binding_data(metal_binding_inserts, metals_inserts, connection)
             connection,
             'MetalBindingSites',
             ['protein_id', 'position', 'ion_id', 'ion_number', 'note', 'evidence'],
-            list(metals_inserts),
+            list(metal_sites_to_insert),
         )
     
     return
@@ -210,10 +226,15 @@ def insert_cofactor_data(
     cofactor_data_inserts = set()
 
     for data_tuple in cofactors_inserts:
+        if data_tuple[1] is None:
+            molecule = None
+        else:
+            molecule = molecules_dict[data_tuple[1]]
+
         cofactor_data_inserts.add(
             (
                 data_tuple[0],  # protein_id
-                molecules_dict[data_tuple[1]],  # molecule_id
+                molecule,  # molecule_id
                 data_tuple[2],  # note
                 data_tuple[3],  # evidence
             )
@@ -254,10 +275,15 @@ def insert_pdb_data(
     pdb_relationships = set()
 
     for data_tuple in protein_pdb_inserts:
+        if data_tuple[1] is None:
+            pdb = None
+        else:
+            pdb = pdb_table_dict[data_tuple[1]]
+
         pdb_relationships.add(
             (
                 data_tuple[0],  # protein_id
-                pdb_table_dict[data_tuple[1]],  # pdb_id
+                pdb,  # pdb_id
             )
         )
 
@@ -286,7 +312,7 @@ def insert_ec_data(
     if len(ec_inserts) != 0:
         insert_data(
             connection,
-            'Ec_number',
+            'Ec_numbers',
             ['ec_number'],
             list(ec_inserts),
         )
@@ -296,10 +322,15 @@ def insert_ec_data(
     ec_relationships = set()
 
     for data_tuple in protein_ec_inserts:
+        if data_tuple[1] is None:
+            ec = None
+        else:
+            ec = ec_table_dict[data_tuple[1]]
+
         ec_relationships.add(
             (
                 data_tuple[0],  # protein_id
-                ec_table_dict[data_tuple[1]],  # ec_id
+                ec,  # ec_id
             )
         )
 
@@ -325,16 +356,12 @@ def insert_protein_names(protein_table_updates, connection):
     for record in tqdm(protein_table_updates, desc="Updating UniProt data in the Proteins table"):
         connection.execute(
             text(
-                "UPDATE Proteins "
-                f"SET uniprot_id = {record[1]} "
-                f"WHERE protein_id = '{record[0]}'"
+                f"UPDATE Proteins SET uniprot_id = '{record[1]}' WHERE protein_id = '{record[0]}'"
             )
         )
         connection.execute(
             text(
-                "UPDATE Proteins "
-                f"SET protein_name = {record[2]} "
-                f"WHERE protein_id = '{record[0]}'"
+                f"UPDATE Proteins SET protein_name = '{record[2]}' WHERE protein_id = '{record[0]}'"
             )
         )
 
