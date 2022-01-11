@@ -50,13 +50,14 @@ def build_class_annotation_dataframes(fam_predictions_df, fam_ground_truths_df, 
     for row_index in tqdm(
         range(len(fam_ground_truths_df["Prediction_tool"])), desc="Getting CAZy class predictions",
     ):
+        row_predictions = fam_predictions_df.iloc[row_index]
+
         if row_predictions["Prediction_tool"] == "dbCAN":
             continue  # otherwise would ignore when different families are predicted for the same class
             # HMMER GH1, DIAMOND GH2 and Hotpep GH3 would result in no dbCAN consensus class annotation
             # so parser separately to find the consensus class annotation, irrespective the family annotation
 
         row_ground_truths = fam_ground_truths_df.iloc[row_index]
-        row_predictions = fam_predictions_df.iloc[row_index]
 
         ground_truth_row_data = [
             row_ground_truths["Genomic_accession"],
