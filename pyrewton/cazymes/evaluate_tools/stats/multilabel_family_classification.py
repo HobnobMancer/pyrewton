@@ -179,7 +179,12 @@ def calculate_family_ari_ri(prediction_df, ground_truth_df, time_stamp):
     return prediction_df
 
 
-def calc_fam_stats(predictions_df, ground_truths_df, args):
+def calc_fam_stats(
+    predictions_df,
+    ground_truths_df,
+    args,
+    tools=["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"],
+):
     """Calculate the Specificity, Sensitivity, Precision, Fbeta, and accuracy for each CAZy family.
 
     :param predictions_df: df of predicted CAZy family annotations from all prediction tools
@@ -197,7 +202,7 @@ def calc_fam_stats(predictions_df, ground_truths_df, args):
     family_names = foundation_dict()
     family_names = list(family_names.keys())
 
-    for tool in ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]:
+    for tool in tools:
         # retrieve the relevant rows for the prediction tool
         grnd_trth_df = ground_truths_df.loc[ground_truths_df["Prediction_tool"] == tool]
         pred_df = predictions_df.loc[predictions_df["Prediction_tool"] == tool]
@@ -510,3 +515,87 @@ def evaluate_taxa_performance(
         fam_longform_df.to_csv(output_path)
     
     return
+
+
+def add_recombined_tool_classifications(
+    all_family_predictions,
+    all_family_ground_truths,
+    tool_combiniations,
+):
+    """Add user defined recombined tool classifications to the family pred df, and calc RI and ARI.
+    
+    :param tool_combiniations: set of tuples, one tuple per user defined combination of tools
+    :param all_family_predictions: Pandas df, 
+        columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy family
+            denoting if annotation predicted (1) or not predicted (0), Rand_index and Adjusted_rand_index
+    :param all_family_ground_truths: Pandas df, 
+        columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy family
+            denoting if annotation given by CAZy (1) or not  (0)
+
+    Return prediciton df with the new recombine tool predictions.
+    """
+    new_rows_pred = []  # list of nested lists, one nested list per new row
+    new_rows_gt = []
+
+    family_names = foundation_dict()
+    family_names = list(family_names.keys())
+
+    for tool_combo in tool_combiniations:
+        tool_1_rows = all_family_predictions[all_family_predictions['Prediction_tool'].str.contains(tool_combo[0])]
+        tool_2_rows = all_family_predictions[all_family_predictions['Prediction_tool'].str.contains(tool_combo[1])]
+        tool_3_rows = all_family_predictions[all_family_predictions['Prediction_tool'].str.contains(tool_combo[2])]
+
+        combo_name = f"{tool_combo[0]}_{tool_combo[1]}_{tool_combo[2]}"
+
+        row_index = 0
+        # 1 row = 1 protein
+        for row_index in tqdm(range(len(tool_1_rows)),desc=f"Getting CAZy family predicitons for {combo_name}"):
+            tool_1_row = tool_1_rows.iloc[row_index]
+            protein_accession = tool_1_row['Protein_accession']
+
+            tool_2_row = tool_2_rows[tool_2_rows['Protein_accession'].str.contains(protein_accession)].iloc[0]  # retrieve pandas series
+            tool_3_row = tool_3_rows[tool_3_rows['Protein_accession'].str.contains(protein_accession)].iloc[0]  # retrieve pandas series
+
+            new_row_pred = [tool_1_row['Genomic_accession'], protein_accession, tool_1_row['Prediction_tool']]
+            y_pred = []  # family classifications for this protein
+
+            protein_ground_truths = all_family_ground_truths[all_family_ground_truths['Protein_accession'].str.contains(protein_accession)].iloc[0]
+            new_row_gt = [tool_1_row['Genomic_accession'], protein_accession, tool_1_row['Prediction_tool']]
+            y_true = []
+
+            for fam in family_names:
+                tool_1_fam = tool_1_row[fam]
+                tool_2_fam = tool_2_row[fam]
+                tool_3_fam = tool_3_row[fam]
+
+                total = tool_1_fam + tool_2_fam + tool_3_fam
+
+                if total >= 2:
+                    fam_classification = 1
+                else:
+                    fam_classification = 0
+
+                new_row_pred.append(fam_classification)
+                y_pred.append(fam_classification)
+                new_row_gt.append(protein_ground_truths[fam])
+                y_true.append(protein_ground_truths[fam])
+
+            ri = rand_score(y_true, y_pred)
+            new_row_pred.append(ri)
+
+            ari = adjusted_rand_score(y_true, y_pred)
+            new_row_pred.append(ari)
+        
+    column_names = list(all_family_predictions.columns)
+        
+    for new_row in tqdm(new_rows_pred, desc="Adding recombined tools CAZy fam annotations to df"):
+        new_df_row = pd.DataFrame(new_row, columns=column_names)
+
+        all_family_predictions = all_family_predictions.append(new_df_row)
+
+    for new_row in tqdm(new_rows_gt, desc="Adding recombined tools CAZy fam ground truths to df"):
+        new_df_row = pd.DataFrame(new_row, columns=column_names)
+
+        all_family_ground_truths = all_family_ground_truths.append(new_df_row)
+    
+    return all_family_predictions, all_family_ground_truths
