@@ -229,6 +229,7 @@ def calculate_class_stats(
     prediction_df,
     args,
     class_list=["GH", "GT", "PL", "CE", "AA", "CBM"],
+    tools=["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"],
 ):
     """Calculate the adjusted rand index and rand index of CAZy class annotation predictions.
 
@@ -246,7 +247,7 @@ def calculate_class_stats(
     across_all_test_sets_data = []
 
     # evaluate performance across all test sets and all proteins
-    for tool in ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]:
+    for tool in tools:
         # retrieve the rows of interest from from predictions and ground truths df
         tool_class_ground_truths = ground_truth_df.loc[ground_truth_df["Prediction_tool"] == tool]
         tool_class_predictions = prediction_df.loc[prediction_df["Prediction_tool"] == tool]
@@ -370,6 +371,7 @@ def calculate_class_stats_by_testsets(
     prediction_df,
     args,
     class_list=["GH", "GT", "PL", "CE", "AA", "CBM"],
+    tools=["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"],
 ):
     """Calculate statistical parameters for evaluating performance of CAZy clas prediction for each
     test set and each prediction tool.
@@ -394,7 +396,7 @@ def calculate_class_stats_by_testsets(
 
     class_stats_data = []  # Genomic_accession, Prediction_tool, Statistic_parameter, Stat_value
 
-    for tool in ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]:
+    for tool in tools:
         # retrieve the rows of interest from dataframes with the current working prediction tool
         tool_ground_truths = ground_truth_df.loc[ground_truth_df["Prediction_tool"] == tool]
         tool_predictions = prediction_df.loc[prediction_df["Prediction_tool"] == tool]
