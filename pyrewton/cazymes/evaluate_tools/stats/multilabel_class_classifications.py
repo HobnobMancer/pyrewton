@@ -623,20 +623,21 @@ def evaluate_taxa_performance(
 def get_recombined_tool_class_classifications(
     class_predictions_df,
     class_ground_truths_df,
-    tool_combonations,
+    tool_combiniations,
     class_list=["GH", "GT", "PL", "CE", "AA", "CBM"],
 ):
     """Retrieve the CAZy class consensus classification for user defined tool recombinations.
     
     Also calculate the RI and ARI for the user defined tool recombinations.
     
-    :param
+    :param tool_combiniations: set of tuples, one tuple per user defined combination of tools
     
     Return parsed class_prediction df
     """
-    new_rows = []  # list of nested lists, one nested list per new row to add to the class_predictions_df
+    new_rows_pred = []  # list of nested lists, one nested list per new row to add to the class_predictions_df
+    new_rows_gt = []
 
-    for tool_combo in tool_combonations:
+    for tool_combo in tool_combiniations:
         tool_1_rows = class_predictions_df[class_predictions_df['Prediction_tool'].str.contains(tool_combo[0])]
         tool_2_rows = class_predictions_df[class_predictions_df['Prediction_tool'].str.contains(tool_combo[1])]
         tool_3_rows = class_predictions_df[class_predictions_df['Prediction_tool'].str.contains(tool_combo[2])]
@@ -652,11 +653,13 @@ def get_recombined_tool_class_classifications(
             tool_2_row = tool_2_rows[tool_2_rows['Protein_accession'].str.contains(protein_accession)].iloc[0]  # retrieve pandas series
             tool_3_row = tool_3_rows[tool_3_rows['Protein_accession'].str.contains(protein_accession)].iloc[0]  # retrieve pandas series
 
-            new_row = [tool_1_row['Genomic_accession'], protein_accession, tool_1_row['Prediction_tool']]
+            new_row_pred = [tool_1_row['Genomic_accession'], protein_accession, tool_1_row['Prediction_tool']]
+            new_row_gt = [tool_1_row['Genomic_accession'], protein_accession, tool_1_row['Prediction_tool']]
+
             y_pred = []  # class classifications for this protein
 
             protein_ground_truths = class_ground_truths_df[class_ground_truths_df['Protein_accession'].str.contains(protein_accession)].iloc[0]
-            ground_truth_classifications = []
+            y_true = []
 
             for cazy_class in class_list:
                 tool_1_class = tool_1_row[cazy_class]
@@ -670,23 +673,27 @@ def get_recombined_tool_class_classifications(
                 else:
                     class_classification = 0
 
-                new_row.append(class_classification)
+                new_row_pred.append(class_classification)
                 y_pred.append(class_classification)
-                ground_truth_classifications.append(protein_ground_truths[cazy_class])
-
-            y_true = ground_truth_classifications[class_list]
+                new_row_gt.append(protein_ground_truths[cazy_class])
+                y_true.append(protein_ground_truths[cazy_class])
 
             ri = rand_score(y_true, y_pred)
-            new_row.append(ri)
+            new_row_pred.append(ri)
 
             ari = adjusted_rand_score(y_true, y_pred)
-            new_row.append(ari)
+            new_row_pred.append(ari)
 
     column_names = list(class_predictions_df.columns)
     
-    for new_row in tqdm(new_rows, desc="Adding recombined tools CAZy class annotations to df"):
+    for new_row in tqdm(new_row_pred, desc="Adding recombined tools CAZy class annotations to df"):
         new_df_row = pd.DataFrame(new_row, columns=column_names)
 
         class_predictions_df = class_predictions_df.append(new_df_row)
+
+    for new_row in tqdm(new_row_gt, desc="Adding recombined tools CAZy class ground truths to df"):
+        new_df_row = pd.DataFrame(new_row, columns=column_names)
+
+        class_ground_truths_df = class_ground_truths_df.append(new_df_row)
     
-    return class_predictions_df
+    return class_predictions_df, class_ground_truths_df
