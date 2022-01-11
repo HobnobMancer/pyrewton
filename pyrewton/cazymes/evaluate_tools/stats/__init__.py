@@ -755,10 +755,38 @@ def evaluate_recombining_tools(
         tool_recombinations,
     )
 
-    
-    
+    binary_c_nc_statistics = []  # [[stat, genomic assembly, prediction tool, value]]
 
+    tools = ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]
+    for tool_combo in tool_recombinations:
+        tool_name = f"{tool_combo[0]}_{tool_combo[1]}_{tool_combo[2]}"
+        tools.append(tool_name)
 
+    for binary_df in tqdm(parsed_binary_dfs, "Calculating recombined tools binary stats"):
+        genomic_accession = binary_df.iloc[0]['Genomic_accession']
+        binary_c_nc_statistics += binary_classification.evaluate_binary_cazyme_noncazyme_predictions(
+            binary_df,
+            genomic_accession,
+            args,
+            tools=tools,
+        )
+    
+        output_path = args.output / "binary_classifications" / f"binary_classifications_{time_stamp}_{genomic_accession}_recombined_tools.csv"
+        binary_df.to_csv(output_path)
+
+    # build dataframe of statisticl evaluations of binary CAZyme/non-CAZyme classifications
+    binary_c_nc_statistics_rt = pd.DataFrame(
+        binary_c_nc_statistics,
+        columns=[
+            'Statistic_parameter',
+            'Genomic_assembly',
+            'Prediction_tool',
+            'Statistic_value',
+        ],
+    )
+
+    output_path = args.output / f'binary_classification_recombined_tools_{time_stamp}.csv'
+    binary_c_nc_statistics_rt.to_csv(output_path)  # USED FOR EVALUATION IN R
 
 
 def get_tool_combinations(args):
