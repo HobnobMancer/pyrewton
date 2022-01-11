@@ -87,6 +87,15 @@ def build_parser(argv: Optional[List] = None):
         help="Defines log file name and/or path",
     )
 
+
+    # Add option to change the number rounds of bootstrapping
+    parser.add_argument(
+        "-b",
+        "--bs_resampling",
+        type=int,
+        default=100,
+        help="Number of rounds of bootstrap resampling",
+    )
     # Add option to prevent over writing of existing files
     # and cause addition of files to output directory
     parser.add_argument(
@@ -107,13 +116,13 @@ def build_parser(argv: Optional[List] = None):
         default=Path(os.getcwd()),
         help="Directory to which all outputs are written",
     )
-    # Add option to change the number rounds of bootstrapping
+
     parser.add_argument(
         "-r",
-        "--bs_resampling",
-        type=int,
-        default=100,
-        help="Number of rounds of bootstrap resampling",
+        "--recombine_tools",
+        type=Path,
+        default=None,
+        help="Path to txt file containing list of recombined tool groups. Three tools per row, separted by a single comma.",
     )
     # Add option to change the number of test sets used for bootstrapping
     parser.add_argument(
