@@ -90,7 +90,7 @@ def build_parser(argv: Optional[List] = None):
 
     # Add option to change the number rounds of bootstrapping
     parser.add_argument(
-        "-b",
+        "-B",
         "--bs_resampling",
         type=int,
         default=100,
