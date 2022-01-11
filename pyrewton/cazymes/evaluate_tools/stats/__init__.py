@@ -750,39 +750,15 @@ def evaluate_recombining_tools(
         )
         return
 
-    # add tool recombinations to the binary classification dfs
-    parsed_binary_dfs = {}  # {genomic_accession: {column_name: [C/NC classifications]}}
+    parsed_binary_dfs = binary_classification.add_recombined_tools(
+        all_binary_c_nc_dfs,
+        tool_recombinations,
+    )
 
-    for binary_df in tqdm(all_binary_c_nc_dfs, desc="Parsing recombined tools binary classifications"):
-        row_index = 0
-        # 1 row = 1 protein
-        for row_index in range(len(binary_df)):
-            row = binary_df.iloc[row_index]
+    
+    
 
-            for tool_combo in tool_recombinations:
-                tool_1 = row[tool_combo[0]]
-                tool_2 = row[tool_combo[1]]
-                tool_3 = row[tool_combo[2]]
 
-                total = tool_1 + tool_2 + tool_3
-
-                if total >= 2:
-                    cazyme_classification = 1
-                else:
-                    cazyme_classification = 0
-
-                column_name = f"{tool_combo[0]}_{tool_combo[1]}_{tool_combo[2]}"
-
-                try:
-                    parsed_binary_dfs[row["Genomic_accession"]]
-                    try:
-                        parsed_binary_dfs[row["Genomic_accession"]][column_name].append(cazyme_classification)
-                    except KeyError:
-                        parsed_binary_dfs[row["Genomic_accession"]][column_name] = [cazyme_classification]
-                except KeyError:
-                    parsed_binary_dfs[row["Genomic_accession"]] = {column_name: [cazyme_classification]}
-
-    for 
 
 
 def get_tool_combinations(args):
