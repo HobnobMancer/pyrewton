@@ -188,7 +188,12 @@ def add_ground_truths(classifications_df, cazy, data_source):
     return classifications_df
 
 
-def evaluate_binary_cazyme_noncazyme_predictions(classifications_df, genomic_accession, args):
+def evaluate_binary_cazyme_noncazyme_predictions(
+    classifications_df,
+    genomic_accession,
+    args,
+    tools=["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"],
+):
     """Calculate the Fbeta-score, recall (sensitivity), precision and specificity for
     CAZyme/non-CAZyme prediction.
 
@@ -207,7 +212,7 @@ def evaluate_binary_cazyme_noncazyme_predictions(classifications_df, genomic_acc
     stats_results = []  # [[stat, genome, tool, value]]
 
     # build a dict to store statistical parameters
-    for tool in ["dbCAN", "HMMER", "Hotpep", "DIAMOND", "CUPP", "eCAMI"]:
+    for tool in tools:
         y_pred = classifications_df[tool].to_numpy()
 
         # calculations
@@ -496,3 +501,55 @@ def get_blast_score_ratio(alignment_score_df, protein_accession, prediction_type
     highest_score = highest_score["blast_score_ratio"]
 
     return highest_score
+
+
+def add_recombined_tools(all_binary_c_nc_dfs, tool_recombinations):
+    """Add consensus C/NC classifications for user defined combination of tools.
+    
+    :param all_binary_c_nc_dfs: Pandas df, of binary classifications
+        columns: Protein_accession, Genomic_accession, one column per tool, CAZy
+    :param tool_recombinations: set of tuples, one tuple per combination of tools.
+    
+    Return list of binary classification dfs containing new columns, one new column per 
+    user defined combination of tools
+    """
+    # add tool recombinations to the binary classification dfs
+    parsed_binary_dfs = {}  # {genomic_accession: {column_name: [C/NC classifications]}}
+
+    for binary_df in tqdm(all_binary_c_nc_dfs, desc="Parsing recombined tools binary classifications"):
+        row_index = 0
+        # 1 row = 1 protein
+        for row_index in range(len(binary_df)):
+            row = binary_df.iloc[row_index]
+
+            for tool_combo in tool_recombinations:
+                tool_1 = row[tool_combo[0]]
+                tool_2 = row[tool_combo[1]]
+                tool_3 = row[tool_combo[2]]
+
+                total = tool_1 + tool_2 + tool_3
+
+                if total >= 2:
+                    cazyme_classification = 1
+                else:
+                    cazyme_classification = 0
+
+                column_name = f"{tool_combo[0]}_{tool_combo[1]}_{tool_combo[2]}"
+
+                try:
+                    parsed_binary_dfs[row["Genomic_accession"]]
+                    try:
+                        parsed_binary_dfs[row["Genomic_accession"]][column_name].append(cazyme_classification)
+                    except KeyError:
+                        parsed_binary_dfs[row["Genomic_accession"]][column_name] = [cazyme_classification]
+                except KeyError:
+                    parsed_binary_dfs[row["Genomic_accession"]] = {column_name: [cazyme_classification]}
+
+    new_dfs = []
+    for binary_df in tqdm(all_binary_c_nc_dfs, desc="Adding recombined tools binary classifications"):
+        for tool_combo in tool_recombinations:
+            column_name = f"{tool_combo[0]}_{tool_combo[1]}_{tool_combo[2]}"
+            binary_df[column_name] = parsed_binary_dfs[row["Genomic_accession"]][column_name]
+            new_dfs.append(binary_df)
+
+    return new_dfs
