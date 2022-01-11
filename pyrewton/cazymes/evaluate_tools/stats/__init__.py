@@ -836,6 +836,7 @@ def evaluate_recombining_tools(
         parsed_family_classifications,
         parsed_family_ground_truths,
         args,
+        tools=tools,
     )  # creates a dataframe USED FOR EVALUATION IN R
 
     output_path = args.output / f"family_per_row_stats_recombined_tools_{time_stamp}.csv"
