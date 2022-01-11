@@ -788,6 +788,34 @@ def evaluate_recombining_tools(
     output_path = args.output / f'binary_classification_recombined_tools_{time_stamp}.csv'
     binary_c_nc_statistics_rt.to_csv(output_path)  # USED FOR EVALUATION IN R
 
+    parsed_class_predictions_df = class_classifications.get_recombined_tool_class_classifications(
+        class_predictions_df,
+        class_ground_truths_df,
+        tool_recombinations,
+        class_list=["GH", "GT", "PL", "CE", "AA", "CBM"],
+    )
+
+    output_path = args.output / f"class_classification_recombined_tools_{time_stamp}.csv"
+    parsed_class_predictions_df.to_csv(output_path)  # USED FOR EVALUATION IN R
+
+    class_stats_df = class_classifications.calculate_class_stats(
+        class_ground_truths_df,
+        parsed_class_predictions_df,
+        args,
+    )
+
+    output_path = args.output / f"class_stats_across_all_test_sets_recombined_tools_{time_stamp}.csv"
+    class_stats_df.to_csv(output_path)
+
+    class_stats_df_testset = class_classifications.calculate_class_stats_by_testsets(
+        class_ground_truths_df,
+        parsed_class_predictions_df,
+        args,
+    )
+
+    output_path = args.output / f"class_stats_per_test_set_recombined_tools_{time_stamp}.csv"
+    class_stats_df_testset.to_csv(output_path)
+
 
 def get_tool_combinations(args):
     """Retrieve the user defined combination of tools.
