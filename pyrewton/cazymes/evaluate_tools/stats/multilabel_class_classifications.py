@@ -617,3 +617,74 @@ def evaluate_taxa_performance(
 
     return
 
+
+def get_recombined_tool_class_classifications(
+    class_predictions_df,
+    class_ground_truths_df,
+    tool_combonations,
+    class_list=["GH", "GT", "PL", "CE", "AA", "CBM"],
+):
+    """Retrieve the CAZy class consensus classification for user defined tool recombinations.
+    
+    Also calculate the RI and ARI for the user defined tool recombinations.
+    
+    :param
+    
+    Return parsed class_prediction df
+    """
+    new_rows = []  # list of nested lists, one nested list per new row to add to the class_predictions_df
+
+    for tool_combo in tool_combonations:
+        tool_1_rows = class_predictions_df[class_predictions_df['Prediction_tool'].str.contains(tool_combo[0])]
+        tool_2_rows = class_predictions_df[class_predictions_df['Prediction_tool'].str.contains(tool_combo[1])]
+        tool_3_rows = class_predictions_df[class_predictions_df['Prediction_tool'].str.contains(tool_combo[2])]
+
+        combo_name = f"{tool_combo[0]}_{tool_combo[1]}_{tool_combo[2]}"
+
+        row_index = 0
+        # 1 row = 1 protein
+        for row_index in tqdm(range(len(tool_1_rows)),desc=f"Getting CAZy class predicitons for {combo_name}"):
+            tool_1_row = tool_1_rows.iloc[row_index]
+            protein_accession = tool_1_row['Protein_accession']
+
+            tool_2_row = tool_2_rows[tool_2_rows['Protein_accession'].str.contains(protein_accession)].iloc[0]  # retrieve pandas series
+            tool_3_row = tool_3_rows[tool_3_rows['Protein_accession'].str.contains(protein_accession)].iloc[0]  # retrieve pandas series
+
+            new_row = [tool_1_row['Genomic_accession'], protein_accession, tool_1_row['Prediction_tool']]
+            y_pred = []  # class classifications for this protein
+
+            protein_ground_truths = class_ground_truths_df[class_ground_truths_df['Protein_accession'].str.contains(protein_accession)].iloc[0]
+            ground_truth_classifications = []
+
+            for cazy_class in class_list:
+                tool_1_class = tool_1_row[cazy_class]
+                tool_2_class = tool_2_row[cazy_class]
+                tool_3_class = tool_3_row[cazy_class]
+
+                total = tool_1_class + tool_2_class + tool_3_class
+
+                if total >= 2:
+                    class_classification = 1
+                else:
+                    class_classification = 0
+
+                new_row.append(class_classification)
+                y_pred.append(class_classification)
+                ground_truth_classifications.append(protein_ground_truths[cazy_class])
+
+            y_true = ground_truth_classifications[class_list]
+
+            ri = rand_score(y_true, y_pred)
+            new_row.append(ri)
+
+            ari = adjusted_rand_score(y_true, y_pred)
+            new_row.append(ari)
+
+    column_names = list(class_predictions_df.columns)
+    
+    for new_row in tqdm(new_rows, desc="Adding recombined tools CAZy class annotations to df"):
+        new_df_row = pd.DataFrame(new_row, columns=column_names)
+
+        class_predictions_df = class_predictions_df.append(new_df_row)
+    
+    return class_predictions_df
