@@ -348,7 +348,7 @@ def evaluate_performance(predictions, cazy, data_source, args):
 
     if args.recombine_tools is not None:  # recombine tools to evaluate the impace
         evaluate_recombining_tools(
-            binary_c_nc_statistics,
+            all_binary_c_nc_dfs,
             all_family_predictions,
             all_family_ground_truths,
             class_predictions_df,
@@ -708,7 +708,7 @@ def add_tax_group(df, tax_dict, column_name):
 
 
 def evaluate_recombining_tools(
-    binary_c_nc_statistics,
+    all_binary_c_nc_dfs,
     all_family_predictions,
     all_family_ground_truths,
     class_predictions_df,
@@ -718,8 +718,8 @@ def evaluate_recombining_tools(
 ):
     """Recombine tools and evaluate the performance of the consensus.
 
-    :param binary_c_nc_statistics: Pandas df, of binary evaluation
-        columns: Statistic_parameter, Genomic_assembly, Prediction_tool, Statistic_value
+    :param all_binary_c_nc_dfs: Pandas df, of binary classifications
+        columns: Protein_accession, Genomic_accession, one column per tool, CAZy
     :param all_family_predictions: Pandas df, 
         columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy family
             denoting if annotation predicted (1) or not predicted (0), Rand_index and Adjusted_rand_index
@@ -745,9 +745,44 @@ def evaluate_recombining_tools(
         return
     if len(tool_recombinations) == 0:
         logging.warning(
-            ""
+            f"Retrieved no tool recombinations from the file:\n{args.recombine_tools}"
+            "No performing the evaluation of recombining tools"
         )
         return
+
+    # add tool recombinations to the binary classification dfs
+    parsed_binary_dfs = {}  # {genomic_accession: {column_name: [C/NC classifications]}}
+
+    for binary_df in tqdm(all_binary_c_nc_dfs, desc="Parsing recombined tools binary classifications"):
+        row_index = 0
+        # 1 row = 1 protein
+        for row_index in range(len(binary_df)):
+            row = binary_df.iloc[row_index]
+
+            for tool_combo in tool_recombinations:
+                tool_1 = row[tool_combo[0]]
+                tool_2 = row[tool_combo[1]]
+                tool_3 = row[tool_combo[2]]
+
+                total = tool_1 + tool_2 + tool_3
+
+                if total >= 2:
+                    cazyme_classification = 1
+                else:
+                    cazyme_classification = 0
+
+                column_name = f"{tool_combo[0]}_{tool_combo[1]}_{tool_combo[2]}"
+
+                try:
+                    parsed_binary_dfs[row["Genomic_accession"]]
+                    try:
+                        parsed_binary_dfs[row["Genomic_accession"]][column_name].append(cazyme_classification)
+                    except KeyError:
+                        parsed_binary_dfs[row["Genomic_accession"]][column_name] = [cazyme_classification]
+                except KeyError:
+                    parsed_binary_dfs[row["Genomic_accession"]] = {column_name: [cazyme_classification]}
+
+    for 
 
 
 def get_tool_combinations(args):
