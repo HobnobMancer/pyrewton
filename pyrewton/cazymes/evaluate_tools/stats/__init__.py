@@ -788,7 +788,7 @@ def evaluate_recombining_tools(
     output_path = args.output / f'binary_classification_recombined_tools_{time_stamp}.csv'
     binary_c_nc_statistics_rt.to_csv(output_path)  # USED FOR EVALUATION IN R
 
-    parsed_class_predictions_df = class_classifications.get_recombined_tool_class_classifications(
+    parsed_class_predictions_df, parsed_class_ground_truths = class_classifications.get_recombined_tool_class_classifications(
         class_predictions_df,
         class_ground_truths_df,
         tool_recombinations,
@@ -797,9 +797,11 @@ def evaluate_recombining_tools(
 
     output_path = args.output / f"class_classification_recombined_tools_{time_stamp}.csv"
     parsed_class_predictions_df.to_csv(output_path)  # USED FOR EVALUATION IN R
+    output_path = args.output / f"class_ground_truths_classification_recombined_tools_{time_stamp}.csv"
+    parsed_class_ground_truths.to_csv(output_path)  # USED FOR EVALUATION IN R
 
     class_stats_df = class_classifications.calculate_class_stats(
-        class_ground_truths_df,
+        parsed_class_ground_truths,
         parsed_class_predictions_df,
         args,
         tools=tools,
@@ -809,7 +811,7 @@ def evaluate_recombining_tools(
     class_stats_df.to_csv(output_path)
 
     class_stats_df_testset = class_classifications.calculate_class_stats_by_testsets(
-        class_ground_truths_df,
+        parsed_class_ground_truths,
         parsed_class_predictions_df,
         args,
         tools=tools,
@@ -817,6 +819,32 @@ def evaluate_recombining_tools(
 
     output_path = args.output / f"class_stats_per_test_set_recombined_tools_{time_stamp}.csv"
     class_stats_df_testset.to_csv(output_path)
+
+    parsed_family_classifications, parsed_family_ground_truths = family_classifications.add_recombined_tool_classifications(
+        all_family_predictions,
+        all_family_ground_truths,
+        tool_recombinations,
+    )
+
+    output_path = args.output / f"family_classification_recombined_tools_{time_stamp}.csv"
+    parsed_family_classifications.to_csv(output_path)  # USED FOR EVALUATION IN R
+    output_path = args.output / f"family_ground_truths_classification_recombined_tools_{time_stamp}.csv"
+    parsed_family_ground_truths.to_csv(output_path)  # USED FOR EVALUATION IN R
+
+    # evaluate the performance of predicting the correct CAZy family ACROSS ALL test sets
+    fam_stats_df, fams_longform_df = family_classifications.calc_fam_stats(
+        parsed_family_classifications,
+        parsed_family_ground_truths,
+        args,
+    )  # creates a dataframe USED FOR EVALUATION IN R
+
+    output_path = args.output / f"family_per_row_stats_recombined_tools_{time_stamp}.csv"
+    fam_stats_df.to_csv(output_path)
+
+    output_path = args.output / f"family_long_form_stats_recombined_tools_df_{time_stamp}.csv"
+    fams_longform_df.to_csv(output_path)
+
+    return
 
 
 def get_tool_combinations(args):
