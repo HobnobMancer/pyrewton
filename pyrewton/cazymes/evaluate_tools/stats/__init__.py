@@ -346,6 +346,17 @@ def evaluate_performance(predictions, cazy, data_source, args):
             args,
         )
 
+    if args.recombine_tools is not None:  # recombine tools to evaluate the impace
+        evaluate_recombining_tools(
+            binary_c_nc_statistics,
+            all_family_predictions,
+            all_family_ground_truths,
+            class_predictions_df,
+            class_ground_truths_df,
+            time_stamp,
+            args,
+        )
+
     return all_family_ground_truths
 
 
@@ -694,3 +705,85 @@ def add_tax_group(df, tax_dict, column_name):
     df['Tax_group'] = tax_groups
 
     return df
+
+
+def evaluate_recombining_tools(
+    binary_c_nc_statistics,
+    all_family_predictions,
+    all_family_ground_truths,
+    class_predictions_df,
+    class_ground_truths_df,
+    time_stamp,
+    args,
+):
+    """Recombine tools and evaluate the performance of the consensus.
+
+    :param binary_c_nc_statistics: Pandas df, of binary evaluation
+        columns: Statistic_parameter, Genomic_assembly, Prediction_tool, Statistic_value
+    :param all_family_predictions: Pandas df, 
+        columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy family
+            denoting if annotation predicted (1) or not predicted (0), Rand_index and Adjusted_rand_index
+    :param all_family_ground_truths: Pandas df, 
+        columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy family
+            denoting if annotation given by CAZy (1) or not  (0)
+    :param class_predictions_df: Pandas df,
+        columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy class
+            denoting if annotation predicted (1) or not predicted (0), Rand_index and Adjusted_rand_index
+    :param class_ground_truths_df: Pandas df, 
+        columns: Genomic_accession, Protein_accession, Prediction_tool, one column per CAZy class
+            denoting if annotation given by CAZy (1) or not  (0)
+    :param time_stamp: str, date and time evaluation was invoked
+    :param args: cmd-line args parser
+    
+    Return nothing.
+    """
+    logger = logging.getLogger(__name__)
+
+    tool_recombinations = get_tool_combinations(args)
+    
+    if tool_recombinations is None:
+        return
+    if len(tool_recombinations) == 0:
+        logging.warning(
+            ""
+        )
+        return
+
+
+def get_tool_combinations(args):
+    """Retrieve the user defined combination of tools.
+    
+    :param args: cmd-lines args parser
+    
+    Return set of tuples, one tuple per combination of tools.
+    """
+    logger = logging.getLogger(__name__)
+
+    try:
+        with open(args.recombine_tools, 'r') as fh:
+            lines = fh.read().splitlines()
+    except FileNotFoundError:
+        logger.error(
+            f"Could not open file containing recombination of tools/classifiers at:\n"
+            f"{args.recombine_tools}\n"
+            "Will not evaluate performance of recombining tools/classifiers"
+        )
+        return
+    
+    tool_combinations = set()
+
+    for line in lines:
+        line_data = line.split(',')
+        try:
+            tools = (line_data[0], line_data[1], line_data[2])
+        except IndexError:
+            logger.warning(
+                "Could not retrieve 3 tools/classifiers from the file of tool combinations\n"
+                f"File: {args.recombine_tools}\n"
+                f"Line: {line}"
+                "Not including this data in the tool recombination evaluation"
+            )
+            continue
+        tool_combinations.add(tools)
+    
+    return tool_combinations
