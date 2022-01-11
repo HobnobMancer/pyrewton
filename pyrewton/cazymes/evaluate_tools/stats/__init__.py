@@ -802,6 +802,7 @@ def evaluate_recombining_tools(
         class_ground_truths_df,
         parsed_class_predictions_df,
         args,
+        tools=tools,
     )
 
     output_path = args.output / f"class_stats_across_all_test_sets_recombined_tools_{time_stamp}.csv"
@@ -811,6 +812,7 @@ def evaluate_recombining_tools(
         class_ground_truths_df,
         parsed_class_predictions_df,
         args,
+        tools=tools,
     )
 
     output_path = args.output / f"class_stats_per_test_set_recombined_tools_{time_stamp}.csv"
