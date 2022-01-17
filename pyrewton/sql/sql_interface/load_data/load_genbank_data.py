@@ -46,6 +46,7 @@ from pyrewton.sql.sql_orm import (
     Assembly,
     CazyFamily,
     Classifier,
+    Domain,
     Protein,
     Taxonomy,
     Session,
@@ -135,3 +136,19 @@ def get_family_db_ids(connection):
         fam_dict[record.family] = record.family_id
 
     return fam_dict
+
+
+def get_protein_records(connection, protein_accessions):
+    """Retrieve records for proteins matching the user's criteria.
+    
+    :param connection: open sqlalchemy connection to an SQLite3 db engine
+    :param protein_accessions: list of protein accessions
+    
+    Return list of Protein table records.
+    """
+    with Session(bind=connection) as session:
+        db_records = session.query(Protein).all()
+
+    selected_records = [r for r in db_records if r.genbank_accession in protein_accessions]
+    
+    return selected_records
