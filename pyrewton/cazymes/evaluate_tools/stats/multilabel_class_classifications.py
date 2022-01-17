@@ -688,7 +688,8 @@ def get_recombined_tool_class_classifications(
             new_rows_pred.append(new_row_pred)
             new_rows_gt.append(new_row_gt)
 
-    column_names = list(class_predictions_df.columns)
+    column_names_pred = list(class_predictions_df.columns)
+    column_names_gt = list(class_ground_truths_df.columns)
 
     with open('class_rt_classifications.txt', 'w') as fh:
         for new_row in tqdm(new_row_pred, desc="Caching class classifications"):
@@ -699,12 +700,12 @@ def get_recombined_tool_class_classifications(
             fh.write(str(new_row))
     
     for new_row in tqdm(new_rows_pred, desc="Adding recombined tools CAZy class annotations to df"):
-        new_df_row = pd.DataFrame([new_row], columns=column_names)
+        new_df_row = pd.DataFrame([new_row], columns=column_names_pred)
 
         class_predictions_df = class_predictions_df.append(new_df_row)
 
     for new_row in tqdm(new_rows_gt, desc="Adding recombined tools CAZy class ground truths to df"):
-        new_df_row = pd.DataFrame([new_row], columns=column_names)
+        new_df_row = pd.DataFrame([new_row], columns=column_names_gt)
 
         class_ground_truths_df = class_ground_truths_df.append(new_df_row)
     

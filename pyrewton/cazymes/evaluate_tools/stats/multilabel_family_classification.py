@@ -589,7 +589,8 @@ def add_recombined_tool_classifications(
             new_rows_pred.append(new_row_pred)
             new_rows_gt.append(new_row_gt)
         
-    column_names = list(all_family_predictions.columns)
+    column_names_pred = list(all_family_predictions.columns)
+    column_names_gt = list(all_family_ground_truths.columns)
 
     with open('fam_rt_classifications.txt', 'w') as fh:
         for new_row in tqdm(new_row_pred, desc="Caching fam classifications"):
@@ -600,12 +601,12 @@ def add_recombined_tool_classifications(
             fh.write(str(new_row)) 
 
     for new_row in tqdm(new_rows_pred, desc="Adding recombined tools CAZy fam annotations to df"):
-        new_df_row = pd.DataFrame([new_row], columns=column_names)
+        new_df_row = pd.DataFrame([new_row], columns=column_names_pred)
 
         all_family_predictions = all_family_predictions.append(new_df_row)
 
     for new_row in tqdm(new_rows_gt, desc="Adding recombined tools CAZy fam ground truths to df"):
-        new_df_row = pd.DataFrame([new_row], columns=column_names)
+        new_df_row = pd.DataFrame([new_row], columns=column_names_gt)
 
         all_family_ground_truths = all_family_ground_truths.append(new_df_row)
     
