@@ -506,7 +506,8 @@ def get_blast_score_ratio(alignment_score_df, protein_accession, prediction_type
 def add_recombined_tools(all_binary_c_nc_dfs, tool_recombinations):
     """Add consensus C/NC classifications for user defined combination of tools.
     
-    :param all_binary_c_nc_dfs: Pandas df, of binary classifications
+    :param all_binary_c_nc_dfs: List of ClassificationDF instances,
+        each instance contains a Pandas df, of binary classifications
         columns: Protein_accession, Genomic_accession, one column per tool, CAZy
     :param tool_recombinations: set of tuples, one tuple per combination of tools.
     
@@ -516,7 +517,8 @@ def add_recombined_tools(all_binary_c_nc_dfs, tool_recombinations):
     # add tool recombinations to the binary classification dfs
     parsed_binary_dfs = {}  # {genomic_accession: {column_name: [C/NC classifications]}}
 
-    for binary_df in tqdm(all_binary_c_nc_dfs, desc="Parsing recombined tools binary classifications"):
+    for binary_df_instance in tqdm(all_binary_c_nc_dfs, desc="Parsing recombined tools binary classifications"):
+        binary_df = binary_df_instance.df
         row_index = 0
         # 1 row = 1 protein
         for row_index in range(len(binary_df)):
@@ -546,7 +548,8 @@ def add_recombined_tools(all_binary_c_nc_dfs, tool_recombinations):
                     parsed_binary_dfs[row["Genomic_accession"]] = {column_name: [cazyme_classification]}
 
     new_dfs = []
-    for binary_df in tqdm(all_binary_c_nc_dfs, desc="Adding recombined tools binary classifications"):
+    for binary_df_instance in tqdm(all_binary_c_nc_dfs, desc="Adding recombined tools binary classifications"):
+        binary_df = binary_df_instance.df
         for tool_combo in tool_recombinations:
             column_name = f"{tool_combo[0]}_{tool_combo[1]}_{tool_combo[2]}"
             binary_df[column_name] = parsed_binary_dfs[row["Genomic_accession"]][column_name]
