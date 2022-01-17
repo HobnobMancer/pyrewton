@@ -685,15 +685,26 @@ def get_recombined_tool_class_classifications(
             ari = adjusted_rand_score(y_true, y_pred)
             new_row_pred.append(ari)
 
+            new_rows_pred.append(new_row_pred)
+            new_rows_gt.append(new_row_gt)
+
     column_names = list(class_predictions_df.columns)
+
+    with open('class_rt_classifications.txt', 'w') as fh:
+        for new_row in tqdm(new_row_pred, desc="Caching class classifications"):
+            fh.write(str(new_row))
+
+    with open('class_rt_gt_classifications.txt', 'w') as fh:
+        for new_row in tqdm(new_row_gt, desc="Caching class gt classifications"):
+            fh.write(str(new_row))
     
-    for new_row in tqdm(new_row_pred, desc="Adding recombined tools CAZy class annotations to df"):
-        new_df_row = pd.DataFrame(new_row, columns=column_names)
+    for new_row in tqdm(new_rows_pred, desc="Adding recombined tools CAZy class annotations to df"):
+        new_df_row = pd.DataFrame([new_row], columns=column_names)
 
         class_predictions_df = class_predictions_df.append(new_df_row)
 
-    for new_row in tqdm(new_row_gt, desc="Adding recombined tools CAZy class ground truths to df"):
-        new_df_row = pd.DataFrame(new_row, columns=column_names)
+    for new_row in tqdm(new_rows_gt, desc="Adding recombined tools CAZy class ground truths to df"):
+        new_df_row = pd.DataFrame([new_row], columns=column_names)
 
         class_ground_truths_df = class_ground_truths_df.append(new_df_row)
     
