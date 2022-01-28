@@ -359,9 +359,12 @@ def insert_protein_names(protein_table_updates, connection):
                 f"UPDATE Proteins SET uniprot_id = '{record[1]}' WHERE protein_id = '{record[0]}'"
             )
         )
+        protein_name = record[2].replace('"', "")
+        protein_name = protein_name.replace("'", "")
+        protein_name = protein_name.replace("`", "")
         connection.execute(
             text(
-                f"UPDATE Proteins SET protein_name = '{record[2]}' WHERE protein_id = '{record[0]}'"
+                f"UPDATE Proteins SET protein_name = '{protein_name}' WHERE protein_id = '{record[0]}'"
             )
         )
 
