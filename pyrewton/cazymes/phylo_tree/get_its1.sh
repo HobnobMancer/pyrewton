@@ -52,6 +52,7 @@ mkdir -p $2
 
 for FILE in $1/*.fna
     do
+        echo "Analysing $FILE"
         ITSx -i $FILE \
         -o itsx/$FILE \
         --nhmmer T \
