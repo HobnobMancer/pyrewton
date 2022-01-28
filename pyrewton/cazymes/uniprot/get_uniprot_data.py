@@ -350,6 +350,7 @@ def get_uniprot_data(uniprot_gbk_dict, args):
             protein_ec_inserts ,
             ec_inserts,
             protein_table_updates,
+            args,
         )
 
         parsed_uniprot_ids = parsed_uniprot_ids.union(latest_parsed_uniprot_ids)
@@ -419,11 +420,12 @@ def query_uniprot(
     protein_ec_inserts ,
     ec_inserts,
     protein_table_updates,
+    args,
 ):
     logger = logging.getLogger(__name__)
 
     for query in tqdm(bioservices_queries, "Batch retrieving protein data from UniProt"):
-        uniprot_df = UniProt().get_df(entries=query)
+        uniprot_df = UniProt().get_df(entries=query, limit=args.batch_size)
 
         index = 0
         for index in tqdm(range(len(uniprot_df['Entry'])), desc="Parsing UniProt response"):
