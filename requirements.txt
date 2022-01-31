@@ -4,6 +4,7 @@ bandit
 biopython
 bioservices
 black
+cazy_webscraper
 coverage
 flake8
 mypy
