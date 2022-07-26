@@ -30,7 +30,7 @@ This page covers the specific method used to perform the presented evaluation of
 
 Information for the general operation of `pyrewton` and support troubleshooting can be found at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/).
 
-The supplementary tables and figures for the evaluation presented in Hobbs _et al_., can be [found here](https://hobnobmancer.github.io/pyrewton/pyrewton/cazymes/evaluate_tools/report/cazyme_prediction_tool_evaluation-2021-03-30.html).
+The supplementary tables and figures for the evaluation presented in Hobbs _et al_., can be [found here](https://hobnobmancer.github.io/pyrewton/pyrewton/cazymes/evaluate_tools/report/cazyme_prediction_tool_evaluation-2021-03-30-v0.9.html).
 
 ## Citation
 
@@ -111,7 +111,7 @@ For all required Python libraries please read 'requirements.txt'.
  
 At the time of publishing `pyrewton` no independent evaluation of the widely used CAZyme classifiers dbCAN, CUPP and eCAMI had been performed. Additionally, previous evaluations had not included an evaluation of the performance of the tools to differentiate between CAZymes and non-CAZymes predict the CAZy class annotation and had not evaluated the multi-label CAZy family annotation performance of the classifiers.
 
-The supplementary tables and figures for the evaluation presented in Hobbs _et al_., can be [found here](https://hobnobmancer.github.io/pyrewton/pyrewton/cazymes/evaluate_tools/report/cazyme_prediction_tool_evaluation-2021-03-30.html).
+The supplementary tables and figures for the evaluation presented in Hobbs _et al_., can be [found here](https://hobnobmancer.github.io/pyrewton/pyrewton/cazymes/evaluate_tools/report/cazyme_prediction_tool_evaluation-2021-03-30-v0.9.html).
 
 ### Retrieving ground truth annotations
 
