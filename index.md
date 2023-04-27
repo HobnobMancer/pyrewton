@@ -11,7 +11,12 @@
 [![Python](https://img.shields.io/badge/Python-v3.7.---orange)](https://www.python.org/about/)
 [![Research](https://img.shields.io/badge/Bioinformatics-Protein%20Engineering-ff69b4)](http://www.eastscotbiodtp.ac.uk/eastbio-student-cohort-2019)
 
-This page is published as supplementary material to the main [`pyrewton` repo](https://github.com/HobnobMancer/pyrewton), and the independent evaluation of the CAZyme classifiers [dbCAN](zhange _et al._, 2018), [CUPP](), and [eCAMI]() presented in [Hobbs et al., 2021]().
+
+## Supplementary information for the statistical evaluation of CAZyme classifiers
+
+This page is published as supplementary material to the main [`pyrewton` repo](https://github.com/HobnobMancer/pyrewton), and the independent evaluation of the CAZyme classifiers dbCAN (Zhange _et al._, 2018), CUPP (Barrett and Lange, 2019), and eCAMI (Xu _et al._, 2020) **presented in [Hobbs et al., 2021](https://figshare.com/articles/poster/Microbiology_Society_Annual_Conference_2021/14370836/3).**
+
+**The full, comprehensive report can be found [here](https://hobnobmancer.github.io/pyrewton/pyrewton/cazymes/evaluate_tools/report/cazyme_prediction_tool_evaluation-2021-03-30-v0.9.html)**.
 
 > Hobbs, E. E. M., Gloster, T. M., Chapman, S., Pritchard, L. (2021): Microbiology Society Annual Conference 2021. figshare. Poster. https://doi.org/10.6084/m9.figshare.14370836.v
 
