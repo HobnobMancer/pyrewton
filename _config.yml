@@ -1,4 +1,4 @@
-theme: jekyll-theme-architect
-logo: '/assets/repophdcover.png'
+theme: jekyll-theme-minimal
+logo: '/assets/logo.svg'
 title: pyrewton
-description: Repository containing the Python package pyrewton for the independent evaluation of CAZyme classifiers and creation of a comprehensive CAZome database.
+description: Bioinformatic pipeline for (i) the independent evaluation of CAZyme classifiers and (ii) creation of a comprehensive CAZome database.
