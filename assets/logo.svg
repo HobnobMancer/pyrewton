@@ -8,9 +8,9 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="93.962326mm"
-   height="94.267593mm"
-   viewBox="0 0 93.962326 94.267593"
+   width="92.893257mm"
+   height="94.305527mm"
+   viewBox="0 0 92.893255 94.305526"
    version="1.1"
    id="svg8"
    inkscape:version="1.0.2-2 (e86c870879, 2021-01-15)"
@@ -50,6 +50,36 @@
          height="10297722"
          id="rect17" />
     </clipPath>
+    <clipPath
+       id="clip1-0">
+      <rect
+         x="0"
+         y="0"
+         width="6629400"
+         height="10306050"
+         id="rect13-9" />
+    </clipPath>
+    <clipPath
+       id="clip3-8">
+      <rect
+         x="0"
+         y="0"
+         width="6629400"
+         height="10297722"
+         id="rect17-9" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath983">
+      <rect
+         style="fill:#194850;fill-opacity:1;stroke:#cc8523;stroke-width:65596.7;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
+         id="rect985"
+         width="6522591.5"
+         height="5159801.5"
+         x="-6522593"
+         y="0.0051324465"
+         transform="scale(-1,1)" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -58,9 +88,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.979899"
-     inkscape:cx="124.2379"
-     inkscape:cy="164.81843"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="-24.422025"
+     inkscape:cy="228.44364"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
@@ -86,10 +116,10 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-102.43409,-7.2946165)">
+     transform="translate(-132.101,-34.117275)">
     <g
        clip-path="url(#clip1)"
-       transform="matrix(-9.1468209e-6,0,0,-9.1468209e-6,196.39642,101.56221)"
+       transform="matrix(-9.1468209e-6,0,0,-9.1468209e-6,224.99426,128.4228)"
        id="g26">
       <g
          clip-path="url(#clip3)"
@@ -133,14 +163,58 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:14.3151px;line-height:1.25;font-family:sans-serif;fill:#194850;fill-opacity:1;stroke:none;stroke-width:0.0745577;"
-       x="101.49046"
-       y="85.080444"
+       style="font-style:normal;font-weight:normal;font-size:14.3151px;line-height:1.25;font-family:sans-serif;fill:#194850;fill-opacity:1;stroke:none;stroke-width:0.0745577"
+       x="131.15738"
+       y="112.87647"
        id="text52"><tspan
          sodipodi:role="line"
          id="tspan50"
-         x="101.49046"
-         y="85.080444"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:14.3151px;font-family:Consolas;-inkscape-font-specification:'Consolas Bold';fill:#194850;stroke-width:0.0745577;fill-opacity:1;">Pyrewton</tspan></text>
+         x="131.15738"
+         y="112.87647"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:14.3151px;font-family:Consolas;-inkscape-font-specification:'Consolas Bold';fill:#194850;fill-opacity:1;stroke-width:0.0745577">Pyrewton</tspan></text>
+    <g
+       clip-path="url(#clipPath983)"
+       transform="matrix(-9.1468209e-6,0,0,9.1468209e-6,224.99426,34.117275)"
+       id="g26-6">
+      <g
+         clip-path="url(#clip3-8)"
+         transform="matrix(1,0,0,1.00081,1,0)"
+         id="g24-5">
+        <use
+           width="100%"
+           height="100%"
+           xlink:href="#img2"
+           transform="scale(21101.9)"
+           id="use22-2"
+           x="0"
+           y="0" />
+      </g>
+      <g
+         id="g60-8"
+         style="stroke:#cc8523;stroke-width:65596.6;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
+         transform="translate(0,-10911.857)">
+        <path
+           style="fill:none;stroke:#cc8523;stroke-width:65596.6;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
+           d="M 6522592.7,5161307.8 0.59042684,-0.24140614 2555562.7,3890618.4 1026602.9,5161307.8 344769.53,522774.84"
+           id="path54-6" />
+        <path
+           style="fill:none;stroke:#cc8523;stroke-width:65596.6;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
+           d="m 2555562.4,3890618.2 3967030,1270689.6 H 1026602.6"
+           id="path56-01" />
+      </g>
+      <g
+         id="g60-6-5"
+         style="stroke:#cc8523;stroke-width:65596.6;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
+         transform="matrix(1,0,0,-1,0.00210246,10321109)">
+        <path
+           style="fill:none;stroke:#cc8523;stroke-width:65596.6;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
+           d="M 6522592.7,5161307.8 0.59042684,-0.24140614 2555562.7,3890618.4 1026602.9,5161307.8 344769.53,522774.84"
+           id="path54-0-2" />
+        <path
+           style="fill:none;stroke:#cc8523;stroke-width:65596.6;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.980392"
+           d="m 2555562.4,3890618.2 3967030,1270689.6 H 1026602.6"
+           id="path56-0-2" />
+      </g>
+    </g>
   </g>
 </svg>
