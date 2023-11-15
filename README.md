@@ -95,6 +95,99 @@ This section of the README lists the areas that are currently being worked upon 
 <p>&nbsp;</p>
 
 
+# Documentation
+
+Full documentation can be found at [Read the Docs](https://pyrewton.readthedocs.io/en/latest/?badge=latest).
+
+Here is a summary of using the `pyrewton` pipeline to automate annotating and exploring CAZymes and CAZomes of species of interest.
+
+## Download genomes.
+
+Use the `download_genomes` subcommand to download the genomic assemblies of all genomes available for a set of candidate species. 
+
+* Download GenBank assemblies to increase the probability of finding CAZy annotated CAZymes
+* If a GenBank assembly is not available, the RefSeq assembly is retrieved
+* Candidate species are specified using a plain text file
+    * List a unique species per line
+    * Identified species by their scientific name or NCBI Taxonomy ID
+    * If a species is specified, assemblies for all its stains are downloaded
+* Genomes downloaded in .GBFF format
+* Leave genomes compressed if working with `pyrewton` - to help manage disk space
+* A CSV file lising the scientific name, NCBI Taxonomy ID and the assembly version accession of all downloaded genomes is created to log the process
+
+Example command:
+```bash
+pyrewton download_genomes \
+    $1 \
+    -d data/genomes/genome_dataframe.csv \
+    -i data/species/species_list \
+    -o data/genomes/ 
+```
+
+Flags: 
+```bash
+positional arguments:
+  user email address    Email address of user, this must be provided for Entrez
+
+options:
+  -h, --help            show this help message and exit
+  -d DATAFRAME, --dataframe DATAFRAME
+                        Location of file for species table to be written to, include .csv extention (default: <_io.TextIOWrapper name='<stdout>'
+                        mode='w' encoding='utf-8'>)
+  -f, --force           Force file over writting (default: False)
+  -g, --genbank         Disable pulldown of GenBank (.gbff) files (default: True)
+  -i input file name, --input_file input file name
+                        Input filename (default: <_io.TextIOWrapper name='<stdin>' mode='r' encoding='utf-8'>)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  -n, --nodelete        enable/disable deletion of exisiting files (default: False)
+  -o output directory name, --output output directory name
+                        Path to output directory. STDOUT. Directory will be created if needed. (default: <_io.TextIOWrapper name='<stdout>' mode='w'     
+                        encoding='utf-8'>)
+  -r maximum number of retries, --retries maximum number of retries
+                        Defines the maximum number of retries if network errors are encountered (default: 10)
+  -t TIMEOUT, --timeout TIMEOUT
+                        Timeout for URL connections, in seconds (default: 10)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
+## Extract protein sequences
+
+The `extract_protein_seqs` subcommand extracts protein sequences from all CDS features in local, compressed GenBank Flat File Format (.gbff) genomic assemblies (.gbff.gz).
+
+* Extracts the protein sequence, protein version accession, locus tag, locus / location, and functional annotation
+* Creates a multiple sequence FASTA file of extracted protein sequences per genomic assembly
+* Creates a CSV file summarising the extraction, i.e. the number of proteins retrieved from each genome
+
+Example command:
+```bash
+pyrewton extract_protein_seqs \
+    data/genomes/genome_dataframe.csv \
+    data/genomes/ \
+    data/proteins/proteomes
+```
+
+Flags:
+```bash
+positional arguments:
+  input dataframe name  Path to input dataframe
+  genome_directory      Path to directory containing compressed genomic assemblies in GenBank Flat File Format (.gbff.gz)
+
+options:
+  -h, --help            show this help message and exit
+  -d OUTPUT_DF, --output_df OUTPUT_DF
+                        path to output directory to write FASTA files to (default: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>)        
+  -f, --force           Force file over writting (default: False)
+  -l LOG, --log LOG     Defines log file name and/or path (default: None)
+  -n, --nodelete        enable/disable deletion of exisiting files (default: False)
+  -o OUTPUT, --output OUTPUT
+                        Output directory. Path to directory to which FASTA files are written (default: <_io.TextIOWrapper name='<stdout>' mode='w'       
+                        encoding='utf-8'>)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
+# Repo structure
+
 ## Directories
 
 Below is a directory plan of this repository, followed by a brief overview of each directories role , to facilitate navigation through the repository.
