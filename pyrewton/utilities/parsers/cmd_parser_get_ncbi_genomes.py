@@ -16,22 +16,25 @@
 # UK
 
 # The MIT License
-"""Build parser for 'get_ncbi_genomes.py'"""
+"""Build CLI for invoke_dbcan.py"""
 
-import argparse
+
+import multiprocessing
 import sys
 
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, _SubParsersAction
 from pathlib import Path
 from typing import List, Optional
 
+from pyrewton.genbank.get_ncbi_genomes import get_ncbi_genomes
 
-def build_parser(argv: Optional[List] = None):
+
+def build_parser(
+    subps: _SubParsersAction, parents: Optional[List[ArgumentParser]] = None
+) -> None:
     """Return ArgumentParser parser for script."""
-    # Create parser object
-    parser = argparse.ArgumentParser(
-        prog="Extract_genomes_NCBI.py",
-        description="Programme to pull down genomic assembleis from NCBI",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    parser = subps.add_parser(
+        "download_genomes", formatter_class=ArgumentDefaultsHelpFormatter
     )
 
     # Add positional arguments to parser
@@ -142,9 +145,4 @@ def build_parser(argv: Optional[List] = None):
         help="Set logger level to 'INFO'",
     )
 
-    if argv is None:
-        # parse command-line
-        return parser
-    else:
-        # return namespace
-        return parser.parse_args(argv)
+    parser.set_defaults(func=get_ncbi_genomes.main)

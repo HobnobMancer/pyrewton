@@ -57,11 +57,11 @@ def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
         args = build_parser(argv)
 
     if args.citation:
-        sys.stderr.write(f"{__version__}\n")
-        sys.stderr.write(f"{__citation__}\n")
+        sys.stderr.write(f"Version: {__version__}\n")
+        sys.stderr.write(f"Citation: {__citation__}\n")
         return 0
     if args.version:
-        sys.stderr.write(f"{__version__}\n")
+        sys.stderr.write(f"Version: {__version__}\n")
         return 0
 
     if logger is None:

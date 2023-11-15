@@ -50,7 +50,9 @@ from pathlib import Path
 from typing import List, Optional
 
 from pyrewton import __version__, __citation__
-# from pyrewton.utilities.parsers import ()
+from pyrewton.utilities.parsers import (
+    cmd_parser_get_ncbi_genomes,
+)
 
 
 def build_parser(argv: Optional[List] = None) -> Namespace:
@@ -83,6 +85,9 @@ def build_parser(argv: Optional[List] = None) -> Namespace:
         default=False,
         help="Print citation information"
     )
+
+    # Download genomes and get protein seqs
+    cmd_parser_get_ncbi_genomes.build_parser(subparsers)
 
     # Parse arguments
     # The list comprehension is to allow PosixPaths to be defined and passed in testing
