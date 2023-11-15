@@ -184,6 +184,7 @@ The `extract_protein_seqs` subcommand extracts protein sequences from all CDS fe
 
 * Extracts the protein sequence, protein version accession, locus tag, locus / location, and functional annotation
 * Creates a multiple sequence FASTA file of extracted protein sequences per genomic assembly
+* Each output FASTA file is named with the corresponding NCBI genomic version accesion
 * Creates a CSV file summarising the extraction, i.e. the number of proteins retrieved from each genome
 
 An example input CSV file listing the genomic assemblies is included in the GitHub repo at `templates/example_genome_file.csv`.
@@ -224,7 +225,7 @@ The `pyrewton` subcommand `predict_cazymes` coordinates `pyrewton` to automate r
 * Provide the path to the parent directory containing all the tools
 * `pyrewton` presumes the tool subdirectories are written in lower case. If not (e.g. CUPP was downloaded to a directory called `Cupp/`), call dbCAN as 'Cupp' when using the `predict_cazymes` subcommand.
 * If no output directory is specified the output is written to the current working directory
-* A new output directory is created for each multi-sequence FASTA file parsed by the CAZyme classifiers. Inside this subdirectory is the output from each classifier.
+* A new output directory is created for each multi-sequence FASTA file parsed by the CAZyme classifiers. Inside this subdirectory is the output from each classifier. Each subdirectory is named with the corresponding NCBI genomic version accesion.
 
 Example command (presuming a directory called dbcan/ containing the dbcan databases is availabe in a directory called `tools/`):
 ```bash
@@ -252,6 +253,33 @@ options:
                         Directory to which all outputs are written (default: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>)
   -v, --verbose         Set logger level to 'INFO' (default: False)
   ```
+
+## Create a comprehensive CAZome database
+
+Compile predicted CAZyme classifications from CAZyme classifiers and canconical CAZyme classifications from CAZy into a single, shareable, local SQLite3 database using the `build_cazome_db` subcommand.
+
+To specify which CAZyme classifers are used, a config YAML file is provided to `pyrewton`. This YAML file is keyed by the names of the tools, and under each tool name are tool additional keys:
+* `version:` the version number of the tool
+* `cazy_release:` the approximate data of the CAZy database release the tool 
+was trained against. If unknown leave blank
+* `dir:` path to the directory containing the output directories
+For example:
+```yaml
+dbCAN_2:
+  version: 2.0.11
+  cazy_release: March 2020
+  dir: data/dbcan_2
+dbCAN_3:
+  version: 3.0.7
+  cazy_release: April 2022
+  dir: data/dbcan_3
+```
+
+The names of the tools will appear as is (as stated in the YAML file) in the resulting local CAZome database. If using multiple version of dbCAN, for clarity in the dataset, label these with different names. If not pyrewton will do this mannually using the version number provided.
+
+### Adding CAZyme annotations to an existing local CAZome database
+
+..... 
 
 # Repo structure
 
