@@ -68,7 +68,15 @@ Do not forget to use the **-e** option when install using pip3, otherwise each t
 
 4. Install the third party CAZyme prediction tools
 The easiest way to do this, and ensure they are installed into the correct directories is to use:  
-`python3 <path to pyrewton setup.py> cpt -p .`
+`python3 <path to pyrewton setup.py> cpt -p <path to directory to install tools>`
+
+Each tool is installed to a subdirectory in the specified directory, such that if the specified directory was `tools/` the resulting structure would be:
+```bash
+tools/
+    - dbcan/
+    - ecami/
+    - cupp/
+```
 
 For alternative methods of installation see the full documentation at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/).
 
@@ -206,6 +214,44 @@ options:
                         encoding='utf-8'>)
   -v, --verbose         Set logger level to 'INFO' (default: False)
 ```
+
+## Automate running CAZyme classifiers to predict CAZymes
+
+The `pyrewton` subcommand `predict_cazymes` coordinates `pyrewton` to automate running the specified CAZymes classifies (from CUPP, dbCAN and eCAMI) for each multi-sequence FASTA file in an input directory.
+
+* All tools (CAZyme classifiers) must be installed to an individual subdirectory for each tool, and which are all located in the same parent directory.
+* Name as many tools to run as desired, in a space separated list.
+* Provide the path to the parent directory containing all the tools
+* `pyrewton` presumes the tool subdirectories are written in lower case. If not (e.g. CUPP was downloaded to a directory called `Cupp/`), call dbCAN as 'Cupp' when using the `predict_cazymes` subcommand.
+* If no output directory is specified the output is written to the current working directory
+* A new output directory is created for each multi-sequence FASTA file parsed by the CAZyme classifiers. Inside this subdirectory is the output from each classifier.
+
+Example command (presuming a directory called dbcan/ containing the dbcan databases is availabe in a directory called `tools/`):
+```bash
+pyrewton predict_cazymes \
+    data/proteins \
+    dbcan,
+    tools \
+    -o data/dbcan_output
+```
+
+flags:
+```bash
+positional arguments:
+  input directory       Path to directory containing FASTA files for prediction tools
+  {cupp,ecami,dbcan}    CAZyme classifiers to run. Pick as many as wanted. Case insensitive
+  tool_dir              Path to parent directory where CAZyme classifiers are installed. E.g. point to the parent directory containing the directory called 'dbcan/'
+
+options:
+  -h, --help            show this help message and exit
+  -f, --force           Force file over writting (default: False)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  -n, --nodelete        enable/disable deletion of exisiting files (default: False)
+  -o output directory, --output output directory
+                        Directory to which all outputs are written (default: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+  ```
 
 # Repo structure
 
