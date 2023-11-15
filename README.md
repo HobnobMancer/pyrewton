@@ -132,6 +132,8 @@ Phytophthora cinnamomi
 
 An example/template input file is included in the GitHub repo at `templates/get_ncbi_genomes_template_input_file`.
 
+An example output CSV file listing the genomic assemblies is included in the GitHub repo at `templates/example_genome_file.csv`.
+
 Example command:
 ```bash
 pyrewton download_genomes \
@@ -175,6 +177,8 @@ The `extract_protein_seqs` subcommand extracts protein sequences from all CDS fe
 * Extracts the protein sequence, protein version accession, locus tag, locus / location, and functional annotation
 * Creates a multiple sequence FASTA file of extracted protein sequences per genomic assembly
 * Creates a CSV file summarising the extraction, i.e. the number of proteins retrieved from each genome
+
+An example input CSV file listing the genomic assemblies is included in the GitHub repo at `templates/example_genome_file.csv`.
 
 Example command:
 ```bash
