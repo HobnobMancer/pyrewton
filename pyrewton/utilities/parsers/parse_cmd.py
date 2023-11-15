@@ -53,6 +53,7 @@ from pyrewton import __version__, __citation__
 from pyrewton.utilities.parsers import (
     cmd_parser_get_ncbi_genomes,
     cmd_parser_get_genbank_annotations,
+    cmd_parser_predict_cazymes,
 )
 
 
@@ -92,6 +93,9 @@ def build_parser(argv: Optional[List] = None) -> Namespace:
     
     # Extract protein seqs from .gbff.gz files
     cmd_parser_get_genbank_annotations.build_parser(subparsers)
+
+    # Automate running CAZyme classifiers over multi-sequence FASTA files in an input dir
+    cmd_parser_predict_cazymes.build_parser(subparsers)
 
     # Parse arguments
     # The list comprehension is to allow PosixPaths to be defined and passed in testing

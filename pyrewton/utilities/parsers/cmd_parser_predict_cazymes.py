@@ -18,22 +18,38 @@
 # The MIT License
 """Build parser for 'predict_cazymes.py'"""
 
-import argparse
+
+import multiprocessing
 import sys
 
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, _SubParsersAction, Action
 from pathlib import Path
 from typing import List, Optional
 
+from pyrewton.cazymes.annotate_cazome import predict_cazymes
 
-def build_parser(argv: Optional[List] = None):
+
+class ValidateTools(Action):
+    """Check the user has provided valid cazyme classifiertool names."""
+    def __call__(self, parser, args, values, option_string=None):
+        valid_formats = ("cupp", "ecami", "dbcan")
+        invalid = False
+        for value in values:
+            if value.lower() not in valid_formats:
+                invalid = True
+                raise ValueError(f'Invalid tool name "{value}" provided. Accepted tools: {valid_formats} (case insensitive)')
+        if invalid:
+            sys.exit(1)
+        setattr(args, self.dest, values)
+
+
+def build_parser(
+    subps: _SubParsersAction, parents: Optional[List[ArgumentParser]] = None
+) -> None:
     """Return ArgumentParser parser for script."""
-    # Create parser object
-    parser = argparse.ArgumentParser(
-        prog="predict_cazymes.py",
-        description="Programme to invoke and evaluate third-party CAZyme prediction tools",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    parser = subps.add_parser(
+        "predict_cazymes", formatter_class=ArgumentDefaultsHelpFormatter
     )
-
     # Add positional arguments to parser
 
     # Add path to input fasta files
@@ -43,17 +59,25 @@ def build_parser(argv: Optional[List] = None):
         metavar="input directory",
         help="Path to directory containing FASTA files for prediction tools",
     )
+    parser.add_argument(
+        "tools",
+        nargs='+',
+        action=ValidateTools,
+        choices=["cupp","ecami","dbcan"],
+        type=str,
+        help="CAZyme classifiers to run. Space separted list. Pick as many as wanted. Case insensitive",
+    )
+    parser.add_argument(
+        "tool_dir",
+        type=Path,
+        help=(
+            "Path to parent directory where CAZyme classifiers are installed.\n"
+            "E.g. point to the parent directory containing the directory called 'dbcan/'"
+        ),
+    )
 
     # Add optional arguments to parser
-    # Add option to define F-beta weighting
-    parser.add_argument(
-        "-b",
-        "--beta",
-        dest="beta",
-        type=int,
-        default=1,
-        help="Weighting of Fbeta-stat when calculating Fbeta score of CAZy family prediction",
-    )
+    
     # Add option to force file over writting
     parser.add_argument(
         "-f",
@@ -103,9 +127,4 @@ def build_parser(argv: Optional[List] = None):
         help="Set logger level to 'INFO'",
     )
 
-    if argv is None:
-        # parse command-line
-        return parser
-    else:
-        # return namespace
-        return parser.parse_args(argv)
+    parser.set_defaults(func=predict_cazymes.main)
