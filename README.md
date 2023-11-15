@@ -115,6 +115,23 @@ Use the `download_genomes` subcommand to download the genomic assemblies of all 
 * Leave genomes compressed if working with `pyrewton` - to help manage disk space
 * A CSV file lising the scientific name, NCBI Taxonomy ID and the assembly version accession of all downloaded genomes is created to log the process
 
+**Note:** All NCBI taxonomy IDs need the prefix 'NCBI:txid'. For example "NCBI:txid318829" not "318829"
+
+**To include comments:** To include a comment (i.e. a piece of text not to be read by `pyrewton`), start the line with a hashtag '#'. For example:
+```bash
+# Fungal species
+Aspergillus fumigatus
+Aspergillus nidulans
+Aspergillus niger
+Aspergillus sydowii
+# Oomycete species
+Albugo candida
+Hyaloperonospora arabidopsidis
+Phytophthora cinnamomi
+```
+
+An example/template input file is included in the GitHub repo at `templates/get_ncbi_genomes_template_input_file`.
+
 Example command:
 ```bash
 pyrewton download_genomes \
