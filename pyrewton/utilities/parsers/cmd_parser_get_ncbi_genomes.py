@@ -113,9 +113,9 @@ def build_parser(
         "-o",
         "--output",
         type=Path,
-        metavar="output file name",
+        metavar="output directory name",
         default=sys.stdout,
-        help="Output filename",
+        help="Path to output directory. STDOUT. Directory will be created if needed.",
     )
     # Add custom maximum number of retries if network error is encountered
     parser.add_argument(
