@@ -338,7 +338,7 @@ def get_genbank_file(accession, args):
 
     # retrieve all files from directory
     files_in_entries = (
-        entry for entry in Path(args.genbank).iterdir() if entry.is_file()
+        entry for entry in Path(args.genome_directory).iterdir() if entry.is_file()
     )
     for item in files_in_entries:
         # search for accession number's GenBank file
