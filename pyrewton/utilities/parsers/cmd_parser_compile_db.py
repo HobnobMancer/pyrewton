@@ -73,6 +73,18 @@ class ValidateConfig(Action):
         setattr(args, self.dest, value)
 
 
+class ValidateCazy(Action):
+    """Check the cazy database file exists."""
+    def __call__(self, parser, args, value, option_string=None):
+        invalid = False
+        if (value.exists() is False):
+            invalid = True
+            raise ValueError(f'Could not find local CAZyme (CAZy) database file at "{value}". Please check the path is correct.')
+        if invalid:
+            sys.exit(1)
+        setattr(args, self.dest, value)
+
+
 def build_parser(
     subps: _SubParsersAction, parents: Optional[List[ArgumentParser]] = None
 ) -> None:
@@ -81,14 +93,6 @@ def build_parser(
         "compile_cazome_db", formatter_class=ArgumentDefaultsHelpFormatter
     )
 
-    parser.add_argument(
-        "protein_dir",
-        type=Path,
-        action=ValidateProteinDir,
-        help=(
-            "Path to directory containing FASTA files of protein seqs extract from genomic assemblies"
-        ),
-    )
     parser.add_argument(
         "config_file",
         type=Path,
@@ -120,9 +124,20 @@ def build_parser(
 
     # Add optional arguments to parser
     parser.add_argument(
+        "--protein_dir",
+        type=Path,
+        action=ValidateProteinDir,
+        default=None,
+        help=(
+            "Path to directory containing FASTA files of protein seqs extract from genomic assemblies"
+        ),
+    )
+
+    parser.add_argument(
         "--cazy",
         type=Path,
         default=None,
+        action=ValidateCazy,
         help=(
             "Path to local CAZyme db of CAZy annotations of proteins created using cazy_webscraper\n"
             "Will add CAZy annotations to the output."
