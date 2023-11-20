@@ -110,10 +110,10 @@ def parse_dbcan_output(overview_file_path, logger, dbcan_version):
             tool_predictions[protein_acc]
         except KeyError:
             tool_predictions[protein_acc] = {
-                'dbCAN': [],
-                'HMMER': [],
-                'DIAMOND': [],
-                kmer_tool: [],
+                'dbCAN': {},
+                'HMMER': {},
+                'DIAMOND': {},
+                kmer_tool: {},
             }
 
         for family in consensus_cazy_fams:
