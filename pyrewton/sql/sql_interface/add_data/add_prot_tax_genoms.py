@@ -41,6 +41,7 @@
 
 
 import logging
+import panads as pd
 import sys
 
 from Bio import SeqIO
@@ -134,16 +135,22 @@ def add_protein_data(connection, args, logger):
         insert_data(connection, "Proteins", ['assembly_id', 'genbank_accession', 'mass', 'length', 'sequence'], assemblies_to_add)
 
 
-def parse_protein_files(protein_fasta_files):
+def parse_protein_files(protein_fasta_files, args, logger):
     """Retrieve protein, genomic and taxonomic data from the FASTA files parsed by dbCAN.
     
     :param protein_fasta_files: list of Paths, one path per FASTA file
+    :param args: CLI args parser
     
     Return two dicts
     tax_dict = {genomic_accession: {'genus': str, 'species': str, 'tax_id': str}}
     protein_dict = {genomic_accession: {protein_accession: str(sequence)}}
     """
     logger = logging.getLogger(__name__)
+
+    if args.genome_csv is not None:
+        genome_tax_dict = get_genome_taxs(args, logger)
+    else:  
+        genome_tax_dict = None
 
     protein_dict = {}
     tax_dict = {}  # {genomes: {'genus': str, 'species': str, 'tax_id': str}}
@@ -159,10 +166,20 @@ def parse_protein_files(protein_fasta_files):
             assembly_acc = assembly_acc.replace("GCA.", "GCA_")
             assembly_acc = assembly_acc.replace("GCF.", "GCF_")
 
-            tax_id = desc[3].replace("txid", "")
-            
-            genus = desc[4]
-            species = desc[5]
+            try:
+                tax_id = genome_tax_dict[assembly_acc]['taxid']
+                genus = genome_tax_dict[assembly_acc]['genus']
+                species = genome_tax_dict[assembly_acc]['species']
+            except KeyError:
+                logger.warning(
+                    f"Tax data for {assembly_acc} not available in {args.genome_csv}\n"
+                    "Extracting tax data from FASTA file"
+                )
+
+                tax_id = desc[3].replace("txid", "")
+                
+                genus = desc[4]
+                species = desc[5]
 
             # add taxonomy data
             try:
@@ -197,3 +214,27 @@ def parse_protein_files(protein_fasta_files):
                 }
 
     return protein_dict, tax_dict
+
+
+def get_genome_taxs(args, logger):
+    try:
+        df = pd.read_csv(args.genome_csv)
+        df.columns=['Index','Genus','Species','NCBI Taxonomy ID','NCBI Accession Numbers']
+    except FileNotFoundError:
+        logger.error(
+            f"Could not find Genome CSV file at {args.genome_csv}\n"
+            "Check path is correct.\nTerminating program."
+        )
+        sys.exit(1)
+
+    genome_tax_dict = {}  # genome: tax
+    for ri in range(len(df)):
+        genomes = df.iloc[ri]['NCBI Accession Numbers'].split(",")
+        for genome in genomes:
+            genome_tax_dict[genome.strip()] = {
+                'genus': df.iloc[ri]['Genus'],
+                'species': df.iloc[ri]['Species'],
+                'taxid': df.iloc[ri]['NCBI Taxonomy ID'].replace('NCBI:txid',''),
+            }
+
+    return genome_tax_dict
