@@ -68,7 +68,15 @@ Do not forget to use the **-e** option when install using pip3, otherwise each t
 
 4. Install the third party CAZyme prediction tools
 The easiest way to do this, and ensure they are installed into the correct directories is to use:  
-`python3 <path to pyrewton setup.py> cpt -p .`
+`python3 <path to pyrewton setup.py> cpt -p <path to directory to install tools>`
+
+Each tool is installed to a subdirectory in the specified directory, such that if the specified directory was `tools/` the resulting structure would be:
+```bash
+tools/
+    - dbcan/
+    - ecami/
+    - cupp/
+```
 
 For alternative methods of installation see the full documentation at [Read the Docs](https://phd-project-scripts.readthedocs.io/en/latest/).
 
@@ -94,6 +102,216 @@ This section of the README lists the areas that are currently being worked upon 
 
 <p>&nbsp;</p>
 
+
+# Documentation
+
+Full documentation can be found at [Read the Docs](https://pyrewton.readthedocs.io/en/latest/?badge=latest).
+
+Here is a summary of using the `pyrewton` pipeline to automate annotating and exploring CAZymes and CAZomes of species of interest.
+
+## Download genomes.
+
+Use the `download_genomes` subcommand to download the genomic assemblies of all genomes available for a set of candidate species. 
+
+* Download GenBank assemblies to increase the probability of finding CAZy annotated CAZymes
+* If a GenBank assembly is not available, the RefSeq assembly is retrieved
+* Candidate species are specified using a plain text file
+    * List a unique species per line
+    * Identified species by their scientific name or NCBI Taxonomy ID
+    * If a species is specified, assemblies for all its stains are downloaded
+* Genomes downloaded in .GBFF format
+* Leave genomes compressed if working with `pyrewton` - to help manage disk space
+* A CSV file lising the scientific name, NCBI Taxonomy ID and the assembly version accession of all downloaded genomes is created to log the process
+
+**Note:** All NCBI taxonomy IDs need the prefix 'NCBI:txid'. For example "NCBI:txid318829" not "318829"
+
+**To include comments:** To include a comment (i.e. a piece of text not to be read by `pyrewton`), start the line with a hashtag '#'. For example:
+```bash
+# Fungal species
+Aspergillus fumigatus
+Aspergillus nidulans
+Aspergillus niger
+Aspergillus sydowii
+# Oomycete species
+Albugo candida
+Hyaloperonospora arabidopsidis
+Phytophthora cinnamomi
+```
+
+An example/template input file is included in the GitHub repo at `templates/get_ncbi_genomes_template_input_file`.
+
+An example output CSV file listing the genomic assemblies is included in the GitHub repo at `templates/example_genome_file.csv`.
+
+Example command:
+```bash
+pyrewton download_genomes \
+    $1 \
+    -d data/genomes/genome_dataframe.csv \
+    -i data/species/species_list \
+    -o data/genomes/ 
+```
+
+Flags: 
+```bash
+positional arguments:
+  user email address    Email address of user, this must be provided for Entrez
+
+options:
+  -h, --help            show this help message and exit
+  -d DATAFRAME, --dataframe DATAFRAME
+                        Location of file for species table to be written to, include .csv extention (default: <_io.TextIOWrapper name='<stdout>'
+                        mode='w' encoding='utf-8'>)
+  -f, --force           Force file over writting (default: False)
+  -g, --genbank         Disable pulldown of GenBank (.gbff) files (default: True)
+  -i input file name, --input_file input file name
+                        Input filename (default: <_io.TextIOWrapper name='<stdin>' mode='r' encoding='utf-8'>)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  -n, --nodelete        enable/disable deletion of exisiting files (default: False)
+  -o output directory name, --output output directory name
+                        Path to output directory. STDOUT. Directory will be created if needed. (default: <_io.TextIOWrapper name='<stdout>' mode='w'     
+                        encoding='utf-8'>)
+  -r maximum number of retries, --retries maximum number of retries
+                        Defines the maximum number of retries if network errors are encountered (default: 10)
+  -t TIMEOUT, --timeout TIMEOUT
+                        Timeout for URL connections, in seconds (default: 10)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
+## Extract protein sequences
+
+The `extract_protein_seqs` subcommand extracts protein sequences from all CDS features in local, compressed GenBank Flat File Format (.gbff) genomic assemblies (.gbff.gz).
+
+* Extracts the protein sequence, protein version accession, locus tag, locus / location, and functional annotation
+* Creates a multiple sequence FASTA file of extracted protein sequences per genomic assembly
+* Each output FASTA file is named with the corresponding NCBI genomic version accesion
+* Creates a CSV file summarising the extraction, i.e. the number of proteins retrieved from each genome
+
+An example input CSV file listing the genomic assemblies is included in the GitHub repo at `templates/example_genome_file.csv`.
+
+Example command:
+```bash
+pyrewton extract_protein_seqs \
+    data/genomes/genome_dataframe.csv \
+    data/genomes/ \
+    data/proteins/proteomes
+```
+
+Flags:
+```bash
+positional arguments:
+  input dataframe name  Path to input dataframe
+  genome_directory      Path to directory containing compressed genomic assemblies in GenBank Flat File Format (.gbff.gz)
+
+options:
+  -h, --help            show this help message and exit
+  -d OUTPUT_DF, --output_df OUTPUT_DF
+                        path to output directory to write FASTA files to (default: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>)        
+  -f, --force           Force file over writting (default: False)
+  -l LOG, --log LOG     Defines log file name and/or path (default: None)
+  -n, --nodelete        enable/disable deletion of exisiting files (default: False)
+  -o OUTPUT, --output OUTPUT
+                        Output directory. Path to directory to which FASTA files are written (default: <_io.TextIOWrapper name='<stdout>' mode='w'       
+                        encoding='utf-8'>)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
+## Automate running CAZyme classifiers to predict CAZymes
+
+The `pyrewton` subcommand `predict_cazymes` coordinates `pyrewton` to automate running the specified CAZymes classifies (from CUPP, dbCAN and eCAMI) for each multi-sequence FASTA file in an input directory.
+
+* All tools (CAZyme classifiers) must be installed to an individual subdirectory for each tool, and which are all located in the same parent directory.
+* Name as many tools to run as desired, in a space separated list.
+* Provide the path to the parent directory containing all the tools
+* `pyrewton` presumes the tool subdirectories are written in lower case. If not (e.g. CUPP was downloaded to a directory called `Cupp/`), call dbCAN as 'Cupp' when using the `predict_cazymes` subcommand.
+* If no output directory is specified the output is written to the current working directory
+* A new output directory is created for each multi-sequence FASTA file parsed by the CAZyme classifiers. Inside this subdirectory is the output from each classifier. Each subdirectory is named with the corresponding NCBI genomic version accesion.
+
+Example command (presuming a directory called dbcan/ containing the dbcan databases is availabe in a directory called `tools/`):
+```bash
+pyrewton predict_cazymes \
+    data/proteins \
+    dbcan,
+    tools \
+    -o data/dbcan_output
+```
+
+flags:
+```bash
+positional arguments:
+  input directory       Path to directory containing FASTA files for prediction tools
+  {cupp,ecami,dbcan}    CAZyme classifiers to run. Pick as many as wanted. Case insensitive
+  tool_dir              Path to parent directory where CAZyme classifiers are installed. E.g. point to the parent directory containing the directory called 'dbcan/'
+
+options:
+  -h, --help            show this help message and exit
+  -f, --force           Force file over writting (default: False)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  -n, --nodelete        enable/disable deletion of exisiting files (default: False)
+  -o output directory, --output output directory
+                        Directory to which all outputs are written (default: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+  ```
+
+## Create a comprehensive CAZome database
+
+Compile predicted CAZyme classifications from CAZyme classifiers and canconical CAZyme classifications from CAZy into a single, shareable, local SQLite3 database using the `compile_cazome_db` subcommand.
+
+To specify which CAZyme classifers are used, a config YAML file is provided to `pyrewton`. This YAML file is keyed by the names of the tools, and under each tool name are tool additional keys:
+* `version:` the version number of the tool
+* `cazy_release:` the approximate data of the CAZy database release the tool 
+was trained against. If unknown leave blank
+* `dir:` path to the directory containing the output directories
+For example:
+```yaml
+dbCAN_2:
+  version: 2.0.11
+  cazy_release: March 2020
+  dir: data/dbcan_2
+dbCAN_3:
+  version: 3.0.7
+  cazy_release: April 2022
+  dir: data/dbcan_3
+```
+
+The names of the tools will appear as is (as stated in the YAML file) in the resulting local CAZome database. If using multiple version of dbCAN, for clarity in the dataset, label these with different names. If not pyrewton will do this mannually using the version number provided.
+
+`pyrewton` defines each classifier-CAZy family pair as a new domain, thus a single protein can be associated with multiple domains in the CAZome database.
+
+### Flags
+```bash
+positional arguments:
+  config_file           Path to directory containing FASTA files of protein seqs extract from genomic assemblies
+
+options:
+  -h, --help            show this help message and exit
+  --new_db NEW_DB       Path to build a new CAZome database. Path to create database file. CANNOT be used at same time as --db (default: None)
+  --db DB               Path to existing CAZome database to add data to. CANNOT be used at same time as --db (default: None)
+  --genome_csv GENOME_CSV
+                        Path to CSV file listing taxonomies and genomic accessions. Created using pyrewton download_genomes subcommand (default: None)
+  --protein_dir PROTEIN_DIR
+                        Path to directory containing FASTA files of protein seqs extract from genomic assemblies (default: None)
+  --cazy CAZY           Path to local CAZyme db of CAZy annotations of proteins created using cazy_webscraper Will add CAZy annotations to the output. (default: None)
+  --cazy_date CAZY_DATE
+                        Date CAZy data was pulled down (default: None)
+  -f, --force           Force file over writting (default: False)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  -n, --nodelete        enable/disable deletion of exisiting files (default: False)
+  --sql_echo            Set SQLite echo to True, adds verbose SQL messaging (default: False)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
+### Adding CAZyme annotations to an existing local CAZome database
+
+The `pyrewton` subcommand `compile_cazome_db` can also be used to add new CAZyme classifications from CAZy and new dbCAN, CUPP and eCAMI analyses to an existing CAZome database created using `pyrewton`. 
+
+To do this, use the `--db` flag to provide a path to an existing CAZome database. Conversly, use the `--new_db` flag to provide a path to create a new CAZome database.
+
+`pyrewton` will parse all specified CAZy, dbCAN, CUPP and eCAMI data, adding new proteins, genomes, taxonomies, CAZy families, classifiers and CAZyme domains to the local CAZome database without adding any duplicates to any tables.
+
+# Repo structure
 
 ## Directories
 

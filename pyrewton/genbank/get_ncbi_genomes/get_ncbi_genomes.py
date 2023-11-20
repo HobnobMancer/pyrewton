@@ -65,24 +65,16 @@ from Bio import Entrez
 from tqdm import tqdm
 
 from pyrewton.utilities import config_logger
-from pyrewton.utilities.parsers.cmd_parser_get_ncbi_genomes import build_parser
 from pyrewton.utilities.file_io import make_output_directory, write_out_dataframe
 
 
-def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
+def main(args: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
     """Set up loggers, parsers and directories for retrieval of genomes from NCBI.
 
     Then retrieve taxonomy data and GenBank files from NCBI.
 
     Return GenBank (.gbff) files and dataframe of taxonomy data.
     """
-    if argv is None:
-        parser = build_parser()
-        args = parser.parse_args()
-    else:
-        parser = build_parser(argv)
-        args = parser.parse_args()
-
     if logger is None:
         config_logger(args)
     logger = logging.getLogger(__name__)

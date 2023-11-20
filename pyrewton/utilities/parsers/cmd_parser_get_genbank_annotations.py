@@ -18,20 +18,23 @@
 # The MIT License
 """Build parser for 'get_genbank_annotations.py'"""
 
-import argparse
+
+import multiprocessing
 import sys
 
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, _SubParsersAction
 from pathlib import Path
 from typing import List, Optional
 
+from pyrewton.genbank.get_genbank_annotations import get_genbank_annotations
 
-def build_parser(argv: Optional[List] = None):
+
+def build_parser(
+    subps: _SubParsersAction, parents: Optional[List[ArgumentParser]] = None
+) -> None:
     """Return ArgumentParser parser for script."""
-    # Create parser object
-    parser = argparse.ArgumentParser(
-        prog="cazy_genbank_summary.py",
-        description="Retrieve protein annotations from GenBank files",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    parser = subps.add_parser(
+        "extract_protein_seqs", formatter_class=ArgumentDefaultsHelpFormatter
     )
 
     # Add positional arguments to parser
@@ -44,10 +47,9 @@ def build_parser(argv: Optional[List] = None):
     )
     # Specify path to directory containing GenBank files
     parser.add_argument(
-        "genbank",
+        "genome_directory",
         type=Path,
-        metavar="GenBank file directory",
-        help="Path to directory containing GenBank files",
+        help="Path to directory containing compressed genomic assemblies in GenBank Flat File Format (.gbff.gz)",
     )
 
     # Add optional arguments to parser
@@ -57,7 +59,6 @@ def build_parser(argv: Optional[List] = None):
         "-d",
         "--output_df",
         type=Path,
-        metavar="output dataframe name",
         default=sys.stdout,
         help="path to output directory to write FASTA files to",
 
@@ -76,7 +77,6 @@ def build_parser(argv: Optional[List] = None):
         "-l",
         "--log",
         type=Path,
-        metavar="log file name",
         default=None,
         help="Defines log file name and/or path",
     )
@@ -95,9 +95,8 @@ def build_parser(argv: Optional[List] = None):
         "-o",
         "--output",
         type=Path,
-        metavar="output directory for fasta files",
         default=sys.stdout,
-        help="Path to directory yo whicg FASTA files are written",
+        help="Output directory. Path to directory to which FASTA files are written",
     )
     # Add option to specify verbose logging
     parser.add_argument(
@@ -109,9 +108,4 @@ def build_parser(argv: Optional[List] = None):
         help="Set logger level to 'INFO'",
     )
 
-    if argv is None:
-        # parse command-line
-        return parser
-    else:
-        # return namespace
-        return parser.parse_args(argv)
+    parser.set_defaults(func=get_genbank_annotations.main)

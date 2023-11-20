@@ -65,7 +65,7 @@ else:
 
 setuptools.setup(
     name="pyrewton",
-    version="0.1.1",
+    version="0.2.0",
     # Metadata
     author="Emma E. M. Hobbs",
     author_email="eemh1@st-andrews.ac.uk",
@@ -84,13 +84,18 @@ setuptools.setup(
     keywords="genome bioinforamtics protein engineering",
     platforms="Posix, MacOS X",
     url="https://github.com/HobnobMancer/PhD_Project_Scripts",  # Github repository
+    # entry_points={
+    #     "console_scripts": [
+    #         "pyrewton_download_genomes = pyrewton.genbank.get_ncbi_genomes.get_ncbi_genomes:main",
+    #         "get_genbank_annotations.py = pyrewton.genbank.get_genbank_annotations."
+    #         "get_genbank_annotations:main",
+    #         "get_uniprot_proteins.py = pyrewton.cazymes.uniprot.get_uniprot_proteins:main",
+    #         "predict_cazymes.py = pyrewton.cazymes.prediction.predict_cazymes:main",
+    #     ]
+    # },
     entry_points={
         "console_scripts": [
-            "get_ncbi_genomes.py = pyrewton.genbank.get_ncbi_genomes.get_ncbi_genomes:main",
-            "get_genbank_annotations.py = pyrewton.genbank.get_genbank_annotations."
-            "get_genbank_annotations:main",
-            "get_uniprot_proteins.py = pyrewton.cazymes.uniprot.get_uniprot_proteins:main",
-            "predict_cazymes.py = pyrewton.cazymes.prediction.predict_cazymes:main",
+            "pyrewton = pyrewton.scripts.pyrewton_main:main",
         ]
     },
     # Ensure all additional requirements are installed

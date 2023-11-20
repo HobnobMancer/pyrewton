@@ -38,6 +38,7 @@ Generate summary dataframe and of all annotated proteins in all GenBank
 files directly linked to a given species.
 """
 
+
 import gzip
 import logging
 import re
@@ -52,24 +53,16 @@ from Bio import SeqIO
 from tqdm import tqdm
 
 from pyrewton.utilities import config_logger
-from pyrewton.utilities.parsers.cmd_parser_get_genbank_annotations import build_parser
 from pyrewton.utilities.file_io import make_output_directory, write_out_dataframe
 
 
-def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
+def main(args: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
     """Coordinate the retrieval of protein annotations from GenBank (.gbff) files.
 
     Including building parser, logger and output directory.
 
     Return dataframe of protein data.
     """
-    if argv is None:
-        parser = build_parser()
-        args = parser.parse_args()
-    else:
-        parser = build_parser(argv)
-        args = parser.parse_args()
-
     if logger is None:
         config_logger(args)
     logger = logging.getLogger(__name__)
@@ -345,7 +338,7 @@ def get_genbank_file(accession, args):
 
     # retrieve all files from directory
     files_in_entries = (
-        entry for entry in Path(args.genbank).iterdir() if entry.is_file()
+        entry for entry in Path(args.genome_directory).iterdir() if entry.is_file()
     )
     for item in files_in_entries:
         # search for accession number's GenBank file
