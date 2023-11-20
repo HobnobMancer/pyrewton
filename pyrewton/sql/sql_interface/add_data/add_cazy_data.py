@@ -64,8 +64,21 @@ def add_families(cazy_families, connection, logger):
         insert_data(connection, "CazyFamilies", ['family'], families_to_add)
 
 
-def add_classifiers(classifier, connection, logger, classifier_version=None, classifier_training_date=None):
-    """Add classifier to database"""
+def add_classifiers(
+        classifier,
+        connection,
+        logger,
+        classifier_version=None,
+        classifier_training_date=None,
+    ):
+    """Add classifier to database
+    
+    :param classifier: str, name of classifier / tool
+    :param connection: open connection to SQL db
+    :param logger: logger object
+    :param classifier version: str, version number
+    :param classifier training date: str, release data of CAZy db against which the tool was trained
+    """
     db_classifiers = load_genbank_data.get_classifier_db_ids(connection) # {classifier : db id}
     if classifier not in db_classifiers.keys()
         insert_data(
