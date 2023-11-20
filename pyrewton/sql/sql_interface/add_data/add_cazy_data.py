@@ -80,7 +80,7 @@ def add_classifiers(
     :param classifier training date: str, release data of CAZy db against which the tool was trained
     """
     db_classifiers = load_genbank_data.get_classifier_db_ids(connection) # {classifier : db id}
-    if classifier not in db_classifiers.keys()
+    if classifier not in db_classifiers.keys():
         insert_data(
             connection,
             "Classifiers",
