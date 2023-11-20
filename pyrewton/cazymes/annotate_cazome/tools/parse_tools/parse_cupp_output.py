@@ -94,7 +94,7 @@ def parse_cupp_output(log_file_path, logger):
                 tool_predictions['CUPP'][prot_acc][cazy_family] = [domain_range]
 
         except KeyError:
-            tool_predictions['CUPP'][prot_acc] = {}
+            tool_predictions['CUPP'][prot_acc] = {cazy_family: None}
         
     return tool_predictions
 
