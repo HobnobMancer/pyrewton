@@ -311,6 +311,36 @@ To do this, use the `--db` flag to provide a path to an existing CAZome database
 
 `pyrewton` will parse all specified CAZy, dbCAN, CUPP and eCAMI data, adding new proteins, genomes, taxonomies, CAZy families, classifiers and CAZyme domains to the local CAZome database without adding any duplicates to any tables.
 
+### Adding additional annotation, function and structral data to the local CAZome database
+
+The `get_uniprot_data` subcommand can be used to retrieve additional functional annotation and structural data from the UniProtKB database and import the data into the local CAZome database. The following data is retrieved:
+
+* Active site annotations
+* Citation data
+* Cofactors
+* EC numbers
+* Glycoslyation data
+* Metal binding and metal binding sites
+* Optimal pH
+* Protein structure PDB IDs
+* Substrates and substrate binding sites
+* Transmembrane regions
+
+**Flags:**
+```bash
+positional arguments:
+  database              Path to local CAZome database
+
+options:
+  -h, --help            show this help message and exit
+  -b BATCH_SIZE, --batch_size BATCH_SIZE
+                        Size of batch queries submitted to UniProt (default: 150)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  --sql_echo            Set SQLite echo to True, adds verbose SQL messaging (default: False)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
 # Repo structure
 
 ## Directories
