@@ -40,7 +40,6 @@
 """Build parser for 'calculate_stats.py'"""
 
 
-import multiprocessing
 import sys
 
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, _SubParsersAction, Action
