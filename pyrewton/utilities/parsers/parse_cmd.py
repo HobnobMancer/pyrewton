@@ -55,7 +55,7 @@ from pyrewton.utilities.parsers import (
     cmd_parser_get_genbank_annotations,
     cmd_parser_predict_cazymes,
     cmd_parser_compile_db,
-    cmd_parser_get_uniprot_proteins,
+    cmd_parser_uniprot,
 )
 
 
@@ -102,7 +102,7 @@ def build_parser(argv: Optional[List] = None) -> Namespace:
     # build and add data to a local CAZome database
     cmd_parser_compile_db.build_parser(subparsers)
 
-    cmd_parser_get_uniprot_proteins.build_parser(subparsers)
+    cmd_parser_uniprot.build_parser(subparsers)
 
     # Parse arguments
     # The list comprehension is to allow PosixPaths to be defined and passed in testing
