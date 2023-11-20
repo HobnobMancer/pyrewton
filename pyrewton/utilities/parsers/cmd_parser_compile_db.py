@@ -101,7 +101,7 @@ def build_parser(
             "Path to directory containing FASTA files of protein seqs extract from genomic assemblies"
         ),
     )
-    
+
     # args to build new db or add data to an existing one 
     parser.add_argument(
         "--new_db",
@@ -121,6 +121,16 @@ def build_parser(
             "CANNOT be used at same time as --db"
         ),
     )
+
+    parser.add_argument(
+        "--genome_csv",
+        type=Path,
+        action=ValidateConfig,
+        help=(
+            "Path to CSV file listing taxonomies and genomic accessions. Created using pyrewton download_genomes subcommand"
+        ),
+    )
+    
 
     # Add optional arguments to parser
     parser.add_argument(
