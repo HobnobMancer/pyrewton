@@ -52,80 +52,100 @@ import re
 import pandas as pd
 import numpy as np
 
+from tqdm import tqdm
 
-def parse_dbcan_output(overview_file_path, logger):
+
+def parse_dbcan_output(overview_file_path, logger, dbcan_version):
     """Parse the output from the dbCAN overview.txt file, write a dataframe for each prediction tool
 
     :param overview_file_path: path, path to the output 'overview.txt' file
     :param logger: logger object
+    :param dbcan_version: int, firt number of version number
 
-    Return 4 dataframes, one each for consensus dbCAN result, HMMER, Hotpep and DIAMOND
+    Return dict
+    {toolname: {protein acc: {family: domain range}}}
+    or None if fails
     """
+    tool_predictions = {}
+    if dbcan_version == 2:
+        kmer_tool = 'Hotpep'
+    elif dbcan_version == 3:
+        kmer_tool = 'eCAMI'
+    else:
+        kmer_tool = 'dbCAN-sub'
+
     try:
-        with open(overview_file_path, "r") as fh:
-            overview_file = fh.read().splitlines()
+        df = pd.read_table(overview_file_path/"overview.txt")
     except FileNotFoundError:
-        logger.error(
-            "Could not open the dbCAN overview.txt file\n"
-            f"{overview_file_path}\n"
-            "Returning no dataframe for dbCAN, HMMER, Hotpep and DIAMOND for this output file"
-        )
-        return None, None, None, None
+        logger.error(f"Could not find overview.txt file in {overview_file_path.name}\nSkipping output dir")
+        return
 
-    # build empty dataframes to add the repsective prediction tools output to
-    # list dfs store data as lists to build the dbcan_df
-    hmmer_df = pd.DataFrame({}, columns=[
-        "protein_accession",
-        "cazy_family",
-        "cazy_subfamily",
-        "domain_range"
-    ])
-    hotpep_df = pd.DataFrame({}, columns=["protein_accession", "cazy_family", "cazy_subfamily"])
-    diamond_df = pd.DataFrame({}, columns=["protein_accession", "cazy_family", "cazy_subfamily"])
-    dbcan_df = pd.DataFrame({}, columns=["protein_accession", "cazy_family", "cazy_subfamily"])
+    for ri in tqdm(range(len(df)), desc=f"Parsing {overview_file_path.name}"): 
+        row = df.iloc[ri]
+        protein_acc = row[0]
 
-    for line in overview_file[1:]:  # skip the first line becuase this is the head titles
-        line = line.split("\t")
+        # get one dict per tool {fam: [domain ranges]}
+        if list(df.columns)[1].startswith('EC#'):  # versions >= 3 include additional EC# col
+            hmmer_fams = parse_hmmer_output(row[2], logger)
+            hotpep_fams = parse_hotpep_output(row[3], logger)  # works for hotpep and ecami
+            diamond_fams = parse_diamond_output(row[4], logger)
+        else:
+            hmmer_fams = parse_hmmer_output(row[1], logger)
+            hotpep_fams = parse_hotpep_output(row[2], logger)
+            diamond_fams = parse_diamond_output(row[3], logger)
 
-        # retrieve the data for HMMER
-        hmmer_temp_df, hmmer_temp_list_df = parse_hmmer_output(line, logger)
-        hmmer_df = hmmer_df.append(hmmer_temp_df, ignore_index=True)
-
-        # retrieve the data for Hotpep
-        hotpep_temp_df, hotpep_temp_list_df = parse_hotpep_output(line, logger)
-        hotpep_df = hotpep_df.append(hotpep_temp_df, ignore_index=True)
-
-        # retrieve the data for DIAMOND
-        diamond_temp_df, diamond_temp_list_df = parse_diamond_output(line, logger)
-        diamond_df = diamond_df.append(diamond_temp_df, ignore_index=True)
 
         # retrieve consensus results for dbCAN
-        if line[-1] != "1":   # check ''#ofTools', don't include if non-CAZyme prediction
-            consensus_cazy_fam = get_dbcan_consensus(
-                hmmer_temp_list_df.iloc[0, 1],
-                hotpep_temp_list_df.iloc[0, 1],
-                diamond_temp_list_df.iloc[0, 1],
-            )
-            consensus_sub_fam = get_dbcan_consensus(
-                hmmer_temp_list_df.iloc[0, 2],
-                hotpep_temp_list_df.iloc[0, 2],
-                diamond_temp_list_df.iloc[0, 2],
-            )
+        if row[-1] != "1":   # check ''#ofTools', don't include if no consensus
+            # consensus is any prediction at at least two tools agree upon
+            consensus_cazy_fams = get_dbcan_consensus(
+                list(hmmer_fams.keys()),
+                list(hotpep_fams.keys()),
+                list(diamond_fams.keys()),
+            )  # set of consensus CAZy family annotations
+        else:
+            consensus_cazy_fams = []
 
-            consensus_dict = {
-                "protein_accession": [line[0]],
-                "cazy_family": [consensus_cazy_fam],
-                "cazy_subfamily": [consensus_sub_fam],
+        try:
+            tool_predictions[protein_acc]
+        except KeyError:
+            tool_predictions[protein_acc] = {
+                'dbCAN': [],
+                'HMMER': [],
+                'DIAMOND': [],
+                kmer_tool: [],
             }
 
-            temp_consensus_df = pd.DataFrame(consensus_dict)
+        for family in consensus_cazy_fams:
+            try:
+                tool_predictions[protein_acc]['dbCAN'][family].append(None)
+            except KeyError:
+                tool_predictions[protein_acc]['dbCAN'][family] = [None]
 
-            dbcan_df = dbcan_df.append(temp_consensus_df, ignore_index=True)
+        for family in hmmer_fams:
+            for domain_range in hmmer_fams[family]:
+                try:
+                    tool_predictions[protein_acc]['HMMER'][family].append(domain_range)
+                except KeyError:
+                    tool_predictions[protein_acc]['HMMER'][family] = [domain_range]
 
-    return dbcan_df, hmmer_df, hotpep_df, diamond_df
+        for family in diamond_fams:
+            try:
+                tool_predictions[protein_acc]['DIAMOND'][family].append(None)
+            except KeyError:
+                tool_predictions[protein_acc]['DIAMOND'][family] = [None]
+
+        for family in hotpep_fams:
+            try:
+                tool_predictions[protein_acc][kmer_tool][family].append(None)
+            except KeyError:
+                tool_predictions[protein_acc][kmer_tool][family] = [None]
 
 
-def parse_hmmer_output(line, logger):
+    return tool_predictions
+
+
+def parse_hmmer_output(tool_data, logger):
     """Parse the output from HMMER from the overview.txt file.
 
     Retrieve the protein accession, predicated CAZy families, accomanying subfamiles and domain
@@ -139,18 +159,15 @@ def parse_hmmer_output(line, logger):
     writing out to a .csv file. The second stores the data in lists to build the dbCAN consensus
     dataframe later on.
 
-    :param line: str, line from the dbcan overview.txt file
+    :param tool_data: str, contents from HMMER cell in dbCAN df
     :param logger: logger object
 
-    Return pandas dataframe.
+    Return dict {fam: [domain ranges]}
     """
     # Retrieve predictions for HMMER and separate out each the predicated domains
-    hmmer_predictions = line[1].split("+")
+    hmmer_predictions = tool_data.split("+")
 
-    # create empty lists to store predicated domains and ranges
-    cazy_fams = []
-    cazy_subfams = []
-    domain_ranges = []
+    fam_annotations = {}  # {fam: [domain ranges]}
 
     # check if no CAZy prediction was made for protein represented in 'line'
     # if no family/subfamily (and thus domain ranges) predicted result will be '-' in 'line'
@@ -161,56 +178,21 @@ def parse_hmmer_output(line, logger):
             domain = domain.split("(")
 
             # Get predicted CAZy family and subfamily if given, called domain_name
-            domain_name = domain[0]
-            # if domain_name == '-' no family/subfamily and domain ranges predicted
-            # don't do anything, empty list converted to null value further down
+            cazy_family = domain[0].split("_")[0]  # drop CAZy subfamily
 
             # Check for none standard CAZy family naming, and standardise
             # known culprits are GT2_Chitin.. and GT2_Glyco.. though there may be others
             try:
-                non_standard_name = re.match(r"\D{2,3}\d+_\D", domain_name).group()
+                non_standard_name = re.match(r"\D{2,3}\d+_\D", cazy_family).group()
                 # log the non-standard name incase the user wants it later
-                domain_name = non_standard_name[:non_standard_name.find("_")]
+                cazy_family = non_standard_name[:non_standard_name.find("_")]
             except AttributeError:
                 pass
 
-            if domain_name.find("_") != -1:  # predicted CAZy subfamily
-                cutoff = domain_name.find("_")
-                fam = domain_name[:cutoff]
-                subfam = domain_name
-                # check family and subfamily formats are correct
-                try:
-                    re.match(r"\D{2,3}\d+", fam).group()
-                    cazy_fams.append(fam)
-                except AttributeError:
-                    logger.warning(
-                        "Non-standardised CAZy family name in HMMER for "
-                        f"{line[0]}, {fam}"
-                        f"Returning no CAZy family for {fam}"
-                    )
+            if cazy_family.startswith(("G", "P", "C", "A")) is False:  # filter out EC numbers
+                continue
 
-                try:
-                    re.match(r"\D{2,3}\d+_\d+", subfam).group()
-                    cazy_subfams.append(subfam)
-                except AttributeError:
-                    logger.warning(
-                        "Non-standardised CAZy subfamily name in HMMER for "
-                        f"{line[0]}, {subfam}"
-                        f"Returning no CAZy subfamily for {subfam}"
-                    )
-
-            else:  # only CAZy family predicted
-                # check family format
-                try:
-                    re.match(r"\D{2,3}\d+", domain_name).group()
-                    cazy_fams.append(domain_name)
-                except AttributeError:
-                    logger.warning(
-                        "Non-standardised CAZy family name in HMMER for "
-                        f"{line[0]}, {domain_name}"
-                        f"Returning no CAZy family for {domain_name}"
-                    )
-
+            # Get domain range
             # Get predicted AA range for domain, called domain_range
             if len(domain) == 1:  # if no domain predicted then no domain ranges predicted
                 continue
@@ -221,53 +203,34 @@ def parse_hmmer_output(line, logger):
                     re.match(r"\d+-\d+\)", domain_range).group()
                     # remove terminal ')' and standardise range separation
                     domain_range = domain_range[:-1].replace("-", "..")
-                    domain_ranges.append(domain_range)
                 except AttributeError:
+                    domain_range = None
                     logger.warning(
                         "Non-standardised domain range in HMMER for "
-                        f"{line[0]}, {domain_range}"
-                        f"Returning no domain range for {domain_range}"
+                        f"{tool_data}, {domain_range}"
+                        f"- Returning no domain range for {domain_range}"
                     )
 
-    # convert lists to strings for human readability
-    # convert empty lists to null values
-    # _hr suffix denotes variables for building human readable dataframe
-    if len(cazy_fams) == 0:
-        cazy_family_hr, cazy_fams = np.nan, [np.nan]
-    else:
-        cazy_family_hr = ", ".join(cazy_fams)
+            # check family format
+            try:
+                re.match(r"\D{2,3}\d+", cazy_family).group()
+                
+                try:
+                    fam_annotations[cazy_family].append(domain_range)
+                except KeyError:
+                    fam_annotations[cazy_family] = [domain_range]
 
-    if len(cazy_subfams) == 0:
-        cazy_subfamily_hr, cazy_subfams = np.nan, [np.nan]
-    else:
-        cazy_subfamily_hr = ", ".join(cazy_subfams)
+            except AttributeError:
+                logger.warning(
+                    "Non-standardised CAZy family name in HMMER for "
+                    f"{tool_data}, {cazy_family}"
+                    f" - Returning no CAZy family."
+                )
 
-    if len(domain_ranges) == 0:
-        domain_ranges_hr, domain_ranges = np.nan, [np.nan]
-    else:
-        domain_ranges_hr = ", ".join(domain_ranges)
-
-    prediction_dict = {
-        "protein_accession": [line[0]],
-        "cazy_family": [cazy_family_hr],
-        "cazy_subfamily": [cazy_subfamily_hr],
-        "domain_range": [domain_ranges_hr],
-    }
-
-    prediction_list_dict = {
-        "protein_accession": [line[0]],
-        "cazy_family": [cazy_fams],
-        "cazy_subfamily": [cazy_subfams],
-        "domain_range": [domain_ranges],
-    }
-
-    prediction_df = pd.DataFrame(prediction_dict)
-    prediction_list_df = pd.DataFrame(prediction_list_dict)
-
-    return prediction_df, prediction_list_df
+    return fam_annotations
 
 
-def parse_hotpep_output(line, logger):
+def parse_hotpep_output(tool_data, logger):
     """Parse the output from Hotpep from the overview.txt file.
 
     Retrieve the protein accession, predicated CAZy families, accomanying subfamiles.
@@ -280,94 +243,42 @@ def parse_hotpep_output(line, logger):
     writing out to a .csv file. The second stores the data in lists to build the dbCAN consensus
     dataframe later on.
 
-    :param line: str, line from the dbcan overview.txt file
+    :param tool_data: str, data from Hotpep cell in dbCAN df
     :param logger: logger object
 
-    Return pandas dataframe."""
+    Return dict {fam: [domain ranges]}
+    """
     # Separate out each of the predicted CAZy families/subfamiles
-    hotpep_predictions = line[2].split("+")
+    hotpep_predictions = tool_data[2].split("+")
 
-    # create empty lists to separate the predicated CAZy fam and subfam
-    cazy_fams = []
-    cazy_subfams = []
+    fam_annotations = {}  # {fam: [domain ranges]}
 
     # remove the k-mer cluster number
-    for prediction in hotpep_predictions:
+    for domain in hotpep_predictions:
 
-        prediction = prediction.split("(")[0]  # drop the k-mer group number
+        domain = domain.split("(")[0]  # drop the k-mer group number
 
-        if prediction == "-":  # no CAZy family predicted
+        if domain == "-":  # no CAZy family predicted
             continue
 
-        elif prediction.find("_") != -1:  # predicted subfamily
-            # separate predicted family and subfamily
-            cutoff = prediction.find("_")
-            fam = prediction[:cutoff]
-            subfam = prediction
+        if domain.startswith(("G", "P", "C", "A")):  # filter out EC numbers
+            cutoff = domain.find("_")
+            cazy_family = domain[:cutoff].split("_")[0]  # drop CAZy subfamily
 
-            # check family and subfamily formats are correct
             try:
-                re.match(r"\D{2,3}\d+", fam).group()
-                cazy_fams.append(fam)
+                re.match(r"\D{2,3}\d+", cazy_family).group()
+                fam_annotations[cazy_family] = [None]
             except AttributeError:
                 logger.warning(
                         "Non-standardised CAZy family name in overview.txt for Hotpep for "
-                        f"{line[0]}, {fam}"
-                        f"Returning no CAZy family for {fam}"
+                        f"{tool_data}, {cazy_family}"
+                        f" - Returning no CAZy family for {cazy_family}"
                     )
 
-            try:
-                re.match(r"\D{2,3}\d+_\d+", subfam).group()
-                cazy_subfams.append(subfam)
-            except AttributeError:
-                logger.warning(
-                        "Non-standardised CAZy subfamily name in overview.txt for Hotpep for "
-                        f"{line[0]}, {subfam}"
-                        f"Returning no CAZy subfamily for {subfam}"
-                    )
-
-        else:  # only CAZy family predicted
-            try:
-                re.match(r"\D{2,3}\d+", prediction).group()
-                cazy_fams.append(prediction)
-            except AttributeError:
-                logger.warning(
-                        "Non-standardised CAZy family name in overview.txt for Hotpep for "
-                        f"{line[0]}, {prediction}"
-                        f"Returning no CAZy family for {prediction}"
-                    )
-
-    # Convert lists to strings for human readability, identified by _hr suffix
-    # Convert lists to null values
-    if len(cazy_fams) == 0:
-        cazy_fams_hr, cazy_fams = np.nan, [np.nan]
-    else:
-        cazy_fams_hr = ", ".join(cazy_fams)
-
-    if len(cazy_subfams) == 0:
-        cazy_subfams_hr, cazy_subfams = np.nan, [np.nan]
-    else:
-        cazy_subfams_hr = ", ".join(cazy_subfams)
-
-    prediction_dict = {
-        "protein_accession": [line[0]],
-        "cazy_family": [cazy_fams_hr],
-        "cazy_subfamily": [cazy_subfams_hr],
-    }
-
-    prediction_list_dict = {
-        "protein_accession": [line[0]],
-        "cazy_family": [cazy_fams],
-        "cazy_subfamily": [cazy_subfams],
-    }
-
-    prediction_df = pd.DataFrame(prediction_dict)
-    prediction_list_df = pd.DataFrame(prediction_list_dict)
-
-    return prediction_df, prediction_list_df
+    return fam_annotations
 
 
-def parse_diamond_output(line, logger):
+def parse_diamond_output(tool_data, logger):
     """Parse the output from DIAMOND from the overview.txt file.
 
     Retrieve the protein accession, predicated CAZy families, accomanying subfamiles.
@@ -380,88 +291,37 @@ def parse_diamond_output(line, logger):
     writing out to a .csv file. The second stores the data in lists to build the dbCAN consensus
     dataframe later on.
 
-    :param line: str, line from the dbcan overview.txt file
+    :param tool_data: str, contents from HMMER cell in dbCAN df
     :param logger: logger object
 
-    Return pandas dataframe."""
-
+    Return dict {fam: [domain ranges]}
+    """
     # Separate out each of the CAZy family/subfamily predictions from DIAMOND
-    diamond_prediction = line[3].split('+')
+    diamond_prediction = tool_data.split('+')
 
-    # create empty lists to separate the CAZy family and subfamiles
-    cazy_fams = []
-    cazy_subfams = []
+    fam_annotations = {}  # {fam: [domain ranges]}
 
-    for prediction in diamond_prediction:
-        if prediction == '-':  # no CAZy family of subfamily predicted
+    for domain in diamond_prediction:
+        if domain == '-':  # no CAZy family of subfamily predicted
             continue
 
-        elif prediction.find("_") != -1:  # CAZy subfamily predicted
-            # separate predicted family and subfamily
-            cutoff = prediction.find("_")
-            fam = prediction[:cutoff]
-            subfam = prediction
+        # separate predicted family and subfamily
+        cutoff = domain.find("_")
+        cazy_family = domain[:cutoff]  # drop subfamily
+        
+        # check family and subfamily formats are correct
+        try:
+            re.match(r"\D{2,3}\d+", cazy_family).group()
+            if cazy_family.startswith(("G", "P", "C", "A")):  # skip EC numbers
+                fam_annotations[cazy_family] = [None]
+        except AttributeError:
+            logger.warning(
+                    "Non-standardised CAZy family name in overview.txt for DIAMOND for "
+                    f"{tool_data}, {cazy_family}"
+                    f" - Returning no CAZy family for {cazy_family}"
+                )
 
-            # check family and subfamily formats are correct
-            try:
-                re.match(r"\D{2,3}\d+", fam).group()
-                cazy_fams.append(fam)
-            except AttributeError:
-                logger.warning(
-                        "Non-standardised CAZy family name in overview.txt for DIAMOND for "
-                        f"{line[0]}, {fam}"
-                        f"Returning no CAZy family for {fam}"
-                    )
-
-            try:
-                re.match(r"\D{2,3}\d+_\d+", subfam).group()
-                cazy_subfams.append(subfam)
-            except AttributeError:
-                logger.warning(
-                        "Non-standardised CAZy subfamily name in overview.txt for DIAMOND for "
-                        f"{line[0]}, {subfam}"
-                        f"Returning no CAZy subfamily for {subfam}"
-                    )
-
-        else:  # only CAZy family predicted
-            try:
-                re.match(r"\D{2,3}\d+", prediction).group()
-                cazy_fams.append(prediction)
-            except AttributeError:
-                logger.warning(
-                        "Non-standardised CAZy family name in overview.txt for DIAMOND for "
-                        f"{line[0]}, {prediction}"
-                        f"Returning no CAZy family for {prediction}"
-                    )
-
-    # Convert lists to strings for human readability, identified by _hr suffix
-    # Convert lists to null values
-    if len(cazy_fams) == 0:
-        cazy_fams_hr, cazy_fams = np.nan, [np.nan]
-    else:
-        cazy_fams_hr = ", ".join(cazy_fams)
-
-    if len(cazy_subfams) == 0:
-        cazy_subfams_hr, cazy_subfams = np.nan, [np.nan]
-    else:
-        cazy_subfams_hr = ", ".join(cazy_subfams)
-
-    prediction_dict = {
-        "protein_accession": [line[0]],
-        "cazy_family": [cazy_fams_hr],
-        "cazy_subfamily": [cazy_subfams_hr],
-    }
-
-    prediction_list_dict = {
-        "protein_accession": [line[0]],
-        "cazy_family": [cazy_fams],
-        "cazy_subfamily": [cazy_subfams],
-    }
-
-    prediction_df = pd.DataFrame(prediction_dict)
-    prediction_list_df = pd.DataFrame(prediction_list_dict)
-
-    return prediction_df, prediction_list_df
+    return fam_annotations
 
 
 def get_dbcan_consensus(hmmer, hotpep, diamond):
@@ -488,98 +348,4 @@ def get_dbcan_consensus(hmmer, hotpep, diamond):
     consensus += list(set(hotpep) & set(diamond))
 
     # remove duplicates
-    consensus = list(dict.fromkeys(consensus))
-
-    # convert to strings for human readability or null value for empty list
-    if (len(consensus) == 0) or (type(consensus[0]) == float):  # consensus was np.nan
-        consensus = np.nan
-    else:
-        consensus = ", ".join(consensus)
-
-    return consensus
-
-
-def add_hotpep_ec_predictions(hotpep_output_file, hotpep_df, logger):
-    """Retrieve predicated EC numbers from Hotpep output file and add to the Hotpep dataframe.
-
-    :param hotpep_output_file: path, path to Hotpep.out file
-    :param hotpep_df: pandas dataframe, containing Hotpep predicated CAZy families
-    :param logger: logger object
-
-    Return pandas dataframe (hotpep_df with EC number predictions)
-    """
-    # Add a column of null values to which EC numbers will be added
-    hotpep_df["ec_number"] = np.nan
-
-    # Retrieve all the predicted EC numbers from the Hotpep.out file
-    try:
-        with open(hotpep_output_file, "r") as fh:
-            hotpep_file = fh.read().splitlines()
-    except FileNotFoundError:
-        logger.error(
-            "Could no open Hotpep output file\n"
-            f"{hotpep_output_file}"
-            "Retunring no EC numbers for this file"
-        )
-        return hotpep_df
-
-    # create empty dict to store EC numbers, keyed by protein accession, valued by predicted EC#
-    ec_predictions = {}
-
-    for line in hotpep_file[1:]:  # skip the first line which contains the titles
-        # separate items in the line
-        line = line.split("\t")
-
-        # separate out the predicted EC numbers, multiple maybe predicted
-        ec_numbers = line[-1].split(", ")
-
-        # remove (":score") from each EC number, and convert "NA" to proper null value
-        index = 0
-        for index in range(len(ec_numbers)):
-            ec = ec_numbers[index].split(":")[0].strip()  # remove the (":score") from the EC#
-
-            if ec == "NA":  # used by Hotpep to show no predicated EC number
-                ec_numbers[index] = np.nan
-
-            else:  # Hotpep infers it is an EC number
-                # check EC number is formated correctly
-                try:
-                    re.match(r"\d+?\.(\d+?|\-)\.(\d+?|\-)\.(\d+?|\-)", ec).group()
-                    ec_numbers[index] = ec
-                except AttributeError:
-                    logger.warning(
-                            "Non-standardised EC# formate in Hotpep.out for "
-                            f"{line[2]}, {ec} in\n"
-                            f"{hotpep_output_file}\n"
-                            f"Returning no EC number for {ec}"
-                        )
-
-        protein_accession = line[2]
-        ec_predictions[protein_accession] = ec_numbers
-
-    # Add the predicted EC numbers for their respective protein in the hotpep_df (hotpep dataframe)
-
-    for protein_accession in ec_predictions:  # dict {protein_accession: [predicated EC#s]}
-        # Check if there are EC numbers to add
-        if type(ec_predictions[protein_accession][0]) == float:  # EC numbers is stored as np.nan
-            continue
-
-        # find index of row in hotpep_df with the same protein accession
-        row_index = hotpep_df.index[hotpep_df["protein_accession"] == protein_accession].tolist()[0]
-
-        # compile all predicted EC numbers for current protein accession into a single string
-        try:
-            string = ", ".join(ec_predictions[protein_accession])
-        except TypeError:  # raised in np.nan is in predicted EC list
-            string = ""
-            # add all but last EC number to string
-            for item in ec_predictions[protein_accession][:-1]:
-                if type(item) != float:  # if item is not np.nan
-                    string += f"{item}, "
-            # add the last predicted EC number
-            string += ec_predictions[protein_accession][-1]
-
-        # Add the string of predicted EC numbers to the dataframe
-        hotpep_df.iloc[row_index, 3] = string
-
-    return hotpep_df
+    return set(consensus)
