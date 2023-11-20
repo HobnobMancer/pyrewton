@@ -42,11 +42,9 @@
 
 import json
 import logging
-import os
 import re
 import sys
-
-import pandas as pd
+import yaml
 
 from datetime import datetime
 from pathlib import Path
@@ -127,7 +125,44 @@ def main(args: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
     
     # add data from cazyme classifiers specified in the config file
     if args.config_file is not None:
-        
+        config_data = load_config_file(args, logger) 
+        # {toolname: 
+        # {'version': '0.0.0',
+        # 'cazy_release': 'date',
+        # 'dir': 'path to parent directory containing the output directories with the tool output'}}
+    
+        # add classifiers to the database
+        add_prediction_classifiers(config_data, logger, connection)
+
+        # add prediction data
+
+
+def gather_domain_annotations(config_data, logger, connection):
+    """Gather all predicted CAZome domain annotations. 
+    One tool + one family = a new domain
+    
+    :param config_data: dict {toolname: {version: str, cazy_release: str, dir: str}}
+    :param logger: logger object
+    :param connection: open connection to sql db
+    """
+    # existing_db_proteins = {genbank_accession: db_id}
+    existing_db_proteins = load_genbank_data.get_protein_db_ids(connection)
+
+    # detect output dirs for all classifiers
+    # {classifier name: [path to output dirs]}
+    output_dirs = get_classifier_paths(config_data, logger)
+
+    if len(list(output_dirs.key())) == 0:
+        return
+
+    # {classifier : db id}
+    db_classifiers = load_genbank_data.get_classifier_db_ids(connection)
+    # load existing families = {family: db_id}
+    family_table_dict = load_genbank_data.get_family_db_ids(connection)
+    # {protein_id : [ (classifier_id, family_id) ]}
+    existing_domains = load_genbank_data.get_protein_annotations_table(connection)
+
+    new_domains_dict = {}  # {ncbi acc: {prot_id: local db prot id, classifier-name: {classifier_id, db id, fam: str, fam_id: db id, domain_range:str}}}
 
 
 
@@ -171,6 +206,79 @@ def main(args: Optional[List[str]] = None, logger: Optional[logging.Logger] = No
 
 
 
+def load_config_file(args, logger):
+    try:
+        with open(args.config_file) as fh:
+            return yaml.full_load(fh)
+    except FileNotFoundError:
+        logger.error(
+            f"Could not found config file at {args.config_file}\n"
+            "Check the path is correct\n"
+            "Terminating program"
+        )
+        sys.exit(1)
+
+
+def add_prediction_classifiers(config_data, logger, connection):
+    """Add classifiers that predict CAZyme annotations to db
+    
+    :param config_data: dict {toolname: {version: str, cazy_release: str, dir: str}}
+    :param logger: logger object
+    :param connection: open connection to SQL db
+    """
+    for classifier in config_data:
+        try:
+            c_version = config_data[classifier]['version']
+        except KeyError:
+            logger.warning(f"No version number found for {classifier}. Setting to null")
+            c_version = None
+        try:
+            cazy_release = config_data[classifier]['cazy_release']
+        except KeyError:
+            logger.warning(f"No training dataset release or version number found for {classifier}. Setting to null")
+            cazy_release = None
+
+        add_cazy_data.add_classifiers(
+            'classifier',
+            connection, 
+            logger,
+            classifier_version=c_version,
+            classifier_training_date=cazy_release,
+        )
+
+
+def get_classifier_paths(config_data, logger):
+    """Get paths to all output directories for all classifiers in config_data
+    
+    :param config_data: dict {toolname: {version: str, cazy_release: str, dir: str}}
+    :param logger: logger object
+
+    Return dict {classifier name: [path to output dirs]}
+    """
+    output_dirs = {}  # {toolname: [paths to output dirs]}
+    for classifier in config_data:
+        try:
+            classifier_parent_dir = config_data[classifier]['dir']
+        except KeyError:
+            logger.error(
+                f"Could not find dir specified for {classifier}."
+                f"Not adding data for {classifier} to the local CAZome db"
+            )
+            continue
+
+        classifier_paths = get_paths.get_dir_paths(classifier_parent_dir)
+
+        if len(classifier_paths) == 0:
+            logger.error(
+                f"No dirs retrieved fpr {classifier} from {classifier_parent_dir}\n"
+                "Check the correct path was provided.\n"
+                f"Not adding data for {classifier} to the local CAZome db"
+            )
+            continue
+
+        output_dirs[classifier] = classifier_paths
+
+    return output_dirs
 
 
 
