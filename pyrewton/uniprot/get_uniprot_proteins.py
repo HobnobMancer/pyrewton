@@ -85,21 +85,11 @@ from tqdm import tqdm
 from urllib.error import HTTPError
 
 from pyrewton.utilities import config_logger
-from pyrewton.utilities.parsers.cmd_parser_get_uniprot_proteins import build_parser
 from pyrewton.utilities.file_io import make_output_directory, write_out_pre_named_dataframe
 
 
-def main(argv: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
+def main(args: Optional[List[str]] = None, logger: Optional[logging.Logger] = None):
     """Set up parser, loggers, and IO directories, then invoke scripts main function."""
-    # Parser arguments
-    # Check if namespace isn't passed, if not parser command-line
-    if argv is None:
-        parser = build_parser()
-        args = parser.parse_args()
-    else:
-        parser = build_parser(argv)
-        args = parser.parse_args()
-
     # Initate logger
     # Note: log file only created if specificied at cmdline
     if logger is None:
