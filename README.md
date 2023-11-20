@@ -256,7 +256,7 @@ options:
 
 ## Create a comprehensive CAZome database
 
-Compile predicted CAZyme classifications from CAZyme classifiers and canconical CAZyme classifications from CAZy into a single, shareable, local SQLite3 database using the `build_cazome_db` subcommand.
+Compile predicted CAZyme classifications from CAZyme classifiers and canconical CAZyme classifications from CAZy into a single, shareable, local SQLite3 database using the `compile_cazome_db` subcommand.
 
 To specify which CAZyme classifers are used, a config YAML file is provided to `pyrewton`. This YAML file is keyed by the names of the tools, and under each tool name are tool additional keys:
 * `version:` the version number of the tool
@@ -277,9 +277,39 @@ dbCAN_3:
 
 The names of the tools will appear as is (as stated in the YAML file) in the resulting local CAZome database. If using multiple version of dbCAN, for clarity in the dataset, label these with different names. If not pyrewton will do this mannually using the version number provided.
 
+`pyrewton` defines each classifier-CAZy family pair as a new domain, thus a single protein can be associated with multiple domains in the CAZome database.
+
+### Flags
+```bash
+positional arguments:
+  config_file           Path to directory containing FASTA files of protein seqs extract from genomic assemblies
+
+options:
+  -h, --help            show this help message and exit
+  --new_db NEW_DB       Path to build a new CAZome database. Path to create database file. CANNOT be used at same time as --db (default: None)
+  --db DB               Path to existing CAZome database to add data to. CANNOT be used at same time as --db (default: None)
+  --genome_csv GENOME_CSV
+                        Path to CSV file listing taxonomies and genomic accessions. Created using pyrewton download_genomes subcommand (default: None)
+  --protein_dir PROTEIN_DIR
+                        Path to directory containing FASTA files of protein seqs extract from genomic assemblies (default: None)
+  --cazy CAZY           Path to local CAZyme db of CAZy annotations of proteins created using cazy_webscraper Will add CAZy annotations to the output. (default: None)
+  --cazy_date CAZY_DATE
+                        Date CAZy data was pulled down (default: None)
+  -f, --force           Force file over writting (default: False)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  -n, --nodelete        enable/disable deletion of exisiting files (default: False)
+  --sql_echo            Set SQLite echo to True, adds verbose SQL messaging (default: False)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
 ### Adding CAZyme annotations to an existing local CAZome database
 
-..... 
+The `pyrewton` subcommand `compile_cazome_db` can also be used to add new CAZyme classifications from CAZy and new dbCAN, CUPP and eCAMI analyses to an existing CAZome database created using `pyrewton`. 
+
+To do this, use the `--db` flag to provide a path to an existing CAZome database. Conversly, use the `--new_db` flag to provide a path to create a new CAZome database.
+
+`pyrewton` will parse all specified CAZy, dbCAN, CUPP and eCAMI data, adding new proteins, genomes, taxonomies, CAZy families, classifiers and CAZyme domains to the local CAZome database without adding any duplicates to any tables.
 
 # Repo structure
 
