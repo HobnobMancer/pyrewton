@@ -41,7 +41,7 @@
 
 
 import logging
-import panads as pd
+import pandas as pd
 import sys
 
 from Bio import SeqIO
