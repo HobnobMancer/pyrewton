@@ -246,7 +246,46 @@ def add_prediction_classifiers(config_data, logger, connection):
             classifier_training_date=cazy_release,
         )
 
+        if classifier.lower().startswith('dbcan'):
+            try:
+                c_version = config_data[classifier]['version']
+                if str(c_version).startswith('2'):
+                    kmer_classifier = 'dbCAN-sub'
+                elif str(c_version).startswith('3'):
+                    kmer_classifier = 'eCAMI'
+                else:
+                    kmer_classifier = 'dbCAN-sub'
+            except KeyError:
+                logger.warning(
+                    f"No version number found for {classifier}\n"
+                    "Presuming using dbCAN version 4, so adding classifiers HMMER, DIAMOND and dbCAN-sub to db"
+                )
+                kmer_classifier = 'dbCAN-sub'
+                c_version=None
 
+            add_cazy_data.add_classifiers(
+                'HMMER',
+                connection, 
+                logger,
+                classifier_version=f"dbCAN=={c_version}",
+                classifier_training_date=cazy_release,
+            )
+            add_cazy_data.add_classifiers(
+                'DIAMOND',
+                connection, 
+                logger,
+                classifier_version=f"dbCAN=={c_version}",
+                classifier_training_date=cazy_release,
+            )
+            add_cazy_data.add_classifiers(
+                kmer_classifier,
+                connection, 
+                logger,
+                classifier_version=f"dbCAN=={c_version}",
+                classifier_training_date=cazy_release,
+            )
+
+            
 def get_classifier_paths(config_data, logger):
     """Get paths to all output directories for all classifiers in config_data
     
