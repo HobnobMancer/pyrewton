@@ -13,17 +13,27 @@ _Please find more detailed documentation for operation and troubleshooting at [R
 
 ## Contents
 
-1. [Overview](#Overview)
-2. [Installation](#Installation)
-    - [Requirements](#Requirements)
-3. [Development](#Development)
-3. [Directories](#Directories)
-4. [Modules](#Modules)
-    - [genbank](#genbank)
-    - [cazymes](#cazymes)
-        - [uniprot](#uniprot)
-        - [evaluate_tools](#evaluate_tools)
-5. [Evaluations](#Evaluations)
+1. [Overview](#overview)
+2. [Installation](#installation)
+    - [Requirements](#requirements)
+3. [Development](#development)
+4. [Documentation](#documentation)
+  * [Download genomes](#download-genomes)
+  * [Extract protein sequences](#extract-protein-sequences)
+  * [Automate running CAZyme classifiers](#automate-running-cazyme-classifiers-to-predict-cazymes)
+  * [Create a comprehensive CAZome database](#create-a-comprehensive-cazome-database)
+    * [Add data to an existing CAZome database](#adding-cazyme-annotations-to-an-existing-local-cazome-database)
+    * [Add UniProt annotation and structural data to a CAZome database](#adding-additional-annotation-function-and-structral-data-to-the-local-cazome-database)
+  * [Analyses to select candidates for engineering and exploration](#select-candidates-for-engineering-industrial-exploitation-and-biological-exploration)
+    * [Extract protein sequences from the CAZome database](#extract-protein-sequences-from-the-local-cazome-database)
+    * [Combine sequences from FASTA files](#combine-seqs-from-multiple-fasta-files-into-one)
+    * [Cluster CAZymes](#cluster-cazymes-into-functionally-related-groups)
+    * [Get sequences for CAZyme clusters](#get-sequences-for-each-cluster)
+    * [Get summary of CAZyme clusters](#get-summary-of-the-mmseqs2-clusters)
+    * [Explore sequence diversity with all-versus-all pairwise sequence alignments](#explore-cluster-sequence-diversity)
+    * [Screen for positive selection](#screen-cazymes-for-positive-selection)
+5. [Directories](#directories)
+6. [Evaluations](#Evaluations)
         
 ## Overview
 
@@ -551,6 +561,10 @@ options:
                         Defines log file name and/or path (default: None)
   -v, --verbose         Set logger level to 'INFO' (default: False)
 ```
+
+## Screen CAZymes for positive selection
+
+
 
 # Repo structure
 
