@@ -53,7 +53,7 @@ def build_parser(
 ) -> None:
     """Return ArgumentParser parser for script."""
     parser = subps.add_parser(
-        "cluster_cazymes", formatter_class=ArgumentDefaultsHelpFormatter
+        "get_cluster_seqs", formatter_class=ArgumentDefaultsHelpFormatter
     )
 
     # Add positional arguments to parser
