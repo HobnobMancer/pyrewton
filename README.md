@@ -408,6 +408,27 @@ INNER JOIN Taxonomies AS Taxs ON Assemblies.taxonomy_id = Taxs.taxonomy_id
 WHERE (F.family like 'GT%') AND (Taxs.genus = 'Aspergillus')
 ```
 
+### Combine seqs from multiple FASTA files into one
+
+Sometimes multiple scrapes of CAZy and multiple CAZyme classifier analyses can result in generating multiple FASTA files. `pyrewton` can combine the contents of two FASTA files into one using the `gather_seqs` subcommand.
+
+**Flags:**
+```bash
+positional arguments:
+  fasta_1               Path to FASTA file containg protein sequences
+  fasta_2               Path to FASTA file containg protein sequences
+
+options:
+  -h, --help            show this help message and exit
+  -f, --force           Force file over writting (default: False)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  -o OUTPUT, --output OUTPUT
+                        Define path to output FASTA file (default: None)
+  -n, --nodelete        Don't delete content aleady in output dir (default: False)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
 # Repo structure
 
 ## Directories
