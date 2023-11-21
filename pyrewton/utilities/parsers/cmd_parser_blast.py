@@ -71,6 +71,13 @@ def build_parser(
     )
 
     # Add positional arguments to parser
+    parser.add_argument(
+        "input",
+        type=Path,
+        help=(
+            "Path to FASTA file containing all sequences for all-versus-all pairwise sequence alignemnts"
+        ),
+    )
 
     parser.add_argument(
         "method",
@@ -80,6 +87,15 @@ def build_parser(
             "Method for all versus all sequence alignemnt. BLAST or DIAMOND. Not case sensitivity"
         ),
     )
+
+    # Add optional arguments to parser
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default="./all_vs_all_alignments.out",
+        help="Path write out output of alignments. Default ./all_vs_all_alignments.out",
+    )
+
 
     # Add optional arguments to parser
     parser.add_argument(
