@@ -46,7 +46,7 @@ from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, _SubParsersA
 from pathlib import Path
 from typing import List, Optional
 
-from pyrewton.uniprot import get_uniprot_proteins
+from pyrewton.select_candidates import get_cluster_seqs
 
 def build_parser(
     subps: _SubParsersAction, parents: Optional[List[ArgumentParser]] = None
@@ -62,39 +62,27 @@ def build_parser(
     parser.add_argument(
         "fasta",
         type=Path,
-        help="Path to FASTA file of protein sequence to cluster",
+        help="Path to FASTA file of all protein sequences",
+    )
+    #mmseq_tsv
+    parser.add_argument(
+        "mmseq_tsv",
+        type=Path,
+        help="Path to TSV file listing clusters created by MMseqs2",
     )
 
     # Add optional arguments to parser
     parser.add_argument(
-        "--mmseqs_db",
+        "--output",
         type=Path,
-        default="mmseqs/mmseqs_db",
-        help="Path to write out mmseqs db. Default ./mmseqs/mmseqs_db",
+        default=".",
+        help="Path to directory to write out cluster multi-sequence FASTA files. Default pwd",
     )
     parser.add_argument(
-        "--mmseqs_out",
-        type=Path,
-        default="mmseqs/mmseqs_out",
-        help="Path to write out mmseqs output file. Default ./mmseqs/mmseqs_out",
-    )
-    parser.add_argument(
-        "--out_tsv",
-        type=Path,
-        default="./mmseqs_out.tsv",
-        help="Path to write out mmseqs TSV file with cluster inforamtion. Default ./mmseqs_out.tsv",
-    )
-    parser.add_argument(
-        "--pident",
-        type=float,
-        default=0.7,
-        help="Percentage identity cutoff (as DECIMAL)",
-    )
-    parser.add_argument(
-        "--cov",
-        type=float,
-        default=0.7,
-        help="Converage cutoff (as DECIMAL)",
+        "--min_size",
+        type=int,
+        default=10,
+        help="Minimum size of cluster",
     )
     # Add log file name option
     # If not given, no log file will be written out
@@ -107,14 +95,6 @@ def build_parser(
         help="Defines log file name and/or path",
     )
 
-    parser.add_argument(
-        "--sql_echo",
-        dest="sql_echo",
-        action="store_true",
-        default=False,
-        help="Set SQLite echo to True, adds verbose SQL messaging",
-    )
-
     # Add option for more detail (verbose) logging
     parser.add_argument(
         "-v",
@@ -125,4 +105,4 @@ def build_parser(
         help="Set logger level to 'INFO'",
     )
 
-    parser.set_defaults(func=get_uniprot_proteins.main)
+    parser.set_defaults(func=get_cluster_seqs.main)

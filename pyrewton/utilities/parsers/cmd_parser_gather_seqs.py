@@ -47,7 +47,7 @@ from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, _SubParsersA
 from pathlib import Path
 from typing import List, Optional
 
-from pyrewton.select_candidates import extract_db_seqs
+from pyrewton.select_candidates import gather_seqs
 
 
 def build_parser(
@@ -116,4 +116,4 @@ def build_parser(
         help="Set logger level to 'INFO'",
     )
 
-    parser.set_defaults(func=extract_db_seqs.main)
+    parser.set_defaults(func=gather_seqs.main)
