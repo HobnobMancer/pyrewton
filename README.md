@@ -456,6 +456,26 @@ options:
   --sql_echo            Set SQLite echo to True, adds verbose SQL messaging (default: False)
   -v, --verbose         Set logger level to 'INFO' (default: False)
 ```
+### Get sequences for each cluster
+
+After clustering the sequences, for clusters containing more than a user define threshold of cluster members, `pyrewton` can gather the sequences from the cluster and write out the sequences to a multi-sequence FASTA file per cluster. This FASTA file is named using the cluster name provided by MMseqs2.
+
+The minimum cluster size threshold can be changed using the `--min-size` flag.
+
+**Flags:**
+```bash
+positional arguments:
+  fasta                 Path to FASTA file of all protein sequences
+  mmseq_tsv             Path to TSV file listing clusters created by MMseqs2
+
+options:
+  -h, --help            show this help message and exit
+  --output OUTPUT       Path to directory to write out cluster multi-sequence FASTA files. Default pwd (default: .)
+  --min_size MIN_SIZE   Minimum size of cluster (default: 10)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
 
 # Repo structure
 
