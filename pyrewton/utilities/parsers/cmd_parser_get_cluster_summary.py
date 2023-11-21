@@ -37,7 +37,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-"""Build parser for 'add_uniprot_data.py'"""
+"""Build parser for 'calculate_stats.py'"""
 
 
 import sys
@@ -46,7 +46,7 @@ from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, _SubParsersA
 from pathlib import Path
 from typing import List, Optional
 
-from pyrewton.select_candidates import get_cluster_seqs
+from pyrewton.select_candidates import get_cluster_summary
 
 
 def build_parser(
@@ -54,36 +54,34 @@ def build_parser(
 ) -> None:
     """Return ArgumentParser parser for script."""
     parser = subps.add_parser(
-        "get_cluster_seqs", formatter_class=ArgumentDefaultsHelpFormatter
+        "get_cluster_summary", formatter_class=ArgumentDefaultsHelpFormatter
     )
-
-    # Add positional arguments to parser
+   # Add positional arguments to parser
 
     # Add path to input fasta files
     parser.add_argument(
-        "fasta",
+        "cazy_fasta",
         type=Path,
-        help="Path to FASTA file of all protein sequences",
+        help="Path to FASTA file containg protein sequences from CAZy",
     )
-    #mmseq_tsv
+    parser.add_argument(
+        "pyrewton_fasta",
+        type=Path,
+        help="Path to FASTA file containg protein sequences from pyrewton",
+    )
     parser.add_argument(
         "mmseq_tsv",
         type=Path,
-        help="Path to TSV file listing clusters created by MMseqs2",
+        help="Path to TSV file created by MMseq2",
     )
-
-    # Add optional arguments to parser
+    # Add option to force file over writting
     parser.add_argument(
-        "--output",
-        type=Path,
-        default=".",
-        help="Path to directory to write out cluster multi-sequence FASTA files. Default pwd",
-    )
-    parser.add_argument(
-        "--min_size",
-        type=int,
-        default=10,
-        help="Minimum size of cluster",
+        "-f",
+        "--force",
+        dest="force",
+        action="store_true",
+        default=False,
+        help="Force file over writting",
     )
     # Add log file name option
     # If not given, no log file will be written out
@@ -95,7 +93,24 @@ def build_parser(
         default=None,
         help="Defines log file name and/or path",
     )
-
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=None,
+        help=(
+            "Define path to output file(s).\n"
+            "The file name provided at the end of the path is used as the file name PREFIX"
+        ),
+    )
+    parser.add_argument(
+        "-n",
+        "--nodelete",
+        dest="nodelete",
+        action="store_true",
+        default=False,
+        help="Don't delete content aleady in output dir",
+    )
     # Add option for more detail (verbose) logging
     parser.add_argument(
         "-v",
@@ -106,4 +121,4 @@ def build_parser(
         help="Set logger level to 'INFO'",
     )
 
-    parser.set_defaults(func=get_cluster_seqs.main)
+    parser.set_defaults(func=get_cluster_summary.main)

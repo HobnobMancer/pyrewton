@@ -60,6 +60,7 @@ from pyrewton.utilities.parsers import (
     cmd_parser_gather_seqs,
     cmd_parser_cluster_seqs,
     cmd_parser_get_cluster_seqs,
+    cmd_parser_get_cluster_summary,
 )
 
 
@@ -115,6 +116,8 @@ def build_parser(argv: Optional[List] = None) -> Namespace:
     cmd_parser_cluster_seqs.build_parser(subparsers)
 
     cmd_parser_get_cluster_seqs.build_parser(subparsers)
+
+    cmd_parser_get_cluster_summary.build_parser(subparsers)
 
     # Parse arguments
     # The list comprehension is to allow PosixPaths to be defined and passed in testing
