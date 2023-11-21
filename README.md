@@ -429,6 +429,34 @@ options:
   -v, --verbose         Set logger level to 'INFO' (default: False)
 ```
 
+### Cluster CAZymes into functionally related groups
+
+`pyrewton` can cluster CAZyme sequences, for example to gather potentially functionally related protein sequences, by using MMseqs2.
+
+> Steinegger, M., Söding, J. MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets. Nat Biotechnol 35, 1026–1028 (2017). https://doi.org/10.1038/nbt.3988
+
+Specifically, using the `cluster_cazymes` subcommand to run MMseqs. By default a cutoff threshold of 70% perecentage identity and coverage is used, but these can be changed using the `--pident` and `--cov` flags respectively.
+
+**Flags:**
+```bash
+positional arguments:
+  fasta                 Path to FASTA file of protein sequence to cluster
+
+options:
+  -h, --help            show this help message and exit
+  --mmseqs_db MMSEQS_DB
+                        Path to write out mmseqs db. Default ./mmseqs/mmseqs_db (default: mmseqs/mmseqs_db)
+  --mmseqs_out MMSEQS_OUT
+                        Path to write out mmseqs output file. Default ./mmseqs/mmseqs_out (default: mmseqs/mmseqs_out)
+  --out_tsv OUT_TSV     Path to write out mmseqs TSV file with cluster inforamtion. Default ./mmseqs_out.tsv (default: ./mmseqs_out.tsv)
+  --pident PIDENT       Percentage identity cutoff (as DECIMAL) (default: 0.7)
+  --cov COV             Converage cutoff (as DECIMAL) (default: 0.7)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  --sql_echo            Set SQLite echo to True, adds verbose SQL messaging (default: False)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
 # Repo structure
 
 ## Directories
