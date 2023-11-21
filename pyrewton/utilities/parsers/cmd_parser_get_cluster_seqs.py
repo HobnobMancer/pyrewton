@@ -46,7 +46,7 @@ from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, _SubParsersA
 from pathlib import Path
 from typing import List, Optional
 
-from pyrewton.select_candidates import cluster_seqs
+from pyrewton.uniprot import get_uniprot_proteins
 
 def build_parser(
     subps: _SubParsersAction, parents: Optional[List[ArgumentParser]] = None
@@ -125,4 +125,4 @@ def build_parser(
         help="Set logger level to 'INFO'",
     )
 
-    parser.set_defaults(func=cluster_seqs.main)
+    parser.set_defaults(func=get_uniprot_proteins.main)
