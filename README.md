@@ -527,6 +527,31 @@ options:
   -v, --verbose         Set logger level to 'INFO' (default: False)
 ```
 
+## Explore cluster sequence diversity
+
+`pyrewton` can configure running BLAST or DIAMOND to perform all-versus-all pairwise sequence alignment to faciltiate exploring sequence diversity within a FASTA file (e.g. protein cluster). This can help identify sequences that may not be functionally or structurally represented in the literature of public repositories, and may identify functional divergence within CAZy families.
+
+Specifically, using the `pyrewton` subcommand `run_all_vs_all` and state the method of choice: BLAST or DIAMOND, as well as providing a path to the FASTA file containing all protein sequences for the analysis.
+
+> Altschul, S.F., Gish, W., Miller, W., Myers, E.W., Lipman, D.J. (1990) “Basic local alignment search tool.” J. Mol. Biol. 215:403-410.
+> Buchfink B, Xie C, Huson DH. Fast and sensitive protein alignment using DIAMOND. Nat Methods. 2015 Jan;12(1):59-60. doi: 10.1038/nmeth.3176. Epub 2014 Nov 17. PMID: 25402007.
+
+**Flags:**
+```bash
+positional arguments:
+  input                 Path to FASTA file containing all sequences for all-versus-all pairwise sequence alignemnts
+  method                Method for all versus all sequence alignemnt. BLAST or DIAMOND. Not case sensitivity
+
+options:
+  -h, --help            show this help message and exit
+  --output OUTPUT       Path write out output of alignments. Default ./all_vs_all_alignments.out (default: ./all_vs_all_alignments.out)
+  --db_path DB_PATH     Path to build DIAMOND database (default: ./diamond.db)
+  --evalue EVALUE       E-value threshold (default: 10.0)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
 # Repo structure
 
 ## Directories
