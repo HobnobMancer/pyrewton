@@ -67,7 +67,7 @@ def build_parser(
 ) -> None:
     """Return ArgumentParser parser for script."""
     parser = subps.add_parser(
-        "run_all_v_all", formatter_class=ArgumentDefaultsHelpFormatter
+        "run_all_vs_all", formatter_class=ArgumentDefaultsHelpFormatter
     )
 
     # Add positional arguments to parser
