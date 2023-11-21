@@ -341,6 +341,73 @@ options:
   -v, --verbose         Set logger level to 'INFO' (default: False)
 ```
 
+## Select candidates for engineering, industrial exploitation and biological exploration
+
+### Extract protein sequences from the local CAZome database
+
+The `pyrewton` subcommand `extract_db_seqs` can be used to extract the protein sequences of proteins identified by the protein version accession in a plain text file from the local CAZome database, and write the sequences to a multi-sequence FASTA file.
+
+The protein IDs in the plain text file must be written one per line. `pyrewton` also does not tidy up duplicates. Therefore, if a protein ID appears multiple times, the protein sequence could be written out multiple times.
+
+To create this plain text file of protein accessions we recommend querying the local CAZome database via an SQL/SQLite interface. We include some example commands below.
+
+**Flags:**
+```bash
+positional arguments:
+  database              Path to the local CAZome database
+  proteins              Txt file of protein accessions to extract protein sequences for. A unique GenBank protein accession per line
+
+options:
+  -h, --help            show this help message and exit
+  -f, --force           Force file over writting (default: False)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  -o OUTPUT, --output OUTPUT
+                        Define path to output FASTA file (default: None)
+  -n, --nodelete        Do not delete content in already existing output dir (default: False)
+  --sql_echo            Set sqlalchemy conneciton echo property to True (default: False)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
+#### SQL query to extract all protein IDs
+
+```sql
+SELECT genbank_accession
+FROM Proteins
+```
+
+#### SQL query to extract all GH protein IDs
+
+```sql
+SELECT genbank_accession
+FROM Proteins AS P
+INNER JOIN Domains AS D ON P.protein_id = D.protein_id
+INNER JOIN CazyFamilies AS F ON D.family_id = F.family_id
+WHERE F.family like 'GH%'
+```
+
+#### SQL query to extract all PL10 protein IDs
+
+```sql
+SELECT genbank_accession
+FROM Proteins AS P
+INNER JOIN Domains AS D ON P.protein_id = D.protein_id
+INNER JOIN CazyFamilies AS F ON D.family_id = F.family_id
+WHERE F.family = 'PL10'
+```
+
+#### SQL query to extract all GT protein IDs from Aspergillus genomes
+
+```sql
+SELECT genbank_accession
+FROM Proteins AS P
+INNER JOIN Domains AS D ON P.protein_id = D.protein_id
+INNER JOIN CazyFamilies AS F ON D.family_id = F.family_id
+INNER JOIN Assemblies ON P.assembly_id = Assemblies.assembly_id
+INNER JOIN Taxonomies AS Taxs ON Assemblies.taxonomy_id = Taxs.taxonomy_id
+WHERE (F.family like 'GT%') AND (Taxs.genus = 'Aspergillus')
+```
+
 # Repo structure
 
 ## Directories
