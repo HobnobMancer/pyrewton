@@ -57,6 +57,7 @@ from pyrewton.utilities.parsers import (
     cmd_parser_compile_db,
     cmd_parser_uniprot,
     cmd_parser_extract_db_seqs,
+    cmd_parser_gather_seqs,
 )
 
 
@@ -106,6 +107,8 @@ def build_parser(argv: Optional[List] = None) -> Namespace:
     cmd_parser_uniprot.build_parser(subparsers)
 
     cmd_parser_extract_db_seqs.build_parser(subparsers)
+
+    cmd_parser_gather_seqs.build_parser(subparsers)
 
     # Parse arguments
     # The list comprehension is to allow PosixPaths to be defined and passed in testing
