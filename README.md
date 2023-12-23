@@ -13,17 +13,27 @@ _Please find more detailed documentation for operation and troubleshooting at [R
 
 ## Contents
 
-1. [Overview](#Overview)
-2. [Installation](#Installation)
-    - [Requirements](#Requirements)
-3. [Development](#Development)
-3. [Directories](#Directories)
-4. [Modules](#Modules)
-    - [genbank](#genbank)
-    - [cazymes](#cazymes)
-        - [uniprot](#uniprot)
-        - [evaluate_tools](#evaluate_tools)
-5. [Evaluations](#Evaluations)
+1. [Overview](#overview)
+2. [Installation](#installation)
+    - [Requirements](#requirements)
+3. [Development](#development)
+4. [Documentation](#documentation)
+  * [Download genomes](#download-genomes)
+  * [Extract protein sequences](#extract-protein-sequences)
+  * [Automate running CAZyme classifiers](#automate-running-cazyme-classifiers-to-predict-cazymes)
+  * [Create a comprehensive CAZome database](#create-a-comprehensive-cazome-database)
+    * [Add data to an existing CAZome database](#adding-cazyme-annotations-to-an-existing-local-cazome-database)
+    * [Add UniProt annotation and structural data to a CAZome database](#adding-additional-annotation-function-and-structral-data-to-the-local-cazome-database)
+  * [Analyses to select candidates for engineering and exploration](#select-candidates-for-engineering-industrial-exploitation-and-biological-exploration)
+    * [Extract protein sequences from the CAZome database](#extract-protein-sequences-from-the-local-cazome-database)
+    * [Combine sequences from FASTA files](#combine-seqs-from-multiple-fasta-files-into-one)
+    * [Cluster CAZymes](#cluster-cazymes-into-functionally-related-groups)
+    * [Get sequences for CAZyme clusters](#get-sequences-for-each-cluster)
+    * [Get summary of CAZyme clusters](#get-summary-of-the-mmseqs2-clusters)
+    * [Explore sequence diversity with all-versus-all pairwise sequence alignments](#explore-cluster-sequence-diversity)
+    * [Screen for positive selection](#screen-cazymes-for-positive-selection)
+5. [Directories](#directories)
+6. [Evaluations](#Evaluations)
         
 ## Overview
 
@@ -310,6 +320,251 @@ The `pyrewton` subcommand `compile_cazome_db` can also be used to add new CAZyme
 To do this, use the `--db` flag to provide a path to an existing CAZome database. Conversly, use the `--new_db` flag to provide a path to create a new CAZome database.
 
 `pyrewton` will parse all specified CAZy, dbCAN, CUPP and eCAMI data, adding new proteins, genomes, taxonomies, CAZy families, classifiers and CAZyme domains to the local CAZome database without adding any duplicates to any tables.
+
+### Adding additional annotation, function and structral data to the local CAZome database
+
+The `get_uniprot_data` subcommand can be used to retrieve additional functional annotation and structural data from the UniProtKB database and import the data into the local CAZome database. The following data is retrieved:
+
+* Active site annotations
+* Citation data
+* Cofactors
+* EC numbers
+* Glycoslyation data
+* Metal binding and metal binding sites
+* Optimal pH
+* Protein structure PDB IDs
+* Substrates and substrate binding sites
+* Transmembrane regions
+
+**Flags:**
+```bash
+positional arguments:
+  database              Path to local CAZome database
+
+options:
+  -h, --help            show this help message and exit
+  -b BATCH_SIZE, --batch_size BATCH_SIZE
+                        Size of batch queries submitted to UniProt (default: 150)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  --sql_echo            Set SQLite echo to True, adds verbose SQL messaging (default: False)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
+## Select candidates for engineering, industrial exploitation and biological exploration
+
+### Extract protein sequences from the local CAZome database
+
+The `pyrewton` subcommand `extract_db_seqs` can be used to extract the protein sequences of proteins identified by the protein version accession in a plain text file from the local CAZome database, and write the sequences to a multi-sequence FASTA file.
+
+The protein IDs in the plain text file must be written one per line. `pyrewton` also does not tidy up duplicates. Therefore, if a protein ID appears multiple times, the protein sequence could be written out multiple times.
+
+To create this plain text file of protein accessions we recommend querying the local CAZome database via an SQL/SQLite interface. We include some example commands below.
+
+**Flags:**
+```bash
+positional arguments:
+  database              Path to the local CAZome database
+  proteins              Txt file of protein accessions to extract protein sequences for. A unique GenBank protein accession per line
+
+options:
+  -h, --help            show this help message and exit
+  -f, --force           Force file over writting (default: False)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  -o OUTPUT, --output OUTPUT
+                        Define path to output FASTA file (default: None)
+  -n, --nodelete        Do not delete content in already existing output dir (default: False)
+  --sql_echo            Set sqlalchemy conneciton echo property to True (default: False)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
+#### SQL query to extract all protein IDs
+
+```sql
+SELECT genbank_accession
+FROM Proteins
+```
+
+#### SQL query to extract all GH protein IDs
+
+```sql
+SELECT genbank_accession
+FROM Proteins AS P
+INNER JOIN Domains AS D ON P.protein_id = D.protein_id
+INNER JOIN CazyFamilies AS F ON D.family_id = F.family_id
+WHERE F.family like 'GH%'
+```
+
+#### SQL query to extract all PL10 protein IDs
+
+```sql
+SELECT genbank_accession
+FROM Proteins AS P
+INNER JOIN Domains AS D ON P.protein_id = D.protein_id
+INNER JOIN CazyFamilies AS F ON D.family_id = F.family_id
+WHERE F.family = 'PL10'
+```
+
+#### SQL query to extract all GT protein IDs from Aspergillus genomes
+
+```sql
+SELECT genbank_accession
+FROM Proteins AS P
+INNER JOIN Domains AS D ON P.protein_id = D.protein_id
+INNER JOIN CazyFamilies AS F ON D.family_id = F.family_id
+INNER JOIN Assemblies ON P.assembly_id = Assemblies.assembly_id
+INNER JOIN Taxonomies AS Taxs ON Assemblies.taxonomy_id = Taxs.taxonomy_id
+WHERE (F.family like 'GT%') AND (Taxs.genus = 'Aspergillus')
+```
+
+### Combine seqs from multiple FASTA files into one
+
+Sometimes multiple scrapes of CAZy and multiple CAZyme classifier analyses can result in generating multiple FASTA files. `pyrewton` can combine the contents of two FASTA files into one using the `gather_seqs` subcommand.
+
+**Flags:**
+```bash
+positional arguments:
+  fasta_1               Path to FASTA file containg protein sequences
+  fasta_2               Path to FASTA file containg protein sequences
+
+options:
+  -h, --help            show this help message and exit
+  -f, --force           Force file over writting (default: False)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  -o OUTPUT, --output OUTPUT
+                        Define path to output FASTA file (default: None)
+  -n, --nodelete        Don't delete content aleady in output dir (default: False)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
+### Cluster CAZymes into functionally related groups
+
+`pyrewton` can cluster CAZyme sequences, for example to gather potentially functionally related protein sequences, by using MMseqs2.
+
+> Steinegger, M., Söding, J. MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets. Nat Biotechnol 35, 1026–1028 (2017). https://doi.org/10.1038/nbt.3988
+
+Specifically, using the `cluster_cazymes` subcommand to run MMseqs. By default a cutoff threshold of 70% perecentage identity and coverage is used, but these can be changed using the `--pident` and `--cov` flags respectively.
+
+**Flags:**
+```bash
+positional arguments:
+  fasta                 Path to FASTA file of protein sequence to cluster
+
+options:
+  -h, --help            show this help message and exit
+  --mmseqs_db MMSEQS_DB
+                        Path to write out mmseqs db. Default ./mmseqs/mmseqs_db (default: mmseqs/mmseqs_db)
+  --mmseqs_out MMSEQS_OUT
+                        Path to write out mmseqs output file. Default ./mmseqs/mmseqs_out (default: mmseqs/mmseqs_out)
+  --out_tsv OUT_TSV     Path to write out mmseqs TSV file with cluster inforamtion. Default ./mmseqs_out.tsv (default: ./mmseqs_out.tsv)
+  --pident PIDENT       Percentage identity cutoff (as DECIMAL) (default: 0.7)
+  --cov COV             Converage cutoff (as DECIMAL) (default: 0.7)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  --sql_echo            Set SQLite echo to True, adds verbose SQL messaging (default: False)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+### Get sequences for each cluster
+
+After clustering the sequences, for clusters containing more than a user define threshold of cluster members, `pyrewton` can gather the sequences from the cluster and write out the sequences to a multi-sequence FASTA file per cluster. This FASTA file is named using the cluster name provided by MMseqs2.
+
+The minimum cluster size threshold can be changed using the `--min-size` flag.
+
+**Flags:**
+```bash
+positional arguments:
+  fasta                 Path to FASTA file of all protein sequences
+  mmseq_tsv             Path to TSV file listing clusters created by MMseqs2
+
+options:
+  -h, --help            show this help message and exit
+  --output OUTPUT       Path to directory to write out cluster multi-sequence FASTA files. Default pwd (default: .)
+  --min_size MIN_SIZE   Minimum size of cluster (default: 10)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
+### Get summary of the MMseqs2 clusters 
+
+To create a CSV file summarising the clusters generated by MMseqs2, using the `pyrewton` subcommand `get_cluster_summary`. This will coordinate `pyrewton` to parse the MMSeqs output TSV file and generate a summary of for each cluster:
+
+* Number of members (unique protein IDs) in each cluster
+* Number of CAZymes predicted by CAZyme classifiers (these proteins could also be presented in CAZy)
+* Number of CAZymes from cluster in the CAZy database (these proteins could laos be predicted by CAZyme classifiers as well as in CAZy)
+* Percentage of total cluster membership that was predicted by a CAZyme classifier
+* Percentage of the total cluster membership that was in the CAZy database
+
+To identify proteins that were in the CAZy database, or classified by a CAZyme classifier 2 FASTA files must be provided to `pyrewton get_cluster_summary`. One FASTA file lists proteins from the CAZy database, the second lists proteins that were predicted to be CAZymes from a CAZyme classifier. CAZy/CAZyme classifier classification does not have to mutually exclusive.
+
+Use the following SQL command to retrieve the protein IDs for all proteins in CAZy from the local CAZyme database - this can be used as the input list to `pyrewton extract_db_seqs` to create the FASTA file of CAZy classified CAZymes:
+
+```sql
+SELECT P.genbank_accession
+FROM Proteins AS P
+INNER JOIN Domains AS D ON P.protein_id = D.protein_id
+INNER JOIN Classifiers AS C ON D.classifier_id = C.classifier_id
+WHERE C.classifier = 'CAZy'
+```
+
+Similarly, use the following SQL command to retrieve the protein IDs for all proteins in the local CAZome database that were predicted to be CAZymes by HMMER and DIAMOND. This SQL command can be modified to extract all proteins predicted to be CAZymes by any combination of user-defined CAZyme classifiers. The list of returned proteins IDs can be used as the input list to `pyrewton extract_db_seqs` to create the FASTA file of CAZyme classifier classified CAZymes:
+
+```sql
+SELECT P.genbank_accession
+FROM Proteins AS P
+INNER JOIN Domains AS D ON P.protein_id = D.protein_id
+INNER JOIN Classifiers AS C ON D.classifier_id = C.classifier_id
+WHERE (C.classifier = 'HMMER') OR (C.classifier = 'DIAMOND')
+```
+
+**Flags:**
+```bash
+positional arguments:
+  cazy_fasta            Path to FASTA file containg protein sequences from CAZy
+  pyrewton_fasta        Path to FASTA file containg protein sequences from pyrewton
+  mmseq_tsv             Path to TSV file created by MMseq2
+
+options:
+  -h, --help            show this help message and exit
+  -f, --force           Force file over writting (default: False)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  -o OUTPUT, --output OUTPUT
+                        Define path to output file(s). The file name provided at the end of the path is used as the file name PREFIX (default: None)
+  -n, --nodelete        Don't delete content aleady in output dir (default: False)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
+## Explore cluster sequence diversity
+
+`pyrewton` can configure running BLAST or DIAMOND to perform all-versus-all pairwise sequence alignment to faciltiate exploring sequence diversity within a FASTA file (e.g. protein cluster). This can help identify sequences that may not be functionally or structurally represented in the literature of public repositories, and may identify functional divergence within CAZy families.
+
+Specifically, using the `pyrewton` subcommand `run_all_vs_all` and state the method of choice: BLAST or DIAMOND, as well as providing a path to the FASTA file containing all protein sequences for the analysis.
+
+> Altschul, S.F., Gish, W., Miller, W., Myers, E.W., Lipman, D.J. (1990) “Basic local alignment search tool.” J. Mol. Biol. 215:403-410.
+> Buchfink B, Xie C, Huson DH. Fast and sensitive protein alignment using DIAMOND. Nat Methods. 2015 Jan;12(1):59-60. doi: 10.1038/nmeth.3176. Epub 2014 Nov 17. PMID: 25402007.
+
+**Flags:**
+```bash
+positional arguments:
+  input                 Path to FASTA file containing all sequences for all-versus-all pairwise sequence alignemnts
+  method                Method for all versus all sequence alignemnt. BLAST or DIAMOND. Not case sensitivity
+
+options:
+  -h, --help            show this help message and exit
+  --output OUTPUT       Path write out output of alignments. Default ./all_vs_all_alignments.out (default: ./all_vs_all_alignments.out)
+  --db_path DB_PATH     Path to build DIAMOND database (default: ./diamond.db)
+  --evalue EVALUE       E-value threshold (default: 10.0)
+  -l log file name, --log log file name
+                        Defines log file name and/or path (default: None)
+  -v, --verbose         Set logger level to 'INFO' (default: False)
+```
+
+## Screen CAZymes for positive selection
+
+
 
 # Repo structure
 
